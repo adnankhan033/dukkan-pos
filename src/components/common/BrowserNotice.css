@@ -1,0 +1,70 @@
+.browser-notice {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--color-bg);
+}
+
+.browser-notice-card {
+  max-width: 520px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  box-shadow: var(--shadow-lg);
+}
+
+.browser-notice-card h1 {
+  font-size: 1.75rem;
+  color: var(--color-primary);
+  margin-bottom: 1rem;
+}
+
+.browser-notice-lead {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+.browser-notice-card p {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+}
+
+.browser-notice-card code {
+  background: var(--color-surface);
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  font-size: 0.8125rem;
+  color: var(--color-text);
+}
+
+.browser-notice-steps {
+  margin: 1.5rem 0;
+  padding: 1rem 1.25rem;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+}
+
+.browser-notice-steps h2 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--color-text);
+}
+
+.browser-notice-steps ol {
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.8;
+}
+
+.browser-notice-hint {
+  font-size: 0.8125rem !important;
+  margin-bottom: 0 !important;
+}

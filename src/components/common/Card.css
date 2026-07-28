@@ -1,0 +1,53 @@
+.card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.card-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-card-label {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.stat-card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.stat-card-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
+
+.stat-card-icon.primary { background: var(--color-primary-light); color: var(--color-primary); }
+.stat-card-icon.success { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.stat-card-icon.warning { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+.stat-card-icon.danger { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.stat-card-icon.info { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }

@@ -1,0 +1,48 @@
+.product-bilingual-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.product-bilingual-en {
+  font-weight: 600;
+  line-height: 1.25;
+  word-break: break-word;
+}
+
+.product-bilingual-ar {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.product-bilingual-sm .product-bilingual-en {
+  font-size: 0.8125rem;
+}
+
+.product-bilingual-sm .product-bilingual-ar {
+  font-size: 0.75rem;
+}
+
+.product-bilingual-md .product-bilingual-en {
+  font-size: 0.875rem;
+}
+
+.product-bilingual-lg .product-bilingual-en {
+  font-size: 0.9375rem;
+}
+
+.product-bilingual-lg .product-bilingual-ar {
+  font-size: 0.875rem;
+}
+
+.align-center {
+  text-align: center;
+  align-items: center;
+}
+
+.align-center .product-bilingual-ar {
+  width: 100%;
+}

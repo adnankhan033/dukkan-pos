@@ -1,0 +1,17 @@
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+
+.pagination-info {
+  color: var(--color-text-muted);
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.375rem;
+}

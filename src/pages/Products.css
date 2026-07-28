@@ -1,0 +1,141 @@
+.product-name-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.product-name-en {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.product-name-ar {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.product-name-ar-empty {
+  font-style: italic;
+  opacity: 0.65;
+}
+
+.product-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.product-tab {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.product-tab:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+.product-tab.active {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  flex-wrap: wrap;
+}
+
+.translate-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin: 0.25rem 0 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  user-select: none;
+  grid-column: 1 / -1;
+}
+
+.translate-checkbox-row input {
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+}
+
+.translate-checkbox-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.translate-checkbox-row small {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.publish-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+  padding: 0.875rem 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  user-select: none;
+}
+
+.publish-checkbox-row input {
+  margin-top: 0.125rem;
+  flex-shrink: 0;
+}
+
+.publish-checkbox-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.publish-checkbox-row small {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+}
+
+.bulk-bar-count {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.row-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+.product-thumb-has-image {
+  color: var(--color-primary);
+}
