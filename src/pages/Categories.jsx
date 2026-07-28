@@ -12,9 +12,9 @@ import Badge from "../components/common/Badge";
 import Modal from "../components/common/Modal";
 import { Input, Textarea } from "../components/common/Input";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
-import { required, runFormValidation } from "../utils/validation";
+import { required, runFormValidation, FORM_VALIDATION_MESSAGE } from "../utils/validation";
 import FormValidationAlert from "../components/common/FormValidationAlert";
-import { formatDateTime } from "../utils/format";
+import { formatDateTime, formatDbError } from "../utils/format";
 
 const emptyForm = { name: "", description: "" };
 
@@ -31,14 +31,20 @@ export default function Categories() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [alert, setAlert] = useState("");
+  const [message, setMessage] = useState("");
   const debouncedSearch = useDebounce(search);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async ({ silent = false, search: searchOverride } = {}) => {
+    if (!silent) setLoading(true);
     try {
-      setCategories(await categoryService.getAll({ search: debouncedSearch }));
+      const term = searchOverride !== undefined ? searchOverride : debouncedSearch;
+      setCategories(await categoryService.getAll({ search: term }));
+      if (!silent) setAlert("");
+    } catch (err) {
+      setCategories([]);
+      setAlert(err.message || "Failed to load categories");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [debouncedSearch]);
 
@@ -50,6 +56,7 @@ export default function Categories() {
     setEditing(null);
     setForm(emptyForm);
     setErrors({});
+    setMessage("");
     setModalOpen(true);
   }
 
@@ -57,6 +64,7 @@ export default function Categories() {
     setEditing(cat);
     setForm({ name: cat.name, description: cat.description || "" });
     setErrors({});
+    setMessage("");
     setModalOpen(true);
   }
 
@@ -87,23 +95,52 @@ export default function Categories() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setAlert("");
 
-    const validation = runFormValidation({ name: required(form.name, "Name") });
+    const payload = {
+      name: form.name.trim(),
+      description: form.description.trim(),
+    };
+
+    const validation = runFormValidation({
+      name: required(payload.name, "Name"),
+    });
+
     if (!validation.isValid) {
       setErrors(validation.errors);
       return;
     }
 
     try {
-      await guard(async () => {
-        if (editing) await categoryService.update(editing.id, form);
-        else await categoryService.create(form);
-        setModalOpen(false);
-        setErrors({});
-        await load();
+      const outcome = await guard(async () => {
+        if (editing) {
+          return categoryService.update(editing.id, payload);
+        }
+        return categoryService.create(payload);
       });
+
+      if (outcome?.skipped) return;
+
+      setModalOpen(false);
+      setErrors({});
+      setMessage(`Category "${payload.name}" ${editing ? "updated" : "created"} successfully.`);
+      if (!editing) setSearch("");
+
+      try {
+        await load({ silent: true, search: editing ? undefined : "" });
+      } catch (loadErr) {
+        setAlert(formatDbError(loadErr) || "Category saved, but the list failed to refresh.");
+      }
     } catch (err) {
-      setErrors({ form: err.message });
+      const msg = formatDbError(err);
+      if (/unique|already exists/i.test(msg)) {
+        setErrors({
+          name: `Category "${payload.name}" already exists`,
+          form: FORM_VALIDATION_MESSAGE,
+        });
+      } else {
+        setErrors({ form: msg || "Failed to save category" });
+      }
     }
   }
 
@@ -156,6 +193,7 @@ export default function Categories() {
           </Button>
         }
       />
+      {message && <Alert type="success">{message}</Alert>}
       {alert && <Alert>{alert}</Alert>}
 
       <div className="page-header-actions" style={{ marginBottom: "1rem" }}>
@@ -207,12 +245,20 @@ export default function Categories() {
               setErrors((p) => ({ ...p, name: undefined, form: undefined }));
             }}
             error={errors.name}
+            autoFocus
+            maxLength={120}
+            placeholder="e.g. Beverages"
           />
           <div style={{ marginTop: "1rem" }}>
             <Textarea
               label="Description"
               value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, description: e.target.value });
+                setErrors((p) => ({ ...p, form: undefined }));
+              }}
+              placeholder="Optional description for this category"
+              maxLength={500}
             />
           </div>
         </form>

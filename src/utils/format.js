@@ -52,3 +52,21 @@ export function calcVat(subtotal, discount, vatPercent) {
 export function calcGrandTotal(subtotal, discount, vat) {
   return Math.max(0, subtotal - discount + vat);
 }
+
+/** Normalize DB / Tauri plugin errors into a readable string. */
+export function formatDbError(err) {
+  if (!err) return "Unknown error";
+  if (typeof err === "string") return err;
+  if (typeof err.message === "string" && err.message.trim()) return err.message;
+  if (typeof err === "object") {
+    if (typeof err.error === "string") return err.error;
+    if (typeof err.msg === "string") return err.msg;
+    try {
+      const text = JSON.stringify(err);
+      if (text && text !== "{}") return text;
+    } catch {
+      /* ignore */
+    }
+  }
+  return "Unknown error";
+}
