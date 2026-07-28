@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState, lazy, Suspense } from "react";
-import { Plus, Pencil, Trash2, Package, Upload } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Plus, Pencil, Trash2, Package } from "lucide-react";
 import { productService } from "../services/ProductService";
 import { categoryService } from "../services/CategoryService";
 import { useSettingsStore } from "../contexts/store";
@@ -22,10 +22,6 @@ import { required, positiveNumber, runFormValidation } from "../utils/validation
 import { translateToArabic } from "../utils/translate";
 import ProductNameFields from "../components/products/ProductNameFields";
 import FormValidationAlert from "../components/common/FormValidationAlert";
-
-const ProductImportExportModal = lazy(
-  () => import("../components/products/ProductImportExportModal")
-);
 import "./Products.css";
 
 const FORM_ID = "product-form";
@@ -66,7 +62,6 @@ export default function Products() {
   const [alert, setAlert] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
   const [translating, setTranslating] = useState(false);
-  const [importExportOpen, setImportExportOpen] = useState(false);
   const debouncedSearch = useDebounce(search);
 
   const isPublishedSection = section === "published";
@@ -408,14 +403,9 @@ export default function Products() {
         title="Products"
         subtitle="Manage published products for sales and unpublished drafts."
         actions={
-          <>
-            <Button variant="secondary" onClick={() => setImportExportOpen(true)}>
-              <Upload size={16} /> Import / Export
-            </Button>
-            <Button onClick={openCreate}>
-              <Plus size={16} /> Add Product
-            </Button>
-          </>
+          <Button onClick={openCreate}>
+            <Plus size={16} /> Add Product
+          </Button>
         }
       />
 
@@ -592,17 +582,6 @@ export default function Products() {
           </div>
         </form>
       </Modal>
-
-      <Suspense fallback={null}>
-        <ProductImportExportModal
-          isOpen={importExportOpen}
-          onClose={() => setImportExportOpen(false)}
-          onComplete={() => {
-            categoryService.getAll().then(setCategories);
-            loadProducts(true);
-          }}
-        />
-      </Suspense>
 
       {confirmDialog}
     </div>
