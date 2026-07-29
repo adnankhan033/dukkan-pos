@@ -37,6 +37,45 @@ export function todayISO() {
   return new Date().toISOString().split("T")[0];
 }
 
+/** Date range for expense/accounting period filters. */
+export function getPeriodDateRange(period, referenceDate = new Date()) {
+  const ref = new Date(referenceDate);
+  ref.setHours(0, 0, 0, 0);
+
+  if (period === "daily") {
+    const day = todayISOFromDate(ref);
+    return { from: day, to: day };
+  }
+
+  if (period === "weekly") {
+    const day = ref.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    const start = new Date(ref);
+    start.setDate(ref.getDate() + diff);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    return { from: todayISOFromDate(start), to: todayISOFromDate(end) };
+  }
+
+  if (period === "monthly") {
+    const start = new Date(ref.getFullYear(), ref.getMonth(), 1);
+    const end = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
+    return { from: todayISOFromDate(start), to: todayISOFromDate(end) };
+  }
+
+  if (period === "yearly") {
+    const start = new Date(ref.getFullYear(), 0, 1);
+    const end = new Date(ref.getFullYear(), 11, 31);
+    return { from: todayISOFromDate(start), to: todayISOFromDate(end) };
+  }
+
+  return { from: null, to: null };
+}
+
+function todayISOFromDate(date) {
+  return date.toISOString().split("T")[0];
+}
+
 export function startOfMonthISO() {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();

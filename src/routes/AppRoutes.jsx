@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "../layouts/MainLayout";
 import AuthLayout from "../layouts/AuthLayout";
 import ProtectedRoute from "./ProtectedRoute";
+import RoleRoute from "./RoleRoute";
 import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import Products from "../pages/Products";
@@ -13,9 +14,14 @@ import Sales from "../pages/Sales";
 import Orders from "../pages/Orders";
 import Purchases from "../pages/Purchases";
 import Inventory from "../pages/Inventory";
-import Expenses from "../pages/Expenses";
+import Accounting from "../pages/Accounting";
 import Reports from "../pages/Reports";
 import Settings from "../pages/Settings";
+import Users from "../pages/Users";
+
+function withRole(module, element) {
+  return <RoleRoute module={module}>{element}</RoleRoute>;
+}
 
 export default function AppRoutes() {
   return (
@@ -31,19 +37,21 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/categories" element={<Categories />} />
-        <Route path="/units" element={<Units />} />
-        <Route path="/customers" element={<Customers />} />
-        <Route path="/suppliers" element={<Suppliers />} />
-        <Route path="/sales" element={<Sales />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/purchases" element={<Purchases />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/expenses" element={<Expenses />} />
-        <Route path="/reports" element={<Reports />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/" element={withRole("dashboard", <Dashboard />)} />
+        <Route path="/products" element={withRole("products", <Products />)} />
+        <Route path="/categories" element={withRole("products", <Categories />)} />
+        <Route path="/units" element={withRole("products", <Units />)} />
+        <Route path="/customers" element={withRole("customers", <Customers />)} />
+        <Route path="/suppliers" element={withRole("suppliers", <Suppliers />)} />
+        <Route path="/sales" element={withRole("sales", <Sales />)} />
+        <Route path="/orders" element={withRole("sales", <Orders />)} />
+        <Route path="/purchases" element={withRole("inventory", <Purchases />)} />
+        <Route path="/inventory" element={withRole("inventory", <Inventory />)} />
+        <Route path="/accounting" element={withRole("accounting", <Accounting />)} />
+        <Route path="/expenses" element={<Navigate to="/accounting" replace />} />
+        <Route path="/reports" element={withRole("reports", <Reports />)} />
+        <Route path="/settings" element={withRole("settings", <Settings />)} />
+        <Route path="/users" element={withRole("users", <Users />)} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

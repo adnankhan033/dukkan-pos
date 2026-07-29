@@ -17,6 +17,7 @@ class DashboardService {
       monthlyPurchases,
       monthlyExpenses,
       recentSales,
+      heldSales,
     ] = await Promise.all([
       saleService.getTodayTotal(),
       purchaseService.getTodayTotal(),
@@ -27,6 +28,7 @@ class DashboardService {
       purchaseService.getMonthlyTotal(),
       expenseService.getMonthlyTotal(),
       saleService.getRecent(8),
+      saleService.getHeldSales(),
     ]);
 
     const monthlyCost = await this.getMonthlyCostOfGoodsSold();
@@ -42,6 +44,7 @@ class DashboardService {
       monthlyRevenue,
       monthlyProfit,
       recentSales,
+      heldCount: heldSales?.length ?? 0,
     };
   }
 

@@ -8,6 +8,7 @@ import { DEFAULT_UNITS } from "../utils/defaultUnits";
 let dbInstance = null;
 let dbConfigured = false;
 let schemaInitialized = false;
+let initPromise = null;
 /** Serializes all DB access — prevents SQLite "database is locked" in Tauri. */
 let dbQueue = Promise.resolve();
 
@@ -63,25 +64,57 @@ export async function ensureReturnSchema() {
 }
 
 export async function initializeDatabase() {
+  if (schemaInitialized) {
+    return getDatabase();
+  }
+
+  if (initPromise) {
+    return initPromise;
+  }
+
+  initPromise = bootstrapDatabase();
+  try {
+    await initPromise;
+    return getDatabase();
+  } catch (err) {
+    initPromise = null;
+    throw err;
+  }
+}
+
+async function bootstrapDatabase() {
   await recoverDatabase();
 
-  const ready = await query(
-    "SELECT value FROM settings WHERE key = '_schema_ready' LIMIT 1"
-  );
+  const hasSettings = await tableExists("settings");
+  let schemaReady = false;
 
-  if (ready.length === 0) {
+  if (hasSettings) {
+    const ready = await query(
+      "SELECT value FROM settings WHERE key = '_schema_ready' LIMIT 1"
+    );
+    schemaReady = ready.length > 0;
+  }
+
+  if (!schemaReady) {
     for (const statement of SCHEMA_STATEMENTS) {
       await execute(statement);
     }
     await execute(
-      "INSERT INTO settings (key, value) VALUES ('_schema_ready', '1')"
+      "INSERT OR IGNORE INTO settings (key, value) VALUES ('_schema_ready', '1')"
     );
   }
 
-  await seedDefaultData();
   await runMigrations();
+  await seedDefaultData();
   schemaInitialized = true;
-  return getDatabase();
+}
+
+async function tableExists(name) {
+  const rows = await query(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name = $1",
+    [name]
+  );
+  return rows.length > 0;
 }
 
 async function getProductColumns() {
@@ -115,6 +148,31 @@ async function runMigrations() {
 
   await ensureReturnTables();
   await ensureUnitsSchema();
+  await ensureUsersAndExpensesSchema();
+  await ensureSettingsKeys();
+}
+
+async function ensureUsersAndExpensesSchema() {
+  const userCols = await query("PRAGMA table_info(users)");
+  if (!userCols.some((c) => c.name === "is_active")) {
+    await execute(
+      "ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1"
+    );
+  }
+
+  const expenseCols = await query("PRAGMA table_info(expenses)");
+  if (!expenseCols.some((c) => c.name === "category")) {
+    await execute("ALTER TABLE expenses ADD COLUMN category TEXT DEFAULT 'other'");
+  }
+}
+
+async function ensureSettingsKeys() {
+  for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
+    await execute(
+      "INSERT OR IGNORE INTO settings (key, value) VALUES ($1, $2)",
+      [key, value]
+    );
+  }
 }
 
 async function ensureUnitsSchema() {
@@ -139,10 +197,14 @@ async function ensureUnitsSchema() {
   const unitCount = await queryOne("SELECT COUNT(*) AS count FROM units");
   if (Number(unitCount?.count ?? 0) === 0) {
     for (const unit of DEFAULT_UNITS) {
-      await execute(
-        "INSERT INTO units (name, symbol, example) VALUES ($1, $2, $3)",
-        [unit.name, unit.symbol, unit.example]
-      );
+      try {
+        await execute(
+          "INSERT INTO units (name, symbol, example) VALUES ($1, $2, $3)",
+          [unit.name, unit.symbol, unit.example]
+        );
+      } catch {
+        /* ignore duplicate symbol if seed races on startup */
+      }
     }
   }
 
@@ -187,11 +249,28 @@ async function ensureReturnTables() {
 async function seedDefaultData() {
   const users = await query("SELECT id FROM users LIMIT 1");
   if (users.length === 0) {
-    const passwordHash = bcrypt.hashSync("admin123", 10);
+    const adminHash = bcrypt.hashSync("admin123", 10);
     await execute(
-      "INSERT INTO users (username, password_hash, full_name, role) VALUES ($1, $2, $3, $4)",
-      ["admin", passwordHash, "Administrator", "admin"]
+      "INSERT INTO users (username, password_hash, full_name, role, is_active) VALUES ($1, $2, $3, $4, $5)",
+      ["admin", adminHash, "Administrator", "admin", 1]
     );
+
+    const cashierHash = bcrypt.hashSync("cashier123", 10);
+    await execute(
+      "INSERT INTO users (username, password_hash, full_name, role, is_active) VALUES ($1, $2, $3, $4, $5)",
+      ["cashier", cashierHash, "Cashier", "cashier", 1]
+    );
+  } else {
+    const cashier = await queryOne(
+      "SELECT id FROM users WHERE username = 'cashier' LIMIT 1"
+    );
+    if (!cashier) {
+      const cashierHash = bcrypt.hashSync("cashier123", 10);
+      await execute(
+        "INSERT INTO users (username, password_hash, full_name, role, is_active) VALUES ($1, $2, $3, $4, $5)",
+        ["cashier", cashierHash, "Cashier", "cashier", 1]
+      );
+    }
   }
 
   const settings = await query(
@@ -264,6 +343,50 @@ export async function getLastInsertId() {
   const row = await queryOne("SELECT last_insert_rowid() as id");
   const id = row?.id != null ? Number(row.id) : null;
   return id && id > 0 ? id : null;
+}
+
+export async function clearDatabaseData() {
+  const clearOrder = [
+    "sale_return_items",
+    "sale_returns",
+    "sale_items",
+    "sales",
+    "purchase_items",
+    "purchases",
+    "payments",
+    "inventory",
+    "expenses",
+    "products",
+    "customers",
+    "suppliers",
+    "categories",
+    "units",
+    "users",
+    "settings",
+    "import_logs",
+  ];
+
+  await runInTransaction(async ({ execute: txExecute }) => {
+    for (const table of clearOrder) {
+      try {
+        await txExecute(`DELETE FROM ${table}`);
+      } catch {
+        /* table may not exist */
+      }
+    }
+    try {
+      await txExecute("DELETE FROM sqlite_sequence");
+    } catch {
+      /* ignore */
+    }
+  });
+
+  await execute(
+    "INSERT OR IGNORE INTO settings (key, value) VALUES ('_schema_ready', '1')"
+  );
+  await seedDefaultData();
+  await ensureUnitsSchema();
+  await ensureSettingsKeys();
 }
 
 export { schemaInitialized };

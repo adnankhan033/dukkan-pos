@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Package } from "lucide-react";
+import { Plus, Pencil, Trash2, Package, FileSpreadsheet } from "lucide-react";
 import { productService } from "../services/ProductService";
 import { categoryService } from "../services/CategoryService";
 import { unitService } from "../services/UnitService";
@@ -22,6 +22,7 @@ import { formatCurrency, formatQuantity } from "../utils/format";
 import { required, positiveNumber, runFormValidation } from "../utils/validation";
 import { translateToArabic } from "../utils/translate";
 import ProductNameFields from "../components/products/ProductNameFields";
+import ProductImportExportModal from "../components/products/ProductImportExportModal";
 import FormValidationAlert from "../components/common/FormValidationAlert";
 import "./Products.css";
 
@@ -65,6 +66,7 @@ export default function Products() {
   const [alert, setAlert] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
   const [translating, setTranslating] = useState(false);
+  const [importExportOpen, setImportExportOpen] = useState(false);
   const debouncedSearch = useDebounce(search);
 
   const isPublishedSection = section === "published";
@@ -413,9 +415,14 @@ export default function Products() {
         title="Products"
         subtitle="Manage published products for sales and unpublished drafts."
         actions={
-          <Button onClick={openCreate}>
-            <Plus size={16} /> Add Product
-          </Button>
+          <>
+            <Button variant="secondary" onClick={() => setImportExportOpen(true)}>
+              <FileSpreadsheet size={16} /> Import / Export
+            </Button>
+            <Button onClick={openCreate}>
+              <Plus size={16} /> Add Product
+            </Button>
+          </>
         }
       />
 
@@ -602,6 +609,12 @@ export default function Products() {
           </div>
         </form>
       </Modal>
+
+      <ProductImportExportModal
+        isOpen={importExportOpen}
+        onClose={() => setImportExportOpen(false)}
+        onComplete={() => loadProducts(true)}
+      />
 
       {confirmDialog}
     </div>

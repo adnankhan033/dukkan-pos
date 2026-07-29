@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { initializeDatabase, ensureReturnSchema } from "../database/connection";
+import { initializeDatabase } from "../database/connection";
 import { settingsService } from "../services/SettingsService";
 import { useAppStore, useSettingsStore } from "../contexts/store";
 
@@ -13,7 +13,6 @@ export function useDatabaseInit() {
     async function init() {
       try {
         await initializeDatabase();
-        await ensureReturnSchema();
         const settings = await settingsService.getAll();
         if (mounted) {
           setSettings(settings);
@@ -21,7 +20,12 @@ export function useDatabaseInit() {
         }
       } catch (err) {
         if (mounted) {
-          setDbError(err.message || "Failed to initialize database");
+          const message =
+            err?.message ||
+            (typeof err === "string" ? err : null) ||
+            "Failed to initialize database";
+          console.error("Database initialization failed:", err);
+          setDbError(message);
         }
       }
     }

@@ -9,10 +9,10 @@ export function useConfirm() {
   const resolverRef = useRef(null);
 
   const confirm = useCallback(
-    ({ title = "Confirm", message, confirmLabel = "Confirm", cancelLabel = "Cancel", variant = "danger" }) =>
+    ({ title = "Confirm", message, children, confirmLabel = "Confirm", cancelLabel = "Cancel", variant = "danger", size = "md" }) =>
       new Promise((resolve) => {
         resolverRef.current = resolve;
-        setState({ title, message, confirmLabel, cancelLabel, variant });
+        setState({ title, message, children, confirmLabel, cancelLabel, variant, size });
       }),
     []
   );

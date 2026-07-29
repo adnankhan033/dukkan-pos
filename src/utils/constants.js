@@ -1,11 +1,26 @@
+import { getModuleDefaults } from "./modules";
+
 export const DB_NAME = "sqlite:portal_pos.db";
 
 export const DEFAULT_SETTINGS = {
   store_name: "Portal POS",
+  store_name_ar: "",
   store_address: "",
+  cr_number: "",
+  vat_registration: "",
   vat_percent: "15",
   currency: "SAR",
   receipt_footer: "Thank you for your purchase!",
+  receipt_footer_ar: "شكراً لتسوقكم",
+  receipt_show_qr: "1",
+  receipt_show_bilingual: "1",
+  receipt_show_tax_info: "1",
+  receipt_paper_width: "80",
+  receipt_header_note: "",
+  dashboard_admin_show_profit: "1",
+  dashboard_admin_show_purchases: "1",
+  dashboard_cashier_show_recent: "1",
+  ...getModuleDefaults(),
 };
 
 export const PAYMENT_METHODS = {
@@ -36,20 +51,80 @@ export const ORDER_RETURN_FILTERS = {
 
 export const PRODUCT_IMPORT_BATCH_SIZE = 50;
 
+export const EXPENSE_CATEGORIES = [
+  { id: "rent", label: "Rent" },
+  { id: "salary", label: "Salaries & Wages" },
+  { id: "utilities", label: "Utilities" },
+  { id: "supplies", label: "Store Supplies" },
+  { id: "maintenance", label: "Maintenance & Repairs" },
+  { id: "transport", label: "Transport & Delivery" },
+  { id: "marketing", label: "Marketing" },
+  { id: "tax", label: "Tax & Government Fees" },
+  { id: "other", label: "Other" },
+];
+
+export const EXPENSE_PERIODS = {
+  DAILY: "daily",
+  WEEKLY: "weekly",
+  MONTHLY: "monthly",
+  YEARLY: "yearly",
+  ALL: "all",
+};
+
 export const ITEMS_PER_PAGE = 10;
 
-export const NAV_ITEMS = [
-  { path: "/", label: "Dashboard", icon: "LayoutDashboard" },
-  { path: "/products", label: "Products", icon: "Package" },
-  { path: "/sales", label: "Sales", icon: "ShoppingCart" },
-  { path: "/orders", label: "Orders", icon: "ClipboardList" },
-  { path: "/purchases", label: "Purchases", icon: "Truck" },
-  { path: "/inventory", label: "Inventory", icon: "Warehouse" },
-  { path: "/customers", label: "Customers", icon: "Users" },
-  { path: "/suppliers", label: "Suppliers", icon: "Building2" },
-  { path: "/categories", label: "Categories", icon: "Tags" },
-  { path: "/units", label: "Units", icon: "Ruler" },
-  { path: "/expenses", label: "Expenses", icon: "Receipt" },
-  { path: "/reports", label: "Reports", icon: "BarChart3" },
-  { path: "/settings", label: "Settings", icon: "Settings" },
+/** Grouped sidebar navigation — filtered by role and module settings. */
+export const NAV_GROUPS = [
+  { id: "dashboard", label: "Dashboard", icon: "LayoutDashboard", path: "/", module: "dashboard" },
+  {
+    id: "sales",
+    label: "Sales",
+    icon: "ShoppingCart",
+    module: "sales",
+    items: [
+      { path: "/sales", label: "POS" },
+      { path: "/orders", label: "Orders" },
+    ],
+  },
+  {
+    id: "products",
+    label: "Products",
+    icon: "Package",
+    module: "products",
+    items: [
+      { path: "/products", label: "Products" },
+      { path: "/categories", label: "Categories" },
+      { path: "/units", label: "Units" },
+    ],
+  },
+  {
+    id: "inventory",
+    label: "Inventory",
+    icon: "Boxes",
+    module: "inventory",
+    items: [
+      { path: "/inventory", label: "Stock" },
+      { path: "/purchases", label: "Purchases" },
+    ],
+  },
+  { id: "customers", label: "Customers", icon: "Users", path: "/customers", module: "customers" },
+  { id: "suppliers", label: "Suppliers", icon: "Building2", path: "/suppliers", module: "suppliers" },
+  {
+    id: "accounting",
+    label: "Accounting",
+    icon: "Receipt",
+    module: "accounting",
+    items: [{ path: "/accounting", label: "Expenses" }],
+  },
+  { id: "reports", label: "Reports", icon: "BarChart3", path: "/reports", module: "reports" },
+  {
+    id: "administration",
+    label: "Administration",
+    icon: "Shield",
+    module: "users",
+    items: [
+      { path: "/users", label: "Users", module: "users" },
+      { path: "/settings", label: "Settings", module: "settings" },
+    ],
+  },
 ];

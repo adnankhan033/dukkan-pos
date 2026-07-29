@@ -19,6 +19,48 @@
   overflow: hidden;
 }
 
+.confirm-dialog-lg {
+  max-width: 520px;
+}
+
+.confirm-body p {
+  margin: 0 0 0.75rem;
+}
+
+.confirm-body p:last-child {
+  margin-bottom: 0;
+}
+
+.confirm-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--color-text);
+}
+
+.confirm-list li {
+  margin-bottom: 0.25rem;
+}
+
+.confirm-note {
+  margin-top: 0.75rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: 0.8125rem;
+  color: var(--color-text);
+}
+
+.confirm-note-danger {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger);
+}
+
+.confirm-file-name {
+  font-weight: 600;
+  color: var(--color-text);
+  word-break: break-all;
+}
+
 .confirm-header {
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--color-border);

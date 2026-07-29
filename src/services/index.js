@@ -10,3 +10,4 @@ export { purchaseService } from "./PurchaseService";
 export { expenseService } from "./ExpenseService";
 export { dashboardService } from "./DashboardService";
 export { reportService } from "./ReportService";
+export { backupService } from "./BackupService";

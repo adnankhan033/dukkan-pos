@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { userService } from "../services/UserService";
 import { useAuthStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
+import { getDefaultRouteForUser } from "../utils/roles";
 import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
@@ -14,6 +15,8 @@ export default function Login() {
   const { submitting, guard } = useSubmitGuard();
   const login = useAuthStore((s) => s.login);
   const navigate = useNavigate();
+  const location = useLocation();
+  const notice = location.state?.message;
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -26,7 +29,7 @@ export default function Login() {
           return;
         }
         login(user);
-        navigate("/");
+        navigate(getDefaultRouteForUser(user));
       });
     } catch (err) {
       setError(err.message || "Login failed");
@@ -40,6 +43,7 @@ export default function Login() {
         <p>Sign in to your point of sale system</p>
       </div>
 
+      {notice && <Alert type="success">{notice}</Alert>}
       {error && <Alert>{error}</Alert>}
 
       <form onSubmit={handleSubmit}>
@@ -65,7 +69,7 @@ export default function Login() {
       </form>
 
       <p style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center" }}>
-        Default: admin / admin123
+        Admin: admin / admin123 · Cashier: cashier / cashier123
       </p>
     </div>
   );

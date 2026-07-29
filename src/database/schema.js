@@ -5,6 +5,7 @@ export const SCHEMA_STATEMENTS = [
     password_hash TEXT NOT NULL,
     full_name TEXT,
     role TEXT DEFAULT 'admin',
+    is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
   )`,
@@ -134,6 +135,7 @@ export const SCHEMA_STATEMENTS = [
   `CREATE TABLE IF NOT EXISTS expenses (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    category TEXT DEFAULT 'other',
     amount REAL NOT NULL,
     expense_date TEXT NOT NULL,
     notes TEXT,
