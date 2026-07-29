@@ -130,3 +130,122 @@
 .settings-feedback-body p:last-child {
   margin-bottom: 0;
 }
+
+.settings-receipt-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(300px, 420px);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.settings-receipt-form {
+  max-width: none;
+}
+
+.receipt-preview-card {
+  max-width: none;
+  position: sticky;
+  top: 1rem;
+}
+
+.receipt-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.receipt-template-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.receipt-template-option {
+  text-align: left;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.receipt-template-option:hover {
+  border-color: var(--color-primary);
+}
+
+.receipt-template-option.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+
+.receipt-template-option-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.receipt-template-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.receipt-template-ar {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.receipt-template-option small {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}
+
+.receipt-preview-meta {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.75rem;
+}
+
+.receipt-preview-frame-wrap {
+  margin: 0 auto;
+  background: #e8e8e8;
+  border-radius: var(--radius-md);
+  padding: 12px;
+  min-height: 420px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+[data-theme="dark"] .receipt-preview-frame-wrap {
+  background: #2a2a2a;
+}
+
+.receipt-preview-frame {
+  width: 100%;
+  min-height: 400px;
+  border: none;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+}
+
+@media (max-width: 960px) {
+  .settings-receipt-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .receipt-preview-card {
+    position: static;
+  }
+}

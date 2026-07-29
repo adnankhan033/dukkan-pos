@@ -13,6 +13,8 @@ import Modal from "../components/common/Modal";
 import { Card } from "../components/common/Card";
 import { Input, Textarea, Select } from "../components/common/Input";
 import { Alert } from "../components/common/Loading";
+import ReceiptPreview from "../components/settings/ReceiptPreview";
+import { DEFAULT_RECEIPT_TEMPLATE } from "../utils/receiptTemplates";
 import "./Settings.css";
 
 const TABS = [
@@ -43,6 +45,7 @@ function buildFormFromSettings(settings) {
     receipt_show_tax_info: settingBool(settings.receipt_show_tax_info),
     receipt_paper_width: settings.receipt_paper_width || "80",
     receipt_header_note: settings.receipt_header_note || "",
+    receipt_template: settings.receipt_template || DEFAULT_RECEIPT_TEMPLATE,
     dashboard_admin_show_profit: settingBool(settings.dashboard_admin_show_profit),
     dashboard_admin_show_purchases: settingBool(settings.dashboard_admin_show_purchases),
     dashboard_cashier_show_recent: settingBool(settings.dashboard_cashier_show_recent),
@@ -82,6 +85,7 @@ function formToSettings(form) {
     receipt_show_tax_info: form.receipt_show_tax_info ? "1" : "0",
     receipt_paper_width: form.receipt_paper_width,
     receipt_header_note: form.receipt_header_note,
+    receipt_template: form.receipt_template || DEFAULT_RECEIPT_TEMPLATE,
     dashboard_admin_show_profit: form.dashboard_admin_show_profit ? "1" : "0",
     dashboard_admin_show_purchases: form.dashboard_admin_show_purchases ? "1" : "0",
     dashboard_cashier_show_recent: form.dashboard_cashier_show_recent ? "1" : "0",
@@ -369,38 +373,67 @@ export default function Settings() {
         )}
 
         {tab === "receipt" && (
-          <Card className="settings-card">
-            <h3 className="settings-section-title">Receipt Template</h3>
-            <div className="settings-check-list">
-              <label className="settings-check">
-                <input type="checkbox" checked={form.receipt_show_qr} onChange={(e) => updateField("receipt_show_qr", e.target.checked)} />
-                Show ZATCA QR code
-              </label>
-              <label className="settings-check">
-                <input type="checkbox" checked={form.receipt_show_bilingual} onChange={(e) => updateField("receipt_show_bilingual", e.target.checked)} />
-                Show bilingual product names (EN + AR)
-              </label>
-              <label className="settings-check">
-                <input type="checkbox" checked={form.receipt_show_tax_info} onChange={(e) => updateField("receipt_show_tax_info", e.target.checked)} />
-                Show CR & VAT numbers on receipt
-              </label>
-            </div>
-            <div className="form-row" style={{ marginTop: "1rem" }}>
-              <Select label="Paper Width" value={form.receipt_paper_width} onChange={(e) => updateField("receipt_paper_width", e.target.value)}>
-                <option value="58">58mm</option>
-                <option value="80">80mm</option>
+          <div className="settings-receipt-layout">
+            <Card className="settings-card settings-receipt-form">
+              <h3 className="settings-section-title">Receipt Template</h3>
+              <p className="settings-section-desc">
+                Choose a Saudi-style invoice layout for your baqala. Use preview and test print before saving.
+              </p>
+
+              <Select
+                label="Default template"
+                value={form.receipt_template}
+                onChange={(e) => updateField("receipt_template", e.target.value)}
+              >
+                <option value="baqala">Saudi Baqala (recommended)</option>
+                <option value="classic">Classic Thermal</option>
+                <option value="compact">Compact 58mm</option>
               </Select>
-            </div>
-            <div style={{ marginTop: "1rem" }}>
-              <Input label="Header Note (optional)" value={form.receipt_header_note} onChange={(e) => updateField("receipt_header_note", e.target.value)} placeholder="e.g. Exchange within 7 days with receipt" />
-            </div>
-            <div style={{ marginTop: "1rem" }}>
-              <Textarea label="Footer (English)" value={form.receipt_footer} onChange={(e) => updateField("receipt_footer", e.target.value)} />
-            </div>
-            <div style={{ marginTop: "1rem" }}>
-              <Textarea label="Footer (Arabic)" value={form.receipt_footer_ar} onChange={(e) => updateField("receipt_footer_ar", e.target.value)} dir="rtl" />
-            </div>
-          </Card>
+
+              <div className="settings-check-list" style={{ marginTop: "1rem" }}>
+                <label className="settings-check">
+                  <input type="checkbox" checked={form.receipt_show_qr} onChange={(e) => updateField("receipt_show_qr", e.target.checked)} />
+                  Show ZATCA QR code
+                </label>
+                <label className="settings-check">
+                  <input type="checkbox" checked={form.receipt_show_bilingual} onChange={(e) => updateField("receipt_show_bilingual", e.target.checked)} />
+                  Show bilingual names (EN + AR)
+                </label>
+                <label className="settings-check">
+                  <input type="checkbox" checked={form.receipt_show_tax_info} onChange={(e) => updateField("receipt_show_tax_info", e.target.checked)} />
+                  Show CR & VAT numbers on receipt
+                </label>
+              </div>
+              <div className="form-row" style={{ marginTop: "1rem" }}>
+                <Select label="Paper width" value={form.receipt_paper_width} onChange={(e) => updateField("receipt_paper_width", e.target.value)}>
+                  <option value="58">58mm (small thermal)</option>
+                  <option value="80">80mm (standard thermal)</option>
+                </Select>
+              </div>
+              <div style={{ marginTop: "1rem" }}>
+                <Input
+                  label="Header note (optional)"
+                  value={form.receipt_header_note}
+                  onChange={(e) => updateField("receipt_header_note", e.target.value)}
+                  placeholder="e.g. Exchange within 7 days with receipt"
+                />
+              </div>
+              <div style={{ marginTop: "1rem" }}>
+                <Textarea label="Footer (English)" value={form.receipt_footer} onChange={(e) => updateField("receipt_footer", e.target.value)} />
+              </div>
+              <div style={{ marginTop: "1rem" }}>
+                <Textarea label="Footer (Arabic)" value={form.receipt_footer_ar} onChange={(e) => updateField("receipt_footer_ar", e.target.value)} dir="rtl" />
+              </div>
+              <p className="settings-section-desc" style={{ marginTop: "1rem" }}>
+                Store name, address, CR, and VAT are taken from the <strong>Store</strong> tab.
+              </p>
+            </Card>
+
+            <ReceiptPreview
+              form={form}
+              onSelectTemplate={(id) => updateField("receipt_template", id)}
+            />
+          </div>
         )}
 
         {tab === "modules" && (

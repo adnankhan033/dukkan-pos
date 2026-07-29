@@ -151,6 +151,7 @@ async function runMigrations() {
   await ensureUsersAndExpensesSchema();
   await ensureSupplierLedgerSchema();
   await ensureCashierModuleDefaults();
+  await ensureReceiptTemplateDefault();
   await ensureSettingsKeys();
 }
 
@@ -166,6 +167,17 @@ async function ensureCashierModuleDefaults() {
   await execute(
     "INSERT INTO settings (key, value) VALUES ('_cashier_reports_v1', '1')"
   );
+}
+
+async function ensureReceiptTemplateDefault() {
+  const row = await queryOne(
+    "SELECT value FROM settings WHERE key = 'receipt_template' LIMIT 1"
+  );
+  if (!row) {
+    await execute(
+      "INSERT INTO settings (key, value) VALUES ('receipt_template', 'baqala')"
+    );
+  }
 }
 
 async function ensureSupplierLedgerSchema() {

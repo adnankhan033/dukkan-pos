@@ -17,6 +17,7 @@ export const DEFAULT_SETTINGS = {
   receipt_show_tax_info: "1",
   receipt_paper_width: "80",
   receipt_header_note: "",
+  receipt_template: "baqala",
   dashboard_admin_show_profit: "1",
   dashboard_admin_show_purchases: "1",
   dashboard_cashier_show_recent: "1",
