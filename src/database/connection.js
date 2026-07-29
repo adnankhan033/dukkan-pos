@@ -150,9 +150,31 @@ async function runMigrations() {
   await ensureUnitsSchema();
   await ensureUsersAndExpensesSchema();
   await ensureSupplierLedgerSchema();
+  await ensureZatcaSchema();
   await ensureCashierModuleDefaults();
   await ensureReceiptTemplateDefault();
   await ensureSettingsKeys();
+}
+
+async function ensureZatcaSchema() {
+  await execute(
+    `CREATE TABLE IF NOT EXISTS zatca_invoices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sale_id INTEGER NOT NULL,
+      sale_number TEXT NOT NULL,
+      phase TEXT NOT NULL,
+      environment TEXT NOT NULL,
+      status TEXT NOT NULL,
+      invoice_uuid TEXT,
+      invoice_hash TEXT,
+      response_json TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (sale_id) REFERENCES sales(id)
+    )`
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_zatca_invoices_sale ON zatca_invoices(sale_id)"
+  );
 }
 
 async function ensureCashierModuleDefaults() {
@@ -440,6 +462,7 @@ export async function clearDatabaseData() {
   const clearOrder = [
     "sale_return_items",
     "sale_returns",
+    "zatca_invoices",
     "sale_items",
     "sales",
     "purchase_items",

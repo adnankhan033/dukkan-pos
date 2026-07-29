@@ -1,4 +1,5 @@
 import { getModuleDefaults, getRoleModuleDefaults } from "./modules";
+import { getZatcaDefaultSettings } from "../zatca/core/config";
 
 export const DB_NAME = "sqlite:portal_pos.db";
 
@@ -24,6 +25,7 @@ export const DEFAULT_SETTINGS = {
   dashboard_admin_show_profit: "1",
   dashboard_admin_show_purchases: "1",
   dashboard_cashier_show_recent: "1",
+  ...getZatcaDefaultSettings(),
   ...getModuleDefaults(),
   ...getRoleModuleDefaults(),
 };

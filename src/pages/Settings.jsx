@@ -14,14 +14,20 @@ import { Card } from "../components/common/Card";
 import { Input, Textarea, Select } from "../components/common/Input";
 import { Alert } from "../components/common/Loading";
 import ReceiptPreview from "../components/settings/ReceiptPreview";
+import ZatcaSettingsPanel from "../components/settings/ZatcaSettingsPanel";
 import { DEFAULT_RECEIPT_TEMPLATE } from "../utils/receiptTemplates";
 import { DEFAULT_BUSINESS_TIMEZONE, BUSINESS_TIMEZONES } from "../utils/timezones";
 import { getBusinessDateTimeLabelFromForm } from "../utils/businessDate";
+import { getZatcaDefaultSettings } from "../zatca/core/config";
+import { ZATCA_PHASES, ZATCA_SETTING_KEYS as ZK } from "../zatca/core/constants";
 import "./Settings.css";
+
+const ZATCA_DEFAULTS = getZatcaDefaultSettings();
 
 const TABS = [
   { id: "store", label: "Store" },
   { id: "receipt", label: "Receipt" },
+  { id: "zatca", label: "ZATCA" },
   { id: "modules", label: "Modules" },
   { id: "dashboard", label: "Dashboard" },
   { id: "backup", label: "Backup" },
@@ -55,6 +61,10 @@ function buildFormFromSettings(settings) {
     dashboard_admin_show_purchases: settingBool(settings.dashboard_admin_show_purchases),
     dashboard_cashier_show_recent: settingBool(settings.dashboard_cashier_show_recent),
   };
+
+  for (const [key, defaultVal] of Object.entries(ZATCA_DEFAULTS)) {
+    form[key] = settings[key] ?? defaultVal;
+  }
 
   for (const mod of MODULES) {
     form[moduleSettingKey(mod.id)] = settingBool(settings[moduleSettingKey(mod.id)]);
@@ -98,6 +108,12 @@ function formToSettings(form) {
     dashboard_admin_show_purchases: form.dashboard_admin_show_purchases ? "1" : "0",
     dashboard_cashier_show_recent: form.dashboard_cashier_show_recent ? "1" : "0",
   };
+
+  for (const key of Object.keys(ZATCA_DEFAULTS)) {
+    payload[key] = form[key] ?? "";
+  }
+  payload[ZK.ENABLED] =
+    payload[ZK.ACTIVE_PHASE] !== ZATCA_PHASES.DISABLED ? "1" : "0";
 
   for (const mod of MODULES) {
     const key = moduleSettingKey(mod.id);
@@ -497,6 +513,10 @@ export default function Settings() {
               onSelectTemplate={(id) => updateField("receipt_template", id)}
             />
           </div>
+        )}
+
+        {tab === "zatca" && (
+          <ZatcaSettingsPanel form={form} updateField={updateField} baseSettings={settings} />
         )}
 
         {tab === "modules" && (

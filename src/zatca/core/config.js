@@ -1,0 +1,118 @@
+import {
+  ZATCA_PHASES,
+  ZATCA_ENVIRONMENTS,
+  ZATCA_SETTING_KEYS,
+} from "./constants";
+import { resolveApiBaseUrl, resolveEnvironmentConfig } from "./environments";
+
+function settingOn(value) {
+  return value === "1" || value === "true";
+}
+
+function pick(settings, key, fallbackKey) {
+  const value = settings?.[key]?.trim();
+  if (value) return value;
+  if (fallbackKey) return settings?.[fallbackKey]?.trim() || "";
+  return "";
+}
+
+/** Parse raw settings into a structured ZATCA configuration object. */
+export function parseZatcaConfig(settings = {}) {
+  const environment =
+    settings[ZATCA_SETTING_KEYS.ENVIRONMENT] || ZATCA_ENVIRONMENTS.SANDBOX;
+  const envConfig = resolveEnvironmentConfig(environment);
+
+  return {
+    enabled: settingOn(settings[ZATCA_SETTING_KEYS.ENABLED]),
+    activePhase: settings[ZATCA_SETTING_KEYS.ACTIVE_PHASE] || ZATCA_PHASES.DISABLED,
+    environment,
+    environmentLabel: envConfig.label,
+
+    device: {
+      id: settings[ZATCA_SETTING_KEYS.DEVICE_ID] || "",
+      serial: settings[ZATCA_SETTING_KEYS.DEVICE_SERIAL] || "",
+      egsUnitName: settings[ZATCA_SETTING_KEYS.EGS_UNIT_NAME] || "",
+      model: settings[ZATCA_SETTING_KEYS.EGS_MODEL] || "Portal POS",
+      version: settings[ZATCA_SETTING_KEYS.EGS_VERSION] || "1.0.0",
+    },
+
+    company: {
+      name: pick(settings, ZATCA_SETTING_KEYS.COMPANY_NAME, "store_name"),
+      nameAr: pick(settings, ZATCA_SETTING_KEYS.COMPANY_NAME_AR, "store_name_ar"),
+      crNumber: pick(settings, ZATCA_SETTING_KEYS.CR_NUMBER, "cr_number"),
+      vatNumber: pick(settings, ZATCA_SETTING_KEYS.VAT_NUMBER, "vat_registration"),
+      address: pick(settings, ZATCA_SETTING_KEYS.COMPANY_ADDRESS, "store_address"),
+    },
+
+    credentials: {
+      certificate: settings[ZATCA_SETTING_KEYS.CERTIFICATE] || "",
+      privateKey: settings[ZATCA_SETTING_KEYS.PRIVATE_KEY] || "",
+      certificateRequest: settings[ZATCA_SETTING_KEYS.CERTIFICATE_REQUEST] || "",
+      complianceCsid: settings[ZATCA_SETTING_KEYS.COMPLIANCE_CSID] || "",
+      productionCsid: settings[ZATCA_SETTING_KEYS.PRODUCTION_CSID] || "",
+      secret: settings[ZATCA_SETTING_KEYS.SECRET] || "",
+      clientId: settings[ZATCA_SETTING_KEYS.CLIENT_ID] || "",
+      clientSecret: settings[ZATCA_SETTING_KEYS.CLIENT_SECRET] || "",
+      otp: settings[ZATCA_SETTING_KEYS.OTP] || "",
+    },
+
+    api: {
+      baseUrl: resolveApiBaseUrl(environment, settings[ZATCA_SETTING_KEYS.API_BASE_URL]),
+      complianceUrl: envConfig.complianceUrl,
+      reportingUrl: envConfig.reportingUrl,
+      clearanceUrl: envConfig.clearanceUrl,
+    },
+
+    chain: {
+      invoiceCounter: Number(settings[ZATCA_SETTING_KEYS.INVOICE_COUNTER] || 0),
+      previousInvoiceHash: settings[ZATCA_SETTING_KEYS.PREVIOUS_INVOICE_HASH] || "",
+    },
+
+    vatPercent: Number(settings.vat_percent || 15),
+  };
+}
+
+export function resolveActivePhase(settings) {
+  const config = parseZatcaConfig(settings);
+  if (!config.enabled) return ZATCA_PHASES.DISABLED;
+
+  if (config.activePhase === ZATCA_PHASES.PHASE1) return ZATCA_PHASES.PHASE1;
+  if (config.activePhase === ZATCA_PHASES.PHASE2) return ZATCA_PHASES.PHASE2;
+
+  return ZATCA_PHASES.DISABLED;
+}
+
+export function isZatcaEnabled(settings) {
+  return resolveActivePhase(settings) !== ZATCA_PHASES.DISABLED;
+}
+
+/** Default ZATCA settings for seeding / forms. */
+export function getZatcaDefaultSettings() {
+  return {
+    [ZATCA_SETTING_KEYS.ENABLED]: "0",
+    [ZATCA_SETTING_KEYS.ACTIVE_PHASE]: ZATCA_PHASES.DISABLED,
+    [ZATCA_SETTING_KEYS.ENVIRONMENT]: ZATCA_ENVIRONMENTS.SANDBOX,
+    [ZATCA_SETTING_KEYS.DEVICE_ID]: "",
+    [ZATCA_SETTING_KEYS.DEVICE_SERIAL]: "",
+    [ZATCA_SETTING_KEYS.EGS_UNIT_NAME]: "",
+    [ZATCA_SETTING_KEYS.EGS_MODEL]: "Portal POS",
+    [ZATCA_SETTING_KEYS.EGS_VERSION]: "1.0.0",
+    [ZATCA_SETTING_KEYS.COMPANY_NAME]: "",
+    [ZATCA_SETTING_KEYS.COMPANY_NAME_AR]: "",
+    [ZATCA_SETTING_KEYS.CR_NUMBER]: "",
+    [ZATCA_SETTING_KEYS.VAT_NUMBER]: "",
+    [ZATCA_SETTING_KEYS.COMPANY_ADDRESS]: "",
+    [ZATCA_SETTING_KEYS.CERTIFICATE]: "",
+    [ZATCA_SETTING_KEYS.PRIVATE_KEY]: "",
+    [ZATCA_SETTING_KEYS.CERTIFICATE_REQUEST]: "",
+    [ZATCA_SETTING_KEYS.COMPLIANCE_CSID]: "",
+    [ZATCA_SETTING_KEYS.PRODUCTION_CSID]: "",
+    [ZATCA_SETTING_KEYS.SECRET]: "",
+    [ZATCA_SETTING_KEYS.API_BASE_URL]: "",
+    [ZATCA_SETTING_KEYS.CLIENT_ID]: "",
+    [ZATCA_SETTING_KEYS.CLIENT_SECRET]: "",
+    [ZATCA_SETTING_KEYS.OTP]: "",
+    [ZATCA_SETTING_KEYS.INVOICE_COUNTER]: "0",
+    [ZATCA_SETTING_KEYS.PREVIOUS_INVOICE_HASH]: "",
+  };
+}

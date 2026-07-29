@@ -12,6 +12,7 @@
     "package:win-zip": "powershell -Command \"Compress-Archive -Path src-tauri/target/release/bundle/nsis/*-setup.exe -DestinationPath Portal-POS-Windows.zip -Force\""
   },
   "dependencies": {
+    "@noble/curves": "^2.2.0",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-sql": "^2.4.0",
