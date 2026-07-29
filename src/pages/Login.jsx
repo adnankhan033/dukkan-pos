@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { userService } from "../services/UserService";
 import { useAuthStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
-import { getDefaultRouteForUser } from "../utils/roles";
+import { getDefaultRouteForUser } from "../utils/modules";
+import { useSettingsStore } from "../contexts/store";
 import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
@@ -29,7 +30,8 @@ export default function Login() {
           return;
         }
         login(user);
-        navigate(getDefaultRouteForUser(user));
+        const settings = useSettingsStore.getState().settings;
+        navigate(getDefaultRouteForUser(user, settings));
       });
     } catch (err) {
       setError(err.message || "Login failed");

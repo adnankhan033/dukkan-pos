@@ -3,61 +3,68 @@ import { purchaseService } from "./PurchaseService";
 import { productService } from "./ProductService";
 import { customerService } from "./CustomerService";
 import { expenseService } from "./ExpenseService";
-import { query } from "../database/connection";
+import {
+  getMonthlyNetRevenue,
+  getMonthlyNetCogs,
+  getMonthlyReturnsTotal,
+  getTodayGrossSales,
+  getTodayReturnsTotal,
+  getTodayNetSales,
+} from "./FinanceService";
 
 class DashboardService {
   async getStats() {
     const [
-      todaySales,
+      todayGrossSales,
+      todayReturns,
+      todayNetSales,
       todayPurchases,
       totalProducts,
       totalCustomers,
       lowStock,
       monthlyRevenue,
+      monthlyReturns,
       monthlyPurchases,
       monthlyExpenses,
       recentSales,
+      recentReturns,
       heldSales,
     ] = await Promise.all([
-      saleService.getTodayTotal(),
+      getTodayGrossSales(),
+      getTodayReturnsTotal(),
+      getTodayNetSales(),
       purchaseService.getTodayTotal(),
       productService.count(),
       customerService.count(),
       productService.getLowStock(),
-      saleService.getMonthlyRevenue(),
+      getMonthlyNetRevenue(),
+      getMonthlyReturnsTotal(),
       purchaseService.getMonthlyTotal(),
       expenseService.getMonthlyTotal(),
       saleService.getRecent(8),
+      saleService.getRecentReturns(8),
       saleService.getHeldSales(),
     ]);
 
-    const monthlyCost = await this.getMonthlyCostOfGoodsSold();
+    const monthlyCost = await getMonthlyNetCogs();
     const monthlyProfit = monthlyRevenue - monthlyCost - monthlyExpenses;
 
     return {
-      todaySales,
+      todaySales: todayNetSales,
+      todayGrossSales,
+      todayReturns,
       todayPurchases,
       totalProducts,
       totalCustomers,
       lowStockCount: lowStock.length,
       lowStock,
       monthlyRevenue,
+      monthlyReturns,
       monthlyProfit,
       recentSales,
+      recentReturns,
       heldCount: heldSales?.length ?? 0,
     };
-  }
-
-  async getMonthlyCostOfGoodsSold() {
-    const row = await query(
-      `SELECT COALESCE(SUM(si.quantity * p.cost_price), 0) as total
-       FROM sale_items si
-       JOIN sales s ON si.sale_id = s.id
-       JOIN products p ON si.product_id = p.id
-       WHERE s.status = 'completed'
-       AND strftime('%Y-%m', s.created_at) = strftime('%Y-%m', 'now')`
-    );
-    return row[0]?.total ?? 0;
   }
 }
 

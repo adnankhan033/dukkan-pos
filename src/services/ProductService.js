@@ -1,19 +1,24 @@
 import { query, queryOne, execute, insert } from "../database/connection";
 
 const LIST_COLUMNS = `
-  p.id, p.name, p.name_ar, p.sku, p.barcode, p.category_id, p.unit_id,
+  p.id, p.name, p.name_ar, p.sku, p.barcode, p.category_id, p.unit_id, p.supplier_id,
   p.cost_price, p.selling_price, p.quantity, p.min_stock, p.published,
   p.created_at, p.updated_at,
   CASE WHEN p.image IS NOT NULL AND p.image != '' THEN 1 ELSE 0 END AS has_image,
   c.name AS category_name,
   u.name AS unit_name,
-  u.symbol AS unit_symbol
+  u.symbol AS unit_symbol,
+  s.company AS supplier_name
 `;
 
-const PRODUCT_JOINS = `
+const BASE_JOINS = `
   LEFT JOIN categories c ON p.category_id = c.id
   LEFT JOIN units u ON p.unit_id = u.id
 `;
+
+const SUPPLIER_JOIN = `LEFT JOIN suppliers s ON p.supplier_id = s.id`;
+
+const PRODUCT_JOINS = `${BASE_JOINS} ${SUPPLIER_JOIN}`;
 
 class ProductService {
   async getAll({
@@ -63,7 +68,7 @@ class ProductService {
       `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity, p.category_id,
               c.name AS category_name, u.symbol AS unit_symbol
        FROM products p
-       ${PRODUCT_JOINS}
+       ${BASE_JOINS}
        WHERE COALESCE(p.published, 1) = 1
        ORDER BY p.name ASC
        LIMIT $1`,
@@ -73,10 +78,11 @@ class ProductService {
 
   async getById(id) {
     return queryOne(
-      `SELECT p.*, c.name as category_name, u.symbol AS unit_symbol
+      `SELECT p.*, c.name as category_name, u.symbol AS unit_symbol, s.company AS supplier_name
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
        LEFT JOIN units u ON p.unit_id = u.id
+       LEFT JOIN suppliers s ON p.supplier_id = s.id
        WHERE p.id = $1`,
       [Number(id)]
     );
@@ -94,12 +100,18 @@ class ProductService {
     return Number(unitId);
   }
 
+  async resolveSupplierId(supplierId) {
+    if (supplierId == null || supplierId === "") return null;
+    return Number(supplierId);
+  }
+
   async create(data) {
     const published = data.published === false || data.published === 0 ? 0 : 1;
     const unitId = await this.resolveUnitId(data.unit_id);
+    const supplierId = await this.resolveSupplierId(data.supplier_id);
     const id = await insert(
-      `INSERT INTO products (name, name_ar, sku, barcode, category_id, unit_id, cost_price, selling_price, quantity, min_stock, image, published)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      `INSERT INTO products (name, name_ar, sku, barcode, category_id, unit_id, supplier_id, cost_price, selling_price, quantity, min_stock, image, published)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)`,
       [
         data.name,
         data.name_ar || null,
@@ -107,6 +119,7 @@ class ProductService {
         data.barcode || null,
         data.category_id || null,
         unitId,
+        supplierId,
         Number(data.cost_price) || 0,
         Number(data.selling_price) || 0,
         Number(data.quantity) || 0,
@@ -129,14 +142,15 @@ class ProductService {
     const published = data.published === false || data.published === 0 ? 0 : 1;
     const numId = Number(id);
     const unitId = await this.resolveUnitId(data.unit_id);
+    const supplierId = await this.resolveSupplierId(data.supplier_id);
 
     if (data.image !== undefined) {
       await execute(
         `UPDATE products SET
-          name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5, unit_id = $6,
-          cost_price = $7, selling_price = $8, quantity = $9, min_stock = $10,
-          published = $11, image = $12, updated_at = datetime('now')
-         WHERE id = $13`,
+          name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5, unit_id = $6, supplier_id = $7,
+          cost_price = $8, selling_price = $9, quantity = $10, min_stock = $11,
+          published = $12, image = $13, updated_at = datetime('now')
+         WHERE id = $14`,
         [
           data.name,
           data.name_ar || null,
@@ -144,6 +158,7 @@ class ProductService {
           data.barcode || null,
           data.category_id || null,
           unitId,
+          supplierId,
           Number(data.cost_price) || 0,
           Number(data.selling_price) || 0,
           Number(data.quantity) || 0,
@@ -156,10 +171,10 @@ class ProductService {
     } else {
       await execute(
         `UPDATE products SET
-          name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5, unit_id = $6,
-          cost_price = $7, selling_price = $8, quantity = $9, min_stock = $10,
-          published = $11, updated_at = datetime('now')
-         WHERE id = $12`,
+          name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5, unit_id = $6, supplier_id = $7,
+          cost_price = $8, selling_price = $9, quantity = $10, min_stock = $11,
+          published = $12, updated_at = datetime('now')
+         WHERE id = $13`,
         [
           data.name,
           data.name_ar || null,
@@ -167,6 +182,7 @@ class ProductService {
           data.barcode || null,
           data.category_id || null,
           unitId,
+          supplierId,
           Number(data.cost_price) || 0,
           Number(data.selling_price) || 0,
           Number(data.quantity) || 0,

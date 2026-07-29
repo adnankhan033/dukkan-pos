@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   TrendingUp,
   Wallet,
+  RotateCcw,
 } from "lucide-react";
 import { useSettingsStore } from "../../contexts/store";
 import PageHeader from "../common/PageHeader";
@@ -31,10 +32,16 @@ export default function AdminDashboard({ stats }) {
 
       <div className="dashboard-stats">
         <StatCard
-          label="Today's Sales"
+          label="Today's Sales (Net)"
           value={formatCurrency(stats.todaySales, currency)}
           icon={DollarSign}
           variant="primary"
+        />
+        <StatCard
+          label="Today's Returns"
+          value={formatCurrency(stats.todayReturns, currency)}
+          icon={RotateCcw}
+          variant="warning"
         />
         {showPurchases && (
           <StatCard
@@ -63,10 +70,16 @@ export default function AdminDashboard({ stats }) {
           variant="warning"
         />
         <StatCard
-          label="Monthly Revenue"
+          label="Monthly Revenue (Net)"
           value={formatCurrency(stats.monthlyRevenue, currency)}
           icon={TrendingUp}
           variant="primary"
+        />
+        <StatCard
+          label="Monthly Returns"
+          value={formatCurrency(stats.monthlyReturns, currency)}
+          icon={RotateCcw}
+          variant="warning"
         />
         {showProfit && (
           <StatCard
@@ -99,6 +112,40 @@ export default function AdminDashboard({ stats }) {
                 </div>
               ))}
             </div>
+          )}
+        </Card>
+
+        <Card>
+          <div className="card-header">
+            <h3 className="card-title">Recent Returns</h3>
+          </div>
+          {stats.recentReturns?.length === 0 ? (
+            <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>No returns yet</p>
+          ) : (
+            <div className="recent-sales-list">
+              {stats.recentReturns.map((ret) => (
+                <div key={ret.id} className="recent-sale-item">
+                  <div>
+                    <strong>{ret.return_number}</strong>
+                    <div style={{ color: "var(--color-text-muted)", fontSize: "0.8125rem" }}>
+                      {ret.sale_number} · {ret.customer_name || "Walk-in"} · {formatDateTime(ret.created_at)}
+                    </div>
+                  </div>
+                  <strong style={{ color: "var(--color-danger)" }}>
+                    −{formatCurrency(ret.total_refund, currency)}
+                  </strong>
+                </div>
+              ))}
+            </div>
+          )}
+          {(stats.recentReturns?.length ?? 0) > 0 && (
+            <button
+              type="button"
+              className="dashboard-link-btn"
+              onClick={() => navigate("/orders")}
+            >
+              View all orders →
+            </button>
           )}
         </Card>
 

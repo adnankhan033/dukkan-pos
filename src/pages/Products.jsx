@@ -3,6 +3,7 @@ import { Plus, Pencil, Trash2, Package, FileSpreadsheet } from "lucide-react";
 import { productService } from "../services/ProductService";
 import { categoryService } from "../services/CategoryService";
 import { unitService } from "../services/UnitService";
+import { supplierService } from "../services/SupplierService";
 import { useSettingsStore } from "../contexts/store";
 import { useDebounce } from "../hooks/usePagination";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
@@ -35,6 +36,7 @@ const emptyForm = {
   barcode: "",
   category_id: "",
   unit_id: "",
+  supplier_id: "",
   cost_price: "",
   selling_price: "",
   quantity: "",
@@ -50,6 +52,7 @@ export default function Products() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [units, setUnits] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -95,9 +98,14 @@ export default function Products() {
   }, [debouncedSearch, categoryFilter, page, isPublishedSection]);
 
   useEffect(() => {
-    Promise.all([categoryService.getAll(), unitService.getAll()]).then(([cats, unitList]) => {
+    Promise.all([
+      categoryService.getAll(),
+      unitService.getAll(),
+      supplierService.getAll({ limit: 200, page: 1 }),
+    ]).then(([cats, unitList, supplierList]) => {
       setCategories(cats);
       setUnits(unitList);
+      setSuppliers(supplierList.items);
     });
   }, []);
 
@@ -123,6 +131,7 @@ export default function Products() {
       barcode: product.barcode || "",
       category_id: product.category_id || "",
       unit_id: product.unit_id ? String(product.unit_id) : "",
+      supplier_id: product.supplier_id ? String(product.supplier_id) : "",
       cost_price: String(product.cost_price),
       selling_price: String(product.selling_price),
       quantity: String(product.quantity),
@@ -285,6 +294,7 @@ export default function Products() {
           name_ar: form.name_ar?.trim() || null,
           category_id: form.category_id ? Number(form.category_id) : null,
           unit_id: form.unit_id ? Number(form.unit_id) : null,
+          supplier_id: form.supplier_id ? Number(form.supplier_id) : null,
           published: form.published ? 1 : 0,
           image: form.image || (editing?.has_image ? undefined : null),
         };
@@ -579,6 +589,16 @@ export default function Products() {
               <option value="">None</option>
               {units.map((u) => (
                 <option key={u.id} value={u.id}>{u.name} ({u.symbol})</option>
+              ))}
+            </Select>
+            <Select
+              label="Supplier"
+              value={form.supplier_id}
+              onChange={(e) => setForm({ ...form, supplier_id: e.target.value })}
+            >
+              <option value="">None</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.id}>{s.company}</option>
               ))}
             </Select>
             <Input label="Cost Price" type="number" step="0.01" min={0} value={form.cost_price} onChange={(e) => { setForm({ ...form, cost_price: e.target.value }); setErrors((p) => ({ ...p, cost_price: undefined, form: undefined })); }} error={errors.cost_price} />

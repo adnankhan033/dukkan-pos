@@ -1,4 +1,4 @@
-import { getModuleDefaults } from "./modules";
+import { getModuleDefaults, getRoleModuleDefaults } from "./modules";
 
 export const DB_NAME = "sqlite:portal_pos.db";
 
@@ -21,11 +21,31 @@ export const DEFAULT_SETTINGS = {
   dashboard_admin_show_purchases: "1",
   dashboard_cashier_show_recent: "1",
   ...getModuleDefaults(),
+  ...getRoleModuleDefaults(),
 };
 
 export const PAYMENT_METHODS = {
   CASH: "cash",
   CARD: "card",
+};
+
+/** Market cash purchase vs supplier delivery (paid now or on credit). */
+export const PURCHASE_TYPE = {
+  MARKET: "market",
+  SUPPLIER_PAID: "supplier_paid",
+  SUPPLIER_CREDIT: "supplier_credit",
+};
+
+export const PURCHASE_PAYMENT_STATUS = {
+  PAID: "paid",
+  PENDING: "pending",
+  PARTIAL: "partial",
+};
+
+export const PURCHASE_PAYMENT_STATUS_LABELS = {
+  paid: "Paid",
+  pending: "Pending",
+  partial: "Partial",
 };
 
 export const SALE_STATUS = {
@@ -102,13 +122,19 @@ export const NAV_GROUPS = [
     label: "Inventory",
     icon: "Boxes",
     module: "inventory",
+    items: [{ path: "/inventory", label: "Stock" }],
+  },
+  { id: "customers", label: "Customers", icon: "Users", path: "/customers", module: "customers" },
+  {
+    id: "suppliers",
+    label: "Suppliers",
+    icon: "Building2",
+    module: "suppliers",
     items: [
-      { path: "/inventory", label: "Stock" },
+      { path: "/suppliers", label: "Accounts" },
       { path: "/purchases", label: "Purchases" },
     ],
   },
-  { id: "customers", label: "Customers", icon: "Users", path: "/customers", module: "customers" },
-  { id: "suppliers", label: "Suppliers", icon: "Building2", path: "/suppliers", module: "suppliers" },
   {
     id: "accounting",
     label: "Accounting",

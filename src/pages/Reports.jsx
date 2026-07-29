@@ -4,9 +4,10 @@ import { useSettingsStore } from "../contexts/store";
 import PageHeader from "../components/common/PageHeader";
 import { Card, StatCard } from "../components/common/Card";
 import Table from "../components/common/Table";
-import { LoadingSpinner } from "../components/common/Loading";
+import Badge from "../components/common/Badge";
+import { Alert, LoadingSpinner } from "../components/common/Loading";
 import { formatCurrency, formatDateTime, todayISO } from "../utils/format";
-import { DollarSign, ShoppingBag, Receipt, TrendingUp } from "lucide-react";
+import { DollarSign, ShoppingBag, Receipt, TrendingUp, RotateCcw } from "lucide-react";
 
 export default function Reports() {
   const currency = useSettingsStore((s) => s.settings.currency) || "SAR";
@@ -14,37 +15,74 @@ export default function Reports() {
   const [profit, setProfit] = useState(null);
   const [dailySales, setDailySales] = useState([]);
   const [monthlySales, setMonthlySales] = useState([]);
+  const [monthlyReturns, setMonthlyReturns] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [inventory, setInventory] = useState([]);
 
+  const [loadError, setLoadError] = useState("");
+
   useEffect(() => {
     async function load() {
-      const [profitData, daily, monthly, purchaseData, expenseData, invData] = await Promise.all([
-        reportService.getProfitSummary(),
-        reportService.getDailySales(todayISO()),
-        reportService.getMonthlySales(),
-        reportService.getMonthlyPurchases(),
-        reportService.getMonthlyExpenses(),
-        reportService.getInventoryReport(),
-      ]);
-      setProfit(profitData);
-      setDailySales(daily);
-      setMonthlySales(monthly);
-      setPurchases(purchaseData);
-      setExpenses(expenseData);
-      setInventory(invData.items);
-      setLoading(false);
+      try {
+        const [profitData, daily, monthly, returns, purchaseData, expenseData, invData] =
+          await Promise.all([
+            reportService.getProfitSummary(),
+            reportService.getDailySales(todayISO()),
+            reportService.getMonthlySales(),
+            reportService.getMonthlyReturnsList(),
+            reportService.getMonthlyPurchases(),
+            reportService.getMonthlyExpenses(),
+            reportService.getInventoryReport(),
+          ]);
+        setProfit(profitData);
+        setDailySales(daily);
+        setMonthlySales(monthly);
+        setMonthlyReturns(returns);
+        setPurchases(purchaseData);
+        setExpenses(expenseData);
+        setInventory(invData.items);
+      } catch (err) {
+        setLoadError(err.message || "Failed to load reports.");
+      } finally {
+        setLoading(false);
+      }
     }
     load();
   }, []);
 
   if (loading) return <LoadingSpinner message="Loading reports..." />;
 
+  if (loadError) {
+    return (
+      <div>
+        <PageHeader title="Reports" subtitle="Sales, returns, expenses, net profit, and inventory." />
+        <Alert>{loadError}</Alert>
+      </div>
+    );
+  }
+
   const salesColumns = [
     { key: "sale_number", label: "Sale #" },
     { key: "customer_name", label: "Customer", render: (r) => r.customer_name || "Walk-in" },
+    {
+      key: "status",
+      label: "Status",
+      render: (r) => (
+        <Badge variant={r.status === "returned" ? "danger" : r.status === "partial_return" ? "warning" : "success"}>
+          {r.status === "partial_return" ? "Partial Return" : r.status}
+        </Badge>
+      ),
+    },
     { key: "total", label: "Total", render: (r) => formatCurrency(r.total, currency) },
+    { key: "created_at", label: "Date", render: (r) => formatDateTime(r.created_at) },
+  ];
+
+  const returnColumns = [
+    { key: "return_number", label: "Return #" },
+    { key: "sale_number", label: "Sale #" },
+    { key: "customer_name", label: "Customer", render: (r) => r.customer_name || "Walk-in" },
+    { key: "total_refund", label: "Refund", render: (r) => formatCurrency(r.total_refund, currency) },
     { key: "created_at", label: "Date", render: (r) => formatDateTime(r.created_at) },
   ];
 
@@ -57,31 +95,29 @@ export default function Reports() {
 
   return (
     <div>
-      <PageHeader title="Reports" subtitle="Sales, purchases, expenses, profit, and inventory overview." />
+      <PageHeader title="Reports" subtitle="Sales, returns, expenses, net profit, and inventory." />
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
-        <StatCard label="Monthly Revenue" value={formatCurrency(profit.monthlyRevenue, currency)} icon={DollarSign} variant="primary" />
-        <StatCard label="Monthly Purchases" value={formatCurrency(profit.monthlyPurchases, currency)} icon={ShoppingBag} variant="info" />
-        <StatCard label="Monthly Expenses" value={formatCurrency(profit.monthlyExpenses, currency)} icon={Receipt} variant="warning" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+        <StatCard label="Gross Sales" value={formatCurrency(profit.grossSales, currency)} icon={DollarSign} variant="primary" />
+        <StatCard label="Returns" value={formatCurrency(profit.returnsTotal, currency)} icon={RotateCcw} variant="warning" />
+        <StatCard label="Net Revenue" value={formatCurrency(profit.monthlyRevenue, currency)} icon={TrendingUp} variant="info" />
+        <StatCard label="COGS (Net)" value={formatCurrency(profit.cogs, currency)} icon={ShoppingBag} variant="info" />
+        <StatCard label="Expenses" value={formatCurrency(profit.monthlyExpenses, currency)} icon={Receipt} variant="warning" />
         <StatCard label="Net Profit" value={formatCurrency(profit.netProfit, currency)} icon={TrendingUp} variant={profit.netProfit >= 0 ? "success" : "danger"} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
         <Card>
-          <h3 className="card-title" style={{ marginBottom: "1rem" }}>Today's Sales</h3>
+          <h3 className="card-title" style={{ marginBottom: "1rem" }}>Today&apos;s Sales</h3>
           <Table columns={salesColumns} data={dailySales} emptyMessage="No sales today" />
+        </Card>
+        <Card>
+          <h3 className="card-title" style={{ marginBottom: "1rem" }}>Monthly Returns</h3>
+          <Table columns={returnColumns} data={monthlyReturns.slice(0, 10)} emptyMessage="No returns this month" />
         </Card>
         <Card>
           <h3 className="card-title" style={{ marginBottom: "1rem" }}>Monthly Sales</h3>
           <Table columns={salesColumns} data={monthlySales.slice(0, 10)} emptyMessage="No sales this month" />
-        </Card>
-        <Card>
-          <h3 className="card-title" style={{ marginBottom: "1rem" }}>Monthly Purchases</h3>
-          <Table columns={[
-            { key: "purchase_number", label: "PO #" },
-            { key: "supplier_name", label: "Supplier", render: (r) => r.supplier_name || "-" },
-            { key: "total", label: "Total", render: (r) => formatCurrency(r.total, currency) },
-          ]} data={purchases.slice(0, 10)} emptyMessage="No purchases this month" />
         </Card>
         <Card>
           <h3 className="card-title" style={{ marginBottom: "1rem" }}>Monthly Expenses</h3>

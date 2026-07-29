@@ -1,11 +1,19 @@
 import { CheckCircle2 } from "lucide-react";
 import Button from "../common/Button";
 import { formatCurrency } from "../../utils/format";
+import { PURCHASE_PAYMENT_STATUS_LABELS, PURCHASE_TYPE } from "../../utils/constants";
 import "../sales/SaleCompleteModal.css";
+
+const PURCHASE_TYPE_LABELS = {
+  [PURCHASE_TYPE.MARKET]: "Market / Cash",
+  [PURCHASE_TYPE.SUPPLIER_PAID]: "Supplier — paid now",
+  [PURCHASE_TYPE.SUPPLIER_CREDIT]: "Supplier — on credit",
+};
 
 export default function PurchaseSaveModal({
   step,
   supplierName,
+  purchaseType,
   items,
   total,
   currency,
@@ -27,6 +35,9 @@ export default function PurchaseSaveModal({
               <p>Review items before recording the purchase and updating inventory.</p>
             </div>
             <div className="sale-complete-body">
+              <p style={{ marginBottom: "0.75rem", fontSize: "0.875rem" }}>
+                Type: <strong>{PURCHASE_TYPE_LABELS[purchaseType]}</strong>
+              </p>
               {supplierName && (
                 <p style={{ marginBottom: "0.75rem", fontSize: "0.875rem" }}>
                   Supplier: <strong>{supplierName}</strong>
@@ -48,6 +59,11 @@ export default function PurchaseSaveModal({
                   <span>{formatCurrency(total, currency)}</span>
                 </div>
               </div>
+              {purchaseType === PURCHASE_TYPE.SUPPLIER_CREDIT && (
+                <p style={{ marginTop: "0.75rem", fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
+                  Payment will stay pending until you pay the supplier from Supplier Accounts.
+                </p>
+              )}
             </div>
             <div className="sale-complete-footer">
               <Button variant="secondary" onClick={onCancel} disabled={processing}>
@@ -70,6 +86,12 @@ export default function PurchaseSaveModal({
                 <h4>Purchase saved!</h4>
                 <p>
                   <strong>{savedPurchase.purchase_number}</strong> — {formatCurrency(savedPurchase.total, currency)}
+                </p>
+                <p style={{ marginTop: "0.5rem" }}>
+                  Status:{" "}
+                  <strong>
+                    {PURCHASE_PAYMENT_STATUS_LABELS[savedPurchase.payment_status] || savedPurchase.payment_status}
+                  </strong>
                 </p>
                 <p style={{ marginTop: "0.5rem" }}>Inventory has been updated.</p>
               </div>

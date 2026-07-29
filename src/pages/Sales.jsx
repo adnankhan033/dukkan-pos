@@ -53,15 +53,20 @@ export default function Sales() {
 
   useEffect(() => {
     async function init() {
-      const [products, customerResult, held] = await Promise.all([
-        productService.getPosCatalog(),
-        customerService.getAll({ limit: 100, page: 1 }),
-        saleService.getHeldSales(),
-      ]);
-      setCatalog(products);
-      setCustomers(customerResult.items);
-      setHeldSales(held);
-      setCatalogLoading(false);
+      try {
+        const [products, customerResult, held] = await Promise.all([
+          productService.getPosCatalog(),
+          customerService.getAll({ limit: 100, page: 1 }),
+          saleService.getHeldSales(),
+        ]);
+        setCatalog(products);
+        setCustomers(customerResult.items);
+        setHeldSales(held);
+      } catch (err) {
+        setError(err.message || "Failed to load POS. Restart the app and try again.");
+      } finally {
+        setCatalogLoading(false);
+      }
     }
     init();
   }, []);

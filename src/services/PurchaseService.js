@@ -1,9 +1,10 @@
 import { query, queryOne, execute, insert } from "../database/connection";
 import { inventoryService } from "./InventoryService";
 import { generateNumber } from "../utils/format";
+import { PURCHASE_PAYMENT_STATUS, PURCHASE_TYPE } from "../utils/constants";
 
 class PurchaseService {
-  async getAll({ page = 1, limit = 10 } = {}) {
+  async getAll({ page = 1, limit = 10, supplierId = null, paymentStatus = null } = {}) {
     let sql = `
       SELECT p.*, s.company as supplier_name
       FROM purchases p
@@ -11,6 +12,16 @@ class PurchaseService {
       WHERE 1=1
     `;
     const params = [];
+
+    if (supplierId) {
+      params.push(Number(supplierId));
+      sql += ` AND p.supplier_id = $${params.length}`;
+    }
+
+    if (paymentStatus) {
+      params.push(paymentStatus);
+      sql += ` AND p.payment_status = $${params.length}`;
+    }
 
     const countRow = await queryOne(
       sql.replace("SELECT p.*, s.company as supplier_name", "SELECT COUNT(*) as total"),
@@ -47,14 +58,48 @@ class PurchaseService {
     return { ...purchase, items };
   }
 
-  async create({ supplierId, items, notes }) {
+  async getPendingBySupplier(supplierId) {
+    return query(
+      `SELECT p.*, (p.total - COALESCE(p.amount_paid, 0)) AS balance_due
+       FROM purchases p
+       WHERE p.supplier_id = $1
+         AND p.payment_status IN ($2, $3)
+         AND (p.total - COALESCE(p.amount_paid, 0)) > 0
+       ORDER BY p.created_at ASC`,
+      [supplierId, PURCHASE_PAYMENT_STATUS.PENDING, PURCHASE_PAYMENT_STATUS.PARTIAL]
+    );
+  }
+
+  async create({ supplierId, items, notes, purchaseType = PURCHASE_TYPE.MARKET, dueDate = null }) {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const purchaseNumber = generateNumber("PO");
 
+    const isCredit = purchaseType === PURCHASE_TYPE.SUPPLIER_CREDIT;
+    const isSupplier = purchaseType !== PURCHASE_TYPE.MARKET;
+
+    if (isSupplier && !supplierId) {
+      throw new Error("Select a supplier for supplier purchases");
+    }
+
+    const paymentStatus = isCredit ? PURCHASE_PAYMENT_STATUS.PENDING : PURCHASE_PAYMENT_STATUS.PAID;
+    const amountPaid = isCredit ? 0 : subtotal;
+
     const purchaseId = await insert(
-      `INSERT INTO purchases (purchase_number, supplier_id, subtotal, total, notes)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [purchaseNumber, supplierId || null, subtotal, subtotal, notes || null]
+      `INSERT INTO purchases (
+         purchase_number, supplier_id, subtotal, total, notes,
+         purchase_type, payment_status, amount_paid, due_date
+       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        purchaseNumber,
+        supplierId || null,
+        subtotal,
+        subtotal,
+        notes || null,
+        purchaseType,
+        paymentStatus,
+        amountPaid,
+        dueDate || null,
+      ]
     );
 
     for (const item of items) {
@@ -70,14 +115,43 @@ class PurchaseService {
         "UPDATE products SET cost_price = $1, updated_at = datetime('now') WHERE id = $2",
         [item.unit_cost, item.product_id]
       );
+
+      if (supplierId) {
+        await execute(
+          "UPDATE products SET supplier_id = $1, updated_at = datetime('now') WHERE id = $2",
+          [supplierId, item.product_id]
+        );
+      }
     }
 
-    await execute(
-      `INSERT INTO payments (purchase_id, amount, payment_method, notes) VALUES ($1, $2, $3, $4)`,
-      [purchaseId, subtotal, "cash", "Purchase payment"]
-    );
+    if (!isCredit && subtotal > 0) {
+      await execute(
+        `INSERT INTO payments (purchase_id, amount, payment_method, notes) VALUES ($1, $2, $3, $4)`,
+        [purchaseId, subtotal, "cash", isSupplier ? "Supplier purchase — paid" : "Market purchase"]
+      );
+    }
 
     return this.getById(purchaseId);
+  }
+
+  async applyPaymentToPurchase(purchaseId, amount) {
+    const purchase = await queryOne("SELECT * FROM purchases WHERE id = $1", [purchaseId]);
+    if (!purchase) throw new Error("Purchase not found");
+
+    const balanceDue = purchase.total - (purchase.amount_paid || 0);
+    if (balanceDue <= 0) return 0;
+
+    const applied = Math.min(Number(amount), balanceDue);
+    const newPaid = (purchase.amount_paid || 0) + applied;
+    let status = PURCHASE_PAYMENT_STATUS.PARTIAL;
+    if (newPaid >= purchase.total) status = PURCHASE_PAYMENT_STATUS.PAID;
+
+    await execute(
+      `UPDATE purchases SET amount_paid = $1, payment_status = $2, updated_at = datetime('now') WHERE id = $3`,
+      [newPaid, status, purchaseId]
+    );
+
+    return applied;
   }
 
   async getTodayTotal() {

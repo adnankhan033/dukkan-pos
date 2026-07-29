@@ -5,14 +5,25 @@ import { supplierService } from "../services/SupplierService";
 import { productService } from "../services/ProductService";
 import { useSettingsStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
+import {
+  PURCHASE_PAYMENT_STATUS_LABELS,
+  PURCHASE_TYPE,
+} from "../utils/constants";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import Table from "../components/common/Table";
+import Badge from "../components/common/Badge";
 import { Input, Select, Textarea } from "../components/common/Input";
 import { Card } from "../components/common/Card";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
 import PurchaseSaveModal from "../components/purchases/PurchaseSaveModal";
 import { formatCurrency, formatDateTime } from "../utils/format";
+
+const PURCHASE_TYPE_OPTIONS = [
+  { value: PURCHASE_TYPE.MARKET, label: "Market / Cash (no supplier account)" },
+  { value: PURCHASE_TYPE.SUPPLIER_PAID, label: "Supplier — paid now" },
+  { value: PURCHASE_TYPE.SUPPLIER_CREDIT, label: "Supplier — on credit (pay later)" },
+];
 
 export default function Purchases() {
   const currency = useSettingsStore((s) => s.settings.currency) || "SAR";
@@ -21,13 +32,19 @@ export default function Purchases() {
   const [suppliers, setSuppliers] = useState([]);
   const [catalog, setCatalog] = useState([]);
   const [listLoading, setListLoading] = useState(true);
+  const [purchaseType, setPurchaseType] = useState(PURCHASE_TYPE.MARKET);
   const [supplierId, setSupplierId] = useState("");
+  const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState([]);
   const [productSearch, setProductSearch] = useState("");
   const [error, setError] = useState("");
   const [saveStep, setSaveStep] = useState(null);
   const [savedPurchase, setSavedPurchase] = useState(null);
+
+  const isSupplierPurchase =
+    purchaseType === PURCHASE_TYPE.SUPPLIER_PAID || purchaseType === PURCHASE_TYPE.SUPPLIER_CREDIT;
+  const isCredit = purchaseType === PURCHASE_TYPE.SUPPLIER_CREDIT;
 
   const loadPurchases = useCallback(async () => {
     setListLoading(true);
@@ -55,12 +72,14 @@ export default function Purchases() {
   const searchResults = useMemo(() => {
     const term = productSearch.trim().toLowerCase();
     if (!term) return [];
-    return catalog.filter(
-      (p) =>
-        p.name?.toLowerCase().includes(term) ||
-        p.sku?.toLowerCase().includes(term) ||
-        p.barcode?.toLowerCase().includes(term)
-    ).slice(0, 15);
+    return catalog
+      .filter(
+        (p) =>
+          p.name?.toLowerCase().includes(term) ||
+          p.sku?.toLowerCase().includes(term) ||
+          p.barcode?.toLowerCase().includes(term)
+      )
+      .slice(0, 15);
   }, [catalog, productSearch]);
 
   const supplierName = suppliers.find((s) => String(s.id) === String(supplierId))?.company || "";
@@ -111,6 +130,10 @@ export default function Purchases() {
       setError("Add at least one product");
       return;
     }
+    if (isSupplierPurchase && !supplierId) {
+      setError("Select a supplier for supplier purchases");
+      return;
+    }
     setError("");
     setSaveStep("confirm");
   }
@@ -122,18 +145,19 @@ export default function Purchases() {
           supplierId: supplierId ? Number(supplierId) : null,
           items,
           notes,
+          purchaseType,
+          dueDate: isCredit && dueDate ? dueDate : null,
         });
 
         setItems([]);
         setNotes("");
         setSupplierId("");
+        setDueDate("");
+        setPurchaseType(PURCHASE_TYPE.MARKET);
         setSavedPurchase(purchase);
         setSaveStep("success");
 
-        await Promise.all([
-          loadPurchases(),
-          productService.getPosCatalog().then(setCatalog),
-        ]);
+        await Promise.all([loadPurchases(), productService.getPosCatalog().then(setCatalog)]);
       });
     } catch (err) {
       setSaveStep(null);
@@ -148,30 +172,103 @@ export default function Purchases() {
 
   const columns = [
     { key: "purchase_number", label: "PO #" },
-    { key: "supplier_name", label: "Supplier", render: (r) => r.supplier_name || "-" },
+    { key: "supplier_name", label: "Supplier", render: (r) => r.supplier_name || "Market" },
     { key: "total", label: "Total", render: (r) => formatCurrency(r.total, currency) },
+    {
+      key: "payment_status",
+      label: "Payment",
+      render: (r) => {
+        const variant =
+          r.payment_status === "paid" ? "success" : r.payment_status === "pending" ? "warning" : "info";
+        return <Badge variant={variant}>{PURCHASE_PAYMENT_STATUS_LABELS[r.payment_status] || r.payment_status}</Badge>;
+      },
+    },
     { key: "created_at", label: "Date", render: (r) => formatDateTime(r.created_at) },
   ];
 
   return (
     <div>
-      <PageHeader title="Purchases" subtitle="Record purchases and update inventory." />
+      <PageHeader
+        title="Purchases"
+        subtitle="Record market buys or supplier deliveries — cash now or on credit."
+      />
 
       {error && <Alert>{error}</Alert>}
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "1.5rem" }}>
         <Card>
-          <h3 className="card-title" style={{ marginBottom: "1rem" }}>New Purchase</h3>
-          <Select label="Supplier" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-            <option value="">Select supplier</option>
-            {suppliers.map((s) => <option key={s.id} value={s.id}>{s.company}</option>)}
+          <h3 className="card-title" style={{ marginBottom: "1rem" }}>
+            New Purchase
+          </h3>
+
+          <Select
+            label="Purchase type"
+            value={purchaseType}
+            onChange={(e) => {
+              setPurchaseType(e.target.value);
+              if (e.target.value === PURCHASE_TYPE.MARKET) {
+                setSupplierId("");
+                setDueDate("");
+              }
+            }}
+          >
+            {PURCHASE_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
           </Select>
+
+          {isSupplierPurchase && (
+            <div style={{ marginTop: "1rem" }}>
+              <Select label="Supplier *" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+                <option value="">Select supplier</option>
+                {suppliers.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.company}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          )}
+
+          {isCredit && (
+            <div style={{ marginTop: "1rem" }}>
+              <Input
+                label="Expected pay date (optional)"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </div>
+          )}
+
           <div style={{ marginTop: "1rem" }}>
-            <Input label="Search Product" value={productSearch} onChange={(e) => setProductSearch(e.target.value)} placeholder="Search products..." />
+            <Input
+              label="Search Product"
+              value={productSearch}
+              onChange={(e) => setProductSearch(e.target.value)}
+              placeholder="Search products..."
+            />
             {searchResults.length > 0 && (
-              <div style={{ marginTop: "0.5rem", border: "1px solid var(--color-border)", borderRadius: "var(--radius-md)" }}>
+              <div
+                style={{
+                  marginTop: "0.5rem",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "var(--radius-md)",
+                }}
+              >
                 {searchResults.map((p) => (
-                  <div key={p.id} onClick={() => addItem(p)} style={{ padding: "0.5rem 0.75rem", cursor: "pointer", fontSize: "0.875rem", borderBottom: "1px solid var(--color-border)" }}>
+                  <div
+                    key={p.id}
+                    onClick={() => addItem(p)}
+                    style={{
+                      padding: "0.5rem 0.75rem",
+                      cursor: "pointer",
+                      fontSize: "0.875rem",
+                      borderBottom: "1px solid var(--color-border)",
+                    }}
+                  >
                     {p.name} — {formatCurrency(p.cost_price, currency)}
                   </div>
                 ))}
@@ -182,14 +279,43 @@ export default function Purchases() {
           {items.length > 0 && (
             <div style={{ marginTop: "1rem" }}>
               {items.map((item) => (
-                <div key={item.product_id} style={{ display: "grid", gridTemplateColumns: "1fr 80px 100px auto", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem", fontSize: "0.875rem" }}>
+                <div
+                  key={item.product_id}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 80px 100px auto",
+                    gap: "0.5rem",
+                    alignItems: "center",
+                    marginBottom: "0.5rem",
+                    fontSize: "0.875rem",
+                  }}
+                >
                   <span>{item.name}</span>
-                  <input className="form-input" type="number" min={1} value={item.quantity} onChange={(e) => updateItem(item.product_id, "quantity", e.target.value)} />
-                  <input className="form-input" type="number" step="0.01" value={item.unit_cost} onChange={(e) => updateItem(item.product_id, "unit_cost", e.target.value)} />
-                  <Button variant="ghost" size="sm" className="btn-icon" onClick={() => removeItem(item.product_id)}><Trash2 size={16} /></Button>
+                  <input
+                    className="form-input"
+                    type="number"
+                    min={1}
+                    value={item.quantity}
+                    onChange={(e) => updateItem(item.product_id, "quantity", e.target.value)}
+                  />
+                  <input
+                    className="form-input"
+                    type="number"
+                    step="0.01"
+                    value={item.unit_cost}
+                    onChange={(e) => updateItem(item.product_id, "unit_cost", e.target.value)}
+                  />
+                  <Button variant="ghost" size="sm" className="btn-icon" onClick={() => removeItem(item.product_id)}>
+                    <Trash2 size={16} />
+                  </Button>
                 </div>
               ))}
               <div style={{ fontWeight: 700, marginTop: "0.75rem" }}>Total: {formatCurrency(total, currency)}</div>
+              {isCredit && (
+                <p style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)", marginTop: "0.5rem" }}>
+                  This amount will be added to the supplier&apos;s pending balance until you record payment in Accounts.
+                </p>
+              )}
             </div>
           )}
 
@@ -197,12 +323,18 @@ export default function Purchases() {
             <Textarea label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
           <Button onClick={openSaveConfirm} disabled={submitting || items.length === 0} style={{ marginTop: "1rem" }}>
-            {submitting ? "Saving..." : (<><Plus size={16} /> Save Purchase</>)}
+            {submitting ? "Saving..." : (
+              <>
+                <Plus size={16} /> Save Purchase
+              </>
+            )}
           </Button>
         </Card>
 
         <Card>
-          <h3 className="card-title" style={{ marginBottom: "1rem" }}>Recent Purchases</h3>
+          <h3 className="card-title" style={{ marginBottom: "1rem" }}>
+            Recent Purchases
+          </h3>
           {listLoading ? <LoadingSpinner /> : <Table columns={columns} data={purchases} emptyMessage="No purchases yet" />}
         </Card>
       </div>
@@ -210,6 +342,7 @@ export default function Purchases() {
       <PurchaseSaveModal
         step={saveStep}
         supplierName={supplierName}
+        purchaseType={purchaseType}
         items={items}
         total={total}
         currency={currency}

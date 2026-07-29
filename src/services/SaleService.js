@@ -58,7 +58,7 @@ class SaleService {
       `SELECT s.*, c.name as customer_name
        FROM sales s
        LEFT JOIN customers c ON s.customer_id = c.id
-       WHERE s.status = 'completed'
+       WHERE s.status IN ('completed', 'partial_return', 'returned')
        ORDER BY s.created_at DESC LIMIT $1`,
       [limit]
     );
@@ -137,20 +137,65 @@ class SaleService {
   }
 
   async getTodayTotal() {
-    const row = await queryOne(
-      `SELECT COALESCE(SUM(total), 0) as total FROM sales
-       WHERE status = 'completed' AND date(created_at) = date('now')`
-    );
-    return row?.total ?? 0;
+    const gross = await this.getTodayGrossSales();
+    const returns = await this.getTodayReturnsTotal();
+    return Math.max(0, gross - returns);
   }
 
-  async getMonthlyRevenue() {
+  async getTodayGrossSales() {
+    const row = await queryOne(
+      `SELECT COALESCE(SUM(total), 0) as total FROM sales
+       WHERE status IN ('completed', 'partial_return', 'returned')
+       AND date(created_at) = date('now')`
+    );
+    return Number(row?.total ?? 0);
+  }
+
+  async getTodayReturnsTotal() {
+    const row = await queryOne(
+      `SELECT COALESCE(SUM(total_refund), 0) as total FROM sale_returns
+       WHERE date(created_at) = date('now')`
+    );
+    return Number(row?.total ?? 0);
+  }
+
+  async getMonthlyReturnsTotal() {
+    const row = await queryOne(
+      `SELECT COALESCE(SUM(total_refund), 0) as total FROM sale_returns
+       WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`
+    );
+    return Number(row?.total ?? 0);
+  }
+
+  async getMonthlyGrossSales() {
     const row = await queryOne(
       `SELECT COALESCE(SUM(total), 0) as total FROM sales
        WHERE status IN ('completed', 'partial_return', 'returned')
        AND strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`
     );
-    return row?.total ?? 0;
+    return Number(row?.total ?? 0);
+  }
+
+  async getMonthlyRevenue() {
+    const gross = await this.getMonthlyGrossSales();
+    const returns = await this.getMonthlyReturnsTotal();
+    return Math.max(0, gross - returns);
+  }
+
+  async getRecentReturns(limit = 8) {
+    try {
+      return await query(
+        `SELECT sr.*, s.sale_number, c.name AS customer_name
+         FROM sale_returns sr
+         JOIN sales s ON s.id = sr.sale_id
+         LEFT JOIN customers c ON c.id = s.customer_id
+         ORDER BY sr.created_at DESC
+         LIMIT $1`,
+        [limit]
+      );
+    } catch {
+      return [];
+    }
   }
 
   _periodFilter(period) {

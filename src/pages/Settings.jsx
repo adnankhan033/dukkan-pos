@@ -5,7 +5,8 @@ import { settingsService } from "../services/SettingsService";
 import { backupService } from "../services/BackupService";
 import { useSettingsStore, useAuthStore } from "../contexts/store";
 import { useConfirm } from "../hooks/useConfirm";
-import { MODULES, moduleSettingKey } from "../utils/modules";
+import { MODULES, ADMIN_MODULES, moduleSettingKey, roleModuleSettingKey } from "../utils/modules";
+import { ROLES, ROLE_LABELS } from "../utils/roles";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import Modal from "../components/common/Modal";
@@ -51,6 +52,17 @@ function buildFormFromSettings(settings) {
     form[moduleSettingKey(mod.id)] = settingBool(settings[moduleSettingKey(mod.id)]);
   }
 
+  for (const mod of [...MODULES, ...ADMIN_MODULES]) {
+    form[roleModuleSettingKey(ROLES.ADMIN, mod.id)] = settingBool(
+      settings[roleModuleSettingKey(ROLES.ADMIN, mod.id)] ??
+        (mod.id === "users" || mod.id === "settings" ? "1" : "1")
+    );
+    form[roleModuleSettingKey(ROLES.CASHIER, mod.id)] = settingBool(
+      settings[roleModuleSettingKey(ROLES.CASHIER, mod.id)] ??
+        (["dashboard", "sales"].includes(mod.id) ? "1" : "0")
+    );
+  }
+
   return form;
 }
 
@@ -78,6 +90,18 @@ function formToSettings(form) {
   for (const mod of MODULES) {
     const key = moduleSettingKey(mod.id);
     payload[key] = form[key] ? "1" : "0";
+  }
+
+  for (const mod of [...MODULES, ...ADMIN_MODULES]) {
+    payload[roleModuleSettingKey(ROLES.ADMIN, mod.id)] = form[roleModuleSettingKey(ROLES.ADMIN, mod.id)]
+      ? "1"
+      : "0";
+    payload[roleModuleSettingKey(ROLES.CASHIER, mod.id)] =
+      mod.id === "users" || mod.id === "settings"
+        ? "0"
+        : form[roleModuleSettingKey(ROLES.CASHIER, mod.id)]
+          ? "1"
+          : "0";
   }
 
   return payload;
@@ -380,30 +404,82 @@ export default function Settings() {
         )}
 
         {tab === "modules" && (
-          <Card className="settings-card">
-            <h3 className="settings-section-title">Enable / Disable Modules</h3>
-            <p className="settings-section-desc">
-              Disabled modules are hidden from all users. Cashiers only see Sales and Dashboard by role.
-            </p>
-            <div className="settings-check-list">
-              {MODULES.map((mod) => {
-                const key = moduleSettingKey(mod.id);
-                return (
-                  <label key={mod.id} className="settings-check settings-check-block">
-                    <input
-                      type="checkbox"
-                      checked={form[key]}
-                      onChange={(e) => updateField(key, e.target.checked)}
-                    />
-                    <span>
-                      <strong>{mod.label}</strong>
-                      <small>{mod.description}</small>
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          </Card>
+          <>
+            <Card className="settings-card">
+              <h3 className="settings-section-title">Store Modules (Global)</h3>
+              <p className="settings-section-desc">
+                Turn modules on or off for the whole store. Disabled modules are hidden from every user.
+              </p>
+              <div className="settings-check-list">
+                {MODULES.map((mod) => {
+                  const key = moduleSettingKey(mod.id);
+                  return (
+                    <label key={mod.id} className="settings-check settings-check-block">
+                      <input
+                        type="checkbox"
+                        checked={form[key]}
+                        onChange={(e) => updateField(key, e.target.checked)}
+                      />
+                      <span>
+                        <strong>{mod.label}</strong>
+                        <small>{mod.description}</small>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </Card>
+
+            <Card className="settings-card">
+              <h3 className="settings-section-title">{ROLE_LABELS[ROLES.ADMIN]} — Menu Access</h3>
+              <p className="settings-section-desc">
+                Choose which menus administrators can see (when the module is enabled globally).
+              </p>
+              <div className="settings-check-list">
+                {[...MODULES, ...ADMIN_MODULES].map((mod) => {
+                  const key = roleModuleSettingKey(ROLES.ADMIN, mod.id);
+                  return (
+                    <label key={key} className="settings-check settings-check-block">
+                      <input
+                        type="checkbox"
+                        checked={form[key]}
+                        onChange={(e) => updateField(key, e.target.checked)}
+                      />
+                      <span>
+                        <strong>{mod.label}</strong>
+                        <small>{mod.description}</small>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </Card>
+
+            <Card className="settings-card">
+              <h3 className="settings-section-title">{ROLE_LABELS[ROLES.CASHIER]} — Menu Access</h3>
+              <p className="settings-section-desc">
+                Choose which menus cashiers can see. User Management and Settings are always admin-only.
+              </p>
+              <div className="settings-check-list">
+                {MODULES.map((mod) => {
+                  const key = roleModuleSettingKey(ROLES.CASHIER, mod.id);
+                  return (
+                    <label key={key} className="settings-check settings-check-block">
+                      <input
+                        type="checkbox"
+                        checked={form[key]}
+                        onChange={(e) => updateField(key, e.target.checked)}
+                      />
+                      <span>
+                        <strong>{mod.label}</strong>
+                        <small>{mod.description}</small>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </Card>
+          </>
         )}
 
         {tab === "dashboard" && (

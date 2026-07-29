@@ -149,7 +149,77 @@ async function runMigrations() {
   await ensureReturnTables();
   await ensureUnitsSchema();
   await ensureUsersAndExpensesSchema();
+  await ensureSupplierLedgerSchema();
+  await ensureCashierModuleDefaults();
   await ensureSettingsKeys();
+}
+
+async function ensureCashierModuleDefaults() {
+  const migrated = await query(
+    "SELECT value FROM settings WHERE key = '_cashier_reports_v1' LIMIT 1"
+  );
+  if (migrated.length > 0) return;
+
+  await execute(
+    "UPDATE settings SET value = '1' WHERE key = 'role_cashier_module_reports'"
+  );
+  await execute(
+    "INSERT INTO settings (key, value) VALUES ('_cashier_reports_v1', '1')"
+  );
+}
+
+async function ensureSupplierLedgerSchema() {
+  let purchaseCols = await query("PRAGMA table_info(purchases)");
+  const addPurchaseCol = async (name, ddl) => {
+    if (!purchaseCols.some((c) => c.name === name)) {
+      await execute(ddl);
+      purchaseCols = await query("PRAGMA table_info(purchases)");
+    }
+  };
+
+  await addPurchaseCol(
+    "purchase_type",
+    "ALTER TABLE purchases ADD COLUMN purchase_type TEXT DEFAULT 'market'"
+  );
+  await addPurchaseCol(
+    "payment_status",
+    "ALTER TABLE purchases ADD COLUMN payment_status TEXT DEFAULT 'paid'"
+  );
+  await addPurchaseCol(
+    "amount_paid",
+    "ALTER TABLE purchases ADD COLUMN amount_paid REAL DEFAULT 0"
+  );
+  await addPurchaseCol("due_date", "ALTER TABLE purchases ADD COLUMN due_date TEXT");
+
+  await execute(
+    `UPDATE purchases
+     SET payment_status = 'paid', amount_paid = total, purchase_type = COALESCE(purchase_type, 'market')
+     WHERE COALESCE(amount_paid, 0) = 0 AND total > 0 AND COALESCE(payment_status, 'paid') = 'paid'`
+  );
+
+  await execute(
+    `CREATE TABLE IF NOT EXISTS supplier_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      supplier_id INTEGER NOT NULL,
+      purchase_id INTEGER,
+      amount REAL NOT NULL,
+      payment_date TEXT NOT NULL,
+      notes TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (supplier_id) REFERENCES suppliers(id),
+      FOREIGN KEY (purchase_id) REFERENCES purchases(id)
+    )`
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_supplier_payments_supplier ON supplier_payments(supplier_id)"
+  );
+
+  const productCols = await query("PRAGMA table_info(products)");
+  if (!productCols.some((c) => c.name === "supplier_id")) {
+    await execute(
+      "ALTER TABLE products ADD COLUMN supplier_id INTEGER REFERENCES suppliers(id)"
+    );
+  }
 }
 
 async function ensureUsersAndExpensesSchema() {

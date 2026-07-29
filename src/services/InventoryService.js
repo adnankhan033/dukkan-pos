@@ -58,6 +58,7 @@ class InventoryService {
     if (!product) throw new Error("Product not found");
 
     const newQty = product.quantity + quantity;
+    const reason = referenceType === "return" ? "Return" : "Purchase";
     await execute(
       "UPDATE products SET quantity = $1, updated_at = datetime('now') WHERE id = $2",
       [newQty, productId]
@@ -65,7 +66,7 @@ class InventoryService {
     await execute(
       `INSERT INTO inventory (product_id, quantity_change, quantity_after, reason, reference_type, reference_id)
        VALUES ($1, $2, $3, $4, $5, $6)`,
-      [productId, quantity, newQty, "Purchase", referenceType, referenceId]
+      [productId, quantity, newQty, reason, referenceType, referenceId]
     );
   }
 

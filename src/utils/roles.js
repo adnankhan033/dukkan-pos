@@ -8,7 +8,7 @@ export const ROLE_LABELS = {
   [ROLES.CASHIER]: "Cashier",
 };
 
-/** Modules each role may access when enabled in settings. */
+/** Fallback when per-role settings are not saved yet. */
 export const ROLE_MODULES = {
   [ROLES.ADMIN]: [
     "dashboard",
@@ -22,7 +22,7 @@ export const ROLE_MODULES = {
     "users",
     "settings",
   ],
-  [ROLES.CASHIER]: ["dashboard", "sales"],
+  [ROLES.CASHIER]: ["dashboard", "sales", "reports"],
 };
 
 export function normalizeRole(role) {
@@ -32,18 +32,4 @@ export function normalizeRole(role) {
 
 export function isAdmin(user) {
   return normalizeRole(user?.role) === ROLES.ADMIN;
-}
-
-export function roleCanAccessModule(user, moduleId) {
-  if (!user || !moduleId) return false;
-  const role = normalizeRole(user.role);
-  const allowed = ROLE_MODULES[role] || [];
-  if (moduleId === "users" || moduleId === "settings") {
-    return role === ROLES.ADMIN;
-  }
-  return allowed.includes(moduleId);
-}
-
-export function getDefaultRouteForUser(user) {
-  return normalizeRole(user?.role) === ROLES.CASHIER ? "/sales" : "/";
 }

@@ -60,6 +60,9 @@ export default function Sidebar() {
     setExpanded((prev) => {
       const next = { ...prev };
       for (const group of visibleGroups) {
+        if (group.id === "sales") {
+          next.sales = true;
+        }
         if (group.items && groupHasActiveChild(group, pathname)) {
           next[group.id] = true;
         }

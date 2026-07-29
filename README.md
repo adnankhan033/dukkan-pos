@@ -16,5 +16,5 @@ This template should help get you started developing with Tauri and React in Vit
 Administrator (full access)
 Admin: admin / admin123
 
-Cashier
+# Cashier
 Cashier: cashier / cashier123
