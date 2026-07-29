@@ -1,11 +1,18 @@
 import { query, queryOne, execute, insert } from "../database/connection";
 
 const LIST_COLUMNS = `
-  p.id, p.name, p.name_ar, p.sku, p.barcode, p.category_id,
+  p.id, p.name, p.name_ar, p.sku, p.barcode, p.category_id, p.unit_id,
   p.cost_price, p.selling_price, p.quantity, p.min_stock, p.published,
   p.created_at, p.updated_at,
   CASE WHEN p.image IS NOT NULL AND p.image != '' THEN 1 ELSE 0 END AS has_image,
-  c.name AS category_name
+  c.name AS category_name,
+  u.name AS unit_name,
+  u.symbol AS unit_symbol
+`;
+
+const PRODUCT_JOINS = `
+  LEFT JOIN categories c ON p.category_id = c.id
+  LEFT JOIN units u ON p.unit_id = u.id
 `;
 
 class ProductService {
@@ -40,7 +47,7 @@ class ProductService {
       query(
         `SELECT ${LIST_COLUMNS}
          FROM products p
-         LEFT JOIN categories c ON p.category_id = c.id
+         ${PRODUCT_JOINS}
          ${where}
          ORDER BY p.name ASC
          LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
@@ -54,9 +61,9 @@ class ProductService {
   async getPosCatalog(limit = 500) {
     return query(
       `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity, p.category_id,
-              c.name AS category_name
+              c.name AS category_name, u.symbol AS unit_symbol
        FROM products p
-       LEFT JOIN categories c ON p.category_id = c.id
+       ${PRODUCT_JOINS}
        WHERE COALESCE(p.published, 1) = 1
        ORDER BY p.name ASC
        LIMIT $1`,
@@ -66,9 +73,10 @@ class ProductService {
 
   async getById(id) {
     return queryOne(
-      `SELECT p.*, c.name as category_name
+      `SELECT p.*, c.name as category_name, u.symbol AS unit_symbol
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
+       LEFT JOIN units u ON p.unit_id = u.id
        WHERE p.id = $1`,
       [Number(id)]
     );
@@ -81,17 +89,24 @@ class ProductService {
     );
   }
 
+  async resolveUnitId(unitId) {
+    if (unitId == null || unitId === "") return null;
+    return Number(unitId);
+  }
+
   async create(data) {
     const published = data.published === false || data.published === 0 ? 0 : 1;
+    const unitId = await this.resolveUnitId(data.unit_id);
     const id = await insert(
-      `INSERT INTO products (name, name_ar, sku, barcode, category_id, cost_price, selling_price, quantity, min_stock, image, published)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+      `INSERT INTO products (name, name_ar, sku, barcode, category_id, unit_id, cost_price, selling_price, quantity, min_stock, image, published)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
       [
         data.name,
         data.name_ar || null,
         data.sku || null,
         data.barcode || null,
         data.category_id || null,
+        unitId,
         Number(data.cost_price) || 0,
         Number(data.selling_price) || 0,
         Number(data.quantity) || 0,
@@ -113,20 +128,22 @@ class ProductService {
   async update(id, data) {
     const published = data.published === false || data.published === 0 ? 0 : 1;
     const numId = Number(id);
+    const unitId = await this.resolveUnitId(data.unit_id);
 
     if (data.image !== undefined) {
       await execute(
         `UPDATE products SET
-          name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5,
-          cost_price = $6, selling_price = $7, quantity = $8, min_stock = $9,
-          published = $10, image = $11, updated_at = datetime('now')
-         WHERE id = $12`,
+          name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5, unit_id = $6,
+          cost_price = $7, selling_price = $8, quantity = $9, min_stock = $10,
+          published = $11, image = $12, updated_at = datetime('now')
+         WHERE id = $13`,
         [
           data.name,
           data.name_ar || null,
           data.sku || null,
           data.barcode || null,
           data.category_id || null,
+          unitId,
           Number(data.cost_price) || 0,
           Number(data.selling_price) || 0,
           Number(data.quantity) || 0,
@@ -139,16 +156,17 @@ class ProductService {
     } else {
       await execute(
         `UPDATE products SET
-          name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5,
-          cost_price = $6, selling_price = $7, quantity = $8, min_stock = $9,
-          published = $10, updated_at = datetime('now')
-         WHERE id = $11`,
+          name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5, unit_id = $6,
+          cost_price = $7, selling_price = $8, quantity = $9, min_stock = $10,
+          published = $11, updated_at = datetime('now')
+         WHERE id = $12`,
         [
           data.name,
           data.name_ar || null,
           data.sku || null,
           data.barcode || null,
           data.category_id || null,
+          unitId,
           Number(data.cost_price) || 0,
           Number(data.selling_price) || 0,
           Number(data.quantity) || 0,
@@ -215,9 +233,10 @@ class ProductService {
 
   async getLowStock() {
     return query(
-      `SELECT p.*, c.name as category_name
+      `SELECT p.*, c.name as category_name, u.symbol AS unit_symbol
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
+       LEFT JOIN units u ON p.unit_id = u.id
        WHERE p.quantity <= p.min_stock AND COALESCE(p.published, 1) = 1
        ORDER BY p.quantity ASC`
     );
@@ -226,9 +245,10 @@ class ProductService {
   async searchForPos(term) {
     const like = `%${term}%`;
     return query(
-      `SELECT p.*, c.name as category_name
+      `SELECT p.*, c.name as category_name, u.symbol AS unit_symbol
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
+       LEFT JOIN units u ON p.unit_id = u.id
        WHERE COALESCE(p.published, 1) = 1
        AND (p.name LIKE $1 OR p.name_ar LIKE $1 OR p.sku LIKE $1 OR p.barcode LIKE $1)
        ORDER BY p.name ASC LIMIT 20`,

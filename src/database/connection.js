@@ -3,6 +3,7 @@ import { DB_NAME } from "../utils/constants";
 import { SCHEMA_STATEMENTS } from "./schema";
 import bcrypt from "bcryptjs";
 import { DEFAULT_SETTINGS } from "../utils/constants";
+import { DEFAULT_UNITS } from "../utils/defaultUnits";
 
 let dbInstance = null;
 let dbConfigured = false;
@@ -113,6 +114,47 @@ async function runMigrations() {
   }
 
   await ensureReturnTables();
+  await ensureUnitsSchema();
+}
+
+async function ensureUnitsSchema() {
+  await execute(
+    `CREATE TABLE IF NOT EXISTS units (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      symbol TEXT NOT NULL UNIQUE,
+      example TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`
+  );
+
+  let cols = await getProductColumns();
+  if (!cols.some((c) => c.name === "unit_id")) {
+    await execute("ALTER TABLE products ADD COLUMN unit_id INTEGER REFERENCES units(id)");
+  }
+
+  await execute("CREATE INDEX IF NOT EXISTS idx_products_unit ON products(unit_id)");
+
+  const unitCount = await queryOne("SELECT COUNT(*) AS count FROM units");
+  if (Number(unitCount?.count ?? 0) === 0) {
+    for (const unit of DEFAULT_UNITS) {
+      await execute(
+        "INSERT INTO units (name, symbol, example) VALUES ($1, $2, $3)",
+        [unit.name, unit.symbol, unit.example]
+      );
+    }
+  }
+
+  const defaultUnit = await queryOne(
+    "SELECT id FROM units WHERE lower(trim(symbol)) = 'pcs' LIMIT 1"
+  );
+  if (defaultUnit?.id) {
+    await execute(
+      "UPDATE products SET unit_id = $1 WHERE unit_id IS NULL",
+      [defaultUnit.id]
+    );
+  }
 }
 
 async function ensureReturnTables() {

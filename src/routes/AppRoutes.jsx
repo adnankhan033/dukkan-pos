@@ -6,6 +6,7 @@ import Login from "../pages/Login";
 import Dashboard from "../pages/Dashboard";
 import Products from "../pages/Products";
 import Categories from "../pages/Categories";
+import Units from "../pages/Units";
 import Customers from "../pages/Customers";
 import Suppliers from "../pages/Suppliers";
 import Sales from "../pages/Sales";
@@ -33,6 +34,7 @@ export default function AppRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/products" element={<Products />} />
         <Route path="/categories" element={<Categories />} />
+        <Route path="/units" element={<Units />} />
         <Route path="/customers" element={<Customers />} />
         <Route path="/suppliers" element={<Suppliers />} />
         <Route path="/sales" element={<Sales />} />

@@ -1,0 +1,31 @@
+/** Default measurement units seeded on first run. */
+export const DEFAULT_UNITS = [
+  { name: "Piece", symbol: "pcs", example: "Biscuit, Chocolate" },
+  { name: "Unit", symbol: "unit", example: "Toothbrush" },
+  { name: "Kilogram", symbol: "kg", example: "Rice, Sugar" },
+  { name: "Gram", symbol: "g", example: "Spices" },
+  { name: "Liter", symbol: "L", example: "Milk, Oil" },
+  { name: "Milliliter", symbol: "ml", example: "Juice" },
+  { name: "Packet", symbol: "pkt", example: "Chips" },
+  { name: "Pack", symbol: "pack", example: "Water bottles" },
+  { name: "Box", symbol: "box", example: "Tea bags" },
+  { name: "Carton", symbol: "carton", example: "Milk cartons" },
+  { name: "Bottle", symbol: "bottle", example: "Soft drinks" },
+  { name: "Can", symbol: "can", example: "Pepsi" },
+  { name: "Jar", symbol: "jar", example: "Honey" },
+  { name: "Bag", symbol: "bag", example: "Flour" },
+  { name: "Sack", symbol: "sack", example: "Rice 25kg" },
+  { name: "Roll", symbol: "roll", example: "Tissue paper" },
+  { name: "Dozen", symbol: "doz", example: "Eggs" },
+  { name: "Pair", symbol: "pair", example: "Gloves" },
+  { name: "Bundle", symbol: "bundle", example: "Coriander" },
+  { name: "Tray", symbol: "tray", example: "Eggs" },
+  { name: "Tube", symbol: "tube", example: "Toothpaste" },
+  { name: "Cup", symbol: "cup", example: "Yogurt" },
+  { name: "Bucket", symbol: "bucket", example: "Paint/Cleaning" },
+  { name: "Meter", symbol: "m", example: "Plastic wrap" },
+  { name: "Cotton", symbol: "cotton", example: "Cotton rolls" },
+  { name: "Sheet", symbol: "sheet", example: "Foil paper" },
+];
+
+export const DEFAULT_UNIT_SYMBOL = "pcs";

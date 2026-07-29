@@ -1,3 +1,9 @@
+export function formatQuantity(qty, symbol = "pcs") {
+  const value = Number(qty) || 0;
+  const unit = symbol?.trim() || "pcs";
+  return `${value} ${unit}`;
+}
+
 export function formatCurrency(amount, currency = "SAR") {
   const value = Number(amount) || 0;
   return `${value.toFixed(2)} ${currency}`;

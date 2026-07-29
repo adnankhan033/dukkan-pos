@@ -17,6 +17,15 @@ export const SCHEMA_STATEMENTS = [
     updated_at TEXT DEFAULT (datetime('now'))
   )`,
 
+  `CREATE TABLE IF NOT EXISTS units (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    symbol TEXT NOT NULL UNIQUE,
+    example TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+
   `CREATE TABLE IF NOT EXISTS products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -24,6 +33,7 @@ export const SCHEMA_STATEMENTS = [
     sku TEXT,
     barcode TEXT,
     category_id INTEGER,
+    unit_id INTEGER,
     cost_price REAL DEFAULT 0,
     selling_price REAL DEFAULT 0,
     quantity INTEGER DEFAULT 0,
@@ -32,7 +42,8 @@ export const SCHEMA_STATEMENTS = [
     published INTEGER NOT NULL DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (category_id) REFERENCES categories(id)
+    FOREIGN KEY (category_id) REFERENCES categories(id),
+    FOREIGN KEY (unit_id) REFERENCES units(id)
   )`,
 
   `CREATE TABLE IF NOT EXISTS customers (
@@ -170,6 +181,7 @@ export const SCHEMA_STATEMENTS = [
   )`,
 
   `CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_products_unit ON products(unit_id)`,
   `CREATE INDEX IF NOT EXISTS idx_products_barcode ON products(barcode)`,
   `CREATE INDEX IF NOT EXISTS idx_products_sku ON products(sku)`,
   `CREATE INDEX IF NOT EXISTS idx_sales_created ON sales(created_at)`,

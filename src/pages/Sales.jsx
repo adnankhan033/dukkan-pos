@@ -21,7 +21,7 @@ import SaleCompleteModal from "../components/sales/SaleCompleteModal";
 import SaleReturnModal from "../components/sales/SaleReturnModal";
 import ProductBilingualName from "../components/products/ProductBilingualName";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
-import { formatCurrency, calcVat, calcGrandTotal } from "../utils/format";
+import { formatCurrency, calcVat, calcGrandTotal, formatQuantity } from "../utils/format";
 import { printReceipt } from "../utils/receipt";
 import { PAYMENT_METHODS, SALE_STATUS } from "../utils/constants";
 import "./Sales.css";
@@ -113,6 +113,7 @@ export default function Sales() {
           product_id: product.id,
           name: product.name,
           name_ar: product.name_ar || "",
+          unit_symbol: product.unit_symbol || "pcs",
           unit_price: product.selling_price,
           quantity: 1,
           discount: 0,
@@ -369,7 +370,8 @@ export default function Sales() {
                 />
                 <div className="pos-product-price">{formatCurrency(p.selling_price, currency)}</div>
                 <div className="pos-product-stock">
-                  Stock: {p.quantity}{p.quantity <= 0 ? " (oversell OK)" : ""}
+                  Stock: {formatQuantity(p.quantity, p.unit_symbol)}
+                  {p.quantity <= 0 ? " (oversell OK)" : ""}
                 </div>
               </div>
             ))}
@@ -412,7 +414,7 @@ export default function Sales() {
                         <Button variant="ghost" size="sm" className="btn-icon" onClick={() => updateQty(item.product_id, -1)}>
                           <Minus size={14} />
                         </Button>
-                        <span>{item.quantity}</span>
+                        <span>{formatQuantity(item.quantity, item.unit_symbol)}</span>
                         <Button variant="ghost" size="sm" className="btn-icon" onClick={() => updateQty(item.product_id, 1)}>
                           <Plus size={14} />
                         </Button>

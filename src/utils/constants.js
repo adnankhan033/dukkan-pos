@@ -48,6 +48,7 @@ export const NAV_ITEMS = [
   { path: "/customers", label: "Customers", icon: "Users" },
   { path: "/suppliers", label: "Suppliers", icon: "Building2" },
   { path: "/categories", label: "Categories", icon: "Tags" },
+  { path: "/units", label: "Units", icon: "Ruler" },
   { path: "/expenses", label: "Expenses", icon: "Receipt" },
   { path: "/reports", label: "Reports", icon: "BarChart3" },
   { path: "/settings", label: "Settings", icon: "Settings" },
