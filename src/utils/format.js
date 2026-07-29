@@ -11,6 +11,17 @@ export function formatCurrency(amount, currency = "SAR") {
 
 export function formatDate(dateStr) {
   if (!dateStr) return "-";
+  const raw = String(dateStr).trim();
+  if (/^\d{4}-\d{2}-\d{2}(?: |T|$)/.test(raw)) {
+    const datePart = raw.slice(0, 10);
+    const [year, month, day] = datePart.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  }
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) return dateStr;
   return date.toLocaleDateString("en-GB", {
@@ -22,6 +33,20 @@ export function formatDate(dateStr) {
 
 export function formatDateTime(dateStr) {
   if (!dateStr) return "-";
+  const raw = String(dateStr).trim();
+  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(raw)) {
+    const [datePart, timePart] = raw.split(" ");
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [h, m] = timePart.split(":").map(Number);
+    const date = new Date(year, month - 1, day, h, m);
+    return date.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) return dateStr;
   return date.toLocaleString("en-GB", {
@@ -33,8 +58,26 @@ export function formatDateTime(dateStr) {
   });
 }
 
-export function todayISO() {
-  return new Date().toISOString().split("T")[0];
+/** Local calendar date as YYYY-MM-DD (avoids UTC shift from toISOString). */
+export function localDateISO(date = new Date()) {
+  const d = date instanceof Date ? date : new Date(date);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Local date and time as YYYY-MM-DD HH:mm:ss. */
+export function localDateTimeISO(date = new Date()) {
+  const d = date instanceof Date ? date : new Date(date);
+  const h = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  const s = String(d.getSeconds()).padStart(2, "0");
+  return `${localDateISO(d)} ${h}:${min}:${s}`;
+}
+
+export function todayISO(date) {
+  return localDateISO(date ?? new Date());
 }
 
 /** Date range for expense/accounting period filters. */
@@ -73,12 +116,12 @@ export function getPeriodDateRange(period, referenceDate = new Date()) {
 }
 
 function todayISOFromDate(date) {
-  return date.toISOString().split("T")[0];
+  return localDateISO(date);
 }
 
-export function startOfMonthISO() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+export function startOfMonthISO(referenceDate = new Date()) {
+  const ref = referenceDate instanceof Date ? referenceDate : new Date(referenceDate);
+  return localDateISO(new Date(ref.getFullYear(), ref.getMonth(), 1));
 }
 
 export function generateNumber(prefix) {

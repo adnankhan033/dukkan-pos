@@ -1,7 +1,7 @@
 import { query, queryOne, execute, insert } from "../database/connection";
 import { getPeriodDateRange } from "../utils/format";
 
-function buildExpenseFilters({ period, dateFrom, dateTo, category, search }) {
+function buildExpenseFilters({ period, dateFrom, dateTo, category, search, referenceDate }) {
   const conditions = [];
   const params = [];
 
@@ -19,7 +19,7 @@ function buildExpenseFilters({ period, dateFrom, dateTo, category, search }) {
   let to = dateTo;
 
   if (period && period !== "all") {
-    const range = getPeriodDateRange(period);
+    const range = getPeriodDateRange(period, referenceDate || new Date());
     from = range.from;
     to = range.to;
   }
@@ -46,6 +46,7 @@ class ExpenseService {
     dateTo = null,
     category = "all",
     search = "",
+    referenceDate = null,
   } = {}) {
     const { where, params } = buildExpenseFilters({
       period,
@@ -53,6 +54,7 @@ class ExpenseService {
       dateTo,
       category,
       search,
+      referenceDate,
     });
 
     const countRow = await queryOne(
@@ -77,6 +79,7 @@ class ExpenseService {
     dateTo = null,
     category = "all",
     search = "",
+    referenceDate = null,
   } = {}) {
     const { where, params } = buildExpenseFilters({
       period,
@@ -84,6 +87,7 @@ class ExpenseService {
       dateTo,
       category,
       search,
+      referenceDate,
     });
 
     const totalRow = await queryOne(

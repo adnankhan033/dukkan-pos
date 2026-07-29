@@ -2,6 +2,16 @@
   margin-bottom: 1.25rem;
 }
 
+.accounting-business-date {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  margin: -0.5rem 0 1rem;
+}
+
+.accounting-business-date strong {
+  color: var(--color-text);
+}
+
 .period-tabs {
   display: flex;
   flex-wrap: wrap;

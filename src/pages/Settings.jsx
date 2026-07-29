@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Download, RotateCcw, Trash2 } from "lucide-react";
 import { settingsService } from "../services/SettingsService";
@@ -15,6 +15,8 @@ import { Input, Textarea, Select } from "../components/common/Input";
 import { Alert } from "../components/common/Loading";
 import ReceiptPreview from "../components/settings/ReceiptPreview";
 import { DEFAULT_RECEIPT_TEMPLATE } from "../utils/receiptTemplates";
+import { DEFAULT_BUSINESS_TIMEZONE, BUSINESS_TIMEZONES } from "../utils/timezones";
+import { getBusinessDateTimeLabelFromForm } from "../utils/businessDate";
 import "./Settings.css";
 
 const TABS = [
@@ -46,6 +48,9 @@ function buildFormFromSettings(settings) {
     receipt_paper_width: settings.receipt_paper_width || "80",
     receipt_header_note: settings.receipt_header_note || "",
     receipt_template: settings.receipt_template || DEFAULT_RECEIPT_TEMPLATE,
+    business_timezone: settings.business_timezone || DEFAULT_BUSINESS_TIMEZONE,
+    business_date_override: settings.business_date_override || "",
+    business_time_override: settings.business_time_override || "",
     dashboard_admin_show_profit: settingBool(settings.dashboard_admin_show_profit),
     dashboard_admin_show_purchases: settingBool(settings.dashboard_admin_show_purchases),
     dashboard_cashier_show_recent: settingBool(settings.dashboard_cashier_show_recent),
@@ -86,6 +91,9 @@ function formToSettings(form) {
     receipt_paper_width: form.receipt_paper_width,
     receipt_header_note: form.receipt_header_note,
     receipt_template: form.receipt_template || DEFAULT_RECEIPT_TEMPLATE,
+    business_timezone: form.business_timezone || DEFAULT_BUSINESS_TIMEZONE,
+    business_date_override: form.business_date_override || "",
+    business_time_override: form.business_time_override || "",
     dashboard_admin_show_profit: form.dashboard_admin_show_profit ? "1" : "0",
     dashboard_admin_show_purchases: form.dashboard_admin_show_purchases ? "1" : "0",
     dashboard_cashier_show_recent: form.dashboard_cashier_show_recent ? "1" : "0",
@@ -128,6 +136,15 @@ export default function Settings() {
   function updateField(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
+
+  const [clockTick, setClockTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setClockTick((t) => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  const businessTimePreview = getBusinessDateTimeLabelFromForm(form);
+  void clockTick;
 
   async function handleSave(e) {
     e.preventDefault();
@@ -360,6 +377,52 @@ export default function Settings() {
               <div className="form-row" style={{ marginTop: "1rem" }}>
                 <Input label="VAT %" type="number" step="0.01" value={form.vat_percent} onChange={(e) => updateField("vat_percent", e.target.value)} />
                 <Input label="Currency" value={form.currency} onChange={(e) => updateField("currency", e.target.value)} />
+              </div>
+            </Card>
+            <Card className="settings-card">
+              <h3 className="settings-section-title">Business Region & Time</h3>
+              <p className="settings-section-desc">
+                Select your store region. Accounting filters (Today, Week, Month) and default expense dates
+                use this timezone automatically — no toggle needed.
+              </p>
+              <Select
+                label="Region / timezone"
+                value={form.business_timezone}
+                onChange={(e) => updateField("business_timezone", e.target.value)}
+              >
+                {BUSINESS_TIMEZONES.map((tz) => (
+                  <option key={tz.id} value={tz.id}>
+                    {tz.label}
+                    {tz.default ? " (Default)" : ""}
+                  </option>
+                ))}
+              </Select>
+              <div className="business-time-live">
+                <div className="business-time-live-label">Current business time</div>
+                <div className="business-time-live-value">{businessTimePreview.datetime}</div>
+                <div className="business-time-live-region" dir="rtl">
+                  {businessTimePreview.regionAr}
+                </div>
+                {businessTimePreview.isOverride && (
+                  <div className="business-time-live-note">Using fixed date below (not live clock)</div>
+                )}
+              </div>
+              <p className="settings-section-desc" style={{ marginTop: "1rem" }}>
+                Optional: set a fixed date/time for new expense records (leave empty to always use live region time).
+              </p>
+              <div className="form-row">
+                <Input
+                  label="Fixed date (optional)"
+                  type="date"
+                  value={form.business_date_override}
+                  onChange={(e) => updateField("business_date_override", e.target.value)}
+                />
+                <Input
+                  label="Fixed time (optional)"
+                  type="time"
+                  value={form.business_time_override}
+                  onChange={(e) => updateField("business_time_override", e.target.value)}
+                />
               </div>
             </Card>
             <Card className="settings-card">

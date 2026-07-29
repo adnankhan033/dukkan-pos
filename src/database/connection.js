@@ -178,6 +178,15 @@ async function ensureReceiptTemplateDefault() {
       "INSERT INTO settings (key, value) VALUES ('receipt_template', 'baqala')"
     );
   }
+
+  const tzRow = await queryOne(
+    "SELECT value FROM settings WHERE key = 'business_timezone' LIMIT 1"
+  );
+  if (!tzRow) {
+    await execute(
+      "INSERT INTO settings (key, value) VALUES ('business_timezone', 'Asia/Riyadh')"
+    );
+  }
 }
 
 async function ensureSupplierLedgerSchema() {

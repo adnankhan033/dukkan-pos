@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { expenseService } from "../services/ExpenseService";
 import { useSettingsStore } from "../contexts/store";
@@ -8,6 +8,13 @@ import {
   EXPENSE_CATEGORIES,
   EXPENSE_PERIODS,
 } from "../utils/constants";
+import {
+  getBusinessDateTime,
+  getBusinessDateTimeLabel,
+  defaultExpenseDateTimeLocal,
+  toDateTimeLocalValue,
+  fromDateTimeLocalValue,
+} from "../utils/businessDate";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import SearchBar from "../components/common/SearchBar";
@@ -17,18 +24,10 @@ import Modal from "../components/common/Modal";
 import { Input, Select, Textarea } from "../components/common/Input";
 import { StatCard } from "../components/common/Card";
 import { LoadingSpinner } from "../components/common/Loading";
-import { formatCurrency, formatDate, todayISO } from "../utils/format";
+import { formatCurrency, formatDateTime } from "../utils/format";
 import { required, positiveNumber, runFormValidation } from "../utils/validation";
 import FormValidationAlert from "../components/common/FormValidationAlert";
 import "./Accounting.css";
-
-const emptyForm = {
-  name: "",
-  category: "other",
-  amount: "",
-  expense_date: todayISO(),
-  notes: "",
-};
 
 const FORM_ID = "expense-form";
 
@@ -36,29 +35,64 @@ function categoryLabel(id) {
   return EXPENSE_CATEGORIES.find((c) => c.id === id)?.label || id;
 }
 
+function buildEmptyForm(settings) {
+  return {
+    name: "",
+    category: "other",
+    amount: "",
+    expense_datetime: defaultExpenseDateTimeLocal(settings),
+    notes: "",
+  };
+}
+
 export default function Accounting() {
   const { submitting, guard } = useSubmitGuard();
-  const currency = useSettingsStore((s) => s.settings.currency) || "SAR";
+  const settings = useSettingsStore((s) => s.settings);
+  const currency = settings.currency || "SAR";
+  const [clockTick, setClockTick] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setClockTick((t) => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  const businessNow = useMemo(() => {
+    void clockTick;
+    return getBusinessDateTime(settings);
+  }, [settings, clockTick]);
+
+  const businessLabel = useMemo(() => {
+    void clockTick;
+    return getBusinessDateTimeLabel(settings);
+  }, [settings, clockTick]);
+
   const [expenses, setExpenses] = useState([]);
   const [summary, setSummary] = useState({ total: 0, count: 0, byCategory: [] });
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
-  const [period, setPeriod] = useState(EXPENSE_PERIODS.MONTHLY);
+  const [period, setPeriod] = useState(EXPENSE_PERIODS.DAILY);
   const [category, setCategory] = useState("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(() => buildEmptyForm(settings));
   const [errors, setErrors] = useState({});
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const filters = { period, category, search, page, limit: ITEMS_PER_PAGE };
+      const filters = {
+        period,
+        category,
+        search,
+        page,
+        limit: ITEMS_PER_PAGE,
+        referenceDate: businessNow,
+      };
       const [result, summaryData] = await Promise.all([
         expenseService.getAll(filters),
-        expenseService.getSummary({ period, category, search }),
+        expenseService.getSummary(filters),
       ]);
       setExpenses(result.items);
       setTotal(result.total);
@@ -66,7 +100,7 @@ export default function Accounting() {
     } finally {
       setLoading(false);
     }
-  }, [page, period, category, search]);
+  }, [page, period, category, search, businessNow]);
 
   useEffect(() => {
     load();
@@ -74,7 +108,7 @@ export default function Accounting() {
 
   function openCreate() {
     setEditing(null);
-    setForm({ ...emptyForm, expense_date: todayISO() });
+    setForm(buildEmptyForm(settings));
     setErrors({});
     setModalOpen(true);
   }
@@ -85,7 +119,7 @@ export default function Accounting() {
       name: e.name,
       category: e.category || "other",
       amount: String(e.amount),
-      expense_date: e.expense_date,
+      expense_datetime: toDateTimeLocalValue(e.expense_date, settings),
       notes: e.notes || "",
     });
     setErrors({});
@@ -103,17 +137,25 @@ export default function Accounting() {
     const validation = runFormValidation({
       name: required(form.name, "Name"),
       amount: positiveNumber(form.amount, "Amount"),
-      expense_date: required(form.expense_date, "Date"),
+      expense_datetime: required(form.expense_datetime, "Date & time"),
     });
     if (!validation.isValid) {
       setErrors(validation.errors);
       return;
     }
 
+    const payload = {
+      name: form.name,
+      category: form.category,
+      amount: form.amount,
+      expense_date: fromDateTimeLocalValue(form.expense_datetime),
+      notes: form.notes,
+    };
+
     try {
       await guard(async () => {
-        if (editing) await expenseService.update(editing.id, form);
-        else await expenseService.create(form);
+        if (editing) await expenseService.update(editing.id, payload);
+        else await expenseService.create(payload);
         setModalOpen(false);
         setErrors({});
         load();
@@ -131,7 +173,7 @@ export default function Accounting() {
       render: (r) => categoryLabel(r.category || "other"),
     },
     { key: "amount", label: "Amount", render: (r) => formatCurrency(r.amount, currency) },
-    { key: "expense_date", label: "Date", render: (r) => formatDate(r.expense_date) },
+    { key: "expense_date", label: "Date & time", render: (r) => formatDateTime(r.expense_date) },
     { key: "notes", label: "Notes", render: (r) => r.notes || "-" },
     {
       key: "actions",
@@ -149,6 +191,8 @@ export default function Accounting() {
     },
   ];
 
+  const businessTimeLabel = businessLabel.datetime;
+
   return (
     <div>
       <PageHeader
@@ -161,6 +205,13 @@ export default function Accounting() {
         }
       />
 
+      <p className="accounting-business-date">
+        Region: <strong>{businessLabel.region}</strong>
+        {" · "}
+        Business time: <strong>{businessTimeLabel}</strong>
+        {businessLabel.isOverride ? " (fixed date in settings)" : " (live)"}
+      </p>
+
       <div className="accounting-filters">
         <div className="period-tabs">
           {Object.entries(EXPENSE_PERIODS).map(([key, value]) => (
@@ -168,7 +219,10 @@ export default function Accounting() {
               key={key}
               type="button"
               className={`period-tab ${period === value ? "active" : ""}`}
-              onClick={() => { setPeriod(value); setPage(1); }}
+              onClick={() => {
+                setPeriod(value);
+                setPage(1);
+              }}
             >
               {key.charAt(0) + key.slice(1).toLowerCase()}
             </button>
@@ -177,17 +231,25 @@ export default function Accounting() {
         <div className="accounting-filter-row">
           <SearchBar
             value={search}
-            onChange={(v) => { setSearch(v); setPage(1); }}
+            onChange={(v) => {
+              setSearch(v);
+              setPage(1);
+            }}
             placeholder="Search expenses..."
           />
           <Select
             value={category}
-            onChange={(e) => { setCategory(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setPage(1);
+            }}
             style={{ maxWidth: "220px" }}
           >
             <option value="all">All Categories</option>
             {EXPENSE_CATEGORIES.map((c) => (
-              <option key={c.id} value={c.id}>{c.label}</option>
+              <option key={c.id} value={c.id}>
+                {c.label}
+              </option>
             ))}
           </Select>
         </div>
@@ -254,7 +316,9 @@ export default function Accounting() {
               onChange={(e) => setForm({ ...form, category: e.target.value })}
             >
               {EXPENSE_CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>{c.label}</option>
+                <option key={c.id} value={c.id}>
+                  {c.label}
+                </option>
               ))}
             </Select>
             <Input
@@ -267,11 +331,11 @@ export default function Accounting() {
               error={errors.amount}
             />
             <Input
-              label="Date *"
-              type="date"
-              value={form.expense_date}
-              onChange={(e) => setForm({ ...form, expense_date: e.target.value })}
-              error={errors.expense_date}
+              label="Date & time *"
+              type="datetime-local"
+              value={form.expense_datetime}
+              onChange={(e) => setForm({ ...form, expense_datetime: e.target.value })}
+              error={errors.expense_datetime}
             />
           </div>
           <div style={{ marginTop: "1rem" }}>
