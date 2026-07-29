@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "build:mac-dmg": "tauri build --bundles dmg",
     "build:win-exe": "tauri build --bundles nsis",
+    "package:mac-dmg": "mkdir -p releases && cp \"src-tauri/target/release/bundle/dmg/\"*.dmg releases/",
     "package:win-zip": "powershell -Command \"Compress-Archive -Path src-tauri/target/release/bundle/nsis/*-setup.exe -DestinationPath Portal-POS-Windows.zip -Force\""
   },
   "dependencies": {
