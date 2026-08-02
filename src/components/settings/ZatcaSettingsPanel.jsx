@@ -9,15 +9,24 @@ import {
   ZATCA_ENVIRONMENTS,
   ZATCA_ENVIRONMENT_LABELS,
   ZATCA_SETTING_KEYS as K,
+  ZATCA_QUEUE_STATUS_LABELS,
+  ZATCA_SYNC_SETTINGS,
+  ZATCA_SYNC_INTERVAL_MS,
 } from "../../zatca/core/constants";
 import { ZATCA_ENVIRONMENT_CONFIG } from "../../zatca/core/environments";
 import { zatcaService } from "../../services/ZatcaService";
+import { zatcaSyncService } from "../../zatca/sync/ZatcaSyncService";
 import { zatcaInvoiceRepository } from "../../zatca/repositories/ZatcaInvoiceRepository";
 import { settingsService } from "../../services/SettingsService";
 import { useSettingsStore } from "../../contexts/store";
+import { validateZatcaCertificate } from "../../zatca/testing/certificateValidator";
+import { buildSyncContext } from "../../zatca/sync/syncRouter";
+import { parseZatcaConfig } from "../../zatca/core/config";
+import { isOnline } from "../../zatca/sync/networkMonitor";
 import { ensurePrivateKey } from "../../zatca/onboarding/ensurePrivateKey";
 import { isValidPrivateKeyPem } from "../../zatca/onboarding/keyGenerator";
 import { generateZatcaCsr, csrPemToBase64 } from "../../zatca/onboarding/csrGenerator";
+import ZatcaOnboardingWizard from "./ZatcaOnboardingWizard";
 
 function SensitiveField({ label, value, onChange, rows = 4, placeholder }) {
   const [visible, setVisible] = useState(false);
@@ -59,6 +68,16 @@ export default function ZatcaSettingsPanel({ form, updateField, baseSettings }) 
   const [csrBase64, setCsrBase64] = useState("");
   const [generatingCsr, setGeneratingCsr] = useState(false);
   const [copyLabel, setCopyLabel] = useState("");
+  const [queueStats, setQueueStats] = useState(null);
+  const [certCheck, setCertCheck] = useState(null);
+  const [checkingCert, setCheckingCert] = useState(false);
+  const [connectionTest, setConnectionTest] = useState(null);
+  const [testingConnection, setTestingConnection] = useState(false);
+
+  useEffect(() => {
+    if (form[K.ACTIVE_PHASE] !== ZATCA_PHASES.PHASE2) return;
+    zatcaService.getQueueStats().then(setQueueStats).catch(() => {});
+  }, [form[K.ACTIVE_PHASE]]);
 
   useEffect(() => {
     let cancelled = false;
@@ -170,14 +189,92 @@ export default function ZatcaSettingsPanel({ form, updateField, baseSettings }) 
     setTimeout(() => setCopyLabel(""), 2000);
   }
 
+  async function runCertificateCheck() {
+    setCheckingCert(true);
+    setCertCheck(null);
+    try {
+      const result = await validateZatcaCertificate({
+        certificate: form[K.CERTIFICATE],
+        privateKey: form[K.PRIVATE_KEY],
+        deviceId: form[K.DEVICE_ID] || form[K.DEVICE_SERIAL],
+        complianceCsid: form[K.COMPLIANCE_CSID],
+      });
+      setCertCheck(result);
+    } catch (err) {
+      setCertCheck({
+        passed: false,
+        summary: err.message || "Certificate check failed.",
+        results: [],
+      });
+    } finally {
+      setCheckingCert(false);
+    }
+  }
+
+  async function runConnectionTest() {
+    setTestingConnection(true);
+    setConnectionTest(null);
+    try {
+      const config = parseZatcaConfig(mergedSettings);
+      const context = buildSyncContext(config);
+      const online = isOnline();
+      const certResult = await validateZatcaCertificate({
+        certificate: form[K.CERTIFICATE],
+        privateKey: form[K.PRIVATE_KEY],
+        deviceId: form[K.DEVICE_ID] || form[K.DEVICE_SERIAL],
+        complianceCsid: form[K.COMPLIANCE_CSID],
+      });
+
+      const checks = [
+        {
+          label: "Internet connection",
+          passed: online,
+          message: online ? "Device is online." : "Offline — sales still work; sync waits for connectivity.",
+        },
+        {
+          label: "Sync credentials",
+          passed: context.ready,
+          message: context.message,
+        },
+        {
+          label: "Certificate valid",
+          passed: certResult.passed,
+          message: certResult.summary,
+        },
+      ];
+
+      setConnectionTest({
+        passed: checks.every((c) => c.passed),
+        checks,
+        destination: context.destinationSummary,
+        targetApi: context.targetApiUrl,
+      });
+    } catch (err) {
+      setConnectionTest({
+        passed: false,
+        checks: [{ label: "Connection test", passed: false, message: err.message }],
+      });
+    } finally {
+      setTestingConnection(false);
+    }
+  }
+
   return (
     <>
       <Card className="settings-card">
         <h3 className="settings-section-title">ZATCA Integration</h3>
         <p className="settings-section-desc">
-          Modular e-invoicing for Saudi Arabia. Phase 1 generates simplified tax invoice QR codes.
-          Phase 2 submits signed e-invoices to ZATCA Fatoora (sandbox configured by default).
+          Modular e-invoicing for Saudi Arabia. Phase 1 generates simplified tax invoice QR codes
+          instantly on each sale. Phase 2 queues invoices locally and syncs with ZATCA when
+          internet is available — sales never stop offline.
         </p>
+
+        {form[K.ACTIVE_PHASE] === ZATCA_PHASES.PHASE2 && (
+          <p className="settings-section-desc">
+            Manage pending invoices from Administration → ZATCA Queue, or use{" "}
+            <strong>Administration → ZATCA Test Center</strong> for step-by-step verification.
+          </p>
+        )}
 
         <Select
           label="Active integration"
@@ -237,6 +334,8 @@ export default function ZatcaSettingsPanel({ form, updateField, baseSettings }) 
           </p>
         )}
       </Card>
+
+      <ZatcaOnboardingWizard form={form} updateField={updateField} baseSettings={baseSettings} />
 
       <Card className="settings-card">
         <h3 className="settings-section-title">Device (EGS) Information</h3>
@@ -383,7 +482,122 @@ export default function ZatcaSettingsPanel({ form, updateField, baseSettings }) 
           onChange={(e) => updateField(K.SECRET, e.target.value)}
           rows={2}
         />
+
+        <div className="settings-backup-actions" style={{ marginTop: "1rem" }}>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={runCertificateCheck}
+            disabled={checkingCert}
+          >
+            {checkingCert ? "Checking…" : "Certificate status"}
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={runConnectionTest}
+            disabled={testingConnection}
+          >
+            {testingConnection ? "Testing…" : "Test connection"}
+          </Button>
+        </div>
+
+        {certCheck && (
+          <div className="zatca-cert-check" style={{ marginTop: "0.75rem" }}>
+            <Alert type={certCheck.passed ? "success" : "warning"}>{certCheck.summary}</Alert>
+            {certCheck.results?.length > 0 && (
+              <ul className="zatca-cert-check-list">
+                {certCheck.results.map((item) => (
+                  <li key={item.id} className={item.passed ? "passed" : "failed"}>
+                    <strong>{item.label}</strong>
+                    <span>{item.message}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+
+        {connectionTest && (
+          <div className="zatca-cert-check" style={{ marginTop: "0.75rem" }}>
+            <Alert type={connectionTest.passed ? "success" : "warning"}>
+              {connectionTest.passed
+                ? "Ready for offline-first sync — invoices queue locally after each sale. Sync manually from Sales → ZATCA Sync."
+                : "Some checks failed — fix credentials before expecting ZATCA sync to succeed."}
+            </Alert>
+            <ul className="zatca-cert-check-list">
+              {connectionTest.checks?.map((item) => (
+                <li key={item.label} className={item.passed ? "passed" : "failed"}>
+                  <strong>{item.label}</strong>
+                  <span>{item.message}</span>
+                </li>
+              ))}
+            </ul>
+            {connectionTest.destination && (
+              <p className="settings-section-desc">
+                Sync target: {connectionTest.destination}
+                {connectionTest.targetApi ? ` · ${connectionTest.targetApi}` : ""}
+              </p>
+            )}
+          </div>
+        )}
       </Card>
+
+      {form[K.ACTIVE_PHASE] === ZATCA_PHASES.PHASE2 && (
+        <Card className="settings-card">
+          <h3 className="settings-section-title">Sync mode</h3>
+          <p className="settings-section-desc">
+            By default, invoices stay in the local queue until you sync them from{" "}
+            <strong>Sales → ZATCA Sync</strong> — one at a time or in bulk.
+          </p>
+
+          <label className="zatca-sync-toggle">
+            <input
+              type="checkbox"
+              checked={(form[ZATCA_SYNC_SETTINGS.AUTO_SYNC_ENABLED] ?? "0") === "1"}
+              onChange={(e) =>
+                updateField(ZATCA_SYNC_SETTINGS.AUTO_SYNC_ENABLED, e.target.checked ? "1" : "0")
+              }
+            />
+            <span>Enable automatic background sync (optional)</span>
+          </label>
+          <p className="settings-section-desc" style={{ marginTop: "0.5rem" }}>
+            When enabled, a background worker checks every{" "}
+            {Math.round(ZATCA_SYNC_INTERVAL_MS / 1000)} seconds and sends pending invoices while
+            online. Leave unchecked for manual sync only.
+          </p>
+
+          {queueStats && (
+            <div className="zatca-status-box" style={{ marginTop: "1rem" }}>
+              <div className="zatca-status-row">
+                <span>Queue pending</span>
+                <strong>{queueStats.pending ?? 0}</strong>
+              </div>
+              <div className="zatca-status-row">
+                <span>Synced</span>
+                <strong>{queueStats.synced ?? 0}</strong>
+              </div>
+              <div className="zatca-status-row">
+                <span>Failed</span>
+                <strong>{queueStats.failed ?? 0}</strong>
+              </div>
+              <div className="zatca-status-row">
+                <span>Internet</span>
+                <strong>{queueStats.online ? "Online" : "Offline"}</strong>
+              </div>
+              <div className="zatca-status-row">
+                <span>Background worker</span>
+                <strong>{zatcaSyncService.isRunning ? "Running" : "Stopped"}</strong>
+              </div>
+            </div>
+          )}
+
+          <p className="settings-section-desc" style={{ marginTop: "0.75rem" }}>
+            Open <strong>Administration → ZATCA Queue</strong> to see each invoice (Pending /
+            Sending / Synced / Failed) and retry manually if needed.
+          </p>
+        </Card>
+      )}
 
       {form[K.ACTIVE_PHASE] === ZATCA_PHASES.PHASE2 && (
         <Card className="settings-card">
@@ -400,7 +614,7 @@ export default function ZatcaSettingsPanel({ form, updateField, baseSettings }) 
               {recentInvoices.map((inv) => (
                 <div key={inv.id} className="zatca-invoice-item">
                   <strong>{inv.sale_number}</strong>
-                  <span>{inv.status}</span>
+                  <span>{ZATCA_QUEUE_STATUS_LABELS[inv.status] || inv.status}</span>
                   <span>{inv.environment}</span>
                   <small>{inv.created_at}</small>
                 </div>

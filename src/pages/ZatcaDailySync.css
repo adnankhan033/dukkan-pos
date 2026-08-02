@@ -1,0 +1,263 @@
+.zatca-daily-page {
+  max-width: 960px;
+}
+
+.zatca-daily-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.zatca-daily-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.zatca-daily-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+.zatca-daily-view-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-bottom: 0.65rem;
+}
+
+.zatca-daily-view-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  padding: 0.45rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.zatca-daily-view-tab.active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-card));
+}
+
+.zatca-daily-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 0.6875rem;
+  font-weight: 700;
+}
+
+.zatca-daily-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.zatca-daily-business-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-left: 0.5rem;
+}
+
+.zatca-daily-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.zatca-daily-filter {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.zatca-daily-filter.active {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-card));
+}
+
+.zatca-daily-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.zatca-daily-worker {
+  opacity: 0.85;
+}
+
+.zatca-daily-empty {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.zatca-daily-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.zatca-daily-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  padding: 1rem;
+}
+
+.zatca-daily-card.status-synced {
+  border-left: 3px solid var(--color-success, #16a34a);
+}
+
+.zatca-daily-card.status-failed {
+  border-left: 3px solid var(--color-danger, #dc2626);
+}
+
+.zatca-daily-card.status-pending,
+.zatca-daily-card.status-sending {
+  border-left: 3px solid var(--color-warning, #d97706);
+}
+
+.zatca-daily-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-wrap: wrap;
+}
+
+.zatca-daily-card-title {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 120px;
+}
+
+.zatca-daily-card-title strong {
+  font-size: 0.9375rem;
+}
+
+.zatca-daily-card-title span {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.zatca-daily-total {
+  font-size: 0.9375rem;
+  color: var(--color-primary);
+}
+
+.zatca-daily-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.zatca-daily-products {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0.625rem 0 0;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.zatca-daily-products li {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+}
+
+.zatca-daily-products li span {
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.zatca-daily-error {
+  margin: 0.5rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-danger, #dc2626);
+}
+
+.zatca-daily-retry {
+  margin: 0.25rem 0 0;
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.zatca-daily-card-actions {
+  margin-top: 0.75rem;
+}
+
+.zatca-daily-icon.synced {
+  color: var(--color-success, #16a34a);
+}
+
+.zatca-daily-icon.failed {
+  color: var(--color-danger, #dc2626);
+}
+
+.zatca-daily-icon.pending {
+  color: var(--color-warning, #d97706);
+}
+
+.zatca-daily-icon.sending {
+  color: var(--color-primary);
+}
+
+.zatca-daily-icon.spin,
+.spin {
+  animation: zatca-daily-spin 1s linear infinite;
+}
+
+@keyframes zatca-daily-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.zatca-daily-xml-row {
+  margin-top: 0.65rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--color-border, #e5e7eb);
+}

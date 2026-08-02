@@ -2,8 +2,9 @@ import {
   ZATCA_PHASES,
   ZATCA_ENVIRONMENTS,
   ZATCA_SETTING_KEYS,
+  ZATCA_SYNC_SETTINGS,
 } from "./constants";
-import { resolveApiBaseUrl, resolveEnvironmentConfig } from "./environments";
+import { resolveApiBaseUrl, resolveEnvironmentConfig, resolveApiUrls } from "./environments";
 
 function settingOn(value) {
   return value === "1" || value === "true";
@@ -49,19 +50,17 @@ export function parseZatcaConfig(settings = {}) {
       privateKey: settings[ZATCA_SETTING_KEYS.PRIVATE_KEY] || "",
       certificateRequest: settings[ZATCA_SETTING_KEYS.CERTIFICATE_REQUEST] || "",
       complianceCsid: settings[ZATCA_SETTING_KEYS.COMPLIANCE_CSID] || "",
+      complianceRequestId: settings[ZATCA_SETTING_KEYS.COMPLIANCE_REQUEST_ID] || "",
       productionCsid: settings[ZATCA_SETTING_KEYS.PRODUCTION_CSID] || "",
       secret: settings[ZATCA_SETTING_KEYS.SECRET] || "",
+      complianceAuthToken: settings[ZATCA_SETTING_KEYS.COMPLIANCE_AUTH_TOKEN] || "",
+      productionAuthToken: settings[ZATCA_SETTING_KEYS.PRODUCTION_AUTH_TOKEN] || "",
       clientId: settings[ZATCA_SETTING_KEYS.CLIENT_ID] || "",
       clientSecret: settings[ZATCA_SETTING_KEYS.CLIENT_SECRET] || "",
       otp: settings[ZATCA_SETTING_KEYS.OTP] || "",
     },
 
-    api: {
-      baseUrl: resolveApiBaseUrl(environment, settings[ZATCA_SETTING_KEYS.API_BASE_URL]),
-      complianceUrl: envConfig.complianceUrl,
-      reportingUrl: envConfig.reportingUrl,
-      clearanceUrl: envConfig.clearanceUrl,
-    },
+    api: resolveApiUrls(environment, settings[ZATCA_SETTING_KEYS.API_BASE_URL]),
 
     chain: {
       invoiceCounter: Number(settings[ZATCA_SETTING_KEYS.INVOICE_COUNTER] || 0),
@@ -86,6 +85,15 @@ export function isZatcaEnabled(settings) {
   return resolveActivePhase(settings) !== ZATCA_PHASES.DISABLED;
 }
 
+/** Force Phase 2 enabled — used by Test Center sync so queue items can sync without changing global settings. */
+export function buildSyncEnabledSettings(settings = {}) {
+  return {
+    ...settings,
+    [ZATCA_SETTING_KEYS.ENABLED]: "1",
+    [ZATCA_SETTING_KEYS.ACTIVE_PHASE]: ZATCA_PHASES.PHASE2,
+  };
+}
+
 /** Default ZATCA settings for seeding / forms. */
 export function getZatcaDefaultSettings() {
   return {
@@ -106,13 +114,18 @@ export function getZatcaDefaultSettings() {
     [ZATCA_SETTING_KEYS.PRIVATE_KEY]: "",
     [ZATCA_SETTING_KEYS.CERTIFICATE_REQUEST]: "",
     [ZATCA_SETTING_KEYS.COMPLIANCE_CSID]: "",
+    [ZATCA_SETTING_KEYS.COMPLIANCE_REQUEST_ID]: "",
     [ZATCA_SETTING_KEYS.PRODUCTION_CSID]: "",
     [ZATCA_SETTING_KEYS.SECRET]: "",
+    [ZATCA_SETTING_KEYS.COMPLIANCE_AUTH_TOKEN]: "",
+    [ZATCA_SETTING_KEYS.PRODUCTION_AUTH_TOKEN]: "",
     [ZATCA_SETTING_KEYS.API_BASE_URL]: "",
     [ZATCA_SETTING_KEYS.CLIENT_ID]: "",
     [ZATCA_SETTING_KEYS.CLIENT_SECRET]: "",
     [ZATCA_SETTING_KEYS.OTP]: "",
     [ZATCA_SETTING_KEYS.INVOICE_COUNTER]: "0",
     [ZATCA_SETTING_KEYS.PREVIOUS_INVOICE_HASH]: "",
+    [ZATCA_SYNC_SETTINGS.LAST_SYNC_AT]: "",
+    [ZATCA_SYNC_SETTINGS.AUTO_SYNC_ENABLED]: "0",
   };
 }

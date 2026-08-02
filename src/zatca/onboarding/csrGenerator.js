@@ -67,11 +67,29 @@ export function buildCsrParams(settings = {}) {
   };
 }
 
+/**
+ * Encode CSR PEM for ZATCA POST /compliance body.
+ * Swagger example decodes to "-----BEGIN CERTIFICATE REQUEST-----" (full PEM, UTF-8, then base64).
+ */
 export function csrPemToBase64(pem) {
-  return String(pem || "")
-    .replace(/-----BEGIN CERTIFICATE REQUEST-----/g, "")
-    .replace(/-----END CERTIFICATE REQUEST-----/g, "")
-    .replace(/\s/g, "");
+  const normalized = String(pem || "").trim();
+  if (!normalized) return "";
+
+  if (normalized.includes("BEGIN CERTIFICATE REQUEST")) {
+    const pemText = normalized.endsWith("\n") ? normalized : `${normalized}\n`;
+    if (typeof btoa === "function") {
+      return btoa(pemText);
+    }
+    return Buffer.from(pemText, "utf8").toString("base64");
+  }
+
+  // Fallback: already stripped to inner base64 — wrap as full PEM for ZATCA API
+  const inner = normalized.replace(/\s/g, "");
+  const pemText = `-----BEGIN CERTIFICATE REQUEST-----\n${inner.match(/.{1,64}/g)?.join("\n") ?? inner}\n-----END CERTIFICATE REQUEST-----\n`;
+  if (typeof btoa === "function") {
+    return btoa(pemText);
+  }
+  return Buffer.from(pemText, "utf8").toString("base64");
 }
 
 export function isValidCsrPem(value) {

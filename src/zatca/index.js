@@ -1,6 +1,9 @@
 import { createZatcaModule, parseZatcaConfig, resolveActivePhase } from "./ZatcaServiceFactory";
 import { zatcaLogger } from "./core/logger";
 import { isZatcaEnabled } from "./core/config";
+import { zatcaInvoiceRepository } from "./repositories/ZatcaInvoiceRepository";
+import { zatcaSyncService } from "./sync/ZatcaSyncService";
+import { ZATCA_SYNC_SETTINGS } from "./core/constants";
 
 /**
  * Facade service — the rest of the POS uses this class only.
@@ -68,6 +71,79 @@ class ZatcaIntegrationService {
       zatcaLogger.error("Sale ZATCA processing failed", err);
       return { success: false, error: err.message };
     }
+  }
+
+  getQueueItems(options) {
+    return zatcaInvoiceRepository.getQueueItems(options);
+  }
+
+  getStatusBySaleIds(saleIds) {
+    return zatcaInvoiceRepository.getStatusBySaleIds(saleIds);
+  }
+
+  getBySaleId(saleId) {
+    return zatcaInvoiceRepository.getBySaleId(saleId);
+  }
+
+  getSignedXmlForSale(saleId) {
+    return zatcaInvoiceRepository.getSignedXmlForSale(saleId);
+  }
+
+  getDailySyncDashboard(businessDate = null) {
+    return zatcaInvoiceRepository.getDailySyncDashboard(businessDate);
+  }
+
+  getSyncPageDashboard(businessDate = null) {
+    return zatcaInvoiceRepository.getSyncPageDashboard(businessDate);
+  }
+
+  isAutoSyncEnabled(settings = null) {
+    const s = settings || this._resolveSettings();
+    return s[ZATCA_SYNC_SETTINGS.AUTO_SYNC_ENABLED] === "1";
+  }
+
+  getDailySyncStats(businessDate = null) {
+    return zatcaInvoiceRepository.getDailySyncStats(businessDate);
+  }
+
+  syncInvoiceById(id, settings, options) {
+    return zatcaSyncService.syncInvoiceById(
+      id,
+      settings || this._resolveSettings(),
+      options
+    );
+  }
+
+  getQueueStats() {
+    return zatcaSyncService.getDashboardStats();
+  }
+
+  refreshQueueStatus() {
+    return zatcaSyncService.refreshStatus();
+  }
+
+  syncAll(settings) {
+    return zatcaSyncService.syncAll(settings || this._resolveSettings());
+  }
+
+  syncSelected(ids, settings) {
+    return zatcaSyncService.syncSelected(ids, settings || this._resolveSettings());
+  }
+
+  retryFailed(ids, settings) {
+    return zatcaSyncService.retryFailed(ids, settings || this._resolveSettings());
+  }
+
+  subscribeSyncEvents(listener) {
+    return zatcaSyncService.subscribe(listener);
+  }
+
+  startBackgroundSync() {
+    zatcaSyncService.startBackgroundSync(this.settingsProvider);
+  }
+
+  restartBackgroundSync() {
+    zatcaSyncService.restartBackgroundSync(this.settingsProvider);
   }
 }
 

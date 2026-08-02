@@ -110,6 +110,7 @@ export const NAV_GROUPS = [
     items: [
       { path: "/sales", label: "POS" },
       { path: "/orders", label: "Orders" },
+      { path: "/zatca-sync", label: "ZATCA Sync" },
     ],
   },
   {
@@ -157,6 +158,8 @@ export const NAV_GROUPS = [
     items: [
       { path: "/users", label: "Users", module: "users" },
       { path: "/settings", label: "Settings", module: "settings" },
+      { path: "/zatca-queue", label: "ZATCA Queue", module: "settings" },
+      { path: "/zatca-test", label: "ZATCA Test Center", module: "settings" },
     ],
   },
 ];

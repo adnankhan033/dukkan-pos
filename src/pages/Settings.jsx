@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Download, RotateCcw, Trash2 } from "lucide-react";
 import { settingsService } from "../services/SettingsService";
 import { backupService } from "../services/BackupService";
+import { zatcaService } from "../services/ZatcaService";
 import { useSettingsStore, useAuthStore } from "../contexts/store";
 import { useConfirm } from "../hooks/useConfirm";
 import { MODULES, ADMIN_MODULES, moduleSettingKey, roleModuleSettingKey } from "../utils/modules";
@@ -168,6 +169,7 @@ export default function Settings() {
       const payload = formToSettings(form);
       const updated = await settingsService.updateMany(payload);
       setSettings(updated);
+      zatcaService.restartBackgroundSync();
       setMessage("Settings saved successfully");
       setError("");
     } catch (err) {
@@ -267,6 +269,7 @@ export default function Settings() {
       const updated = await settingsService.getAll();
       setSettings(updated);
       setForm(buildFormFromSettings(updated));
+      zatcaService.restartBackgroundSync();
       setFeedbackModal({
         title: "Backup Restored",
         icon: "restore",

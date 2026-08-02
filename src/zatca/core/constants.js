@@ -13,12 +13,14 @@ export const ZATCA_PHASE_LABELS = {
 
 export const ZATCA_ENVIRONMENTS = {
   SANDBOX: "sandbox",
+  SIMULATION: "simulation",
   PRODUCTION: "production",
 };
 
 export const ZATCA_ENVIRONMENT_LABELS = {
-  [ZATCA_ENVIRONMENTS.SANDBOX]: "Sandbox (Testing)",
-  [ZATCA_ENVIRONMENTS.PRODUCTION]: "Production",
+  [ZATCA_ENVIRONMENTS.SANDBOX]: "Sandbox (ZATCA Testing)",
+  [ZATCA_ENVIRONMENTS.SIMULATION]: "Simulation (Local / No API)",
+  [ZATCA_ENVIRONMENTS.PRODUCTION]: "Production (Live)",
 };
 
 /** Settings keys — all prefixed with zatca_ for isolation. */
@@ -43,8 +45,11 @@ export const ZATCA_SETTING_KEYS = {
   PRIVATE_KEY: "zatca_private_key",
   CERTIFICATE_REQUEST: "zatca_certificate_request",
   COMPLIANCE_CSID: "zatca_compliance_csid",
+  COMPLIANCE_REQUEST_ID: "zatca_compliance_request_id",
   PRODUCTION_CSID: "zatca_production_csid",
   SECRET: "zatca_secret",
+  COMPLIANCE_AUTH_TOKEN: "zatca_compliance_auth_token",
+  PRODUCTION_AUTH_TOKEN: "zatca_production_auth_token",
 
   API_BASE_URL: "zatca_api_base_url",
   CLIENT_ID: "zatca_client_id",
@@ -62,6 +67,40 @@ export const ZATCA_SENSITIVE_KEYS = new Set([
   ZATCA_SETTING_KEYS.COMPLIANCE_CSID,
   ZATCA_SETTING_KEYS.PRODUCTION_CSID,
   ZATCA_SETTING_KEYS.SECRET,
+  ZATCA_SETTING_KEYS.COMPLIANCE_AUTH_TOKEN,
+  ZATCA_SETTING_KEYS.PRODUCTION_AUTH_TOKEN,
   ZATCA_SETTING_KEYS.CLIENT_SECRET,
   ZATCA_SETTING_KEYS.OTP,
 ]);
+
+/** Queue statuses for Phase 2 offline sync. */
+export const ZATCA_QUEUE_STATUS = {
+  PENDING: "pending",
+  SENDING: "sending",
+  SYNCED: "synced",
+  FAILED: "failed",
+};
+
+export const ZATCA_QUEUE_STATUS_LABELS = {
+  [ZATCA_QUEUE_STATUS.PENDING]: "Pending",
+  [ZATCA_QUEUE_STATUS.SENDING]: "Sending…",
+  [ZATCA_QUEUE_STATUS.SYNCED]: "Synced",
+  [ZATCA_QUEUE_STATUS.FAILED]: "Failed",
+};
+
+/** User-facing success label (same as synced). */
+export const ZATCA_QUEUE_STATUS_SUCCESS = ZATCA_QUEUE_STATUS.SYNCED;
+
+export const ZATCA_SYNC_SETTINGS = {
+  LAST_SYNC_AT: "zatca_last_sync_at",
+  AUTO_SYNC_ENABLED: "zatca_auto_sync_enabled",
+};
+
+export const ZATCA_SYNC_DEFAULTS = {
+  [ZATCA_SYNC_SETTINGS.LAST_SYNC_AT]: "",
+  [ZATCA_SYNC_SETTINGS.AUTO_SYNC_ENABLED]: "0",
+};
+
+export const ZATCA_MAX_RETRY_COUNT = 5;
+/** Background worker checks queue every 45 seconds when auto-sync is on. */
+export const ZATCA_SYNC_INTERVAL_MS = 45 * 1000;

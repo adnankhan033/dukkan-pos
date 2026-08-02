@@ -24,12 +24,15 @@ import { Alert, LoadingSpinner } from "../components/common/Loading";
 import { formatCurrency, calcVat, calcGrandTotal, formatQuantity } from "../utils/format";
 import { printReceipt } from "../utils/receipt";
 import { PAYMENT_METHODS, SALE_STATUS } from "../utils/constants";
+import { resolveActivePhase } from "../zatca/core/config";
+import { ZATCA_PHASES } from "../zatca/core/constants";
 import "./Sales.css";
 
 export default function Sales() {
   const settings = useSettingsStore((s) => s.settings);
   const currency = settings.currency || "SAR";
   const vatPercent = Number(settings.vat_percent) || 0;
+  const zatcaPhase2 = resolveActivePhase(settings) === ZATCA_PHASES.PHASE2;
   const { submitting, guard } = useSubmitGuard();
 
   const [catalog, setCatalog] = useState([]);
@@ -549,6 +552,7 @@ export default function Sales() {
         vatPercent={vatPercent}
         completedSale={completedSale}
         processing={submitting}
+        zatcaQueued={zatcaPhase2 && Boolean(completedSale)}
         onConfirmComplete={handleConfirmComplete}
         onCancel={closeCompleteFlow}
         onPrint={handlePrintReceipt}

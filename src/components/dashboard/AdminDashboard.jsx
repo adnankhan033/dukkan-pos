@@ -14,6 +14,7 @@ import PageHeader from "../common/PageHeader";
 import { StatCard, Card } from "../common/Card";
 import Badge from "../common/Badge";
 import { formatCurrency, formatDateTime } from "../../utils/format";
+import ZatcaSyncWidget from "./ZatcaSyncWidget";
 import "../../pages/Dashboard.css";
 
 export default function AdminDashboard({ stats }) {
@@ -148,6 +149,8 @@ export default function AdminDashboard({ stats }) {
             </button>
           )}
         </Card>
+
+        <ZatcaSyncWidget />
 
         <Card>
           <div className="card-header">

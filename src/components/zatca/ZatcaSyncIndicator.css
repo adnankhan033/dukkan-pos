@@ -1,0 +1,56 @@
+.zatca-sync-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  margin: -0.5rem 0 1rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.zatca-sync-indicator:hover {
+  background: var(--color-surface);
+}
+
+.zatca-sync-indicator.pending {
+  border-color: color-mix(in srgb, var(--color-warning, #d97706) 45%, var(--color-border));
+  background: color-mix(in srgb, var(--color-warning, #d97706) 8%, var(--color-card));
+}
+
+.zatca-sync-indicator.failed {
+  border-color: color-mix(in srgb, var(--color-danger, #dc2626) 45%, var(--color-border));
+  background: color-mix(in srgb, var(--color-danger, #dc2626) 8%, var(--color-card));
+}
+
+.zatca-sync-indicator.synced {
+  border-color: color-mix(in srgb, var(--color-success, #16a34a) 40%, var(--color-border));
+  background: color-mix(in srgb, var(--color-success, #16a34a) 8%, var(--color-card));
+}
+
+.zatca-sync-indicator.idle {
+  opacity: 0.85;
+}
+
+.zatca-sync-indicator-text {
+  flex: 1;
+}
+
+.zatca-sync-indicator-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.zatca-sync-indicator-chevron {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+}

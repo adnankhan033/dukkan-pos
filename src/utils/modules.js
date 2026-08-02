@@ -20,6 +20,7 @@ export const ROUTE_MODULE_MAP = {
   "/": "dashboard",
   "/sales": "sales",
   "/orders": "sales",
+  "/zatca-sync": "sales",
   "/products": "products",
   "/categories": "products",
   "/units": "products",
@@ -32,6 +33,8 @@ export const ROUTE_MODULE_MAP = {
   "/reports": "reports",
   "/users": "users",
   "/settings": "settings",
+  "/zatca-queue": "settings",
+  "/zatca-test": "settings",
 };
 
 const CASHIER_DEFAULT_MODULES = ["dashboard", "sales", "reports"];

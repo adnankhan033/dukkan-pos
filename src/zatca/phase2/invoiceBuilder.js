@@ -1,17 +1,22 @@
 import { generateNumber } from "../../utils/format";
+import { resolveZatcaIssueDateTime } from "./invoiceSigner";
 
 /** Build UBL 2.1 simplified tax invoice payload (placeholder structure). */
 export function buildSimplifiedInvoicePayload({ sale, items, config }) {
   const counter = (config.chain.invoiceCounter || 0) + 1;
+  const { issue_date, issue_time } = resolveZatcaIssueDateTime({
+    created_at: sale.created_at,
+  });
 
   return {
     invoiceType: "388",
     invoiceTypeName: "0211010",
     uuid: typeof crypto !== "undefined" && crypto.randomUUID ? crypto.randomUUID() : generateNumber("INV"),
     icv: counter,
-    issueDate: (sale.created_at || new Date().toISOString()).slice(0, 10),
-    issueTime: (sale.created_at || new Date().toISOString()).slice(11, 19),
+    issueDate: issue_date,
+    issueTime: issue_time,
     saleNumber: sale.sale_number,
+    created_at: sale.created_at,
     seller: {
       name: config.company.name,
       nameAr: config.company.nameAr,
@@ -22,6 +27,7 @@ export function buildSimplifiedInvoicePayload({ sale, items, config }) {
     buyer: {
       name: sale.customer_name || "Walk-in Customer",
     },
+    customer_name: sale.customer_name || "Walk-in Customer",
     lineItems: (items || []).map((item, index) => ({
       id: index + 1,
       name: item.product_name || item.name,
