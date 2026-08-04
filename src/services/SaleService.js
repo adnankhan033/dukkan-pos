@@ -1,7 +1,19 @@
 import { query, queryOne, execute, insert } from "../database/connection";
 import { inventoryService } from "./InventoryService";
+import { settingsService } from "./SettingsService";
+import { zatcaService } from "./ZatcaService";
 import { generateNumber } from "../utils/format";
 import { SALE_STATUS } from "../utils/constants";
+
+async function processZatcaForSale(sale) {
+  if (!sale || sale.status !== SALE_STATUS.COMPLETED) return;
+  try {
+    const settings = await settingsService.getAll();
+    await zatcaService.processSale({ sale, items: sale.items, settings });
+  } catch (err) {
+    console.error("ZATCA processing failed:", err);
+  }
+}
 
 class SaleService {
   async getAll({ page = 1, limit = 10, status = null } = {}) {
@@ -103,7 +115,12 @@ class SaleService {
     }
 
     const saved = await this.getById(saleId);
-    if (saved) return saved;
+    if (saved) {
+      if (status === SALE_STATUS.COMPLETED) {
+        await processZatcaForSale(saved);
+      }
+      return saved;
+    }
 
     throw new Error("Sale saved but could not be loaded. Please refresh and check sales history.");
   }
@@ -127,7 +144,11 @@ class SaleService {
       [saleId, sale.total, paymentMethod]
     );
 
-    return this.getById(saleId);
+    const completed = await this.getById(saleId);
+    if (completed) {
+      await processZatcaForSale(completed);
+    }
+    return completed;
   }
 
   async deleteHeldSale(saleId) {

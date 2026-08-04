@@ -104,6 +104,28 @@
   color: var(--color-text-muted);
 }
 
+.order-detail-zatca-error {
+  color: var(--color-danger, #c0392b);
+  font-size: 0.8125rem;
+}
+
+.order-detail-zatca-link {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.order-detail-zatca-link:hover {
+  text-decoration: underline;
+}
+
+.order-detail-empty {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
 @media (max-width: 720px) {
   .order-detail-grid {
     grid-template-columns: 1fr;

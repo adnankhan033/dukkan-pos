@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Rust build output (installers live in releases/)
+src-tauri/target/

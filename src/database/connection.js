@@ -150,9 +150,80 @@ async function runMigrations() {
   await ensureUnitsSchema();
   await ensureUsersAndExpensesSchema();
   await ensureSupplierLedgerSchema();
+  await ensureZatcaSchema();
   await ensureCashierModuleDefaults();
   await ensureReceiptTemplateDefault();
   await ensureSettingsKeys();
+}
+
+async function ensureZatcaColumn(table, column, definition) {
+  const cols = await query(`PRAGMA table_info(${table})`);
+  if (!cols.some((c) => c.name === column)) {
+    await execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
+
+async function ensureZatcaSchema() {
+  await execute(
+    `CREATE TABLE IF NOT EXISTS zatca_invoices (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sale_id INTEGER NOT NULL,
+      sale_number TEXT NOT NULL,
+      phase TEXT NOT NULL,
+      environment TEXT NOT NULL,
+      status TEXT NOT NULL,
+      invoice_uuid TEXT,
+      invoice_hash TEXT,
+      response_json TEXT,
+      payload_json TEXT,
+      retry_count INTEGER DEFAULT 0,
+      last_attempt_at TEXT,
+      synced_at TEXT,
+      error_message TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (sale_id) REFERENCES sales(id)
+    )`
+  );
+
+  await ensureZatcaColumn("zatca_invoices", "payload_json", "TEXT");
+  await ensureZatcaColumn("zatca_invoices", "retry_count", "INTEGER DEFAULT 0");
+  await ensureZatcaColumn("zatca_invoices", "last_attempt_at", "TEXT");
+  await ensureZatcaColumn("zatca_invoices", "synced_at", "TEXT");
+  await ensureZatcaColumn("zatca_invoices", "error_message", "TEXT");
+  await ensureZatcaColumn(
+    "zatca_invoices",
+    "updated_at",
+    "TEXT DEFAULT (datetime('now'))"
+  );
+  await ensureZatcaColumn("zatca_invoices", "signed_xml", "TEXT");
+  await ensureZatcaColumn("zatca_invoices", "qr_tlv", "TEXT");
+  await ensureZatcaColumn("zatca_invoices", "next_retry_at", "TEXT");
+
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_zatca_invoices_sale ON zatca_invoices(sale_id)"
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_zatca_invoices_status ON zatca_invoices(status)"
+  );
+
+  await execute(
+    `CREATE TABLE IF NOT EXISTS zatca_api_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      endpoint TEXT NOT NULL,
+      method TEXT NOT NULL,
+      request_body TEXT,
+      response_body TEXT,
+      http_status INTEGER,
+      success INTEGER DEFAULT 0,
+      error_message TEXT,
+      duration_ms INTEGER,
+      created_at TEXT DEFAULT (datetime('now'))
+    )`
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_zatca_api_logs_created ON zatca_api_logs(created_at DESC)"
+  );
 }
 
 async function ensureCashierModuleDefaults() {
@@ -440,6 +511,7 @@ export async function clearDatabaseData() {
   const clearOrder = [
     "sale_return_items",
     "sale_returns",
+    "zatca_invoices",
     "sale_items",
     "sales",
     "purchase_items",

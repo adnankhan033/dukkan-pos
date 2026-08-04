@@ -1,0 +1,85 @@
+.zatca-xml-actions {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.zatca-xml-actions.compact {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+.zatca-xml-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.75rem;
+  align-items: baseline;
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+}
+
+.zatca-xml-meta span {
+  color: var(--text-muted, #6b7280);
+  min-width: 5.5rem;
+}
+
+.zatca-xml-meta code {
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.zatca-xml-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.zatca-xml-hint,
+.zatca-xml-note {
+  margin: 0.35rem 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.zatca-xml-note {
+  color: var(--success-text, #047857);
+}
+
+.zatca-xml-api-result {
+  margin: 0 0 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  background: var(--surface-muted, #f3f4f6);
+  color: var(--text-muted, #4b5563);
+}
+
+.zatca-xml-api-result.ok {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.zatca-xml-validator-note {
+  margin: 0.5rem 0 0;
+  padding: 0.55rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  background: #fffbeb;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.zatca-xml-preview {
+  margin-top: 0.75rem;
+  max-height: 220px;
+  overflow: auto;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: var(--surface-muted, #f3f4f6);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

@@ -1,0 +1,194 @@
+.zatca-queue-page .zatca-queue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.zatca-queue-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.zatca-queue-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.zatca-queue-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.zatca-queue-filter {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.zatca-queue-filter.active {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: var(--color-primary);
+}
+
+.zatca-queue-error {
+  display: inline-block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-danger);
+  font-size: 0.8125rem;
+}
+
+.zatca-queue-empty {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+  padding: 1rem 0;
+}
+
+.zatca-sync-widget .zatca-sync-widget-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.zatca-sync-widget .zatca-sync-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.zatca-sync-widget .zatca-sync-stat span {
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.zatca-sync-widget .zatca-sync-stat strong {
+  font-size: 1.125rem;
+}
+
+.zatca-sync-widget .zatca-sync-footer {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.zatca-sync-widget .zatca-sync-online {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.zatca-sync-widget .zatca-sync-online.online {
+  color: var(--color-success);
+}
+
+.zatca-sync-widget .zatca-sync-online.offline {
+  color: var(--color-warning);
+}
+
+.zatca-queue-cards {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.zatca-queue-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.zatca-queue-card.status-synced {
+  border-color: color-mix(in srgb, var(--color-success) 40%, var(--color-border));
+}
+
+.zatca-queue-card.status-failed {
+  border-color: color-mix(in srgb, var(--color-danger) 40%, var(--color-border));
+}
+
+.zatca-queue-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.875rem;
+}
+
+.zatca-queue-card-body small {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.zatca-queue-card-error {
+  color: var(--color-danger) !important;
+}
+
+.zatca-queue-icon.synced {
+  color: var(--color-success);
+  flex-shrink: 0;
+}
+
+.zatca-queue-icon.failed {
+  color: var(--color-danger);
+  flex-shrink: 0;
+}
+
+.zatca-queue-icon.pending {
+  color: var(--color-warning);
+  flex-shrink: 0;
+}
+
+.zatca-queue-icon.sending {
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.zatca-queue-icon.spin {
+  animation: zatca-spin 1s linear infinite;
+}
+
+@keyframes zatca-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.zatca-sync-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.zatca-sync-toggle input {
+  width: 1rem;
+  height: 1rem;
+}

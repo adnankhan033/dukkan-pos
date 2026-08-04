@@ -17,6 +17,8 @@ const BACKUP_TABLES = [
   "payments",
   "sale_returns",
   "sale_return_items",
+  "zatca_invoices",
+  "zatca_api_logs",
 ];
 
 class BackupService {

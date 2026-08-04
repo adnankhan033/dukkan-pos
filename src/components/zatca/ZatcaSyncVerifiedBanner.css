@@ -1,0 +1,41 @@
+.zatca-sync-verified-banner {
+  margin: 0.65rem 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+  background: #f0fdf4;
+  color: #14532d;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.zatca-sync-verified-banner.accepted {
+  border-color: #86efac;
+}
+
+.zatca-sync-verified-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.zatca-sync-verified-api {
+  margin: 0.35rem 0 0;
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.zatca-sync-verified-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin: 0.55rem 0 0;
+  padding-top: 0.55rem;
+  border-top: 1px solid #bbf7d0;
+  font-size: 0.78rem;
+  color: #166534;
+}
+
+.zatca-sync-verified-note code {
+  font-size: 0.75rem;
+}

@@ -1,4 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import Button from "../common/Button";
 import ProductBilingualName from "../products/ProductBilingualName";
 import { formatCurrency } from "../../utils/format";
@@ -19,6 +20,7 @@ export default function SaleCompleteModal({
   vatPercent,
   completedSale,
   processing = false,
+  zatcaQueued = false,
   onConfirmComplete,
   onCancel,
   onPrint,
@@ -114,6 +116,12 @@ export default function SaleCompleteModal({
                   <strong>{completedSale.sale_number}</strong> — {formatCurrency(completedSale.total, currency)}
                 </p>
                 <p style={{ marginTop: "0.5rem" }}>Would you like to print the receipt?</p>
+                {zatcaQueued && (
+                  <p className="sale-complete-zatca-note">
+                    Invoice queued for ZATCA.{" "}
+                    <Link to="/zatca-sync">View today&apos;s sync status →</Link>
+                  </p>
+                )}
               </div>
             </div>
             <div className="sale-complete-footer split">

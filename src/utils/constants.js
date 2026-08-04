@@ -1,4 +1,5 @@
 import { getModuleDefaults, getRoleModuleDefaults } from "./modules";
+import { getZatcaDefaultSettings } from "../zatca/core/config";
 
 export const DB_NAME = "sqlite:portal_pos.db";
 
@@ -24,6 +25,7 @@ export const DEFAULT_SETTINGS = {
   dashboard_admin_show_profit: "1",
   dashboard_admin_show_purchases: "1",
   dashboard_cashier_show_recent: "1",
+  ...getZatcaDefaultSettings(),
   ...getModuleDefaults(),
   ...getRoleModuleDefaults(),
 };
@@ -108,6 +110,7 @@ export const NAV_GROUPS = [
     items: [
       { path: "/sales", label: "POS" },
       { path: "/orders", label: "Orders" },
+      { path: "/zatca-sync", label: "ZATCA Sync" },
     ],
   },
   {
@@ -155,6 +158,8 @@ export const NAV_GROUPS = [
     items: [
       { path: "/users", label: "Users", module: "users" },
       { path: "/settings", label: "Settings", module: "settings" },
+      { path: "/zatca-queue", label: "ZATCA Queue", module: "settings" },
+      { path: "/zatca-test", label: "ZATCA Test Center", module: "settings" },
     ],
   },
 ];

@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ClipboardList, DollarSign, Eye, RotateCcw, ShoppingBag } from "lucide-react";
 import { saleService } from "../services/SaleService";
+import { zatcaService } from "../services/ZatcaService";
 import { ensureReturnSchema } from "../database/connection";
 import { useSettingsStore } from "../contexts/store";
 import { ORDER_PERIODS, ORDER_RETURN_FILTERS, SALE_STATUS } from "../utils/constants";
+import { resolveActivePhase } from "../zatca/core/config";
+import { ZATCA_PHASES } from "../zatca/core/constants";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import SearchBar from "../components/common/SearchBar";
 import { Card, StatCard } from "../components/common/Card";
 import Table from "../components/common/Table";
 import Badge from "../components/common/Badge";
+import ZatcaOrderStatusBadge from "../components/zatca/ZatcaOrderStatusBadge";
+import ZatcaXmlDownloadLink from "../components/zatca/ZatcaXmlDownloadLink";
 import OrderDetailModal from "../components/orders/OrderDetailModal";
 import SaleReturnModal from "../components/sales/SaleReturnModal";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
@@ -59,11 +64,14 @@ export default function Orders() {
   const settings = useSettingsStore((s) => s.settings);
   const currency = settings.currency || "SAR";
   const vatPercent = Number(settings.vat_percent) || 0;
+  const zatcaPhase = resolveActivePhase(settings);
+  const showZatcaColumn = zatcaPhase === ZATCA_PHASES.PHASE2;
 
   const [period, setPeriod] = useState(ORDER_PERIODS.TODAY);
   const [returnFilter, setReturnFilter] = useState(ORDER_RETURN_FILTERS.ALL);
   const [search, setSearch] = useState("");
   const [orders, setOrders] = useState([]);
+  const [zatcaBySaleId, setZatcaBySaleId] = useState({});
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
@@ -88,18 +96,35 @@ export default function Orders() {
       ]);
       setOrders(list);
       setStats(periodStats);
+
+      if (showZatcaColumn && list.length) {
+        const statusMap = await zatcaService.getStatusBySaleIds(list.map((o) => o.id));
+        setZatcaBySaleId(statusMap);
+      } else {
+        setZatcaBySaleId({});
+      }
     } catch (err) {
       setOrders([]);
       setStats(null);
+      setZatcaBySaleId({});
       setError(err.message || "Failed to load orders");
     } finally {
       setLoading(false);
     }
-  }, [period]);
+  }, [period, showZatcaColumn]);
 
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  useEffect(() => {
+    if (!showZatcaColumn) return undefined;
+
+    const unsubscribe = zatcaService.subscribeSyncEvents(() => {
+      loadOrders();
+    });
+    return unsubscribe;
+  }, [showZatcaColumn, loadOrders]);
 
   const filteredOrders = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -122,10 +147,19 @@ export default function Orders() {
     setError("");
 
     try {
-      const [full, returns] = await Promise.all([
+      const requests = [
         saleService.getById(row.id),
         saleService.getReturnsForSale(row.id),
-      ]);
+      ];
+      if (showZatcaColumn) {
+        requests.push(zatcaService.getBySaleId(row.id));
+      }
+
+      const results = await Promise.all(requests);
+      const full = results[0];
+      const returns = results[1];
+      const zatcaRows = showZatcaColumn ? results[2] : [];
+
       if (!full) {
         setError("Order not found");
         setDetailOpen(false);
@@ -133,6 +167,10 @@ export default function Orders() {
       }
       setSelectedSale(full);
       setSelectedReturns(returns);
+
+      if (showZatcaColumn && zatcaRows?.[0]) {
+        setZatcaBySaleId((prev) => ({ ...prev, [row.id]: zatcaRows[0] }));
+      }
     } catch (err) {
       setError(err.message || "Failed to load order details");
       setDetailOpen(false);
@@ -202,6 +240,29 @@ export default function Orders() {
       label: "Status",
       render: (r) => orderStatusBadge(r.status),
     },
+    ...(showZatcaColumn
+      ? [
+          {
+            key: "zatca_status",
+            label: "ZATCA",
+            render: (r) => (
+              <ZatcaOrderStatusBadge status={zatcaBySaleId[r.id]?.status} />
+            ),
+          },
+          {
+            key: "zatca_xml",
+            label: "XML",
+            stopPropagation: true,
+            render: (r) => (
+              <ZatcaXmlDownloadLink
+                saleId={r.id}
+                saleNumber={r.sale_number}
+                record={zatcaBySaleId[r.id]}
+              />
+            ),
+          },
+        ]
+      : []),
     {
       key: "total",
       label: "Total",
@@ -345,6 +406,8 @@ export default function Orders() {
         loading={detailLoading}
         sale={selectedSale}
         returns={selectedReturns}
+        zatcaRecord={selectedSale ? zatcaBySaleId[selectedSale.id] : null}
+        showZatca={showZatcaColumn}
         currency={currency}
         vatPercent={vatPercent}
         onClose={() => {

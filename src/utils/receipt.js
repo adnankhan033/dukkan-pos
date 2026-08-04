@@ -1,5 +1,6 @@
 import { formatCurrency, formatDateTime } from "./format";
-import { generateZatcaQrDataUrl, canGenerateZatcaQr } from "./zatca";
+import { zatcaService } from "../services/ZatcaService";
+import { ZATCA_PHASE_LABELS } from "../zatca/core/constants";
 import { DEFAULT_RECEIPT_TEMPLATE, getReceiptTemplate } from "./receiptTemplates";
 
 function escapeHtml(str) {
@@ -63,14 +64,16 @@ function buildTotalsBlock(sale, currency, vatPercent, showChange = true) {
 }
 
 async function buildQrHtml(sale, settings, showQr) {
-  if (!showQr || !canGenerateZatcaQr(settings)) return "";
+  if (!showQr || !zatcaService.canGenerateReceiptQr({ sale, settings })) return "";
   try {
-    const qrDataUrl = await generateZatcaQrDataUrl({ sale, settings });
+    const qrDataUrl = await zatcaService.generateReceiptQr({ sale, settings });
     if (!qrDataUrl) return "";
+    const phase = zatcaService.getActivePhase(settings);
+    const phaseLabel = ZATCA_PHASE_LABELS[phase] || "ZATCA";
     return `
       <div class="qr-section">
         <img src="${qrDataUrl}" alt="ZATCA QR Code" width="120" height="120" />
-        <p class="qr-label">ZATCA Phase 1 · المرحلة الأولى</p>
+        <p class="qr-label">${phaseLabel} · QR</p>
       </div>`;
   } catch (err) {
     console.error("ZATCA QR generation failed:", err);

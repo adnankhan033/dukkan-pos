@@ -1,5 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar";
+import ZatcaSyncIndicator from "../components/zatca/ZatcaSyncIndicator";
 import "./MainLayout.css";
 
 export default function MainLayout() {
@@ -7,6 +8,7 @@ export default function MainLayout() {
     <div className="main-layout">
       <Sidebar />
       <main className="main-content">
+        <ZatcaSyncIndicator />
         <Outlet />
       </main>
     </div>

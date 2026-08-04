@@ -1,7 +1,11 @@
 import { Printer, RotateCcw } from "lucide-react";
+import { Link } from "react-router-dom";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import Badge from "../common/Badge";
+import ZatcaOrderStatusBadge from "../zatca/ZatcaOrderStatusBadge";
+import ZatcaInvoiceXmlActions from "../zatca/ZatcaInvoiceXmlActions";
+import ZatcaSyncedQrDisplay from "../zatca/ZatcaSyncedQrDisplay";
 import ProductBilingualName from "../products/ProductBilingualName";
 import { LoadingSpinner } from "../common/Loading";
 import { formatCurrency, formatDateTime } from "../../utils/format";
@@ -20,6 +24,8 @@ export default function OrderDetailModal({
   loading = false,
   sale,
   returns = [],
+  zatcaRecord = null,
+  showZatca = false,
   currency,
   vatPercent,
   onClose,
@@ -95,6 +101,57 @@ export default function OrderDetailModal({
               </div>
             </section>
           </div>
+
+          {showZatca && (
+            <section className="order-detail-section" style={{ marginTop: "1rem" }}>
+              <h4>ZATCA E-Invoice</h4>
+              {zatcaRecord ? (
+                <>
+                  <ZatcaSyncedQrDisplay record={zatcaRecord} />
+                  <dl className="order-detail-dl">
+                    <dt>Sync status</dt>
+                    <dd>
+                      <ZatcaOrderStatusBadge status={zatcaRecord.status} />
+                    </dd>
+                    <dt>Environment</dt>
+                    <dd>{zatcaRecord.environment || "—"}</dd>
+                    {zatcaRecord.synced_at && (
+                      <>
+                        <dt>Synced at</dt>
+                        <dd>{formatDateTime(zatcaRecord.synced_at)}</dd>
+                      </>
+                    )}
+                    {zatcaRecord.last_attempt_at && (
+                      <>
+                        <dt>Last attempt</dt>
+                        <dd>{formatDateTime(zatcaRecord.last_attempt_at)}</dd>
+                      </>
+                    )}
+                    {zatcaRecord.next_retry_at && (
+                      <>
+                        <dt>Next retry</dt>
+                        <dd>{formatDateTime(zatcaRecord.next_retry_at)}</dd>
+                      </>
+                    )}
+                    {zatcaRecord.error_message && (
+                      <>
+                        <dt>Error</dt>
+                        <dd className="order-detail-zatca-error">{zatcaRecord.error_message}</dd>
+                      </>
+                    )}
+                  </dl>
+                  <ZatcaInvoiceXmlActions record={zatcaRecord} />
+                </>
+              ) : (
+                <p className="order-detail-empty">
+                  No ZATCA queue entry for this order (sale may pre-date Phase 2 or ZATCA was disabled).
+                </p>
+              )}
+              <Link to="/zatca-sync" className="order-detail-zatca-link">
+                Open Daily ZATCA Sync →
+              </Link>
+            </section>
+          )}
 
           <section className="order-detail-section" style={{ marginTop: "1rem" }}>
             <h4>Items ({lineItems.length})</h4>
