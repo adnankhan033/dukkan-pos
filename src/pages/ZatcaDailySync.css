@@ -123,6 +123,36 @@
   font-size: 0.875rem;
 }
 
+.zatca-daily-bulk-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  flex-wrap: wrap;
+}
+
+.zatca-daily-bulk-count {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.zatca-daily-row-checkbox {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.zatca-daily-row-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .zatca-daily-list {
   list-style: none;
   margin: 0;

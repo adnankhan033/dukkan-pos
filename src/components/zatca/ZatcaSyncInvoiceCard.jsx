@@ -28,6 +28,9 @@ export default function ZatcaSyncInvoiceCard({
   isSyncing = false,
   busy = false,
   onSync,
+  selectable = false,
+  selected = false,
+  onToggleSelect,
 }) {
   const displayStatus = isSyncing ? ZATCA_QUEUE_STATUS.SENDING : row.status;
   const isPreviousDay = isOlderThanDate(row.sale_date, businessDate);
@@ -35,6 +38,16 @@ export default function ZatcaSyncInvoiceCard({
   return (
     <li className={`zatca-daily-card status-${displayStatus}`}>
       <div className="zatca-daily-card-head">
+        {selectable && (
+          <input
+            type="checkbox"
+            className="zatca-daily-row-checkbox"
+            checked={selected}
+            onChange={() => onToggleSelect?.(row.id)}
+            disabled={busy || isSyncing}
+            aria-label={`Select ${row.sale_number}`}
+          />
+        )}
         <div className="zatca-daily-card-title">
           <strong>{row.sale_number}</strong>
           <span>{formatDateTime(row.sale_date)}</span>

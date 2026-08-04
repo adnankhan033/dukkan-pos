@@ -95,6 +95,16 @@ class ProductService {
     );
   }
 
+  async findByBarcode(barcode) {
+    return queryOne(
+      `SELECT ${LIST_COLUMNS}
+       FROM products p
+       ${PRODUCT_JOINS}
+       WHERE p.barcode = $1`,
+      [barcode]
+    );
+  }
+
   async resolveUnitId(unitId) {
     if (unitId == null || unitId === "") return null;
     return Number(unitId);

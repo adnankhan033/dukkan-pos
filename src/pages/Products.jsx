@@ -23,6 +23,7 @@ import { formatCurrency, formatQuantity } from "../utils/format";
 import { required, positiveNumber, runFormValidation } from "../utils/validation";
 import { translateToArabic } from "../utils/translate";
 import ProductNameFields from "../components/products/ProductNameFields";
+import ProductBarcodeScanner from "../components/products/ProductBarcodeScanner";
 import ProductImportExportModal from "../components/products/ProductImportExportModal";
 import FormValidationAlert from "../components/common/FormValidationAlert";
 import "./Products.css";
@@ -261,17 +262,46 @@ export default function Products() {
     }
   }
 
-  async function handleTranslateArabic() {
+  async function handleTranslateArabic(sourceName) {
+    const englishName = (sourceName ?? form.name)?.trim();
+    if (!englishName) return;
+
     setTranslating(true);
     setErrors((prev) => ({ ...prev, name_ar: undefined, translate: undefined }));
     try {
-      const translated = await translateToArabic(form.name);
+      const translated = await translateToArabic(englishName);
       setForm((f) => ({ ...f, name_ar: translated }));
     } catch (err) {
       setErrors((prev) => ({ ...prev, translate: err.message }));
     } finally {
       setTranslating(false);
     }
+  }
+
+  function applyBarcodeLookup(patch) {
+    setForm((prev) => ({
+      ...prev,
+      ...patch,
+      category_id: patch.category_id ? String(patch.category_id) : prev.category_id,
+      unit_id: patch.unit_id ? String(patch.unit_id) : prev.unit_id,
+      supplier_id: prev.supplier_id,
+      cost_price: prev.cost_price,
+      selling_price: prev.selling_price,
+      quantity: prev.quantity,
+      min_stock: prev.min_stock,
+      published: prev.published,
+    }));
+    setErrors((prev) => {
+      const next = { ...prev };
+      delete next.name;
+      delete next.form;
+      return next;
+    });
+  }
+
+  async function handleBarcodeDuplicate(product) {
+    setModalOpen(false);
+    await openEdit(product);
   }
 
   async function handleSubmit(e) {
@@ -551,6 +581,19 @@ export default function Products() {
         <form id={FORM_ID} onSubmit={handleSubmit} noValidate>
           <FormValidationAlert errors={errors} />
 
+          {!editing && (
+            <ProductBarcodeScanner
+              active={modalOpen}
+              categories={categories}
+              units={units}
+              onApply={applyBarcodeLookup}
+              onDuplicate={handleBarcodeDuplicate}
+              onTranslate={handleTranslateArabic}
+              translating={translating}
+              disabled={submitting || imageLoading}
+            />
+          )}
+
           <ProductNameFields
             name={form.name}
             nameAr={form.name_ar}
@@ -566,7 +609,7 @@ export default function Products() {
               }
             }}
             onNameArChange={(value) => setForm({ ...form, name_ar: value })}
-            onTranslate={handleTranslateArabic}
+            onTranslate={() => handleTranslateArabic()}
             translating={translating}
             nameError={errors.name}
             translateError={errors.translate}

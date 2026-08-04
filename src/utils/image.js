@@ -38,3 +38,17 @@ export function compressImageFile(file) {
     reader.readAsDataURL(file);
   });
 }
+
+/** Fetch a remote image URL and compress for SQLite storage. */
+export async function compressImageUrl(url) {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error("Failed to download product image");
+  }
+  const blob = await response.blob();
+  if (!blob.type.startsWith("image/")) {
+    throw new Error("Remote file is not an image");
+  }
+  const file = new File([blob], "product.jpg", { type: blob.type || "image/jpeg" });
+  return compressImageFile(file);
+}

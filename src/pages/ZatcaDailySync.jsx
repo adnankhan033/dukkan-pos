@@ -53,6 +53,7 @@ export default function ZatcaDailySync() {
   const [syncingIds, setSyncingIds] = useState([]);
   const [view, setView] = useState("outstanding");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedIds, setSelectedIds] = useState([]);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
@@ -93,6 +94,31 @@ export default function ZatcaDailySync() {
     () => filterSyncItems(viewItems, statusFilter),
     [viewItems, statusFilter]
   );
+
+  const selectableIds = useMemo(
+    () =>
+      filteredItems
+        .filter((item) => item.status !== ZATCA_QUEUE_STATUS.SYNCED)
+        .map((item) => item.id),
+    [filteredItems]
+  );
+
+  const allSelected =
+    selectableIds.length > 0 && selectableIds.every((id) => selectedIds.includes(id));
+
+  useEffect(() => {
+    setSelectedIds((prev) => prev.filter((id) => selectableIds.includes(id)));
+  }, [selectableIds]);
+
+  function toggleSelectAll() {
+    setSelectedIds(allSelected ? [] : [...selectableIds]);
+  }
+
+  function toggleSelect(id) {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((value) => value !== id) : [...prev, id]
+    );
+  }
 
   const lineItemsBySaleId = pageData?.lineItemsBySaleId ?? {};
   const outstandingIds = useMemo(
@@ -144,6 +170,7 @@ export default function ZatcaDailySync() {
         setMessage(
           `Synced ${result.synced ?? 0} of ${ids.length} invoice(s).${result.failed ? ` ${result.failed} failed.` : ""}`
         );
+        setSelectedIds((prev) => prev.filter((id) => !ids.includes(id)));
       } else {
         setError(result.error || "Sync failed.");
       }
@@ -279,20 +306,61 @@ export default function ZatcaDailySync() {
           </p>
         </Card>
       ) : (
-        <ul className="zatca-daily-list">
-          {filteredItems.map((row) => (
-            <ZatcaSyncInvoiceCard
-              key={row.id}
-              row={row}
-              lineItems={lineItemsBySaleId[row.sale_id] || []}
-              currency={currency}
-              businessDate={businessDate}
-              isSyncing={syncingIds.includes(row.id) || row.status === ZATCA_QUEUE_STATUS.SENDING}
-              busy={busy}
-              onSync={syncRow}
-            />
-          ))}
-        </ul>
+        <>
+          {selectableIds.length > 0 && (
+            <div className="zatca-daily-bulk-bar">
+              <input
+                type="checkbox"
+                className="zatca-daily-row-checkbox"
+                checked={allSelected}
+                onChange={toggleSelectAll}
+                disabled={busy}
+                aria-label="Select all invoices"
+              />
+              <span className="zatca-daily-bulk-count">
+                {selectedIds.length > 0
+                  ? `${selectedIds.length} selected`
+                  : "Select all on page"}
+              </span>
+              {selectedIds.length > 0 && (
+                <>
+                  <Button
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => syncIds(selectedIds, "selection")}
+                  >
+                    <Send size={14} /> Sync selected ({selectedIds.length})
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={busy}
+                    onClick={() => setSelectedIds([])}
+                  >
+                    Clear
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+          <ul className="zatca-daily-list">
+            {filteredItems.map((row) => (
+              <ZatcaSyncInvoiceCard
+                key={row.id}
+                row={row}
+                lineItems={lineItemsBySaleId[row.sale_id] || []}
+                currency={currency}
+                businessDate={businessDate}
+                isSyncing={syncingIds.includes(row.id) || row.status === ZATCA_QUEUE_STATUS.SENDING}
+                busy={busy}
+                onSync={syncRow}
+                selectable={row.status !== ZATCA_QUEUE_STATUS.SYNCED}
+                selected={selectedIds.includes(row.id)}
+                onToggleSelect={toggleSelect}
+              />
+            ))}
+          </ul>
+        </>
       )}
     </div>
   );
