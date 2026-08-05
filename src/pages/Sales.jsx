@@ -8,13 +8,18 @@ import {
   CreditCard,
   Banknote,
   RotateCcw,
+  Search,
+  ShoppingCart,
+  ScanBarcode,
+  User,
+  X,
+  Sparkles,
 } from "lucide-react";
 import { productService } from "../services/ProductService";
 import { customerService } from "../services/CustomerService";
 import { saleService } from "../services/SaleService";
 import { useSettingsStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
-import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import { Select } from "../components/common/Input";
 import SaleCompleteModal from "../components/sales/SaleCompleteModal";
@@ -28,6 +33,21 @@ import { resolveActivePhase } from "../zatca/core/config";
 import { ZATCA_PHASES } from "../zatca/core/constants";
 import "./Sales.css";
 
+const PRODUCT_HUES = [221, 262, 173, 32, 346, 199, 280, 150];
+
+function productAccent(name = "") {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return PRODUCT_HUES[Math.abs(hash) % PRODUCT_HUES.length];
+}
+
+function productInitial(name = "") {
+  const trimmed = name.trim();
+  return trimmed ? trimmed.charAt(0).toUpperCase() : "?";
+}
+
 export default function Sales() {
   const settings = useSettingsStore((s) => s.settings);
   const currency = settings.currency || "SAR";
@@ -38,6 +58,7 @@ export default function Sales() {
   const [catalog, setCatalog] = useState([]);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [customers, setCustomers] = useState([]);
   const [cart, setCart] = useState([]);
   const [customerId, setCustomerId] = useState("");
@@ -74,17 +95,41 @@ export default function Sales() {
     init();
   }, []);
 
+  const categories = useMemo(() => {
+    const map = new Map();
+    for (const product of catalog) {
+      if (product.category_id && product.category_name) {
+        map.set(product.category_id, product.category_name);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [catalog]);
+
+  const cartQtyMap = useMemo(() => {
+    const map = new Map();
+    for (const item of cart) {
+      map.set(item.product_id, item.quantity);
+    }
+    return map;
+  }, [cart]);
+
   const displayedProducts = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return catalog.slice(0, 60);
-    return catalog.filter(
-      (p) =>
+    return catalog.filter((p) => {
+      const matchesCategory =
+        categoryFilter === "all" || String(p.category_id) === String(categoryFilter);
+      if (!matchesCategory) return false;
+      if (!term) return true;
+      return (
         p.name?.toLowerCase().includes(term) ||
         p.name_ar?.toLowerCase().includes(term) ||
         p.sku?.toLowerCase().includes(term) ||
         p.barcode?.toLowerCase().includes(term)
-    );
-  }, [catalog, search]);
+      );
+    });
+  }, [catalog, search, categoryFilter]);
 
   async function handleBarcodeSearch(e) {
     if (e.key !== "Enter" || !search.trim()) return;
@@ -148,12 +193,20 @@ export default function Sales() {
     setCart((prev) => prev.filter((i) => i.product_id !== productId));
   }
 
+  function clearCart() {
+    setCart([]);
+    setDiscount(0);
+    setCashReceived("");
+    setError("");
+  }
+
   const subtotal = cart.reduce((s, i) => s + i.total, 0);
   const vat = calcVat(subtotal, Number(discount), vatPercent);
   const grandTotal = calcGrandTotal(subtotal, Number(discount), vat);
   const received = Number(cashReceived) || 0;
   const changeDue = Math.max(0, received - grandTotal);
   const balanceDue = Math.max(0, grandTotal - received);
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   async function refreshCatalog() {
     const products = await productService.getPosCatalog();
@@ -178,6 +231,14 @@ export default function Sales() {
   function closeCompleteFlow() {
     setCompleteStep(null);
     setCompletedSale(null);
+  }
+
+  function setExactCash() {
+    setCashReceived(String(grandTotal));
+  }
+
+  function addQuickCash(amount) {
+    setCashReceived(String((Number(cashReceived) || 0) + amount));
   }
 
   async function handleConfirmComplete() {
@@ -324,217 +385,383 @@ export default function Sales() {
   }
 
   return (
-    <div>
-      <PageHeader
-        title="Sales"
-        subtitle="Process sales and manage the POS cart."
-        actions={
+    <div className="pos-page">
+      <header className="pos-topbar">
+        <div className="pos-topbar-main">
+          <div className="pos-topbar-brand">
+            <div className="pos-topbar-icon">
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <h1 className="pos-topbar-title">Point of Sale</h1>
+              <p className="pos-topbar-subtitle">Tap products or scan a barcode to sell</p>
+            </div>
+          </div>
+
+          <div className="pos-topbar-metrics">
+            <div className="pos-metric">
+              <span className="pos-metric-label">In cart</span>
+              <strong className="pos-metric-value">{cartItemCount}</strong>
+            </div>
+            <div className="pos-metric pos-metric-total">
+              <span className="pos-metric-label">Total</span>
+              <strong className="pos-metric-value">{formatCurrency(grandTotal, currency)}</strong>
+            </div>
+          </div>
+        </div>
+
+        <div className="pos-topbar-actions">
           <Button variant="secondary" onClick={() => setReturnOpen(true)}>
             <RotateCcw size={16} /> Return
           </Button>
-        }
-      />
+        </div>
+      </header>
 
       {message && <Alert type="success">{message}</Alert>}
       {error && <Alert>{error}</Alert>}
 
       {heldSales.length > 0 && (
-        <div className="pos-held-sales">
-          <strong style={{ fontSize: "0.875rem" }}>Held:</strong>
-          {heldSales.map((s) => (
-            <Button key={s.id} variant="secondary" size="sm" onClick={() => resumeHeld(s.id)}>
-              {s.sale_number} ({formatCurrency(s.total, currency)})
-            </Button>
-          ))}
+        <div className="pos-held-strip">
+          <span className="pos-held-label">
+            <Pause size={14} /> Held sales
+          </span>
+          <div className="pos-held-chips">
+            {heldSales.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className="pos-held-chip"
+                onClick={() => resumeHeld(s.id)}
+              >
+                <span>{s.sale_number}</span>
+                <strong>{formatCurrency(s.total, currency)}</strong>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
       <div className="pos-layout">
-        <div className="pos-products">
-          <div className="pos-search-row">
-            <input
-              className="form-input"
-              placeholder="Search English, Arabic, SKU, or barcode..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={handleBarcodeSearch}
-              autoFocus
-            />
+        <section className="pos-catalog" aria-label="Product catalog">
+          <div className="pos-catalog-toolbar">
+            <div className="pos-search-wrap">
+              <Search size={18} className="pos-search-icon" />
+              <input
+                className="pos-search-input"
+                placeholder="Search name, Arabic, SKU, or scan barcode…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleBarcodeSearch}
+                autoFocus
+              />
+              {search ? (
+                <button
+                  type="button"
+                  className="pos-search-clear"
+                  onClick={() => setSearch("")}
+                  aria-label="Clear search"
+                >
+                  <X size={16} />
+                </button>
+              ) : (
+                <span className="pos-search-hint">
+                  <ScanBarcode size={14} /> Enter
+                </span>
+              )}
+            </div>
+
+            <div className="pos-category-scroll">
+              <button
+                type="button"
+                className={`pos-category-chip ${categoryFilter === "all" ? "active" : ""}`}
+                onClick={() => setCategoryFilter("all")}
+              >
+                All
+                <span className="pos-category-count">{catalog.length}</span>
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`pos-category-chip ${categoryFilter === String(cat.id) ? "active" : ""}`}
+                  onClick={() => setCategoryFilter(String(cat.id))}
+                >
+                  {cat.name}
+                  <span className="pos-category-count">
+                    {catalog.filter((p) => String(p.category_id) === String(cat.id)).length}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="pos-catalog-meta">
+            <span>
+              {displayedProducts.length} product{displayedProducts.length !== 1 ? "s" : ""}
+              {search ? ` matching “${search.trim()}”` : ""}
+            </span>
           </div>
 
           <div className="pos-product-grid">
-            {displayedProducts.map((p) => (
-              <div
-                key={p.id}
-                className={`pos-product-card ${p.quantity <= 0 ? "low-stock" : ""}`}
-                onClick={() => addToCart(p)}
-              >
-                <ProductBilingualName
-                  name={p.name}
-                  nameAr={p.name_ar}
-                  size="sm"
-                  align="center"
-                  className="pos-product-name-block"
-                />
-                <div className="pos-product-price">{formatCurrency(p.selling_price, currency)}</div>
-                <div className="pos-product-stock">
-                  Stock: {formatQuantity(p.quantity, p.unit_symbol)}
-                  {p.quantity <= 0 ? " (oversell OK)" : ""}
-                </div>
-              </div>
-            ))}
+            {displayedProducts.map((p) => {
+              const inCart = cartQtyMap.get(p.id) || 0;
+              const hue = productAccent(p.name);
+              const lowStock = p.quantity <= 0;
+
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`pos-product-card ${lowStock ? "low-stock" : ""} ${inCart ? "in-cart" : ""}`}
+                  onClick={() => addToCart(p)}
+                  style={{ "--product-accent": `${hue}` }}
+                >
+                  {inCart > 0 && <span className="pos-product-badge">{inCart}</span>}
+                  <div className="pos-product-thumb">{productInitial(p.name)}</div>
+                  <ProductBilingualName
+                    name={p.name}
+                    nameAr={p.name_ar}
+                    size="sm"
+                    align="center"
+                    className="pos-product-name-block"
+                  />
+                  <div className="pos-product-price">{formatCurrency(p.selling_price, currency)}</div>
+                  <div className="pos-product-meta">
+                    {p.category_name && (
+                      <span className="pos-product-category">{p.category_name}</span>
+                    )}
+                    <span className={`pos-product-stock ${lowStock ? "warn" : ""}`}>
+                      {formatQuantity(p.quantity, p.unit_symbol)}
+                      {lowStock ? " · oversell OK" : ""}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+
             {!displayedProducts.length && (
-              <p style={{ color: "var(--color-text-muted)", gridColumn: "1/-1", fontSize: "0.875rem" }}>
-                {search ? "No products found" : "No products in stock — add products first"}
-              </p>
+              <div className="pos-empty-catalog">
+                <Search size={32} strokeWidth={1.5} />
+                <p>{search ? "No products match your search" : "No products in this category"}</p>
+                {(search || categoryFilter !== "all") && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      setSearch("");
+                      setCategoryFilter("all");
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </div>
             )}
           </div>
-        </div>
+        </section>
 
-        <div className="pos-right-panel">
-          <div className="pos-cart">
-            <div className="pos-section-header">Cart ({cart.length})</div>
+        <aside className="pos-checkout" aria-label="Cart and payment">
+          <div className="pos-cart-panel">
+            <div className="pos-cart-header">
+              <div className="pos-cart-title">
+                <ShoppingCart size={18} />
+                <span>Cart</span>
+                {cart.length > 0 && <span className="pos-cart-count">{cart.length}</span>}
+              </div>
+              {cart.length > 0 && (
+                <button type="button" className="pos-clear-cart" onClick={clearCart}>
+                  Clear
+                </button>
+              )}
+            </div>
 
-            <div style={{ padding: "0.5rem 0.75rem" }}>
-              <Select label="Customer" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-                <option value="">Walk-in Customer</option>
+            <div className="pos-customer-row">
+              <User size={16} className="pos-customer-icon" />
+              <Select
+                label=""
+                value={customerId}
+                onChange={(e) => setCustomerId(e.target.value)}
+                className="pos-customer-select"
+              >
+                <option value="">Walk-in customer</option>
                 {customers.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
                 ))}
               </Select>
             </div>
 
             <div className="pos-cart-items">
               {cart.length === 0 ? (
-                <p style={{ padding: "0.75rem", color: "var(--color-text-muted)", fontSize: "0.8125rem" }}>
-                  No items in cart
-                </p>
+                <div className="pos-cart-empty">
+                  <ShoppingCart size={36} strokeWidth={1.25} />
+                  <p>Your cart is empty</p>
+                  <span>Select products from the catalog to begin</span>
+                </div>
               ) : (
                 cart.map((item) => (
                   <div key={item.product_id} className="pos-cart-item">
-                    <div>
-                      <ProductBilingualName
-                        name={item.name}
-                        nameAr={item.name_ar}
-                        size="sm"
-                      />
-                      <div className="pos-qty-controls">
-                        <Button variant="ghost" size="sm" className="btn-icon" onClick={() => updateQty(item.product_id, -1)}>
-                          <Minus size={14} />
-                        </Button>
-                        <span>{formatQuantity(item.quantity, item.unit_symbol)}</span>
-                        <Button variant="ghost" size="sm" className="btn-icon" onClick={() => updateQty(item.product_id, 1)}>
-                          <Plus size={14} />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="btn-icon" onClick={() => removeItem(item.product_id)}>
-                          <Trash2 size={14} />
-                        </Button>
+                    <div className="pos-cart-item-main">
+                      <ProductBilingualName name={item.name} nameAr={item.name_ar} size="sm" />
+                      <div className="pos-cart-item-price">
+                        {formatCurrency(item.unit_price, currency)} each
                       </div>
                     </div>
-                    <strong>{formatCurrency(item.total, currency)}</strong>
+                    <div className="pos-cart-item-footer">
+                      <div className="pos-qty-controls">
+                        <button
+                          type="button"
+                          className="pos-qty-btn"
+                          onClick={() => updateQty(item.product_id, -1)}
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus size={14} />
+                        </button>
+                        <span className="pos-qty-value">
+                          {formatQuantity(item.quantity, item.unit_symbol)}
+                        </span>
+                        <button
+                          type="button"
+                          className="pos-qty-btn"
+                          onClick={() => updateQty(item.product_id, 1)}
+                          aria-label="Increase quantity"
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+                      <strong className="pos-line-total">{formatCurrency(item.total, currency)}</strong>
+                      <button
+                        type="button"
+                        className="pos-remove-btn"
+                        onClick={() => removeItem(item.product_id)}
+                        aria-label="Remove item"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
             </div>
 
             <div className="pos-cart-summary">
-              <div className="pos-summary-row"><span>Subtotal</span><span>{formatCurrency(subtotal, currency)}</span></div>
               <div className="pos-summary-row">
+                <span>Subtotal</span>
+                <span>{formatCurrency(subtotal, currency)}</span>
+              </div>
+              <div className="pos-summary-row pos-summary-discount">
                 <span>Discount</span>
                 <input
                   type="number"
-                  className="form-input"
-                  style={{ width: "90px", padding: "0.2rem 0.4rem", fontSize: "0.8125rem" }}
+                  className="pos-discount-input"
                   value={discount}
                   min={0}
                   onChange={(e) => setDiscount(e.target.value)}
                 />
               </div>
-              <div className="pos-summary-row"><span>VAT ({vatPercent}%)</span><span>{formatCurrency(vat, currency)}</span></div>
-              <div className="pos-summary-row grand"><span>Total</span><span>{formatCurrency(grandTotal, currency)}</span></div>
+              <div className="pos-summary-row">
+                <span>VAT ({vatPercent}%)</span>
+                <span>{formatCurrency(vat, currency)}</span>
+              </div>
+              <div className="pos-summary-row pos-summary-grand">
+                <span>Total due</span>
+                <span>{formatCurrency(grandTotal, currency)}</span>
+              </div>
             </div>
           </div>
 
-          <div className="pos-payment">
+          <div className="pos-payment-panel">
             <div className="pos-payment-tabs">
-            <button
-                type="button"
-                className={`pos-payment-tab ${paymentTab === PAYMENT_METHODS.CARD ? "active" : ""}`}
-                onClick={() => setPaymentTab(PAYMENT_METHODS.CARD)}
-              >
-                <CreditCard size={16} /> Card
-              </button> 
-
               <button
                 type="button"
                 className={`pos-payment-tab ${paymentTab === PAYMENT_METHODS.CASH ? "active" : ""}`}
                 onClick={() => setPaymentTab(PAYMENT_METHODS.CASH)}
               >
-                <Banknote size={16} /> Cash
+                <Banknote size={18} /> Cash
               </button>
-     
+              <button
+                type="button"
+                className={`pos-payment-tab ${paymentTab === PAYMENT_METHODS.CARD ? "active" : ""}`}
+                onClick={() => setPaymentTab(PAYMENT_METHODS.CARD)}
+              >
+                <CreditCard size={18} /> Card
+              </button>
             </div>
 
             <div className="pos-payment-body">
               {paymentTab === PAYMENT_METHODS.CASH ? (
                 <>
-                  <label className="form-label">Cash Received (optional)</label>
+                  <label className="pos-field-label">Cash received</label>
                   <input
-                    className="form-input"
+                    className="pos-cash-input"
                     type="number"
                     step="0.01"
                     min={0}
-                    placeholder="Leave empty or enter partial payment"
+                    placeholder="0.00"
                     value={cashReceived}
                     onChange={(e) => setCashReceived(e.target.value)}
                   />
-                  <div className="pos-change-display">
-                    <div className="pos-change-label">{balanceDue > 0 ? "Balance Due" : "Change Due"}</div>
-                    <div className="pos-change-value">
-                      {formatCurrency(balanceDue > 0 ? balanceDue : changeDue, currency)}
-                    </div>
+
+                  <div className="pos-quick-cash">
+                    <button type="button" className="pos-quick-btn" onClick={setExactCash}>
+                      Exact
+                    </button>
+                    {[50, 100, 200, 500].map((amount) => (
+                      <button
+                        key={amount}
+                        type="button"
+                        className="pos-quick-btn"
+                        onClick={() => addQuickCash(amount)}
+                      >
+                        +{amount}
+                      </button>
+                    ))}
                   </div>
-                  <div className="pos-payment-actions">
-                    <Button variant="secondary" disabled={submitting} onClick={() => completeHeldSale(PAYMENT_METHODS.CASH)}>
-                      <Pause size={16} /> Hold
-                    </Button>
-                    <Button variant="secondary" disabled={submitting} onClick={handlePrintLast}>
-                      <Printer size={16} /> Reprint
-                    </Button>
-                    <Button
-                      disabled={submitting || cart.length === 0}
-                      onClick={() => openCompleteConfirm(PAYMENT_METHODS.CASH)}
-                      style={{ gridColumn: "1 / -1" }}
-                    >
-                      {submitting ? "Processing..." : "Complete Cash Sale"}
-                    </Button>
+
+                  <div className="pos-change-display">
+                    <span className="pos-change-label">
+                      {balanceDue > 0 ? "Balance due" : "Change due"}
+                    </span>
+                    <span className="pos-change-value">
+                      {formatCurrency(balanceDue > 0 ? balanceDue : changeDue, currency)}
+                    </span>
                   </div>
                 </>
               ) : (
-                <>
-                  <p style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
-                    Card payment — total {formatCurrency(grandTotal, currency)}
-                  </p>
-                  <div className="pos-payment-actions">
-                    <Button variant="secondary" disabled={submitting} onClick={() => completeHeldSale(PAYMENT_METHODS.CARD)}>
-                      <Pause size={16} /> Hold
-                    </Button>
-                    <Button variant="secondary" disabled={submitting} onClick={handlePrintLast}>
-                      <Printer size={16} /> Reprint
-                    </Button>
-                    <Button
-                      disabled={submitting || cart.length === 0}
-                      onClick={() => openCompleteConfirm(PAYMENT_METHODS.CARD)}
-                      style={{ gridColumn: "1 / -1" }}
-                    >
-                      {submitting ? "Processing..." : "Complete Card Sale"}
-                    </Button>
-                  </div>
-                </>
+                <div className="pos-card-info">
+                  <CreditCard size={28} strokeWidth={1.25} />
+                  <p>Card payment</p>
+                  <strong>{formatCurrency(grandTotal, currency)}</strong>
+                </div>
               )}
+
+              <div className="pos-payment-actions">
+                <Button
+                  variant="secondary"
+                  disabled={submitting}
+                  onClick={() => completeHeldSale(paymentTab)}
+                >
+                  <Pause size={16} /> Hold
+                </Button>
+                <Button variant="secondary" disabled={submitting} onClick={handlePrintLast}>
+                  <Printer size={16} /> Reprint
+                </Button>
+                <Button
+                  className="pos-complete-btn"
+                  disabled={submitting || cart.length === 0}
+                  onClick={() => openCompleteConfirm(paymentTab)}
+                >
+                  {submitting
+                    ? "Processing…"
+                    : paymentTab === PAYMENT_METHODS.CASH
+                      ? "Complete cash sale"
+                      : "Complete card sale"}
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
 
       <SaleCompleteModal
@@ -563,7 +790,9 @@ export default function Sales() {
         isOpen={returnOpen}
         onClose={() => setReturnOpen(false)}
         onSuccess={(result) => {
-          setMessage(`Return ${result.returnNumber} — ${formatCurrency(result.totalRefund, currency)} refunded`);
+          setMessage(
+            `Return ${result.returnNumber} — ${formatCurrency(result.totalRefund, currency)} refunded`
+          );
           refreshCatalog();
         }}
         currency={currency}
