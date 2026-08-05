@@ -237,7 +237,7 @@ export function templateSampleRow() {
 
 export function templateInstructionsRows() {
   return [
-    ["Product Import Template — Portal POS"],
+    ["Product Import Template — DukkanPOS"],
     [""],
     ["Required columns", "name, selling_price"],
     ["Optional columns", "All other columns below"],

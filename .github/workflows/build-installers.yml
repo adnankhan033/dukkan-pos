@@ -53,11 +53,11 @@ jobs:
             echo "Installer unchanged, skipping commit"
             exit 0
           fi
-          git commit -m "Add Windows installer for Portal POS"
+          git commit -m "Add Windows installer for DukkanPOS"
           git push
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: Portal-POS-Windows
+          name: DukkanPOS-Windows
           path: src-tauri/target/release/bundle/nsis/*-setup.exe

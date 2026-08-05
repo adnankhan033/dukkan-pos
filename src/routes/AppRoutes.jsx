@@ -21,6 +21,7 @@ import Users from "../pages/Users";
 import ZatcaQueue from "../pages/ZatcaQueue";
 import ZatcaDailySync from "../pages/ZatcaDailySync";
 import ZatcaTestCenter from "../pages/ZatcaTestCenter";
+import Subscriptions from "../pages/Subscriptions";
 
 function withRole(module, element) {
   return <RoleRoute module={module}>{element}</RoleRoute>;
@@ -53,6 +54,7 @@ export default function AppRoutes() {
         <Route path="/accounting" element={withRole("accounting", <Accounting />)} />
         <Route path="/expenses" element={<Navigate to="/accounting" replace />} />
         <Route path="/reports" element={withRole("reports", <Reports />)} />
+        <Route path="/subscriptions" element={withRole("dashboard", <Subscriptions />)} />
         <Route path="/settings" element={withRole("settings", <Settings />)} />
         <Route path="/zatca-sync" element={withRole("sales", <ZatcaDailySync />)} />
         <Route path="/zatca-queue" element={withRole("settings", <ZatcaQueue />)} />

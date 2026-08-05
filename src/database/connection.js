@@ -158,6 +158,7 @@ async function runMigrations() {
   await ensureSupplierLedgerSchema();
   await ensureZatcaSchema();
   await ensureCashierModuleDefaults();
+  await ensureUserSubscriptionsSchema();
   await ensureReceiptTemplateDefault();
   await ensureSettingsKeys();
   await migrateUtcTimestampsToBusinessTimezone();
@@ -232,6 +233,60 @@ async function ensureZatcaSchema() {
   );
   await execute(
     "CREATE INDEX IF NOT EXISTS idx_zatca_api_logs_created ON zatca_api_logs(created_at DESC)"
+  );
+}
+
+async function ensureUserSubscriptionsSchema() {
+  await execute(
+    `CREATE TABLE IF NOT EXISTS user_subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL UNIQUE,
+      plan TEXT NOT NULL,
+      start_date TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      last_renewed_at TEXT,
+      next_renewal_at TEXT,
+      is_suspended INTEGER NOT NULL DEFAULT 0,
+      suspended_at TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )`
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_user_subscriptions_expires ON user_subscriptions(expires_at)"
+  );
+
+  const migrated = await queryOne(
+    "SELECT value FROM settings WHERE key = '_user_subscriptions_v1' LIMIT 1"
+  );
+  if (migrated) return;
+
+  const cashiers = await query(
+    "SELECT id FROM users WHERE role = $1 AND id NOT IN (SELECT user_id FROM user_subscriptions)",
+    ["cashier"]
+  );
+
+  const start = new Date();
+  const y = start.getFullYear();
+  const m = String(start.getMonth() + 1).padStart(2, "0");
+  const d = String(start.getDate()).padStart(2, "0");
+  const startDate = `${y}-${m}-${d}`;
+  const end = new Date(start);
+  end.setFullYear(end.getFullYear() + 1);
+  const expiresAt = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+
+  for (const cashier of cashiers) {
+    await execute(
+      `INSERT INTO user_subscriptions
+       (user_id, plan, start_date, expires_at, last_renewed_at, next_renewal_at, is_suspended)
+       VALUES ($1, 'annual', $2, $3, $2, $3, 0)`,
+      [cashier.id, startDate, expiresAt]
+    );
+  }
+
+  await execute(
+    "INSERT INTO settings (key, value) VALUES ('_user_subscriptions_v1', '1')"
   );
 }
 

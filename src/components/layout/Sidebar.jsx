@@ -11,6 +11,7 @@ import {
   BarChart3,
   Settings,
   Shield,
+  CreditCard,
   LogOut,
   Moon,
   Sun,
@@ -35,6 +36,7 @@ const ICONS = {
   BarChart3,
   Settings,
   Shield,
+  CreditCard,
 };
 
 function isPathActive(pathname, path) {
@@ -83,13 +85,13 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <h2>{settings.store_name || "Portal POS"}</h2>
+        <h2>{settings.store_name || "DukkanPOS"}</h2>
         {settings.store_name_ar && (
           <p className="sidebar-brand-ar" dir="rtl">
             {settings.store_name_ar}
           </p>
         )}
-        <span>Point of Sale v1.0</span>
+        <span>DukkanPOS v1.0</span>
       </div>
 
       <nav className="sidebar-nav">

@@ -1,12 +1,12 @@
-# Portal POS — ZATCA Integration Guide
+# DukkanPOS — ZATCA Integration Guide
 
-Guide for Saudi Arabia **ZATCA** (Zakat, Tax and Customs Authority) e-invoicing in Portal POS.
+Guide for Saudi Arabia **ZATCA** (Zakat, Tax and Customs Authority) e-invoicing in DukkanPOS.
 
 ---
 
 ## Overview
 
-Portal POS supports three ZATCA modes configured per store in **Settings → ZATCA**:
+DukkanPOS supports three ZATCA modes configured per store in **Settings → ZATCA**:
 
 | Mode | What it does | API required |
 |------|----------------|--------------|
@@ -202,7 +202,7 @@ QR content follows ZATCA Phase 1 TLV specification regardless of Phase 2 sync st
 
 ## Architecture (for reference)
 
-Portal POS uses a **module pattern**:
+DukkanPOS uses a **module pattern**:
 
 - `DisabledModule` — no ZATCA
 - `Phase1Module` — QR generation only

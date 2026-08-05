@@ -19,7 +19,7 @@ function DesktopApp() {
   }
 
   if (!dbReady) {
-    return <LoadingSpinner message="Initializing Portal POS..." />;
+    return <LoadingSpinner message="Initializing DukkanPOS..." />;
   }
 
   return <AppRoutes />;

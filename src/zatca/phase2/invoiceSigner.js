@@ -128,7 +128,7 @@ export function resolveEgsUuid(config) {
     const trimmed = String(value || "").trim();
     if (UUID_RE.test(trimmed)) return trimmed;
   }
-  const seed = String(config.device?.serial || config.device?.id || "portal-pos-egs");
+  const seed = String(config.device?.serial || config.device?.id || "dukkan-pos-egs");
   return uuidFromSeed(seed);
 }
 
@@ -156,7 +156,7 @@ function buildEgsInfo(config, { production = false } = {}) {
   const info = {
     uuid: resolveEgsUuid(config),
     custom_id: config.device?.id || config.device?.serial || "EGS-001",
-    model: config.device?.model || "Portal POS",
+    model: config.device?.model || "DukkanPOS",
     CRN_number: normalizeCrnNumber(config.company?.crNumber, config.environment),
     VAT_name: config.company?.name || "Store",
     VAT_number:
@@ -228,7 +228,7 @@ function buildInvoiceProps(payload, config, { production = false } = {}) {
  */
 export async function signZatcaInvoice(config, payload, { production = false } = {}) {
   if (!isTauri()) {
-    throw new Error("Invoice signing requires the Portal POS desktop app.");
+    throw new Error("Invoice signing requires the DukkanPOS desktop app.");
   }
 
   const privateKey = config.credentials?.privateKey?.trim();

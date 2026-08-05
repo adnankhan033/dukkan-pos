@@ -41,11 +41,11 @@ export default function Login() {
   return (
     <div className="auth-card">
       <div className="auth-brand">
-        <h1>Portal POS</h1>
+        <h1>DukkanPOS</h1>
         <p>Sign in to your point of sale system</p>
       </div>
 
-      {notice && <Alert type="success">{notice}</Alert>}
+      {notice && <Alert type="warning">{notice}</Alert>}
       {error && <Alert>{error}</Alert>}
 
       <form onSubmit={handleSubmit}>

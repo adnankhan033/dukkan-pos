@@ -5,15 +5,15 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleDisplayName</key>
-	<string>Portal POS</string>
+	<string>DukkanPOS</string>
 	<key>CFBundleExecutable</key>
-	<string>tauri-app</string>
+	<string>dukkan-pos</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.sharedtechadnan.portal-pos</string>
+	<string>com.sharedtechadnan.dukkan-pos</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Portal POS</string>
+	<string>DukkanPOS</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

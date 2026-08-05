@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "tauri-app",
+      "name": "dukkan-pos",
       "dependencies": {
         "@fidm/x509": "^1.2.1",
         "@noble/curves": "^2.2.0",

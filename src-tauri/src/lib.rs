@@ -19,8 +19,8 @@ fn generate_zatca_csr(private_key_pem: String, csr_config: String) -> Result<Str
         .map_err(|e| e.to_string())?
         .as_nanos();
     let temp_dir = std::env::temp_dir();
-    let key_path = temp_dir.join(format!("portal-pos-zatca-{nanos}.pem"));
-    let config_path = temp_dir.join(format!("portal-pos-zatca-{nanos}.cnf"));
+    let key_path = temp_dir.join(format!("dukkan-pos-zatca-{nanos}.pem"));
+    let config_path = temp_dir.join(format!("dukkan-pos-zatca-{nanos}.cnf"));
 
     fs::write(&key_path, private_key_pem.trim()).map_err(|e| e.to_string())?;
     fs::write(&config_path, csr_config).map_err(|e| e.to_string())?;
@@ -254,8 +254,8 @@ fn validate_zatca_certificate(
         .map_err(|e| e.to_string())?
         .as_nanos();
     let temp_dir = std::env::temp_dir();
-    let cert_path = temp_dir.join(format!("portal-pos-cert-{nanos}.pem"));
-    let key_path = temp_dir.join(format!("portal-pos-key-{nanos}.pem"));
+    let cert_path = temp_dir.join(format!("dukkan-pos-cert-{nanos}.pem"));
+    let key_path = temp_dir.join(format!("dukkan-pos-key-{nanos}.pem"));
 
     prepare_x509_cert_pem(&certificate_pem, &cert_path)?;
     fs::write(&key_path, private_key_pem.trim()).map_err(|e| e.to_string())?;

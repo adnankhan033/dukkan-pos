@@ -1,5 +1,5 @@
 {
-  "name": "portal-pos",
+  "name": "dukkan-pos",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -12,7 +12,7 @@
     "build:mac-dmg": "tauri build --bundles dmg",
     "build:win-exe": "tauri build --bundles nsis",
     "package:mac-dmg": "mkdir -p releases && cp \"src-tauri/target/release/bundle/dmg/\"*.dmg releases/",
-    "package:win-zip": "powershell -Command \"Compress-Archive -Path src-tauri/target/release/bundle/nsis/*-setup.exe -DestinationPath Portal-POS-Windows.zip -Force\""
+    "package:win-zip": "powershell -Command \"Compress-Archive -Path src-tauri/target/release/bundle/nsis/*-setup.exe -DestinationPath DukkanPOS-Windows.zip -Force\""
   },
   "dependencies": {
     "@fidm/x509": "^1.2.1",

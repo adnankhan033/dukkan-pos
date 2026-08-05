@@ -1,10 +1,10 @@
 import { getModuleDefaults, getRoleModuleDefaults } from "./modules";
 import { getZatcaDefaultSettings } from "../zatca/core/config";
 
-export const DB_NAME = "sqlite:portal_pos.db";
+export const DB_NAME = "sqlite:dukkan_pos.db";
 
 export const DEFAULT_SETTINGS = {
-  store_name: "Portal POS",
+  store_name: "DukkanPOS",
   store_name_ar: "",
   store_address: "",
   cr_number: "",
@@ -150,6 +150,13 @@ export const NAV_GROUPS = [
     items: [{ path: "/accounting", label: "Expenses" }],
   },
   { id: "reports", label: "Reports", icon: "BarChart3", path: "/reports", module: "reports" },
+  {
+    id: "subscriptions",
+    label: "Subscriptions",
+    icon: "CreditCard",
+    path: "/subscriptions",
+    module: "dashboard",
+  },
   {
     id: "administration",
     label: "Administration",

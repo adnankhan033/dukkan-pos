@@ -344,7 +344,7 @@ async function buildCompactReceipt(ctx) {
 }
 
 export async function buildReceiptHtml({ sale, items, settings, currency }) {
-  const storeName = settings.store_name || "Portal POS";
+  const storeName = settings.store_name || "DukkanPOS";
   const storeNameAr = settings.store_name_ar || "";
   const address = settings.store_address || "";
   const footer = settings.receipt_footer || "Thank you!";

@@ -3,6 +3,7 @@ import { query, queryOne, execute, runInTransaction, clearDatabaseData } from ".
 const BACKUP_TABLES = [
   "settings",
   "users",
+  "user_subscriptions",
   "categories",
   "units",
   "products",
@@ -55,7 +56,7 @@ class BackupService {
   async createBackupDownload() {
     const data = await this.exportAll();
     const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-    this.downloadJson(data, `portal-pos-backup-${stamp}.json`);
+    this.downloadJson(data, `dukkan-pos-backup-${stamp}.json`);
     return { tableCount: BACKUP_TABLES.length, exported_at: data.exported_at };
   }
 

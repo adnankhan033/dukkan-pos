@@ -1,6 +1,6 @@
-# Portal POS
+# DukkanPOS
 
-A desktop Point of Sale (POS) application built for retail stores in Saudi Arabia. Portal POS runs offline on your computer, supports bilingual (English / Arabic) receipts, VAT, inventory, suppliers, accounting, and optional **ZATCA** e-invoicing (Phase 1 and Phase 2).
+A desktop Point of Sale (POS) application built for retail stores in Saudi Arabia. DukkanPOS runs offline on your computer, supports bilingual (English / Arabic) receipts, VAT, inventory, suppliers, accounting, and optional **ZATCA** e-invoicing (Phase 1 and Phase 2).
 
 **Stack:** Tauri 2 · React 19 · Vite · SQLite (local database)
 
@@ -19,7 +19,7 @@ A desktop Point of Sale (POS) application built for retail stores in Saudi Arabi
 
 ## Commands
 
-All commands are run from the project root (`tauri-app/`).
+All commands are run from the project root (`dukkan-pos/`).
 
 ### First-time setup
 
@@ -32,18 +32,30 @@ bun install
 
 ### Run the app (development)
 
-Starts the React dev server and opens the Portal POS desktop window with hot reload.
+Opens the **DukkanPOS desktop window** with hot reload (Vite + Tauri).
 
 ```bash
 bun run tauri dev
 ```
 
-Other useful dev commands:
+The first run compiles Rust dependencies and may take a minute. Later runs are much faster.
+
+**If `tauri dev` fails** with a plugin permissions error mentioning the old `tauri-app` path, clear stale Rust build cache once, then start again:
 
 ```bash
-bun run dev          # Frontend only (Vite) — usually used by Tauri internally
-bun run build        # Build frontend to dist/ (production assets)
-bun run preview      # Preview production frontend in browser
+cargo clean --manifest-path src-tauri/Cargo.toml && bun run tauri dev
+```
+
+After that, `bun run tauri dev` alone is enough for day-to-day development.
+
+> **Note:** `bun run build` only builds the frontend to `dist/` — it does **not** open the desktop app. Use `bun run tauri dev` to run the app, or `bun run tauri build` for a production installer.
+
+Other useful commands:
+
+```bash
+bun run dev          # Frontend only (Vite at http://localhost:1420/) — used internally by Tauri
+bun run build        # Build frontend assets to dist/ (used before production packaging)
+bun run preview      # Preview production frontend in the browser (no Tauri / SQLite)
 ```
 
 ### Build macOS installer (DMG)
@@ -61,8 +73,8 @@ bun run package:mac-dmg
 **Output location:**
 
 ```
-src-tauri/target/release/bundle/dmg/Portal POS_1.0.0_aarch64.dmg   # Apple Silicon
-src-tauri/target/release/bundle/dmg/Portal POS_1.0.0_x64.dmg      # Intel Mac
+src-tauri/target/release/bundle/dmg/DukkanPOS_1.0.0_aarch64.dmg   # Apple Silicon
+src-tauri/target/release/bundle/dmg/DukkanPOS_1.0.0_x64.dmg      # Intel Mac
 ```
 
 After `package:mac-dmg`, a copy is also placed in:
@@ -71,7 +83,7 @@ After `package:mac-dmg`, a copy is also placed in:
 releases/
 ```
 
-**Install on Mac:** Open the `.dmg` → drag **Portal POS** to Applications → launch from Applications.
+**Install on Mac:** Open the `.dmg` → drag **DukkanPOS** to Applications → launch from Applications.
 
 ### Build Windows installer (EXE)
 
@@ -88,16 +100,16 @@ bun run package:win-zip
 **Output location:**
 
 ```
-src-tauri/target/release/bundle/nsis/Portal POS_1.0.0_x64-setup.exe
+src-tauri/target/release/bundle/nsis/DukkanPOS_1.0.0_x64-setup.exe
 ```
 
 After `package:win-zip`:
 
 ```
-Portal-POS-Windows.zip   # contains the setup.exe
+DukkanPOS-Windows.zip   # contains the setup.exe
 ```
 
-**Install on Windows:** Run `Portal POS_1.0.0_x64-setup.exe` → follow the installer → launch from Start menu.
+**Install on Windows:** Run `DukkanPOS_1.0.0_x64-setup.exe` → follow the installer → launch from Start menu.
 
 ### Full production build (all bundles for current OS)
 
@@ -112,7 +124,8 @@ Builds all bundle types configured for your platform (DMG + `.app` on Mac, NSIS 
 | Command | Description |
 |---------|-------------|
 | `bun install` | Install Node dependencies |
-| `bun run tauri dev` | Run app in development mode |
+| `bun run tauri dev` | Run desktop app in development mode |
+| `cargo clean --manifest-path src-tauri/Cargo.toml` | Clear stale Rust cache (after rename / upgrade) |
 | `bun run tauri build` | Full production build (current OS) |
 | `bun run build:mac-dmg` | Build macOS `.dmg` only |
 | `bun run build:win-exe` | Build Windows `.exe` installer only |
@@ -120,6 +133,19 @@ Builds all bundle types configured for your platform (DMG + `.app` on Mac, NSIS 
 | `bun run package:win-zip` | Zip Windows setup exe |
 
 > **Note:** You cannot cross-compile a Windows `.exe` on Mac (or a Mac `.dmg` on Windows) with Tauri by default. Build each installer on its target operating system.
+
+### Upgrading from Portal POS
+
+If you previously used **Portal POS** or the old **`tauri-app/`** folder name:
+
+1. **Reopen the project** from the renamed folder: `dukkan-pos/` (was `tauri-app/`)
+2. **Clear Rust build cache** so Tauri stops looking for files under the old path:
+   ```bash
+   cargo clean --manifest-path src-tauri/Cargo.toml
+   bun run tauri dev
+   ```
+3. **Database:** The app now uses `dukkan_pos.db`. If you have existing data, rename your old database file from `portal_pos.db` to `dukkan_pos.db` in the Tauri app data directory, or restore from a JSON backup.
+4. **Delete old build artifacts** such as `Portal POS.app` — run `bun run build:mac-dmg` to generate **DukkanPOS.app** / **DukkanPOS.dmg**
 
 ---
 
@@ -185,4 +211,4 @@ Full details: [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
 
 ## License
 
-Private project — Portal POS v0.1.0
+Private project — DukkanPOS v0.1.0

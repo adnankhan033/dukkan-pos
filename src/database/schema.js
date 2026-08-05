@@ -191,4 +191,21 @@ export const SCHEMA_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS idx_inventory_product ON inventory(product_id)`,
   `CREATE INDEX IF NOT EXISTS idx_sale_returns_sale ON sale_returns(sale_id)`,
   `CREATE INDEX IF NOT EXISTS idx_sale_returns_created ON sale_returns(created_at)`,
+
+  `CREATE TABLE IF NOT EXISTS user_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL UNIQUE,
+    plan TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    last_renewed_at TEXT,
+    next_renewal_at TEXT,
+    is_suspended INTEGER NOT NULL DEFAULT 0,
+    suspended_at TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`,
+
+  `CREATE INDEX IF NOT EXISTS idx_user_subscriptions_expires ON user_subscriptions(expires_at)`,
 ];

@@ -9,7 +9,7 @@ export const useAuthStore = create(
       login: (user) => set({ user, isAuthenticated: true }),
       logout: () => set({ user: null, isAuthenticated: false }),
     }),
-    { name: "portal-pos-auth" }
+    { name: "dukkan-pos-auth" }
   )
 );
 
@@ -21,7 +21,7 @@ export const useThemeStore = create(
         set((state) => ({ theme: state.theme === "light" ? "dark" : "light" })),
       setTheme: (theme) => set({ theme }),
     }),
-    { name: "portal-pos-theme" }
+    { name: "dukkan-pos-theme" }
   )
 );
 

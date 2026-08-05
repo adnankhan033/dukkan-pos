@@ -1,5 +1,5 @@
 /**
- * Data models for Portal POS.
+ * Data models for DukkanPOS.
  * These shapes mirror SQLite rows and future Drupal REST API responses.
  */
 

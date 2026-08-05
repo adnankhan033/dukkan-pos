@@ -31,6 +31,7 @@ export const ROUTE_MODULE_MAP = {
   "/accounting": "accounting",
   "/expenses": "accounting",
   "/reports": "reports",
+  "/subscriptions": "dashboard",
   "/users": "users",
   "/settings": "settings",
   "/zatca-queue": "settings",

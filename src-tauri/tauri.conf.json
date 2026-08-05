@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Portal POS",
+  "productName": "DukkanPOS",
   "version": "1.0.0",
-  "identifier": "com.sharedtechadnan.portal-pos",
+  "identifier": "com.sharedtechadnan.dukkan-pos",
   "build": {
     "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Portal POS",
+        "title": "DukkanPOS",
         "width": 1280,
         "height": 800,
         "minWidth": 1024,
@@ -25,7 +25,7 @@
   },
   "plugins": {
     "sql": {
-      "preload": ["sqlite:portal_pos.db"]
+      "preload": ["sqlite:dukkan_pos.db"]
     }
   },
   "bundle": {
