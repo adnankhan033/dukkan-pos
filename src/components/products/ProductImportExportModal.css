@@ -333,3 +333,186 @@
   gap: 0.75rem;
   margin-top: 1rem;
 }
+
+.pie-field-reference {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.pie-field-reference h4 {
+  margin: 0 0 0.625rem;
+  font-size: 0.9375rem;
+}
+
+.pie-field-reference-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.pie-field-reference-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8125rem;
+}
+
+.pie-field-reference-table th,
+.pie-field-reference-table td {
+  padding: 0.5rem 0.625rem;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.pie-field-reference-table th {
+  background: var(--color-surface);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pie-field-reference-table code {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.35rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.pie-download-feedback {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 1rem 1.125rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  animation: pie-download-pop 0.28s ease;
+  position: relative;
+}
+
+.pie-download-feedback.success {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-success, #16a34a) 10%, var(--color-card)) 0%,
+    var(--color-card) 100%
+  );
+  border-color: color-mix(in srgb, var(--color-success, #16a34a) 35%, var(--color-border));
+}
+
+.pie-download-feedback.error {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-danger, #dc2626) 10%, var(--color-card)) 0%,
+    var(--color-card) 100%
+  );
+  border-color: color-mix(in srgb, var(--color-danger, #dc2626) 35%, var(--color-border));
+}
+
+.pie-download-feedback-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.pie-download-feedback.success .pie-download-feedback-icon {
+  color: var(--color-success, #16a34a);
+  background: color-mix(in srgb, var(--color-success, #16a34a) 14%, var(--color-card));
+}
+
+.pie-download-feedback.error .pie-download-feedback-icon {
+  color: var(--color-danger, #dc2626);
+  background: color-mix(in srgb, var(--color-danger, #dc2626) 14%, var(--color-card));
+}
+
+.pie-download-feedback-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.pie-download-feedback-body strong {
+  display: block;
+  font-size: 0.9375rem;
+  margin-bottom: 0.25rem;
+}
+
+.pie-download-feedback-body p {
+  margin: 0 0 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+.pie-download-feedback-body code {
+  font-size: 0.8125rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  word-break: break-all;
+}
+
+.pie-download-feedback-label {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.pie-download-feedback-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.pie-download-feedback-meta span {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.pie-download-feedback-hint {
+  margin-top: 0.35rem !important;
+  font-size: 0.75rem !important;
+}
+
+.pie-download-feedback-dismiss {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.625rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.125rem 0.35rem;
+  border-radius: var(--radius-sm);
+}
+
+.pie-download-feedback-dismiss:hover {
+  color: var(--color-text);
+  background: var(--color-surface);
+}
+
+.pie-link:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@keyframes pie-download-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -41,7 +41,7 @@ export function resolveZatcaIssueDateTime(payload = {}) {
   return zatcaRiyadhNow();
 }
 
-function normalizeZatcaIssueTime(time) {
+export function normalizeZatcaIssueTime(time) {
   const t = String(time || "").trim();
   if (/^\d{2}:\d{2}:\d{2}$/.test(t)) return t;
   if (/^\d{2}:\d{2}$/.test(t)) return `${t}:00`;
@@ -81,6 +81,13 @@ function zatcaPartsFromDate(date) {
 
 export function zatcaRiyadhNow() {
   return zatcaPartsFromDate(new Date());
+}
+
+/** QR tag 3 / display timestamp — must match XML IssueDate + IssueTime (KSA local, no Z). */
+export function formatZatcaQrTimestamp(issue_date, issue_time) {
+  const date = String(issue_date || "").slice(0, 10);
+  const time = normalizeZatcaIssueTime(String(issue_time || "").replace(/Z$/i, "").trim());
+  return `${date}T${time}`;
 }
 
 export function resolveBuyerName(payload = {}) {

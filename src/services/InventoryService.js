@@ -58,7 +58,12 @@ class InventoryService {
     if (!product) throw new Error("Product not found");
 
     const newQty = product.quantity + quantity;
-    const reason = referenceType === "return" ? "Return" : "Purchase";
+    const reason =
+      referenceType === "return"
+        ? "Return"
+        : referenceType === "order_delete"
+          ? "Order deleted"
+          : "Purchase";
     await execute(
       "UPDATE products SET quantity = $1, updated_at = datetime('now') WHERE id = $2",
       [newQty, productId]

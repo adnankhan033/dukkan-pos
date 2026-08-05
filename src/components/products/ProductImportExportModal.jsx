@@ -26,7 +26,7 @@ import {
   validateImportRows,
   buildErrorReportCsv,
 } from "../../utils/productImport/validate";
-import { downloadText, downloadArrayBuffer, formatFileSize } from "../../utils/productImport/download";
+import { downloadText, downloadArrayBuffer, formatFileSize, fileTypeLabel } from "../../utils/productImport/download";
 import { PRODUCT_IMPORT_COLUMNS } from "../../utils/productImport/columns";
 import { useConfirm } from "../../hooks/useConfirm";
 import "./ProductImportExportModal.css";
@@ -37,6 +37,45 @@ function formatEta(seconds) {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `~${mins}m ${secs}s remaining`;
+}
+
+function DownloadFeedbackBanner({ feedback, onDismiss }) {
+  if (!feedback) return null;
+
+  const isSuccess = feedback.type === "success";
+  const Icon = isSuccess ? CheckCircle2 : XCircle;
+
+  return (
+    <div className={`pie-download-feedback ${isSuccess ? "success" : "error"}`} role="status" aria-live="polite">
+      <div className="pie-download-feedback-icon">
+        <Icon size={22} />
+      </div>
+      <div className="pie-download-feedback-body">
+        <strong>{feedback.title}</strong>
+        {isSuccess ? (
+          <>
+            <p>
+              <span className="pie-download-feedback-label">{feedback.label}</span> saved as{" "}
+              <code>{feedback.filename}</code>
+            </p>
+            <div className="pie-download-feedback-meta">
+              <span>{fileTypeLabel(feedback.filename)}</span>
+              <span>{formatFileSize(feedback.size)}</span>
+              {feedback.detail && <span>{feedback.detail}</span>}
+            </div>
+            <p className="pie-download-feedback-hint">
+              Check your browser <strong>Downloads</strong> folder. If nothing appears, allow downloads for this app.
+            </p>
+          </>
+        ) : (
+          <p>{feedback.message || "Something went wrong. Please try again."}</p>
+        )}
+      </div>
+      <button type="button" className="pie-download-feedback-dismiss" onClick={onDismiss} aria-label="Dismiss">
+        ×
+      </button>
+    </div>
+  );
 }
 
 export default function ProductImportExportModal({ isOpen, onClose, onComplete }) {
@@ -58,7 +97,36 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
   const [progress, setProgress] = useState(null);
   const [summary, setSummary] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [downloading, setDownloading] = useState("");
+  const [downloadFeedback, setDownloadFeedback] = useState(null);
   const [message, setMessage] = useState("");
+  const downloadFeedbackTimerRef = useRef(null);
+
+  const clearDownloadFeedbackTimer = useCallback(() => {
+    if (downloadFeedbackTimerRef.current) {
+      clearTimeout(downloadFeedbackTimerRef.current);
+      downloadFeedbackTimerRef.current = null;
+    }
+  }, []);
+
+  const showDownloadFeedback = useCallback(
+    (feedback) => {
+      clearDownloadFeedbackTimer();
+      setDownloadFeedback(feedback);
+      if (feedback?.type === "success") {
+        downloadFeedbackTimerRef.current = setTimeout(() => {
+          setDownloadFeedback(null);
+          downloadFeedbackTimerRef.current = null;
+        }, 12000);
+      }
+    },
+    [clearDownloadFeedbackTimer]
+  );
+
+  const dismissDownloadFeedback = useCallback(() => {
+    clearDownloadFeedbackTimer();
+    setDownloadFeedback(null);
+  }, [clearDownloadFeedbackTimer]);
 
   const resetImportState = useCallback(() => {
     cancelRef.current = false;
@@ -79,14 +147,51 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
       resetImportState();
       setTab("import");
       setMessage("");
+      setDownloading("");
+      dismissDownloadFeedback();
     }
-  }, [isOpen, resetImportState]);
+  }, [isOpen, resetImportState, dismissDownloadFeedback]);
+
+  useEffect(() => () => clearDownloadFeedbackTimer(), [clearDownloadFeedbackTimer]);
+
+  async function runDownloadAction(id, label, action) {
+    setDownloading(id);
+    dismissDownloadFeedback();
+    setMessage("");
+    try {
+      const result = await action();
+      showDownloadFeedback({
+        type: "success",
+        title: "Download ready",
+        label,
+        filename: result.filename,
+        size: result.size,
+        detail: result.detail || null,
+      });
+    } catch (err) {
+      showDownloadFeedback({
+        type: "error",
+        title: "Download failed",
+        label,
+        message: err.message || "Could not download the file. Please try again.",
+      });
+    } finally {
+      setDownloading(null);
+    }
+  }
 
   async function runValidation(rows, importMode) {
     setValidating(true);
     try {
-      const { skuIndex, barcodeIndex } = await productImportService.getExistingIndex();
-      const result = validateImportRows(rows, { skuIndex, barcodeIndex, mode: importMode });
+      const { skuIndex, barcodeIndex, unitIndex, supplierIndex } =
+        await productImportService.getValidationIndexes();
+      const result = validateImportRows(rows, {
+        skuIndex,
+        barcodeIndex,
+        unitIndex,
+        supplierIndex,
+        mode: importMode,
+      });
       setValidation(result);
       return result;
     } finally {
@@ -204,46 +309,69 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
   function downloadErrorReport() {
     const errors = summary?.errors || validation?.errors || [];
     if (!errors.length) return;
-    const csv = buildErrorReportCsv(headers.length ? headers : PRODUCT_IMPORT_COLUMNS.map((c) => c.label), errors);
-    downloadText(csv, `import-errors-${productImportService.timestamp()}.csv`);
+    const filename = `import-errors-${productImportService.timestamp()}.csv`;
+    runDownloadAction("error-report", "Error report", async () => {
+      const csv = buildErrorReportCsv(
+        headers.length ? headers : PRODUCT_IMPORT_COLUMNS.map((c) => c.label),
+        errors
+      );
+      const result = downloadText(csv, filename);
+      return { ...result, detail: `${errors.length} error row(s)` };
+    });
   }
 
   async function handleExportCsv() {
-    setExporting(true);
-    setMessage("");
-    try {
-      const result = await productImportService.exportCsv();
-      downloadText(result.content, result.filename);
-      setMessage(`Exported ${result.count} products to CSV.`);
-    } catch (err) {
-      setMessage(err.message || "Export failed");
-    } finally {
-      setExporting(false);
-    }
+    await runDownloadAction("export-csv", "Product export", async () => {
+      setExporting(true);
+      try {
+        const result = await productImportService.exportCsv();
+        const downloaded = downloadText(result.content, result.filename);
+        return {
+          ...downloaded,
+          detail: `${result.count} product(s)`,
+        };
+      } finally {
+        setExporting(false);
+      }
+    });
   }
 
   async function handleExportExcel() {
-    setExporting(true);
-    setMessage("");
-    try {
-      const result = await productImportService.exportExcel();
-      downloadArrayBuffer(result.buffer, result.filename, result.mimeType);
-      setMessage(`Exported ${result.count} products to Excel.`);
-    } catch (err) {
-      setMessage(err.message || "Export failed");
-    } finally {
-      setExporting(false);
-    }
+    await runDownloadAction("export-xlsx", "Product export", async () => {
+      setExporting(true);
+      try {
+        const result = await productImportService.exportExcel();
+        const downloaded = downloadArrayBuffer(result.buffer, result.filename, result.mimeType);
+        return {
+          ...downloaded,
+          detail: `${result.count} product(s)`,
+        };
+      } finally {
+        setExporting(false);
+      }
+    });
   }
 
-  function handleTemplateCsv() {
-    const result = productImportService.templateCsv();
-    downloadText(result.content, result.filename);
+  async function handleTemplateCsv() {
+    await runDownloadAction("template-csv", "CSV template", async () => {
+      const result = productImportService.templateCsv();
+      const downloaded = downloadText(result.content, result.filename);
+      return {
+        ...downloaded,
+        detail: "3 example products · 12 columns",
+      };
+    });
   }
 
-  function handleTemplateExcel() {
-    const result = productImportService.templateExcel();
-    downloadArrayBuffer(result.buffer, result.filename, result.mimeType);
+  async function handleTemplateExcel() {
+    await runDownloadAction("template-xlsx", "Excel template", async () => {
+      const result = productImportService.templateExcel();
+      const downloaded = downloadArrayBuffer(result.buffer, result.filename, result.mimeType);
+      return {
+        ...downloaded,
+        detail: "Products + Instructions sheets",
+      };
+    });
   }
 
   const preview = previewRows(parsedRows);
@@ -310,29 +438,98 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
 
           {message && <Alert type="success">{message}</Alert>}
 
+          <DownloadFeedbackBanner feedback={downloadFeedback} onDismiss={dismissDownloadFeedback} />
+
           {tab === "export" && (
             <div className="pie-export">
               <p className="pie-help">
-                Export your full product catalogue with categories, prices, stock, and Arabic names (UTF-8).
+                Export your full catalogue with all product fields — English &amp; Arabic names, SKU, barcode,
+                category, unit, supplier, prices, stock, and published status (UTF-8).
               </p>
               <div className="pie-export-actions">
-                <Button variant="secondary" disabled={exporting} onClick={handleExportCsv}>
-                  <FileText size={16} /> Export CSV
+                <Button
+                  variant="secondary"
+                  disabled={exporting || Boolean(downloading)}
+                  onClick={handleExportCsv}
+                >
+                  {downloading === "export-csv" ? (
+                    <Loader2 size={16} className="spin" />
+                  ) : (
+                    <FileText size={16} />
+                  )}
+                  {downloading === "export-csv" ? "Preparing CSV…" : "Export CSV"}
                 </Button>
-                <Button variant="secondary" disabled={exporting} onClick={handleExportExcel}>
-                  <FileSpreadsheet size={16} /> Export Excel
+                <Button
+                  variant="secondary"
+                  disabled={exporting || Boolean(downloading)}
+                  onClick={handleExportExcel}
+                >
+                  {downloading === "export-xlsx" ? (
+                    <Loader2 size={16} className="spin" />
+                  ) : (
+                    <FileSpreadsheet size={16} />
+                  )}
+                  {downloading === "export-xlsx" ? "Preparing Excel…" : "Export Excel"}
                 </Button>
               </div>
               <div className="pie-template-section">
                 <h4>Download Template</h4>
-                <p>Use these templates for bulk imports. Required columns: <strong>name</strong>, <strong>selling_price</strong>.</p>
+                <p>
+                  Templates match the Add Product form. Required columns: <strong>name</strong>,{" "}
+                  <strong>selling_price</strong>. Excel includes 3 example rows plus an Instructions sheet.
+                </p>
                 <div className="pie-export-actions">
-                  <Button variant="ghost" size="sm" onClick={handleTemplateCsv}>
-                    <Download size={14} /> CSV Template
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={Boolean(downloading)}
+                    onClick={handleTemplateCsv}
+                  >
+                    {downloading === "template-csv" ? (
+                      <Loader2 size={14} className="spin" />
+                    ) : (
+                      <Download size={14} />
+                    )}
+                    {downloading === "template-csv" ? "Downloading…" : "CSV Template"}
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={handleTemplateExcel}>
-                    <Download size={14} /> Excel Template
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={Boolean(downloading)}
+                    onClick={handleTemplateExcel}
+                  >
+                    {downloading === "template-xlsx" ? (
+                      <Loader2 size={14} className="spin" />
+                    ) : (
+                      <Download size={14} />
+                    )}
+                    {downloading === "template-xlsx" ? "Downloading…" : "Excel Template"}
                   </Button>
+                </div>
+              </div>
+              <div className="pie-field-reference">
+                <h4>Column reference</h4>
+                <div className="pie-field-reference-wrap">
+                  <table className="pie-field-reference-table">
+                    <thead>
+                      <tr>
+                        <th>Column</th>
+                        <th>Required</th>
+                        <th>Description</th>
+                        <th>Example</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {PRODUCT_IMPORT_COLUMNS.map((col) => (
+                        <tr key={col.key}>
+                          <td><code>{col.label}</code></td>
+                          <td>{col.required ? "Yes" : "No"}</td>
+                          <td>{col.hint}</td>
+                          <td>{col.example}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
@@ -454,9 +651,12 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
                                 <th>Name</th>
                                 <th>Arabic</th>
                                 <th>SKU</th>
+                                <th>Barcode</th>
                                 <th>Category</th>
+                                <th>Unit</th>
                                 <th>Price</th>
                                 <th>Qty</th>
+                                <th>Published</th>
                                 <th>Status</th>
                               </tr>
                             </thead>
@@ -469,9 +669,12 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
                                     <td>{row.data.name}</td>
                                     <td dir="rtl">{row.data.name_ar}</td>
                                     <td>{row.data.sku}</td>
+                                    <td>{row.data.barcode}</td>
                                     <td>{row.data.category}</td>
+                                    <td>{row.data.unit}</td>
                                     <td>{row.data.selling_price}</td>
                                     <td>{row.data.quantity}</td>
+                                    <td>{row.data.published || "yes"}</td>
                                     <td>{v?.valid ? "OK" : "Error"}</td>
                                   </tr>
                                 );
@@ -483,9 +686,25 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
 
                       <div className="pie-template-inline">
                         <span>Need a template?</span>
-                        <button type="button" className="pie-link" onClick={handleTemplateCsv}>CSV</button>
+                        <button
+                          type="button"
+                          className="pie-link"
+                          disabled={Boolean(downloading)}
+                          onClick={handleTemplateCsv}
+                        >
+                          {downloading === "template-csv" ? "Downloading CSV…" : "CSV"}
+                        </button>
                         <span>·</span>
-                        <button type="button" className="pie-link" onClick={handleTemplateExcel}>Excel</button>
+                        <button
+                          type="button"
+                          className="pie-link"
+                          disabled={Boolean(downloading)}
+                          onClick={handleTemplateExcel}
+                        >
+                          {downloading === "template-xlsx" ? "Downloading Excel…" : "Excel"}
+                        </button>
+                        <span>·</span>
+                        <span>Includes 3 example products matching the Add Product form</span>
                       </div>
                     </>
                   )}

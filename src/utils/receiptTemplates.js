@@ -29,7 +29,7 @@ export function getReceiptTemplate(id) {
 
 /** Sample sale used in Settings preview and test print. */
 export const SAMPLE_RECEIPT_SALE = {
-  sale_number: "SALE-00042",
+  sale_number: "INV-1",
   created_at: new Date().toISOString(),
   subtotal: 43.48,
   discount: 0,

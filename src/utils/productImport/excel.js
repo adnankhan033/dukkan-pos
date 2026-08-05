@@ -1,9 +1,11 @@
 import * as XLSX from "xlsx";
-import { templateHeaders, templateSampleRow } from "./columns.js";
+import { templateHeaders, templateSampleRows, templateInstructionsRows } from "./columns.js";
 
 export function parseExcelArrayBuffer(buffer) {
   const workbook = XLSX.read(buffer, { type: "array", codepage: 65001 });
-  const sheetName = workbook.SheetNames[0];
+  const sheetName =
+    workbook.SheetNames.find((name) => name.toLowerCase() === "products") ||
+    workbook.SheetNames[0];
   if (!sheetName) return [];
   const sheet = workbook.Sheets[sheetName];
   return XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "", raw: false });
@@ -22,5 +24,16 @@ export function workbookToArrayBuffer(workbook) {
 }
 
 export function buildTemplateWorkbook() {
-  return buildExcelWorkbook(templateHeaders(), [templateSampleRow()], "Template");
+  const workbook = XLSX.utils.book_new();
+
+  const productsSheet = XLSX.utils.aoa_to_sheet([
+    templateHeaders(),
+    ...templateSampleRows(),
+  ]);
+  XLSX.utils.book_append_sheet(workbook, productsSheet, "Products");
+
+  const instructionsSheet = XLSX.utils.aoa_to_sheet(templateInstructionsRows());
+  XLSX.utils.book_append_sheet(workbook, instructionsSheet, "Instructions");
+
+  return workbook;
 }

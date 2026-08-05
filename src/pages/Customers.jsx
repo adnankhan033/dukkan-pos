@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { customerService } from "../services/CustomerService";
+import { DIRECTORY_EXPORT_TYPES } from "../utils/directoryExport/definitions";
 import { useDebounce } from "../hooks/usePagination";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import { ITEMS_PER_PAGE } from "../utils/constants";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
+import DirectoryExportButtons from "../components/common/DirectoryExportButtons";
+import { Card } from "../components/common/Card";
 import SearchBar from "../components/common/SearchBar";
 import Table from "../components/common/Table";
 import Pagination from "../components/common/Pagination";
@@ -97,7 +100,20 @@ export default function Customers() {
 
   return (
     <div>
-      <PageHeader title="Customers" subtitle="Manage customer records." actions={<Button onClick={openCreate}><Plus size={16} /> Add Customer</Button>} />
+      <PageHeader
+        title="Customers"
+        subtitle="Manage customer records and export a professional directory for WhatsApp or email."
+        actions={<Button onClick={openCreate}><Plus size={16} /> Add Customer</Button>}
+      />
+
+      <Card className="directory-export-card">
+        <DirectoryExportButtons
+          type={DIRECTORY_EXPORT_TYPES.CUSTOMERS}
+          search={debouncedSearch}
+          label="Customer directory"
+        />
+      </Card>
+
       <div style={{ marginBottom: "1rem" }}>
         <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); }} placeholder="Search customers..." />
       </div>

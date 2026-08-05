@@ -1,0 +1,40 @@
+.directory-export-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.directory-export-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.directory-export-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.directory-export-wrap .alert {
+  margin: 0;
+}
+
+.directory-export-card {
+  margin-bottom: 1rem;
+  padding: 1rem 1.125rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 5%, var(--color-card)) 0%, var(--color-card) 100%);
+}
+
+.spin {
+  animation: directory-export-spin 0.8s linear infinite;
+}
+
+@keyframes directory-export-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

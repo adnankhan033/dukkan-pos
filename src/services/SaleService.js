@@ -2,7 +2,7 @@ import { query, queryOne, execute, insert } from "../database/connection";
 import { inventoryService } from "./InventoryService";
 import { settingsService } from "./SettingsService";
 import { zatcaService } from "./ZatcaService";
-import { generateNumber } from "../utils/format";
+import { generateNumber, formatInvoiceNumber, parseInvoiceSequence } from "../utils/format";
 import { SALE_STATUS } from "../utils/constants";
 
 async function processZatcaForSale(sale) {
@@ -16,6 +16,18 @@ async function processZatcaForSale(sale) {
 }
 
 class SaleService {
+  async getNextInvoiceNumber() {
+    const rows = await query(`SELECT sale_number FROM sales WHERE sale_number LIKE 'INV-%'`);
+    let maxSequence = 0;
+    for (const row of rows) {
+      const sequence = parseInvoiceSequence(row.sale_number);
+      if (sequence != null) {
+        maxSequence = Math.max(maxSequence, sequence);
+      }
+    }
+    return formatInvoiceNumber(maxSequence + 1);
+  }
+
   async getAll({ page = 1, limit = 10, status = null } = {}) {
     let sql = `
       SELECT s.*, c.name as customer_name
@@ -87,12 +99,24 @@ class SaleService {
   async createSale({ customerId, items, discount, vat, paymentMethod, status = SALE_STATUS.COMPLETED, notes }) {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const total = Math.max(0, subtotal - discount + vat);
-    const saleNumber = generateNumber("SALE");
+    const saleNumber = await this.getNextInvoiceNumber();
+    const createdAt = new Date().toISOString();
 
     const saleId = await insert(
-      `INSERT INTO sales (sale_number, customer_id, subtotal, discount, vat, total, payment_method, status, notes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
-      [saleNumber, customerId || null, subtotal, discount, vat, total, paymentMethod, status, notes || null]
+      `INSERT INTO sales (sale_number, customer_id, subtotal, discount, vat, total, payment_method, status, notes, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [
+        saleNumber,
+        customerId || null,
+        subtotal,
+        discount,
+        vat,
+        total,
+        paymentMethod,
+        status,
+        notes || null,
+        createdAt,
+      ]
     );
 
     for (const item of items) {
@@ -155,6 +179,74 @@ class SaleService {
     await execute("DELETE FROM sale_items WHERE sale_id = $1", [saleId]);
     await execute("DELETE FROM sales WHERE id = $1 AND status = 'held'", [saleId]);
     return true;
+  }
+
+  async deleteSale(saleId) {
+    const numId = Number(saleId);
+    const sale = await this.getById(numId);
+    if (!sale) {
+      throw new Error("Order not found");
+    }
+
+    if (sale.status !== SALE_STATUS.HELD && sale.items?.length) {
+      const returnedRows = await query(
+        `SELECT sri.product_id, SUM(sri.quantity) AS returned_qty
+         FROM sale_return_items sri
+         JOIN sale_returns sr ON sr.id = sri.return_id
+         WHERE sr.sale_id = $1
+         GROUP BY sri.product_id`,
+        [numId]
+      );
+      const returnedMap = Object.fromEntries(
+        returnedRows.map((row) => [row.product_id, Number(row.returned_qty)])
+      );
+
+      for (const item of sale.items) {
+        const returned = returnedMap[item.product_id] || 0;
+        const netSold = Math.max(0, Number(item.quantity) - returned);
+        if (netSold > 0) {
+          await inventoryService.increaseStock(
+            item.product_id,
+            netSold,
+            "order_delete",
+            numId
+          );
+        }
+      }
+    }
+
+    const returns = await query("SELECT id FROM sale_returns WHERE sale_id = $1", [numId]);
+    for (const row of returns) {
+      await execute("DELETE FROM sale_return_items WHERE return_id = $1", [row.id]);
+    }
+    await execute("DELETE FROM sale_returns WHERE sale_id = $1", [numId]);
+    await execute("DELETE FROM zatca_invoices WHERE sale_id = $1", [numId]);
+    await execute("DELETE FROM payments WHERE sale_id = $1", [numId]);
+    await execute("DELETE FROM sale_items WHERE sale_id = $1", [numId]);
+    await execute("DELETE FROM sales WHERE id = $1", [numId]);
+
+    const stillExists = await queryOne("SELECT id FROM sales WHERE id = $1", [numId]);
+    if (stillExists) {
+      throw new Error(`Failed to delete order ${sale.sale_number}`);
+    }
+
+    return true;
+  }
+
+  async deleteMany(ids) {
+    const deleted = [];
+    const failed = [];
+
+    for (const id of ids) {
+      try {
+        await this.deleteSale(id);
+        deleted.push(Number(id));
+      } catch (err) {
+        failed.push({ id: Number(id), message: err.message || "Delete failed" });
+      }
+    }
+
+    return { deleted, failed };
   }
 
   async getTodayTotal() {

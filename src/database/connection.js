@@ -4,6 +4,12 @@ import { SCHEMA_STATEMENTS } from "./schema";
 import bcrypt from "bcryptjs";
 import { DEFAULT_SETTINGS } from "../utils/constants";
 import { DEFAULT_UNITS } from "../utils/defaultUnits";
+import {
+  convertUtcSqliteDatetimeToBusiness,
+  resolveBusinessTimezone,
+  utcSqliteStringToIso,
+  wallClockInTimezoneToIso,
+} from "../utils/timezones";
 
 let dbInstance = null;
 let dbConfigured = false;
@@ -154,6 +160,9 @@ async function runMigrations() {
   await ensureCashierModuleDefaults();
   await ensureReceiptTemplateDefault();
   await ensureSettingsKeys();
+  await migrateUtcTimestampsToBusinessTimezone();
+  await migrateSalesTimestampsToIsoUtc();
+  await fixSalesUtcTimestampsForRiyadh();
 }
 
 async function ensureZatcaColumn(table, column, definition) {
@@ -335,6 +344,135 @@ async function ensureSettingsKeys() {
       [key, value]
     );
   }
+}
+
+/** One-time: SQLite datetime('now') is UTC — convert stored timestamps to business region. */
+async function migrateUtcTimestampsToBusinessTimezone() {
+  const done = await queryOne(
+    "SELECT value FROM settings WHERE key = '_utc_to_business_tz_v1' LIMIT 1"
+  );
+  if (done) return;
+
+  const settingsRows = await query("SELECT key, value FROM settings");
+  const settings = Object.fromEntries(settingsRows.map((row) => [row.key, row.value]));
+  const tz = resolveBusinessTimezone(settings);
+
+  const targets = [
+    { table: "sales", columns: ["created_at"] },
+    { table: "sale_returns", columns: ["created_at"] },
+    { table: "purchases", columns: ["created_at"] },
+    { table: "payments", columns: ["created_at", "payment_date"] },
+    { table: "zatca_invoices", columns: ["created_at", "last_attempt_at", "synced_at", "updated_at"] },
+    { table: "zatca_api_logs", columns: ["created_at"] },
+    { table: "inventory", columns: ["created_at"] },
+    { table: "categories", columns: ["created_at"] },
+    { table: "units", columns: ["created_at"] },
+    { table: "products", columns: ["created_at"] },
+    { table: "customers", columns: ["created_at"] },
+    { table: "suppliers", columns: ["created_at"] },
+  ];
+
+  for (const { table, columns } of targets) {
+    if (!(await tableExists(table))) continue;
+
+    const tableCols = await query(`PRAGMA table_info(${table})`);
+    const colNames = new Set(tableCols.map((col) => col.name));
+
+    for (const column of columns) {
+      if (!colNames.has(column)) continue;
+
+      const rows = await query(
+        `SELECT id, ${column} AS ts FROM ${table} WHERE ${column} IS NOT NULL AND ${column} != ''`
+      );
+
+      for (const row of rows) {
+        const converted = convertUtcSqliteDatetimeToBusiness(row.ts, tz);
+        if (converted && converted !== row.ts) {
+          await execute(`UPDATE ${table} SET ${column} = $1 WHERE id = $2`, [
+            converted,
+            row.id,
+          ]);
+        }
+      }
+    }
+  }
+
+  await execute(
+    "INSERT INTO settings (key, value) VALUES ('_utc_to_business_tz_v1', '1')"
+  );
+}
+
+/** Normalize sales.created_at to ISO UTC for reliable display in business region. */
+async function migrateSalesTimestampsToIsoUtc() {
+  const done = await queryOne(
+    "SELECT value FROM settings WHERE key = '_sales_iso_utc_v2' LIMIT 1"
+  );
+  if (done) return;
+
+  const settingsRows = await query("SELECT key, value FROM settings");
+  const settings = Object.fromEntries(settingsRows.map((row) => [row.key, row.value]));
+  const tz = resolveBusinessTimezone(settings);
+  const v1Done = settings._utc_to_business_tz_v1 === "1";
+
+  if (!(await tableExists("sales"))) {
+    await execute(
+      "INSERT INTO settings (key, value) VALUES ('_sales_iso_utc_v2', '1')"
+    );
+    return;
+  }
+
+  const rows = await query(
+    "SELECT id, created_at FROM sales WHERE created_at IS NOT NULL AND created_at != ''"
+  );
+
+  for (const row of rows) {
+    const raw = String(row.created_at).trim();
+    if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) continue;
+
+    const iso = v1Done
+      ? wallClockInTimezoneToIso(raw, tz)
+      : utcSqliteStringToIso(raw);
+
+    if (iso && iso !== raw) {
+      await execute("UPDATE sales SET created_at = $1 WHERE id = $2", [iso, row.id]);
+    }
+  }
+
+  await execute(
+    "INSERT INTO settings (key, value) VALUES ('_sales_iso_utc_v2', '1')"
+  );
+}
+
+/** Fix order times still stored as UTC sqlite strings → ISO UTC. */
+async function fixSalesUtcTimestampsForRiyadh() {
+  const done = await queryOne(
+    "SELECT value FROM settings WHERE key = '_sales_riyadh_fix_v3' LIMIT 1"
+  );
+  if (done) return;
+  if (!(await tableExists("sales"))) {
+    await execute(
+      "INSERT INTO settings (key, value) VALUES ('_sales_riyadh_fix_v3', '1')"
+    );
+    return;
+  }
+
+  const rows = await query(
+    "SELECT id, created_at FROM sales WHERE created_at IS NOT NULL AND created_at != ''"
+  );
+
+  for (const row of rows) {
+    const raw = String(row.created_at).trim();
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(raw)) {
+      const iso = utcSqliteStringToIso(raw);
+      if (iso && iso !== raw) {
+        await execute("UPDATE sales SET created_at = $1 WHERE id = $2", [iso, row.id]);
+      }
+    }
+  }
+
+  await execute(
+    "INSERT INTO settings (key, value) VALUES ('_sales_riyadh_fix_v3', '1')"
+  );
 }
 
 async function ensureUnitsSchema() {

@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClipboardList, DollarSign, Eye, RotateCcw, ShoppingBag } from "lucide-react";
+import { ClipboardList, DollarSign, Eye, RotateCcw, ShoppingBag, Trash2, ShieldAlert } from "lucide-react";
 import { saleService } from "../services/SaleService";
 import { zatcaService } from "../services/ZatcaService";
 import { ensureReturnSchema } from "../database/connection";
 import { useSettingsStore } from "../contexts/store";
+import { usePermissions } from "../hooks/usePermissions";
+import { useConfirm } from "../hooks/useConfirm";
 import { ORDER_PERIODS, ORDER_RETURN_FILTERS, SALE_STATUS } from "../utils/constants";
 import { resolveActivePhase } from "../zatca/core/config";
 import { ZATCA_PHASES } from "../zatca/core/constants";
@@ -18,7 +20,7 @@ import ZatcaXmlDownloadLink from "../components/zatca/ZatcaXmlDownloadLink";
 import OrderDetailModal from "../components/orders/OrderDetailModal";
 import SaleReturnModal from "../components/sales/SaleReturnModal";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
-import { formatCurrency, formatDateTime } from "../utils/format";
+import { formatCurrency, formatOrderDateTime } from "../utils/format";
 import { printReceipt } from "../utils/receipt";
 import "./Orders.css";
 
@@ -62,6 +64,8 @@ function orderStatusBadge(status) {
 
 export default function Orders() {
   const settings = useSettingsStore((s) => s.settings);
+  const { isAdmin } = usePermissions();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const currency = settings.currency || "SAR";
   const vatPercent = Number(settings.vat_percent) || 0;
   const zatcaPhase = resolveActivePhase(settings);
@@ -84,6 +88,8 @@ export default function Orders() {
 
   const [returnOpen, setReturnOpen] = useState(false);
   const [returnSaleId, setReturnSaleId] = useState(null);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -96,6 +102,7 @@ export default function Orders() {
       ]);
       setOrders(list);
       setStats(periodStats);
+      setSelectedIds(new Set());
 
       if (showZatcaColumn && list.length) {
         const statusMap = await zatcaService.getStatusBySaleIds(list.map((o) => o.id));
@@ -211,12 +218,97 @@ export default function Orders() {
     }
   }
 
+  function toggleSelect(id) {
+    const numId = Number(id);
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(numId)) next.delete(numId);
+      else next.add(numId);
+      return next;
+    });
+  }
+
+  function toggleSelectAll() {
+    if (selectedIds.size === filteredOrders.length && filteredOrders.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredOrders.map((order) => Number(order.id))));
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (!isAdmin || selectedIds.size === 0) return;
+
+    const ok = await confirm({
+      title: "Delete Selected Orders",
+      message: `Permanently delete ${selectedIds.size} order(s)? Stock will be restored where applicable. Linked returns, payments, and ZATCA records will also be removed. This cannot be undone.`,
+      confirmLabel: `Delete ${selectedIds.size} Order(s)`,
+      variant: "danger",
+    });
+    if (!ok) return;
+
+    setBulkDeleting(true);
+    setError("");
+    setMessage("");
+    try {
+      const { deleted, failed } = await saleService.deleteMany([...selectedIds]);
+      if (failed.length > 0 && deleted.length === 0) {
+        setError(`Delete failed: ${failed.map((f) => f.message).join("; ")}`);
+      } else if (failed.length > 0) {
+        setMessage(`Deleted ${deleted.length} order(s). Failed ${failed.length}.`);
+        setError(failed.map((f) => f.message).join("; "));
+      } else {
+        setMessage(`Deleted ${deleted.length} order(s) successfully.`);
+      }
+      if (selectedSale && deleted.includes(Number(selectedSale.id))) {
+        setDetailOpen(false);
+        setSelectedSale(null);
+      }
+      await loadOrders();
+    } catch (err) {
+      setError(err.message || "Bulk delete failed");
+    } finally {
+      setBulkDeleting(false);
+    }
+  }
+
   const columns = [
+    ...(isAdmin
+      ? [
+          {
+            key: "select",
+            label: (
+              <input
+                type="checkbox"
+                className="orders-row-checkbox"
+                checked={
+                  filteredOrders.length > 0 && selectedIds.size === filteredOrders.length
+                }
+                onChange={toggleSelectAll}
+                onClick={(e) => e.stopPropagation()}
+                aria-label="Select all orders"
+              />
+            ),
+            stopPropagation: true,
+            width: "42px",
+            render: (row) => (
+              <input
+                type="checkbox"
+                className="orders-row-checkbox"
+                checked={selectedIds.has(Number(row.id))}
+                onChange={() => toggleSelect(row.id)}
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Select ${row.sale_number}`}
+              />
+            ),
+          },
+        ]
+      : []),
     { key: "sale_number", label: "Order #" },
     {
       key: "created_at",
       label: "Date & Time",
-      render: (r) => formatDateTime(r.created_at),
+      render: (r) => formatOrderDateTime(r.created_at),
     },
     {
       key: "customer_name",
@@ -385,6 +477,41 @@ export default function Orders() {
           </div>
         </div>
 
+        {isAdmin && filteredOrders.length > 0 && (
+          <div className="orders-bulk-bar">
+            <input
+              type="checkbox"
+              className="orders-row-checkbox"
+              checked={selectedIds.size === filteredOrders.length}
+              onChange={toggleSelectAll}
+            />
+            <span className="orders-bulk-count">
+              {selectedIds.size > 0
+                ? `${selectedIds.size} selected`
+                : "Select all on page"}
+            </span>
+            <span className="orders-bulk-admin-note">
+              <ShieldAlert size={14} /> Administrator only
+            </span>
+            {selectedIds.size > 0 && (
+              <>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  disabled={bulkDeleting}
+                  onClick={handleBulkDelete}
+                >
+                  <Trash2 size={14} />
+                  {bulkDeleting ? "Deleting..." : `Delete Selected (${selectedIds.size})`}
+                </Button>
+                <Button variant="ghost" size="sm" disabled={bulkDeleting} onClick={() => setSelectedIds(new Set())}>
+                  Clear
+                </Button>
+              </>
+            )}
+          </div>
+        )}
+
         {loading ? (
           <LoadingSpinner message="Loading orders..." />
         ) : (
@@ -425,6 +552,7 @@ export default function Orders() {
         currency={currency}
         initialSaleId={returnSaleId}
       />
+      {confirmDialog}
     </div>
   );
 }

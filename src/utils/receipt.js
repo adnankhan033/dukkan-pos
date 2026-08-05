@@ -1,4 +1,4 @@
-import { formatCurrency, formatDateTime } from "./format";
+import { formatCurrency, formatOrderDateTime } from "./format";
 import { zatcaService } from "../services/ZatcaService";
 import { ZATCA_PHASE_LABELS } from "../zatca/core/constants";
 import { DEFAULT_RECEIPT_TEMPLATE, getReceiptTemplate } from "./receiptTemplates";
@@ -176,7 +176,7 @@ async function buildBaqalaReceipt(ctx) {
       ${headerNote ? `<p class="note">${escapeHtml(headerNote)}</p>` : ""}
       <div class="meta">
         <div><span>Invoice / رقم الفاتورة</span><strong>${escapeHtml(sale.sale_number || "")}</strong></div>
-        <div><span>Date / التاريخ</span><span>${formatDateTime(sale.created_at || new Date().toISOString())}</span></div>
+        <div><span>Date / التاريخ</span><span>${formatOrderDateTime(sale.created_at || new Date().toISOString())}</span></div>
         <div><span>Payment / الدفع</span><span>${escapeHtml((sale.payment_method || "cash").toUpperCase())}</span></div>
       </div>
       <table>
@@ -260,7 +260,7 @@ async function buildClassicReceipt(ctx) {
       <div>Simplified Tax Invoice</div>
       <div class="invoice-type-ar">فاتورة ضريبية مبسطة</div>
     </div>
-    <p>${formatDateTime(sale.created_at || new Date().toISOString())}</p>
+    <p>${formatOrderDateTime(sale.created_at || new Date().toISOString())}</p>
     <p><strong>${escapeHtml(sale.sale_number || "")}</strong></p>
     <p>Payment: ${escapeHtml((sale.payment_method || "cash").toUpperCase())}</p>
     <table>
@@ -329,7 +329,7 @@ async function buildCompactReceipt(ctx) {
     <div class="center"><strong>${escapeHtml(storeName)}</strong></div>
     ${storeNameAr && showBilingual ? `<div class="center store-ar">${escapeHtml(storeNameAr)}</div>` : ""}
     <div class="center" style="font-size:9px;margin:4px 0">فاتورة ضريبية مبسطة</div>
-    <div class="center">${escapeHtml(sale.sale_number || "")} · ${formatDateTime(sale.created_at || new Date().toISOString())}</div>
+    <div class="center">${escapeHtml(sale.sale_number || "")} · ${formatOrderDateTime(sale.created_at || new Date().toISOString())}</div>
     <table><tbody>${rows}</tbody></table>
     <div class="total"><span>Total (VAT ${vatPercent}%)</span><span>${formatCurrency(sale.total, currency)}</span></div>
     ${qrHtml}

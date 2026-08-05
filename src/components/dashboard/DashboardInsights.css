@@ -1,0 +1,206 @@
+.dashboard-insights-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-insights-card,
+.dashboard-top-products-card {
+  margin-bottom: 0;
+}
+
+.dashboard-insights-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-insights-head.compact {
+  margin-bottom: 0.875rem;
+}
+
+.dashboard-insights-head-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(59, 130, 246, 0.12));
+  color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.dashboard-insights-head-icon.products {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(234, 88, 12, 0.1));
+  color: #d97706;
+}
+
+.dashboard-insights-head h3 {
+  margin: 0 0 0.2rem;
+}
+
+.dashboard-insights-head p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.dashboard-insights-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dashboard-insight {
+  display: flex;
+  gap: 0.875rem;
+  padding: 0.875rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.dashboard-insight-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.insight-positive .dashboard-insight-icon {
+  color: var(--color-success, #16a34a);
+  background: color-mix(in srgb, var(--color-success, #16a34a) 12%, var(--color-card));
+}
+
+.insight-warning .dashboard-insight-icon {
+  color: var(--color-danger, #dc2626);
+  background: color-mix(in srgb, var(--color-danger, #dc2626) 12%, var(--color-card));
+}
+
+.insight-timing .dashboard-insight-icon,
+.insight-product .dashboard-insight-icon {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 12%, var(--color-card));
+}
+
+.insight-inventory .dashboard-insight-icon {
+  color: #d97706;
+  background: color-mix(in srgb, #d97706 12%, var(--color-card));
+}
+
+.insight-neutral .dashboard-insight-icon {
+  color: var(--color-text-muted);
+  background: var(--color-card);
+}
+
+.dashboard-insight-body {
+  min-width: 0;
+}
+
+.dashboard-insight-title {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: 0.2rem;
+}
+
+.dashboard-insight-message {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--color-text);
+}
+
+.dashboard-insight-detail {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.dashboard-top-products-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.dashboard-top-product-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.dashboard-top-product-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.dashboard-top-product-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  background: var(--color-surface);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.dashboard-top-product-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.dashboard-top-product-info strong {
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+.dashboard-top-product-ar {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.dashboard-top-product-stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.125rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.dashboard-top-product-stats span:last-child {
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+@media (max-width: 960px) {
+  .dashboard-insights-wrap {
+    grid-template-columns: 1fr;
+  }
+}

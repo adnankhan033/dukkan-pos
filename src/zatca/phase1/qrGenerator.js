@@ -1,5 +1,10 @@
 import QRCode from "qrcode";
 import { ZATCA_PHASES } from "../core/constants";
+import {
+  resolveZatcaIssueDateTime,
+  normalizeZatcaIssueTime,
+  formatZatcaQrTimestamp,
+} from "../phase2/invoiceSigner.js";
 
 function encodeTLV(tag, value) {
   const valueBytes = new TextEncoder().encode(String(value));
@@ -42,12 +47,11 @@ export function buildZatcaQrPayload({ sellerName, vatNumber, timestamp, total, v
 }
 
 export function formatZatcaTimestamp(dateStr) {
-  const date = dateStr ? new Date(String(dateStr).replace(" ", "T")) : new Date();
-  if (Number.isNaN(date.getTime())) {
-    return new Date().toISOString();
-  }
-  return date.toISOString();
+  const { issue_date, issue_time } = resolveZatcaIssueDateTime({ created_at: dateStr });
+  return formatZatcaQrTimestamp(issue_date, issue_time);
 }
+
+export { resolveZatcaIssueDateTime, normalizeZatcaIssueTime, formatZatcaQrTimestamp };
 
 export async function generateQrDataUrl({ sellerName, vatNumber, sale }) {
   const payload = buildZatcaQrPayload({

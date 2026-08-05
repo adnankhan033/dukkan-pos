@@ -178,7 +178,7 @@ export default function SaleReturnModal({
             label="Sale Number"
             value={saleNumber}
             onChange={(e) => setSaleNumber(e.target.value)}
-            placeholder="e.g. SALE-40118302393"
+            placeholder="e.g. INV-1"
             onKeyDown={(e) => e.key === "Enter" && searchSale()}
           />
           <Button onClick={searchSale} disabled={loading || submitting}>

@@ -1,3 +1,10 @@
+import { useSettingsStore } from "../contexts/store";
+import {
+  resolveBusinessTimezone,
+  formatDateTimeInTimezone,
+  parseStoredTimestampToInstant,
+} from "./timezones";
+
 export function formatQuantity(qty, symbol = "pcs") {
   const value = Number(qty) || 0;
   const unit = symbol?.trim() || "pcs";
@@ -33,29 +40,24 @@ export function formatDate(dateStr) {
 
 export function formatDateTime(dateStr) {
   if (!dateStr) return "-";
-  const raw = String(dateStr).trim();
-  if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(raw)) {
-    const [datePart, timePart] = raw.split(" ");
-    const [year, month, day] = datePart.split("-").map(Number);
-    const [h, m] = timePart.split(":").map(Number);
-    const date = new Date(year, month - 1, day, h, m);
-    return date.toLocaleString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const tz = resolveBusinessTimezone(useSettingsStore.getState().settings);
+  const instant = parseStoredTimestampToInstant(dateStr);
+  if (instant) {
+    return formatDateTimeInTimezone(instant, tz);
   }
-  const date = new Date(dateStr);
-  if (Number.isNaN(date.getTime())) return dateStr;
-  return date.toLocaleString("en-GB", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  return String(dateStr);
+}
+
+/** Order/sale timestamps — always show in store region (default Asia/Riyadh). */
+export function formatOrderDateTime(dateStr) {
+  if (!dateStr) return "-";
+  const settings = useSettingsStore.getState().settings;
+  const tz = resolveBusinessTimezone(settings);
+  const instant = parseStoredTimestampToInstant(dateStr);
+  if (instant) {
+    return formatDateTimeInTimezone(instant, tz);
+  }
+  return String(dateStr);
 }
 
 /** Local calendar date as YYYY-MM-DD (avoids UTC shift from toISOString). */
@@ -130,6 +132,21 @@ export function generateNumber(prefix) {
     .toString()
     .padStart(3, "0");
   return `${prefix}-${ts}${rand}`;
+}
+
+export const INVOICE_NUMBER_PREFIX = "INV";
+
+/** Format sequential invoice number, e.g. INV-1, INV-42 */
+export function formatInvoiceNumber(sequence) {
+  const num = Math.max(1, Number(sequence) || 1);
+  return `${INVOICE_NUMBER_PREFIX}-${num}`;
+}
+
+/** Parse numeric suffix from INV-123 (case-insensitive). Returns null if not matched. */
+export function parseInvoiceSequence(saleNumber) {
+  const match = String(saleNumber ?? "").trim().match(/^INV-(\d+)$/i);
+  if (!match) return null;
+  return Number(match[1]);
 }
 
 export function calcVat(subtotal, discount, vatPercent) {

@@ -1,18 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, Wallet } from "lucide-react";
 import { supplierService } from "../services/SupplierService";
+import { DIRECTORY_EXPORT_TYPES } from "../utils/directoryExport/definitions";
 import { useSettingsStore } from "../contexts/store";
 import { useDebounce } from "../hooks/usePagination";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import { ITEMS_PER_PAGE } from "../utils/constants";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
+import DirectoryExportButtons from "../components/common/DirectoryExportButtons";
 import SearchBar from "../components/common/SearchBar";
 import Table from "../components/common/Table";
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
 import { Input, Textarea } from "../components/common/Input";
-import { StatCard } from "../components/common/Card";
+import { StatCard, Card } from "../components/common/Card";
 import { LoadingSpinner, Alert } from "../components/common/Loading";
 import SupplierAccountModal from "../components/suppliers/SupplierAccountModal";
 import { required, runFormValidation } from "../utils/validation";
@@ -162,6 +164,14 @@ export default function Suppliers() {
           </Button>
         }
       />
+
+      <Card className="directory-export-card" style={{ marginBottom: "1.25rem" }}>
+        <DirectoryExportButtons
+          type={DIRECTORY_EXPORT_TYPES.SUPPLIERS}
+          search={debouncedSearch}
+          label="Supplier directory"
+        />
+      </Card>
 
       <div
         style={{

@@ -53,6 +53,19 @@ class CustomerService {
     const row = await queryOne("SELECT COUNT(*) as total FROM customers");
     return row?.total ?? 0;
   }
+
+  async getAllForExport({ search = "" } = {}) {
+    let sql = "SELECT * FROM customers WHERE 1=1";
+    const params = [];
+
+    if (search) {
+      params.push(`%${search}%`);
+      sql += ` AND (name LIKE $${params.length} OR phone LIKE $${params.length} OR email LIKE $${params.length} OR address LIKE $${params.length})`;
+    }
+
+    sql += " ORDER BY name ASC";
+    return query(sql, params);
+  }
 }
 
 export const customerService = new CustomerService();

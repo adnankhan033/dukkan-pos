@@ -11,6 +11,7 @@ import {
   getTodayReturnsTotal,
   getTodayNetSales,
 } from "./FinanceService";
+import { dashboardInsightsService } from "./DashboardInsightsService";
 
 class DashboardService {
   async getStats() {
@@ -29,6 +30,7 @@ class DashboardService {
       recentSales,
       recentReturns,
       heldSales,
+      smartInsights,
     ] = await Promise.all([
       getTodayGrossSales(),
       getTodayReturnsTotal(),
@@ -44,6 +46,7 @@ class DashboardService {
       saleService.getRecent(8),
       saleService.getRecentReturns(8),
       saleService.getHeldSales(),
+      dashboardInsightsService.getInsights(),
     ]);
 
     const monthlyCost = await getMonthlyNetCogs();
@@ -64,6 +67,8 @@ class DashboardService {
       recentSales,
       recentReturns,
       heldCount: heldSales?.length ?? 0,
+      smartInsights: smartInsights.insights,
+      topProducts: smartInsights.topProducts,
     };
   }
 }

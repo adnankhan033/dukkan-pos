@@ -48,7 +48,13 @@ function normKey(value) {
 
 export function validateImportRows(
   rows,
-  { skuIndex = new Map(), barcodeIndex = new Map(), mode = IMPORT_MODES.NEW_ONLY } = {}
+  {
+    skuIndex = new Map(),
+    barcodeIndex = new Map(),
+    unitIndex = new Map(),
+    supplierIndex = new Map(),
+    mode = IMPORT_MODES.NEW_ONLY,
+  } = {}
 ) {
   const fileSku = new Map();
   const fileBarcode = new Map();
@@ -107,6 +113,16 @@ export function validateImportRows(
       }
     }
 
+    const unitKey = normKey(d.unit);
+    if (unitKey && unitIndex && !unitIndex.has(unitKey)) {
+      issues.push(`unit "${d.unit}" not found — create it in Settings → Units first`);
+    }
+
+    const supplierKey = normKey(d.supplier);
+    if (supplierKey && supplierIndex && !supplierIndex.has(supplierKey)) {
+      issues.push(`supplier "${d.supplier}" not found — add it in Suppliers first`);
+    }
+
     if (issues.length) {
       errors.push({
         rowNumber: row.rowNumber,
@@ -125,6 +141,8 @@ export function validateImportRows(
           sku: d.sku?.trim() || null,
           barcode: d.barcode?.trim() || null,
           category_name: d.category?.trim() || null,
+          unit_name: d.unit?.trim() || null,
+          supplier_name: d.supplier?.trim() || null,
           cost_price: cost.value ?? 0,
           selling_price: selling.value,
           quantity: qty.value ?? 0,

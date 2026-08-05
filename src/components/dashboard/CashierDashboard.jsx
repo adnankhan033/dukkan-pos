@@ -5,6 +5,7 @@ import PageHeader from "../common/PageHeader";
 import Button from "../common/Button";
 import { StatCard, Card } from "../common/Card";
 import { formatCurrency, formatDateTime } from "../../utils/format";
+import DashboardInsights from "./DashboardInsights";
 import "../../pages/Dashboard.css";
 
 export default function CashierDashboard({ stats }) {
@@ -43,6 +44,12 @@ export default function CashierDashboard({ stats }) {
           <ClipboardList size={16} /> View Orders
         </Button>
       </div>
+
+      <DashboardInsights
+        insights={(stats.smartInsights || []).slice(0, 3)}
+        topProducts={(stats.topProducts || []).slice(0, 3)}
+        currency={currency}
+      />
 
       {showRecent && (
         <Card style={{ marginTop: "1.5rem" }}>

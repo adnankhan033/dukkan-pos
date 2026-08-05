@@ -1,8 +1,9 @@
 import { query, queryOne, execute, insert, getDatabase } from "../database/connection";
 import { categoryService } from "./CategoryService";
+import { unitService } from "./UnitService";
 import { PRODUCT_IMPORT_BATCH_SIZE } from "../utils/constants";
 import { IMPORT_MODES } from "../utils/productImport/validate";
-import { templateHeaders, templateSampleRow } from "../utils/productImport/columns";
+import { templateHeaders, templateSampleRows } from "../utils/productImport/columns";
 import { rowsToCsv } from "../utils/productImport/csv";
 import {
   buildExcelWorkbook,
@@ -16,6 +17,8 @@ const EXPORT_HEADERS = [
   "sku",
   "barcode",
   "category",
+  "unit",
+  "supplier",
   "cost_price",
   "selling_price",
   "quantity",
@@ -80,6 +83,40 @@ class ProductImportService {
     return { skuIndex, barcodeIndex };
   }
 
+  async getReferenceIndexes() {
+    const [units, suppliers] = await Promise.all([
+      unitService.getAll(),
+      query("SELECT id, company FROM suppliers ORDER BY company ASC"),
+    ]);
+
+    const unitIndex = new Map();
+    for (const unit of units) {
+      if (unit.symbol?.trim()) {
+        unitIndex.set(unit.symbol.trim().toLowerCase(), unit.id);
+      }
+      if (unit.name?.trim()) {
+        unitIndex.set(unit.name.trim().toLowerCase(), unit.id);
+      }
+    }
+
+    const supplierIndex = new Map();
+    for (const supplier of suppliers) {
+      if (supplier.company?.trim()) {
+        supplierIndex.set(supplier.company.trim().toLowerCase(), supplier.id);
+      }
+    }
+
+    return { unitIndex, supplierIndex };
+  }
+
+  async getValidationIndexes() {
+    const [{ skuIndex, barcodeIndex }, { unitIndex, supplierIndex }] = await Promise.all([
+      this.getExistingIndex(),
+      this.getReferenceIndexes(),
+    ]);
+    return { skuIndex, barcodeIndex, unitIndex, supplierIndex };
+  }
+
   async findProductId(parsed, skuIndex, barcodeIndex) {
     const skuKey = parsed.sku?.trim().toLowerCase();
     const barcodeKey = parsed.barcode?.trim().toLowerCase();
@@ -108,6 +145,18 @@ class ProductImportService {
     return created.id;
   }
 
+  resolveUnitId(nameOrSymbol, unitIndex) {
+    const key = nameOrSymbol?.trim().toLowerCase();
+    if (!key) return null;
+    return unitIndex.get(key) ?? null;
+  }
+
+  resolveSupplierId(company, supplierIndex) {
+    const key = company?.trim().toLowerCase();
+    if (!key) return null;
+    return supplierIndex.get(key) ?? null;
+  }
+
   async deleteAllProducts() {
     await execute("DELETE FROM inventory");
     await execute("DELETE FROM sale_items");
@@ -132,16 +181,18 @@ class ProductImportService {
     }
   }
 
-  async insertProduct(parsed, categoryId) {
+  async insertProduct(parsed, categoryId, unitId, supplierId) {
     return insert(
-      `INSERT INTO products (name, name_ar, sku, barcode, category_id, cost_price, selling_price, quantity, min_stock, published)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      `INSERT INTO products (name, name_ar, sku, barcode, category_id, unit_id, supplier_id, cost_price, selling_price, quantity, min_stock, published)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
       [
         parsed.name,
         parsed.name_ar,
         parsed.sku,
         parsed.barcode,
         categoryId,
+        unitId,
+        supplierId,
         parsed.cost_price,
         parsed.selling_price,
         parsed.quantity,
@@ -151,19 +202,21 @@ class ProductImportService {
     );
   }
 
-  async updateProduct(id, parsed, categoryId) {
+  async updateProduct(id, parsed, categoryId, unitId, supplierId) {
     await execute(
       `UPDATE products SET
-        name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5,
-        cost_price = $6, selling_price = $7, quantity = $8, min_stock = $9,
-        published = $10, updated_at = datetime('now')
-       WHERE id = $11`,
+        name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5, unit_id = $6, supplier_id = $7,
+        cost_price = $8, selling_price = $9, quantity = $10, min_stock = $11,
+        published = $12, updated_at = datetime('now')
+       WHERE id = $13`,
       [
         parsed.name,
         parsed.name_ar,
         parsed.sku,
         parsed.barcode,
         categoryId,
+        unitId,
+        supplierId,
         parsed.cost_price,
         parsed.selling_price,
         parsed.quantity,
@@ -220,6 +273,7 @@ class ProductImportService {
     }
 
     let { skuIndex, barcodeIndex } = await this.getExistingIndex();
+    const { unitIndex, supplierIndex } = await this.getReferenceIndexes();
     const categoryCache = new Map();
 
     const validRows = validatedRows.filter((r) => r.valid);
@@ -246,18 +300,20 @@ class ProductImportService {
             const parsed = row.parsed;
             const existingId = await this.findProductId(parsed, skuIndex, barcodeIndex);
             const categoryId = await this.resolveCategoryId(parsed.category_name, categoryCache);
+            const unitId = this.resolveUnitId(parsed.unit_name, unitIndex);
+            const supplierId = this.resolveSupplierId(parsed.supplier_name, supplierIndex);
 
             if (existingId) {
               if (mode === IMPORT_MODES.NEW_ONLY || mode === IMPORT_MODES.SKIP_DUPLICATES) {
                 summary.skipped += 1;
               } else if (mode === IMPORT_MODES.UPDATE || mode === IMPORT_MODES.REPLACE_ALL) {
-                await this.updateProduct(existingId, parsed, categoryId);
+                await this.updateProduct(existingId, parsed, categoryId, unitId, supplierId);
                 summary.updated += 1;
               } else {
                 summary.skipped += 1;
               }
             } else {
-              const newId = await this.insertProduct(parsed, categoryId);
+              const newId = await this.insertProduct(parsed, categoryId, unitId, supplierId);
               summary.imported += 1;
               if (parsed.sku) skuIndex.set(parsed.sku.toLowerCase(), newId);
               if (parsed.barcode) barcodeIndex.set(parsed.barcode.toLowerCase(), newId);
@@ -326,9 +382,12 @@ class ProductImportService {
   async getAllForExport() {
     return query(
       `SELECT p.name, p.name_ar, p.sku, p.barcode, c.name AS category,
+              u.symbol AS unit, s.company AS supplier,
               p.cost_price, p.selling_price, p.quantity, p.min_stock, p.published
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
+       LEFT JOIN units u ON p.unit_id = u.id
+       LEFT JOIN suppliers s ON p.supplier_id = s.id
        ORDER BY p.name ASC`
     );
   }
@@ -340,6 +399,8 @@ class ProductImportService {
       p.sku || "",
       p.barcode || "",
       p.category || "",
+      p.unit || "",
+      p.supplier || "",
       Number(p.cost_price ?? 0).toFixed(2),
       Number(p.selling_price ?? 0).toFixed(2),
       String(p.quantity ?? 0),
@@ -386,7 +447,7 @@ class ProductImportService {
 
   templateCsv() {
     return {
-      content: rowsToCsv(templateHeaders(), [templateSampleRow()]),
+      content: rowsToCsv(templateHeaders(), templateSampleRows()),
       filename: "product-import-template.csv",
     };
   }

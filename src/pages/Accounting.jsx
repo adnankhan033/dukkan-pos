@@ -25,6 +25,7 @@ import { Input, Select, Textarea } from "../components/common/Input";
 import { StatCard } from "../components/common/Card";
 import { LoadingSpinner } from "../components/common/Loading";
 import { formatCurrency, formatDateTime } from "../utils/format";
+import { formatWallClockDateTime } from "../utils/timezones";
 import { required, positiveNumber, runFormValidation } from "../utils/validation";
 import FormValidationAlert from "../components/common/FormValidationAlert";
 import "./Accounting.css";
@@ -173,7 +174,17 @@ export default function Accounting() {
       render: (r) => categoryLabel(r.category || "other"),
     },
     { key: "amount", label: "Amount", render: (r) => formatCurrency(r.amount, currency) },
-    { key: "expense_date", label: "Date & time", render: (r) => formatDateTime(r.expense_date) },
+    {
+      key: "expense_date",
+      label: "Date & time",
+      render: (r) => {
+        const raw = String(r.expense_date || "").trim();
+        if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(raw)) {
+          return formatWallClockDateTime(raw);
+        }
+        return formatDateTime(r.expense_date);
+      },
+    },
     { key: "notes", label: "Notes", render: (r) => r.notes || "-" },
     {
       key: "actions",

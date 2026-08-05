@@ -8,7 +8,7 @@ import ZatcaInvoiceXmlActions from "../zatca/ZatcaInvoiceXmlActions";
 import ZatcaSyncedQrDisplay from "../zatca/ZatcaSyncedQrDisplay";
 import ProductBilingualName from "../products/ProductBilingualName";
 import { LoadingSpinner } from "../common/Loading";
-import { formatCurrency, formatDateTime } from "../../utils/format";
+import { formatCurrency, formatOrderDateTime, formatDateTime } from "../../utils/format";
 import { SALE_STATUS } from "../../utils/constants";
 import "./OrderDetailModal.css";
 
@@ -77,7 +77,7 @@ export default function OrderDetailModal({
                 <dt>Status</dt>
                 <dd>{statusBadge(sale.status)}</dd>
                 <dt>Date</dt>
-                <dd>{formatDateTime(sale.created_at)}</dd>
+                <dd>{formatOrderDateTime(sale.created_at)}</dd>
                 <dt>Customer</dt>
                 <dd>{sale.customer_name || "Walk-in Customer"}</dd>
                 <dt>Payment</dt>
@@ -200,7 +200,7 @@ export default function OrderDetailModal({
                   <div key={ret.id} className="order-return-row">
                     <div>
                       <strong>{ret.return_number}</strong>
-                      <span className="order-return-date">{formatDateTime(ret.created_at)}</span>
+                      <span className="order-return-date">{formatOrderDateTime(ret.created_at)}</span>
                     </div>
                     <div className="order-return-summary">{ret.items_summary || "—"}</div>
                     <strong>{formatCurrency(ret.total_refund, currency)}</strong>

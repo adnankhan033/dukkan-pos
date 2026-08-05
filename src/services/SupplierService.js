@@ -185,6 +185,36 @@ class SupplierService {
     };
   }
 
+  async getAllForExport({ search = "" } = {}) {
+    let where = "WHERE 1=1";
+    const params = [];
+
+    if (search) {
+      params.push(`%${search}%`);
+      where += ` AND (s.company LIKE $${params.length} OR s.contact_person LIKE $${params.length} OR s.phone LIKE $${params.length} OR s.email LIKE $${params.length})`;
+    }
+
+    return query(
+      `SELECT s.*,
+              COALESCE(b.total_delivered, 0) AS total_delivered,
+              COALESCE(b.total_paid, 0) AS total_paid,
+              COALESCE(b.balance_pending, 0) AS balance_pending
+       FROM suppliers s
+       LEFT JOIN (
+         SELECT supplier_id,
+                SUM(total) AS total_delivered,
+                SUM(COALESCE(amount_paid, 0)) AS total_paid,
+                SUM(total - COALESCE(amount_paid, 0)) AS balance_pending
+         FROM purchases
+         WHERE supplier_id IS NOT NULL
+         GROUP BY supplier_id
+       ) b ON b.supplier_id = s.id
+       ${where}
+       ORDER BY s.company ASC`,
+      params
+    );
+  }
+
   async getById(id) {
     return queryOne("SELECT * FROM suppliers WHERE id = $1", [id]);
   }
