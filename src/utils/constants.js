@@ -100,6 +100,15 @@ export const EXPENSE_PERIODS = {
 
 export const ITEMS_PER_PAGE = 10;
 
+/** Products list page size. */
+export const PRODUCTS_PAGE_SIZE = 100;
+
+/** Inventory stock list page size (large catalogs). */
+export const INVENTORY_PAGE_SIZE = 200;
+
+/** Orders list page size. */
+export const ORDERS_PAGE_SIZE = 100;
+
 /** Grouped sidebar navigation — filtered by role and module settings. */
 export const NAV_GROUPS = [
   { id: "dashboard", label: "Dashboard", icon: "LayoutDashboard", path: "/", module: "dashboard" },

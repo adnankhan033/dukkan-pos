@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ClipboardList, DollarSign, Eye, RotateCcw, ShoppingBag, Trash2, ShieldAlert } from "lucide-react";
 import { saleService } from "../services/SaleService";
 import { zatcaService } from "../services/ZatcaService";
@@ -6,7 +6,8 @@ import { ensureReturnSchema } from "../database/connection";
 import { useSettingsStore } from "../contexts/store";
 import { usePermissions } from "../hooks/usePermissions";
 import { useConfirm } from "../hooks/useConfirm";
-import { ORDER_PERIODS, ORDER_RETURN_FILTERS, SALE_STATUS } from "../utils/constants";
+import { useDebounce } from "../hooks/usePagination";
+import { ORDER_PERIODS, ORDER_RETURN_FILTERS, ORDERS_PAGE_SIZE, SALE_STATUS } from "../utils/constants";
 import { resolveActivePhase } from "../zatca/core/config";
 import { ZATCA_PHASES } from "../zatca/core/constants";
 import PageHeader from "../components/common/PageHeader";
@@ -14,6 +15,7 @@ import Button from "../components/common/Button";
 import SearchBar from "../components/common/SearchBar";
 import { Card, StatCard } from "../components/common/Card";
 import Table from "../components/common/Table";
+import Pagination from "../components/common/Pagination";
 import Badge from "../components/common/Badge";
 import ZatcaOrderStatusBadge from "../components/zatca/ZatcaOrderStatusBadge";
 import ZatcaXmlDownloadLink from "../components/zatca/ZatcaXmlDownloadLink";
@@ -38,23 +40,6 @@ const RETURN_FILTER_TABS = [
   { id: ORDER_RETURN_FILTERS.RETURNED, label: "Full Return" },
 ];
 
-function matchesReturnFilter(order, filter) {
-  switch (filter) {
-    case ORDER_RETURN_FILTERS.NO_RETURN:
-      return order.status === SALE_STATUS.COMPLETED;
-    case ORDER_RETURN_FILTERS.WITH_RETURN:
-      return (
-        order.status === SALE_STATUS.PARTIAL_RETURN || order.status === SALE_STATUS.RETURNED
-      );
-    case ORDER_RETURN_FILTERS.PARTIAL:
-      return order.status === SALE_STATUS.PARTIAL_RETURN;
-    case ORDER_RETURN_FILTERS.RETURNED:
-      return order.status === SALE_STATUS.RETURNED;
-    default:
-      return true;
-  }
-}
-
 function orderStatusBadge(status) {
   if (status === SALE_STATUS.RETURNED) return <Badge variant="neutral">Returned</Badge>;
   if (status === SALE_STATUS.PARTIAL_RETURN) return <Badge variant="warning">Partial Return</Badge>;
@@ -74,12 +59,17 @@ export default function Orders() {
   const [period, setPeriod] = useState(ORDER_PERIODS.TODAY);
   const [returnFilter, setReturnFilter] = useState(ORDER_RETURN_FILTERS.ALL);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [orders, setOrders] = useState([]);
   const [zatcaBySaleId, setZatcaBySaleId] = useState({});
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  const debouncedSearch = useDebounce(search, 300);
+  const totalPages = Math.max(1, Math.ceil(total / ORDERS_PAGE_SIZE));
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -96,33 +86,56 @@ export default function Orders() {
     setError("");
     try {
       await ensureReturnSchema();
-      const [list, periodStats] = await Promise.all([
-        saleService.getByPeriod(period),
+      const [result, periodStats] = await Promise.all([
+        saleService.getByPeriodPaginated({
+          period,
+          page,
+          limit: ORDERS_PAGE_SIZE,
+          returnFilter,
+          search: debouncedSearch,
+        }),
         saleService.getPeriodStats(period),
       ]);
-      setOrders(list);
+      setOrders(result.items);
+      setTotal(result.total);
       setStats(periodStats);
       setSelectedIds(new Set());
 
-      if (showZatcaColumn && list.length) {
-        const statusMap = await zatcaService.getStatusBySaleIds(list.map((o) => o.id));
+      if (showZatcaColumn && result.items.length) {
+        const statusMap = await zatcaService.getStatusBySaleIds(result.items.map((o) => o.id));
         setZatcaBySaleId(statusMap);
       } else {
         setZatcaBySaleId({});
       }
     } catch (err) {
       setOrders([]);
+      setTotal(0);
       setStats(null);
       setZatcaBySaleId({});
       setError(err.message || "Failed to load orders");
     } finally {
       setLoading(false);
     }
-  }, [period, showZatcaColumn]);
+  }, [period, page, returnFilter, debouncedSearch, showZatcaColumn]);
 
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
+
+  function changePeriod(next) {
+    setPeriod(next);
+    setPage(1);
+  }
+
+  function changeReturnFilter(next) {
+    setReturnFilter(next);
+    setPage(1);
+  }
+
+  function changeSearch(value) {
+    setSearch(value);
+    setPage(1);
+  }
 
   useEffect(() => {
     if (!showZatcaColumn) return undefined;
@@ -132,19 +145,6 @@ export default function Orders() {
     });
     return unsubscribe;
   }, [showZatcaColumn, loadOrders]);
-
-  const filteredOrders = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return orders.filter((o) => {
-      if (!matchesReturnFilter(o, returnFilter)) return false;
-      if (!term) return true;
-      return (
-        o.sale_number?.toLowerCase().includes(term) ||
-        o.customer_name?.toLowerCase().includes(term) ||
-        o.payment_method?.toLowerCase().includes(term)
-      );
-    });
-  }, [orders, search, returnFilter]);
 
   async function openOrderDetail(row) {
     setDetailOpen(true);
@@ -229,10 +229,10 @@ export default function Orders() {
   }
 
   function toggleSelectAll() {
-    if (selectedIds.size === filteredOrders.length && filteredOrders.length > 0) {
+    if (selectedIds.size === orders.length && orders.length > 0) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(filteredOrders.map((order) => Number(order.id))));
+      setSelectedIds(new Set(orders.map((order) => Number(order.id))));
     }
   }
 
@@ -281,9 +281,7 @@ export default function Orders() {
               <input
                 type="checkbox"
                 className="orders-row-checkbox"
-                checked={
-                  filteredOrders.length > 0 && selectedIds.size === filteredOrders.length
-                }
+                checked={orders.length > 0 && selectedIds.size === orders.length}
                 onChange={toggleSelectAll}
                 onClick={(e) => e.stopPropagation()}
                 aria-label="Select all orders"
@@ -413,7 +411,7 @@ export default function Orders() {
             key={tab.id}
             type="button"
             className={`orders-period-tab ${period === tab.id ? "active" : ""}`}
-            onClick={() => setPeriod(tab.id)}
+            onClick={() => changePeriod(tab.id)}
           >
             {tab.label}
           </button>
@@ -453,11 +451,11 @@ export default function Orders() {
         <div className="orders-list-toolbar">
           <SearchBar
             value={search}
-            onChange={setSearch}
+            onChange={changeSearch}
             placeholder="Search order #, customer, payment..."
           />
           <span className="orders-list-count">
-            {filteredOrders.length} order{filteredOrders.length !== 1 ? "s" : ""}
+            {total.toLocaleString()} order{total !== 1 ? "s" : ""}
           </span>
         </div>
 
@@ -469,7 +467,7 @@ export default function Orders() {
                 key={tab.id}
                 type="button"
                 className={`orders-return-filter-tab ${returnFilter === tab.id ? "active" : ""}`}
-                onClick={() => setReturnFilter(tab.id)}
+                onClick={() => changeReturnFilter(tab.id)}
               >
                 {tab.label}
               </button>
@@ -477,12 +475,12 @@ export default function Orders() {
           </div>
         </div>
 
-        {isAdmin && filteredOrders.length > 0 && (
+        {isAdmin && orders.length > 0 && (
           <div className="orders-bulk-bar">
             <input
               type="checkbox"
               className="orders-row-checkbox"
-              checked={selectedIds.size === filteredOrders.length}
+              checked={selectedIds.size === orders.length && orders.length > 0}
               onChange={toggleSelectAll}
             />
             <span className="orders-bulk-count">
@@ -515,16 +513,25 @@ export default function Orders() {
         {loading ? (
           <LoadingSpinner message="Loading orders..." />
         ) : (
-          <Table
-            columns={columns}
-            data={filteredOrders}
-            onRowClick={openOrderDetail}
-            emptyMessage={
-              returnFilter === ORDER_RETURN_FILTERS.ALL
-                ? `No orders ${periodLabel}`
-                : `No matching orders ${periodLabel} for this return filter`
-            }
-          />
+          <>
+            <Table
+              columns={columns}
+              data={orders}
+              onRowClick={openOrderDetail}
+              emptyMessage={
+                returnFilter === ORDER_RETURN_FILTERS.ALL
+                  ? `No orders ${periodLabel}`
+                  : `No matching orders ${periodLabel} for this return filter`
+              }
+            />
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              onPageChange={setPage}
+              itemLabel="orders"
+            />
+          </>
         )}
       </Card>
 

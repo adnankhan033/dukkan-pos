@@ -334,21 +334,88 @@ class SaleService {
     return " AND date(sr.created_at) = date('now')";
   }
 
+  _buildOrdersQueryFilters(period, returnFilter = "all", search = "") {
+    let where = `WHERE s.status IN ('completed', 'partial_return', 'returned', 'held')`;
+    where += this._periodFilter(period);
+
+    if (returnFilter === "no_return") {
+      where += " AND s.status = 'completed'";
+    } else if (returnFilter === "with_return") {
+      where += " AND s.status IN ('partial_return', 'returned')";
+    } else if (returnFilter === "partial_return") {
+      where += " AND s.status = 'partial_return'";
+    } else if (returnFilter === "returned") {
+      where += " AND s.status = 'returned'";
+    }
+
+    const params = [];
+    const term = search.trim();
+    if (term) {
+      params.push(`%${term}%`);
+      where += ` AND (s.sale_number LIKE $${params.length} OR COALESCE(c.name, '') LIKE $${params.length} OR COALESCE(s.payment_method, '') LIKE $${params.length})`;
+    }
+
+    return { where, params };
+  }
+
+  async getByPeriodPaginated({
+    period = "today",
+    page = 1,
+    limit = 100,
+    returnFilter = "all",
+    search = "",
+  } = {}) {
+    const { where, params } = this._buildOrdersQueryFilters(period, returnFilter, search);
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.max(1, Number(limit) || 100);
+    const offset = (safePage - 1) * safeLimit;
+    const countParams = [...params];
+
+    const [countRow, items] = await Promise.all([
+      queryOne(
+        `SELECT COUNT(*) AS total
+         FROM sales s
+         LEFT JOIN customers c ON s.customer_id = c.id
+         ${where}`,
+        countParams
+      ),
+      query(
+        `SELECT s.*, c.name AS customer_name,
+                (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS item_count
+         FROM sales s
+         LEFT JOIN customers c ON s.customer_id = c.id
+         ${where}
+         ORDER BY s.created_at DESC
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, safeLimit, offset]
+      ),
+    ]);
+
+    return {
+      items,
+      total: Number(countRow?.total ?? 0),
+      page: safePage,
+      limit: safeLimit,
+    };
+  }
+
   async getByPeriod(period = "today") {
-    const filter = this._periodFilter(period);
-    return query(
-      `SELECT s.*, c.name AS customer_name,
-              (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS item_count
-       FROM sales s
-       LEFT JOIN customers c ON s.customer_id = c.id
-       WHERE s.status IN ('completed', 'partial_return', 'returned', 'held')
-       ${filter}
-       ORDER BY s.created_at DESC`
-    );
+    const result = await this.getByPeriodPaginated({ period, page: 1, limit: 100000 });
+    return result.items;
   }
 
   async getPeriodStats(period = "today") {
-    const orders = await this.getByPeriod(period);
+    const periodFilter = this._periodFilter(period);
+    const salesRow = await queryOne(
+      `SELECT
+         COUNT(CASE WHEN s.status != 'held' THEN 1 END) AS order_count,
+         COUNT(CASE WHEN s.status = 'held' THEN 1 END) AS held_count,
+         COALESCE(SUM(CASE WHEN s.status != 'held' THEN s.total ELSE 0 END), 0) AS sales_total
+       FROM sales s
+       WHERE s.status IN ('completed', 'partial_return', 'returned', 'held')
+       ${periodFilter}`
+    );
+
     let returnsTotal = 0;
     try {
       const returnsFilter = this._returnsPeriodFilter(period);
@@ -360,13 +427,11 @@ class SaleService {
       returnsTotal = 0;
     }
 
-    const salesTotal = orders
-      .filter((o) => o.status !== SALE_STATUS.HELD)
-      .reduce((sum, o) => sum + Number(o.total || 0), 0);
+    const salesTotal = Number(salesRow?.sales_total ?? 0);
 
     return {
-      orderCount: orders.filter((o) => o.status !== SALE_STATUS.HELD).length,
-      heldCount: orders.filter((o) => o.status === SALE_STATUS.HELD).length,
+      orderCount: Number(salesRow?.order_count ?? 0),
+      heldCount: Number(salesRow?.held_count ?? 0),
       salesTotal,
       returnsTotal,
       netTotal: Math.max(0, salesTotal - returnsTotal),

@@ -9,7 +9,7 @@ import { useDebounce } from "../hooks/usePagination";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import { useConfirm } from "../hooks/useConfirm";
 import { compressImageFile } from "../utils/image";
-import { ITEMS_PER_PAGE } from "../utils/constants";
+import { PRODUCTS_PAGE_SIZE } from "../utils/constants";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import SearchBar from "../components/common/SearchBar";
@@ -84,7 +84,7 @@ export default function Products() {
         categoryId: categoryFilter || null,
         published: isPublishedSection,
         page,
-        limit: ITEMS_PER_PAGE,
+        limit: PRODUCTS_PAGE_SIZE,
       });
       setProducts(result.items);
       setTotal(result.total);
@@ -563,9 +563,10 @@ export default function Products() {
           />
           <Pagination
             page={page}
-            totalPages={Math.ceil(total / ITEMS_PER_PAGE)}
+            totalPages={Math.ceil(total / PRODUCTS_PAGE_SIZE)}
             total={total}
             onPageChange={setPage}
+            itemLabel="products"
           />
         </>
       )}
