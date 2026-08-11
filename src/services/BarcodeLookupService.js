@@ -146,6 +146,15 @@ class BarcodeLookupService {
 
     const local = await productService.findByBarcode(barcode);
     if (local) {
+      const excludeId = options.excludeProductId != null ? Number(options.excludeProductId) : null;
+      if (excludeId != null && Number(local.id) === excludeId) {
+        return {
+          status: "assigned",
+          message: "Barcode applied to this product.",
+          barcode,
+          formPatch: { barcode },
+        };
+      }
       return {
         status: "duplicate",
         message: `"${local.name}" already exists with this barcode.`,

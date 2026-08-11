@@ -19,11 +19,14 @@ export default function ProductBarcodeScanner({
   active = true,
   categories = [],
   units = [],
+  excludeProductId = null,
   onApply,
   onDuplicate,
   onTranslate,
   translating = false,
   disabled = false,
+  title = "Scan or enter barcode",
+  description = "Use your barcode scanner or type the number — product details fill in automatically when found.",
 }) {
   const inputRef = useRef(null);
   const debounceRef = useRef(null);
@@ -60,11 +63,21 @@ export default function ProductBarcodeScanner({
       setResult(null);
 
       try {
-        const lookup = await barcodeLookupService.lookup(barcode, { categories, units });
+        const lookup = await barcodeLookupService.lookup(barcode, {
+          categories,
+          units,
+          excludeProductId,
+        });
         setResult(lookup);
 
         if (lookup.status === "duplicate") {
           setLookupState("duplicate");
+          return;
+        }
+
+        if (lookup.status === "assigned") {
+          setLookupState("assigned");
+          onApply?.(lookup.formPatch, lookup);
           return;
         }
 
@@ -92,7 +105,7 @@ export default function ProductBarcodeScanner({
         loadingRef.current = false;
       }
     },
-    [categories, units, onApply, onTranslate]
+    [categories, units, excludeProductId, onApply, onTranslate]
   );
 
   function scheduleLookup(nextValue) {
@@ -143,10 +156,8 @@ export default function ProductBarcodeScanner({
           <ScanLine size={22} />
         </div>
         <div>
-          <h4>Scan or enter barcode</h4>
-          <p>
-            Use your barcode scanner or type the number — product details fill in automatically when found.
-          </p>
+          <h4>{title}</h4>
+          <p>{description}</p>
         </div>
       </div>
 
@@ -253,6 +264,18 @@ export default function ProductBarcodeScanner({
                 </Button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {lookupState === "assigned" && showPreview && (
+        <div className="product-barcode-result found">
+          <div className="product-barcode-result-icon success">
+            <CheckCircle2 size={20} />
+          </div>
+          <div className="product-barcode-result-body">
+            <strong>Barcode applied</strong>
+            <p>{result.message}</p>
           </div>
         </div>
       )}

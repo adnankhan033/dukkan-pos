@@ -14,6 +14,7 @@ import {
   User,
   X,
   Sparkles,
+  Pencil,
 } from "lucide-react";
 import { productService } from "../services/ProductService";
 import { customerService } from "../services/CustomerService";
@@ -24,6 +25,7 @@ import Button from "../components/common/Button";
 import { Select } from "../components/common/Input";
 import SaleCompleteModal from "../components/sales/SaleCompleteModal";
 import SaleReturnModal from "../components/sales/SaleReturnModal";
+import PosProductEditModal from "../components/sales/PosProductEditModal";
 import ProductBilingualName from "../components/products/ProductBilingualName";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
 import { formatCurrency, calcVat, calcGrandTotal, formatQuantity } from "../utils/format";
@@ -75,6 +77,7 @@ export default function Sales() {
   const [pendingPaymentMethod, setPendingPaymentMethod] = useState(PAYMENT_METHODS.CASH);
   const [completedSale, setCompletedSale] = useState(null);
   const [returnOpen, setReturnOpen] = useState(false);
+  const [editProductId, setEditProductId] = useState(null);
 
   const searchRef = useRef(null);
   const checkoutRef = useRef({});
@@ -225,6 +228,57 @@ export default function Sales() {
   async function refreshTopProducts() {
     const products = await productService.getTopSellingForPos(POS_TOP_SELLERS_LIMIT);
     setTopProducts(products);
+  }
+
+  function openProductEdit(productId, e) {
+    e?.stopPropagation?.();
+    e?.preventDefault?.();
+    setEditProductId(Number(productId));
+  }
+
+  function closeProductEdit() {
+    setEditProductId(null);
+  }
+
+  function patchCatalogProduct(updated) {
+    const patch = (list) =>
+      list.map((p) =>
+        p.id === updated.id
+          ? {
+              ...p,
+              name: updated.name,
+              name_ar: updated.name_ar,
+              barcode: updated.barcode,
+              selling_price: updated.selling_price,
+            }
+          : p
+      );
+
+    setTopProducts((prev) => patch(prev));
+    setSearchResults((prev) => patch(prev));
+  }
+
+  function applyProductUpdateToCart(updated) {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.product_id === updated.id
+          ? {
+              ...item,
+              name: updated.name,
+              name_ar: updated.name_ar,
+              unit_price: updated.selling_price,
+              total: item.quantity * updated.selling_price,
+            }
+          : item
+      )
+    );
+  }
+
+  function handleProductSaved(updated) {
+    patchCatalogProduct(updated);
+    applyProductUpdateToCart(updated);
+    setMessage(`Updated "${updated.name}" — cart price refreshed`);
+    setError("");
   }
 
   function validateBeforeComplete() {
@@ -580,14 +634,22 @@ export default function Sales() {
               const lowStock = p.quantity <= 0;
 
               return (
-                <button
+                <div
                   key={p.id}
-                  type="button"
                   className={`pos-product-card ${lowStock ? "low-stock" : ""} ${inCart ? "in-cart" : ""}`}
-                  onClick={() => addToCart(p)}
                   style={{ "--product-accent": `${hue}` }}
                 >
+                  <button
+                    type="button"
+                    className="pos-product-edit-btn"
+                    onClick={(e) => openProductEdit(p.id, e)}
+                    aria-label={`Edit ${p.name}`}
+                    title="Edit product"
+                  >
+                    <Pencil size={12} />
+                  </button>
                   {inCart > 0 && <span className="pos-product-badge">{inCart}</span>}
+                  <button type="button" className="pos-product-card-body" onClick={() => addToCart(p)}>
                   <div className="pos-product-thumb">{productInitial(p.name)}</div>
                   <ProductBilingualName
                     name={p.name}
@@ -606,7 +668,8 @@ export default function Sales() {
                       {lowStock ? " · oversell OK" : ""}
                     </span>
                   </div>
-                </button>
+                  </button>
+                </div>
               );
             })}
 
@@ -667,7 +730,18 @@ export default function Sales() {
                 cart.map((item) => (
                   <div key={item.product_id} className="pos-cart-item">
                     <div className="pos-cart-item-main">
-                      <ProductBilingualName name={item.name} nameAr={item.name_ar} size="sm" />
+                      <div className="pos-cart-item-title-row">
+                        <ProductBilingualName name={item.name} nameAr={item.name_ar} size="sm" />
+                        <button
+                          type="button"
+                          className="pos-cart-edit-btn"
+                          onClick={() => openProductEdit(item.product_id)}
+                          aria-label={`Edit ${item.name}`}
+                          title="Edit product"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      </div>
                       <div className="pos-cart-item-price">
                         {formatCurrency(item.unit_price, currency)} each
                       </div>
@@ -860,6 +934,14 @@ export default function Sales() {
           refreshTopProducts();
         }}
         currency={currency}
+      />
+
+      <PosProductEditModal
+        isOpen={editProductId != null}
+        productId={editProductId}
+        currency={currency}
+        onClose={closeProductEdit}
+        onSaved={handleProductSaved}
       />
     </div>
   );
