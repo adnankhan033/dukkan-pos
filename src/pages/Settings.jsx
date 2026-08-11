@@ -163,13 +163,19 @@ export default function Settings() {
   const businessTimePreview = getBusinessDateTimeLabelFromForm(form);
   void clockTick;
 
+  async function persistForm(mergedForm) {
+    const payload = formToSettings(mergedForm ?? form);
+    const updated = await settingsService.updateMany(payload);
+    setSettings(updated);
+    setForm(buildFormFromSettings(updated));
+    zatcaService.restartBackgroundSync();
+    return updated;
+  }
+
   async function handleSave(e) {
     e.preventDefault();
     try {
-      const payload = formToSettings(form);
-      const updated = await settingsService.updateMany(payload);
-      setSettings(updated);
-      zatcaService.restartBackgroundSync();
+      const updated = await persistForm(form);
       setMessage("Settings saved successfully");
       setError("");
     } catch (err) {
@@ -519,7 +525,12 @@ export default function Settings() {
         )}
 
         {tab === "zatca" && (
-          <ZatcaSettingsPanel form={form} updateField={updateField} baseSettings={settings} />
+          <ZatcaSettingsPanel
+            form={form}
+            updateField={updateField}
+            baseSettings={settings}
+            saveForm={persistForm}
+          />
         )}
 
         {tab === "modules" && (

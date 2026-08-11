@@ -1,11 +1,13 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { ZATCA_ENVIRONMENTS } from "../core/constants";
-import { resolveStoredCertificate } from "../core/certificateUtils";
+import { resolveStoredCertificate, resolveCertificateForMode } from "../core/certificateUtils";
+
+import { resolveInvoiceVatNumber } from "../core/vatResolver";
 
 /** ZATCA sandbox test CR (10 digits) — invalid placeholder CRN causes BR-KSA-F-13. */
 export const ZATCA_SANDBOX_CR_PLACEHOLDER = "1010010000";
 
-/** ZATCA sandbox test VAT. */
+/** @deprecated use ZATCA_SANDBOX_VAT from vatResolver */
 export const ZATCA_SANDBOX_VAT_PLACEHOLDER = "300000000000003";
 
 /** Normalize Saudi CR number for invoice XML (BT-29). */
@@ -145,7 +147,7 @@ function defaultLocation(config) {
 }
 
 function buildEgsInfo(config, { production = false } = {}) {
-  const certificatePem = resolveStoredCertificate(config.credentials);
+  const certificatePem = resolveCertificateForMode(config.credentials, { production });
   const certBody = certificatePem
     ? certificatePem
         .replace(/-----BEGIN CERTIFICATE-----/g, "")
@@ -159,9 +161,7 @@ function buildEgsInfo(config, { production = false } = {}) {
     model: config.device?.model || "DukkanPOS",
     CRN_number: normalizeCrnNumber(config.company?.crNumber, config.environment),
     VAT_name: config.company?.name || "Store",
-    VAT_number:
-      config.company?.vatNumber ||
-      (config.environment === ZATCA_ENVIRONMENTS.SANDBOX ? "300000000000003" : ""),
+    VAT_number: resolveInvoiceVatNumber(config, { production }),
     branch_name: config.device?.egsUnitName || config.company?.name || "Main Branch",
     branch_industry: "Retail",
     location: defaultLocation(config),
@@ -170,10 +170,12 @@ function buildEgsInfo(config, { production = false } = {}) {
 
   if (production) {
     info.production_certificate = certBody;
-    info.production_api_secret = config.credentials?.secret || "";
+    info.production_api_secret =
+      config.credentials?.productionSecret || config.credentials?.secret || "";
   } else {
     info.compliance_certificate = certBody;
-    info.compliance_api_secret = config.credentials?.secret || "";
+    info.compliance_api_secret =
+      config.credentials?.complianceSecret || config.credentials?.secret || "";
   }
 
   return info;
@@ -226,18 +228,26 @@ function buildInvoiceProps(payload, config, { production = false } = {}) {
  * Build and cryptographically sign a ZATCA simplified tax invoice.
  * Uses zatca-xml-js via Tauri (Node.js + OpenSSL).
  */
-export async function signZatcaInvoice(config, payload, { production = false } = {}) {
+export async function signZatcaInvoice(
+  config,
+  payload,
+  { production = false, invoiceKind = "simplified" } = {}
+) {
   if (!isTauri()) {
     throw new Error("Invoice signing requires the DukkanPOS desktop app.");
   }
 
   const privateKey = config.credentials?.privateKey?.trim();
-  const certificate = resolveStoredCertificate(config.credentials);
+  const certificate = resolveCertificateForMode(config.credentials, { production });
   if (!privateKey) {
     throw new Error("Private key missing — generate one in Settings → ZATCA.");
   }
   if (!certificate) {
-    throw new Error("Compliance CSID certificate missing — run Compliance CSID in Step 2.");
+    throw new Error(
+      production
+        ? "Production CSID certificate missing — run Step 6 (Production CSID) first."
+        : "Compliance CSID certificate missing — run Compliance CSID first."
+    );
   }
 
   const egs_info = buildEgsInfo(config, { production });
@@ -250,7 +260,9 @@ export async function signZatcaInvoice(config, payload, { production = false } =
         egs_info,
         invoice_props,
         production,
+        invoice_kind: invoiceKind,
         buyer_name: invoice_props.buyer_name,
+        buyer: payload.buyer,
       }),
     });
   } catch (err) {

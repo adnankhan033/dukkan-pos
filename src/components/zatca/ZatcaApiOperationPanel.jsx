@@ -122,7 +122,14 @@ export default function ZatcaApiOperationPanel({
 
       {operation.usesTestInvoice && (
         <p className="zatca-test-help" style={{ marginTop: "0.5rem" }}>
-          Uses auto-generated test invoice XML (unsigned placeholder until full signing is added).
+          Uses a cryptographically signed test invoice (same signing pipeline as live sales).
+          {operation.id === "reporting_single" && (
+            <>
+              {" "}
+              Requires <strong>Production CSID</strong> (Step 6) — Compliance CSID will not work
+              for Reporting API.
+            </>
+          )}
         </p>
       )}
 

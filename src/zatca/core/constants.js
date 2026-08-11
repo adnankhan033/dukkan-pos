@@ -48,6 +48,8 @@ export const ZATCA_SETTING_KEYS = {
   COMPLIANCE_REQUEST_ID: "zatca_compliance_request_id",
   PRODUCTION_CSID: "zatca_production_csid",
   SECRET: "zatca_secret",
+  COMPLIANCE_SECRET: "zatca_compliance_secret",
+  PRODUCTION_SECRET: "zatca_production_secret",
   COMPLIANCE_AUTH_TOKEN: "zatca_compliance_auth_token",
   PRODUCTION_AUTH_TOKEN: "zatca_production_auth_token",
 
@@ -58,6 +60,9 @@ export const ZATCA_SETTING_KEYS = {
 
   INVOICE_COUNTER: "zatca_invoice_counter",
   PREVIOUS_INVOICE_HASH: "zatca_previous_invoice_hash",
+  CERTIFICATE_VAT: "zatca_certificate_vat",
+  COMPLIANCE_CERTIFICATE_VAT: "zatca_compliance_certificate_vat",
+  PRODUCTION_CERTIFICATE_VAT: "zatca_production_certificate_vat",
 };
 
 export const ZATCA_SENSITIVE_KEYS = new Set([
@@ -67,6 +72,8 @@ export const ZATCA_SENSITIVE_KEYS = new Set([
   ZATCA_SETTING_KEYS.COMPLIANCE_CSID,
   ZATCA_SETTING_KEYS.PRODUCTION_CSID,
   ZATCA_SETTING_KEYS.SECRET,
+  ZATCA_SETTING_KEYS.COMPLIANCE_SECRET,
+  ZATCA_SETTING_KEYS.PRODUCTION_SECRET,
   ZATCA_SETTING_KEYS.COMPLIANCE_AUTH_TOKEN,
   ZATCA_SETTING_KEYS.PRODUCTION_AUTH_TOKEN,
   ZATCA_SETTING_KEYS.CLIENT_SECRET,
@@ -104,3 +111,18 @@ export const ZATCA_SYNC_DEFAULTS = {
 export const ZATCA_MAX_RETRY_COUNT = 5;
 /** Background worker checks queue every 45 seconds when auto-sync is on. */
 export const ZATCA_SYNC_INTERVAL_MS = 45 * 1000;
+
+/** UBL KSA-2 transaction type codes (InvoiceTypeCode/@name). */
+export const ZATCA_INVOICE_TYPE_NAMES = {
+  STANDARD: "0100000",
+  SIMPLIFIED: "0200000",
+};
+
+/** Invoice document kinds for ZATCA APIs. */
+export const ZATCA_INVOICE_KINDS = {
+  STANDARD: "standard",
+  SIMPLIFIED: "simplified",
+};
+
+/** Sandbox test buyer VAT for standard (B2B) clearance invoices. Must match /^3\\d{13}3$/. */
+export const ZATCA_SANDBOX_BUYER_VAT = "301121971500003";

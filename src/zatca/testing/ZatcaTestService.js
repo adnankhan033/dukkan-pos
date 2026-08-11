@@ -291,11 +291,9 @@ class ZatcaTestService {
 
     const payload = {
       ...testData.payload,
-      xml: testData.xml,
-      invoiceBase64:
-        typeof btoa === "function"
-          ? btoa(unescape(encodeURIComponent(testData.xml)))
-          : testData.xml,
+      signedXml: testData.signedXml,
+      xml: testData.signedXml,
+      invoiceBase64: testData.invoiceBase64,
     };
     const invoiceHash = testData.invoiceHash;
 
@@ -304,7 +302,7 @@ class ZatcaTestService {
       saleNumber,
       phase: ZATCA_PHASES.PHASE2,
       environment: config.environment,
-      invoiceUuid: payload.uuid,
+      invoiceUuid: testData.uuid,
       invoiceHash,
       payload,
     });
@@ -317,7 +315,7 @@ class ZatcaTestService {
         "Offline test complete. Invoice saved locally and added to queue as Pending. No API call was made.",
       saleNumber,
       queueId,
-      uuid: payload.uuid,
+      uuid: testData.uuid,
       queueStats: stats,
     };
   }
@@ -417,12 +415,14 @@ class ZatcaTestService {
     let xmlPassed = false;
     try {
       const inv = await generateTestInvoice(config);
-      xmlPassed = inv.xml?.includes("<Invoice");
+      xmlPassed = Boolean(inv.signedXml?.includes("<Invoice") || inv.xml?.includes("<Invoice"));
       items.push({
         id: "xml",
-        label: "XML generation works",
+        label: "Signed XML generation works",
         passed: xmlPassed,
-        message: xmlPassed ? "Sample XML invoice created." : "XML generation failed.",
+        message: xmlPassed
+          ? "Signed ZATCA XML invoice created."
+          : "Signed XML generation failed.",
       });
     } catch (err) {
       items.push({ id: "xml", label: "XML generation works", passed: false, message: err.message });

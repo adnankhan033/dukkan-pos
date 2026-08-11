@@ -1,4 +1,5 @@
 import { ZATCA_SETTING_KEYS as K } from "../core/constants";
+import { extractVatFromCertificate } from "../core/vatResolver";
 
 /**
  * ZATCA Sandbox / Production API registry — mirrors Fatoora Swagger operations.
@@ -189,15 +190,29 @@ export function mapCsidResponseToSettings(kind, data, certificatePem) {
     saved[K.COMPLIANCE_CSID] = certificatePem;
     saved[K.CERTIFICATE] = certificatePem;
     saved[K.SECRET] = data.secret;
+    saved[K.COMPLIANCE_SECRET] = data.secret;
     saved[K.COMPLIANCE_AUTH_TOKEN] = String(data.binarySecurityToken || "").replace(/\s/g, "");
+    const certVat = extractVatFromCertificate(certificatePem);
+    if (certVat) {
+      saved[K.CERTIFICATE_VAT] = certVat;
+      saved[K.COMPLIANCE_CERTIFICATE_VAT] = certVat;
+    }
     if (data.requestID != null) {
       saved[K.COMPLIANCE_REQUEST_ID] = String(data.requestID);
     }
   } else {
     saved[K.PRODUCTION_CSID] = certificatePem;
     saved[K.CERTIFICATE] = certificatePem;
-    if (data.secret) saved[K.SECRET] = data.secret;
+    if (data.secret) {
+      saved[K.SECRET] = data.secret;
+      saved[K.PRODUCTION_SECRET] = data.secret;
+    }
     saved[K.PRODUCTION_AUTH_TOKEN] = String(data.binarySecurityToken || "").replace(/\s/g, "");
+    const certVat = extractVatFromCertificate(certificatePem);
+    if (certVat) {
+      saved[K.CERTIFICATE_VAT] = certVat;
+      saved[K.PRODUCTION_CERTIFICATE_VAT] = certVat;
+    }
   }
   return saved;
 }

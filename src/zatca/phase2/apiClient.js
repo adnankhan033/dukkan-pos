@@ -1,6 +1,7 @@
 import { zatcaLogger } from "../core/logger";
 import { ZATCA_ENVIRONMENTS } from "../core/constants";
 import { executeZatcaApiOperation } from "../api/executor";
+import { resolveEgsUuid } from "./invoiceSigner";
 import { pemToZatcaAuthToken, base64TokenToPem, normalizeCertificatePem } from "../core/certificateUtils";
 
 /**
@@ -90,9 +91,9 @@ export class ZatcaApiClient {
   }
 
   async _submitInvoice(operationId, invoicePayload) {
-    const egsUuid = invoicePayload.egsUuid || invoicePayload.uuid;
+    const egsUuid = invoicePayload.egsUuid || resolveEgsUuid(this.config);
     const inputs = {
-      invoice_uuid: egsUuid,
+      egs_uuid: egsUuid,
       invoice_hash: invoicePayload.invoiceHash || invoicePayload.hash,
       invoice_base64: invoicePayload.invoiceBase64 || invoicePayload.apiBody?.invoice,
     };

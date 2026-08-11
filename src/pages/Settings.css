@@ -363,6 +363,202 @@
   color: var(--color-text-muted);
 }
 
+/* Easy Setup wizard (Fatoora-style) */
+.zatca-easy-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.zatca-easy-help-list {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+.zatca-easy-links {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.zatca-easy-links li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.zatca-easy-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.zatca-easy-links a:hover {
+  text-decoration: underline;
+}
+
+.zatca-easy-links span {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  padding-left: 1.35rem;
+}
+
+.zatca-easy-section-title {
+  margin: 1.25rem 0 0.25rem;
+  font-size: 0.9375rem;
+}
+
+.zatca-easy-save-row {
+  margin-top: 1.25rem;
+}
+
+.zatca-easy-auto-msg {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-primary);
+}
+
+.zatca-advanced-toggle {
+  width: 100%;
+  padding: 0.75rem 0;
+  border: none;
+  background: none;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.zatca-advanced-body {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.zatca-easy-setup {
+  max-width: 820px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 4%, var(--color-card));
+}
+
+.zatca-easy-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.zatca-easy-icon {
+  color: var(--color-primary);
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.zatca-easy-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1.25rem 0;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+}
+
+.zatca-easy-progress-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  opacity: 0.55;
+}
+
+.zatca-easy-progress-item.active,
+.zatca-easy-progress-item.done {
+  opacity: 1;
+}
+
+.zatca-easy-progress-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.zatca-easy-progress-label span {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.zatca-easy-step-done {
+  color: var(--color-success);
+}
+
+.zatca-easy-step-active {
+  color: var(--color-primary);
+}
+
+.zatca-easy-step-pending {
+  color: var(--color-text-muted);
+}
+
+.zatca-easy-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  margin-bottom: 0.75rem;
+}
+
+.zatca-easy-panel p {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.zatca-easy-missing {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--color-danger);
+}
+
+.zatca-easy-csr-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-size: 0.75rem;
+}
+
+.zatca-easy-copy-label {
+  font-size: 0.75rem;
+  color: var(--color-success);
+}
+
+.zatca-easy-actions-secondary {
+  margin-top: 0.5rem;
+}
+
 .zatca-onboarding-wizard {
   max-width: 820px;
 }

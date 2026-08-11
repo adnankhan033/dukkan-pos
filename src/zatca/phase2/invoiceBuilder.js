@@ -1,8 +1,9 @@
 import { generateNumber } from "../../utils/format";
 import { resolveZatcaIssueDateTime } from "./invoiceSigner";
+import { resolveInvoiceVatNumber } from "../core/vatResolver";
 
 /** Build UBL 2.1 simplified tax invoice payload (placeholder structure). */
-export function buildSimplifiedInvoicePayload({ sale, items, config }) {
+export function buildSimplifiedInvoicePayload({ sale, items, config, production = false }) {
   const counter = (config.chain.invoiceCounter || 0) + 1;
   const { issue_date, issue_time } = resolveZatcaIssueDateTime({
     created_at: sale.created_at,
@@ -20,7 +21,7 @@ export function buildSimplifiedInvoicePayload({ sale, items, config }) {
     seller: {
       name: config.company.name,
       nameAr: config.company.nameAr,
-      vatNumber: config.company.vatNumber,
+      vatNumber: resolveInvoiceVatNumber(config, { production }),
       crNumber: config.company.crNumber,
       address: config.company.address,
     },

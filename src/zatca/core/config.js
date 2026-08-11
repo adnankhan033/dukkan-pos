@@ -53,6 +53,14 @@ export function parseZatcaConfig(settings = {}) {
       complianceRequestId: settings[ZATCA_SETTING_KEYS.COMPLIANCE_REQUEST_ID] || "",
       productionCsid: settings[ZATCA_SETTING_KEYS.PRODUCTION_CSID] || "",
       secret: settings[ZATCA_SETTING_KEYS.SECRET] || "",
+      complianceSecret:
+        settings[ZATCA_SETTING_KEYS.COMPLIANCE_SECRET] ||
+        settings[ZATCA_SETTING_KEYS.SECRET] ||
+        "",
+      productionSecret:
+        settings[ZATCA_SETTING_KEYS.PRODUCTION_SECRET] ||
+        settings[ZATCA_SETTING_KEYS.SECRET] ||
+        "",
       complianceAuthToken: settings[ZATCA_SETTING_KEYS.COMPLIANCE_AUTH_TOKEN] || "",
       productionAuthToken: settings[ZATCA_SETTING_KEYS.PRODUCTION_AUTH_TOKEN] || "",
       clientId: settings[ZATCA_SETTING_KEYS.CLIENT_ID] || "",
@@ -66,6 +74,13 @@ export function parseZatcaConfig(settings = {}) {
       invoiceCounter: Number(settings[ZATCA_SETTING_KEYS.INVOICE_COUNTER] || 0),
       previousInvoiceHash: settings[ZATCA_SETTING_KEYS.PREVIOUS_INVOICE_HASH] || "",
     },
+
+    certificateVat: settings[ZATCA_SETTING_KEYS.CERTIFICATE_VAT] || "",
+    complianceCertificateVat:
+      settings[ZATCA_SETTING_KEYS.COMPLIANCE_CERTIFICATE_VAT] ||
+      settings[ZATCA_SETTING_KEYS.CERTIFICATE_VAT] ||
+      "",
+    productionCertificateVat: settings[ZATCA_SETTING_KEYS.PRODUCTION_CERTIFICATE_VAT] || "",
 
     vatPercent: Number(settings.vat_percent || 15),
   };
@@ -117,6 +132,8 @@ export function getZatcaDefaultSettings() {
     [ZATCA_SETTING_KEYS.COMPLIANCE_REQUEST_ID]: "",
     [ZATCA_SETTING_KEYS.PRODUCTION_CSID]: "",
     [ZATCA_SETTING_KEYS.SECRET]: "",
+    [ZATCA_SETTING_KEYS.COMPLIANCE_SECRET]: "",
+    [ZATCA_SETTING_KEYS.PRODUCTION_SECRET]: "",
     [ZATCA_SETTING_KEYS.COMPLIANCE_AUTH_TOKEN]: "",
     [ZATCA_SETTING_KEYS.PRODUCTION_AUTH_TOKEN]: "",
     [ZATCA_SETTING_KEYS.API_BASE_URL]: "",
@@ -125,6 +142,9 @@ export function getZatcaDefaultSettings() {
     [ZATCA_SETTING_KEYS.OTP]: "",
     [ZATCA_SETTING_KEYS.INVOICE_COUNTER]: "0",
     [ZATCA_SETTING_KEYS.PREVIOUS_INVOICE_HASH]: "",
+    [ZATCA_SETTING_KEYS.CERTIFICATE_VAT]: "",
+    [ZATCA_SETTING_KEYS.COMPLIANCE_CERTIFICATE_VAT]: "",
+    [ZATCA_SETTING_KEYS.PRODUCTION_CERTIFICATE_VAT]: "",
     [ZATCA_SYNC_SETTINGS.LAST_SYNC_AT]: "",
     [ZATCA_SYNC_SETTINGS.AUTO_SYNC_ENABLED]: "0",
   };

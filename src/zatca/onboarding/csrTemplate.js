@@ -6,6 +6,22 @@ const TEMPLATE_NAMES = {
 };
 
 /**
+ * OpenSSL .cnf values must be a single line. Newlines or unescaped `=` break parsing.
+ * Wrap in double quotes for DN / alt_name fields.
+ */
+export function sanitizeCnfValue(value, { maxLength = 200, fallback = "N/A" } = {}) {
+  const cleaned = String(value ?? "")
+    .replace(/[\r\n\t]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/["\\#;]/g, "")
+    .trim()
+    .slice(0, maxLength);
+
+  const safe = cleaned || fallback;
+  return `"${safe.replace(/"/g, "")}"`;
+}
+
+/**
  * OpenSSL `.cnf` for a ZATCA-compliant CSR (Fatoora / developer-portal spec).
  */
 export function generateCSRTemplate({
@@ -21,6 +37,17 @@ export function generateCSRTemplate({
   taxpayerName,
 }) {
   const templateName = TEMPLATE_NAMES[environment] || TEMPLATE_NAMES[ZATCA_ENVIRONMENTS.SANDBOX];
+
+  const safeTaxpayer = sanitizeCnfValue(taxpayerName, { fallback: "Taxpayer" });
+  const safeBranch = sanitizeCnfValue(branchName, { fallback: "Main Branch" });
+  const safeCommon = sanitizeCnfValue(commonName, { fallback: "EGS-001" });
+  const safeLocation = sanitizeCnfValue(branchLocation, { fallback: "Riyadh" });
+  const safeIndustry = sanitizeCnfValue(branchIndustry, { fallback: "Retail" });
+  const safeVat = sanitizeCnfValue(vatNumber, { fallback: "300000000000003", maxLength: 15 });
+  const safeEgsSerial = sanitizeCnfValue(
+    `1-${solutionName}|2-${egsModel}|3-${egsSerialNumber}`,
+    { fallback: "1-PortalPOS|2-DukkanPOS|3-POS-001", maxLength: 250 }
+  );
 
   const template = `oid_section = OIDs
 
@@ -53,14 +80,11 @@ businessCategory = SET_BRANCH_INDUSTRY`;
 
   return template
     .replaceAll("SET_TEMPLATE_NAME", templateName)
-    .replaceAll(
-      "SET_EGS_SERIAL_NUMBER",
-      `1-${solutionName}|2-${egsModel}|3-${egsSerialNumber}`
-    )
-    .replaceAll("SET_VAT_REGISTRATION_NUMBER", vatNumber)
-    .replaceAll("SET_BRANCH_LOCATION", branchLocation)
-    .replaceAll("SET_BRANCH_INDUSTRY", branchIndustry)
-    .replaceAll("SET_COMMON_NAME", commonName)
-    .replaceAll("SET_BRANCH_NAME", branchName)
-    .replaceAll("SET_TAXPAYER_NAME", taxpayerName);
+    .replaceAll("SET_EGS_SERIAL_NUMBER", safeEgsSerial)
+    .replaceAll("SET_VAT_REGISTRATION_NUMBER", safeVat)
+    .replaceAll("SET_BRANCH_LOCATION", safeLocation)
+    .replaceAll("SET_BRANCH_INDUSTRY", safeIndustry)
+    .replaceAll("SET_COMMON_NAME", safeCommon)
+    .replaceAll("SET_BRANCH_NAME", safeBranch)
+    .replaceAll("SET_TAXPAYER_NAME", safeTaxpayer);
 }

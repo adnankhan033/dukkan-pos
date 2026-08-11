@@ -14,7 +14,8 @@ import { isValidCsrPem, csrPemToBase64 } from "../onboarding/csrGenerator";
 import { zatcaLogger } from "../core/logger";
 import { generateTestInvoice } from "../testing/testInvoiceGenerator";
 import { resolveEgsUuid } from "../phase2/invoiceSigner";
-import { resolveAuthToken } from "../sync/syncRouter";
+import { resolveInvoiceVatNumber } from "../core/vatResolver";
+import { resolveAuthToken, explainSyncHttpError } from "../sync/syncRouter";
 import {
   ZATCA_AUTH,
   getZatcaApiOperation,
@@ -70,20 +71,27 @@ function resolveAuthHeaders(auth, config, inputs) {
       creds,
       "compliance"
     );
-    if (!token || !creds.secret) {
+    const secret = creds.complianceSecret || creds.secret;
+    if (!token || !secret) {
       throw new Error("Compliance CSID certificate and secret are required.");
     }
-    headers.Authorization = buildBasicAuthHeader(token, creds.secret);
+    headers.Authorization = buildBasicAuthHeader(token, secret);
   }
 
   if (auth === ZATCA_AUTH.PRODUCTION_BASIC || auth === ZATCA_AUTH.OTP_PRODUCTION_BASIC) {
     const token = certToToken(creds.productionCsid, creds, "production");
-    if (!token || !creds.secret) {
+    const secret = creds.productionSecret || creds.secret;
+    if (!token || !secret) {
       throw new Error(
-        "Production CSID required for this API. Run POST /production/csids in API Explorer first."
+        "Production CSID and secret required. Run Step 6 — Production CSID (POST /production/csids) first."
       );
     }
-    headers.Authorization = buildBasicAuthHeader(token, creds.secret);
+    if (!creds.productionCsid?.trim() && !creds.productionAuthToken?.trim()) {
+      throw new Error(
+        "Reporting API requires Production CSID — Compliance CSID cannot be used. Complete Step 6 first."
+      );
+    }
+    headers.Authorization = buildBasicAuthHeader(token, secret);
   }
 
   return headers;
@@ -148,9 +156,9 @@ async function buildRequestBody(operation, config, settings, inputs) {
   }
 
   if (operation.usesTestInvoice) {
-    const egsUuid = inputs.egs_uuid || resolveEgsUuid(config);
+    const egsUuid = inputs.egs_uuid || inputs.invoice_uuid || resolveEgsUuid(config);
 
-    if (inputs.invoice_hash && inputs.invoice_base64 && egsUuid) {
+    if (inputs.invoice_hash && inputs.invoice_base64) {
       return {
         uuid: egsUuid,
         invoiceHash: inputs.invoice_hash,
@@ -158,12 +166,15 @@ async function buildRequestBody(operation, config, settings, inputs) {
       };
     }
 
-    const testData = await generateTestInvoice(config);
-    const invoiceBase64 = inputs.invoice_base64 || encodeBase64(testData.xml);
+    const useProduction =
+      operation.id === "reporting_single" || operation.id === "clearance_single";
+    const invoiceKind =
+      operation.id === "clearance_single" ? "standard" : "simplified";
+    const testData = await generateTestInvoice(config, { production: useProduction, invoiceKind });
     return {
-      uuid: egsUuid,
-      invoiceHash: inputs.invoice_hash || testData.invoiceHash,
-      invoice: invoiceBase64,
+      uuid: testData.uuid,
+      invoiceHash: testData.invoiceHash,
+      invoice: testData.invoiceBase64,
     };
   }
 
@@ -258,12 +269,17 @@ export async function executeZatcaApiOperation(operationId, { settings = {}, inp
     };
 
     if (!response.ok) {
+      let message = formatZatcaApiError(response);
+      if (response.status === 401) {
+        const hint = explainSyncHttpError(401, operation.auth, operation.id);
+        if (hint) message = hint;
+      }
       return {
         success: false,
         operationId,
         httpStatus: response.status,
         durationMs: response.durationMs,
-        message: formatZatcaApiError(response),
+        message,
         request: displayRequest,
         response: response.body,
       };
@@ -301,6 +317,23 @@ export async function executeZatcaApiOperation(operationId, { settings = {}, inp
       message = success
         ? `${operation.name} accepted by ZATCA.`
         : formatZatcaApiError({ status: response.status, body: data }) || "Invoice submission failed.";
+      if (
+        !success &&
+        data?.validationResults?.errorMessages?.some((e) => e.code === "certificate-permissions")
+      ) {
+        const certVat = resolveInvoiceVatNumber(config, { production: true });
+        message +=
+          certVat
+            ? ` Use Production CSID VAT ${certVat} on invoices. If your store VAT changed, regenerate Keys & CSR and request new certificates.`
+            : " Regenerate Keys & CSR, then request new Compliance and Production certificates.";
+      }
+      if (
+        !success &&
+        data?.validationResults?.errorMessages?.some((e) => e.code === "XML-INVOICE-ERROR")
+      ) {
+        message +=
+          " Clearance API requires a Standard (B2B) tax invoice — Reporting API is for Simplified (B2C/POS) invoices.";
+      }
     }
 
     return {

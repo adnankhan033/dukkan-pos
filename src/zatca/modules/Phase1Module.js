@@ -1,5 +1,6 @@
 import { ZATCA_PHASES, ZATCA_PHASE_LABELS } from "../core/constants";
 import { parseZatcaConfig } from "../core/config";
+import { resolveInvoiceVatNumber } from "../core/vatResolver";
 import { zatcaLogger } from "../core/logger";
 import { generateQrDataUrl } from "../phase1/qrGenerator";
 import { BaseZatcaModule } from "./BaseZatcaModule";
@@ -52,10 +53,11 @@ export class Phase1ZatcaModule extends BaseZatcaModule {
     }
 
     const config = parseZatcaConfig(context.settings);
+    const vatNumber = resolveInvoiceVatNumber(config);
     try {
       return await generateQrDataUrl({
         sellerName: config.company.name,
-        vatNumber: config.company.vatNumber,
+        vatNumber,
         sale: context.sale,
       });
     } catch (err) {

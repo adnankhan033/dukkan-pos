@@ -16,9 +16,11 @@ function pick(...values) {
 }
 
 function normalizeVatNumber(vat, environment) {
+  if (environment === ZATCA_ENVIRONMENTS.SANDBOX) {
+    return SANDBOX_VAT_PLACEHOLDER;
+  }
   const digits = String(vat || "").replace(/\D/g, "");
   if (/^3\d{13}3$/.test(digits)) return digits;
-  if (environment === ZATCA_ENVIRONMENTS.SANDBOX) return SANDBOX_VAT_PLACEHOLDER;
   return "";
 }
 
@@ -128,6 +130,10 @@ export async function generateZatcaCsr(settings = {}) {
   const pem = await invoke("generate_zatca_csr", {
     privateKeyPem: privateKey,
     csrConfig,
+  }).catch((err) => {
+    const msg =
+      typeof err === "string" ? err : err?.message || String(err ?? "CSR generation failed");
+    throw new Error(msg);
   });
 
   return {

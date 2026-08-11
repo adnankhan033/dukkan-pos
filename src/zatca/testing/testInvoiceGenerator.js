@@ -1,12 +1,17 @@
 import { generateNumber } from "../../utils/format";
-import {
-  buildSimplifiedInvoicePayload,
-  computePlaceholderInvoiceHash,
-} from "../phase2/invoiceBuilder";
+import { buildSimplifiedInvoicePayload } from "../phase2/invoiceBuilder";
 import { generateQrDataUrl } from "../phase1/qrGenerator";
+import { signZatcaInvoice, resolveEgsUuid } from "../phase2/invoiceSigner";
+import {
+  assertInvoiceVatMatchesCertificate,
+  resolveInvoiceVatNumber,
+} from "../core/vatResolver";
+import {
+  ZATCA_INVOICE_KINDS,
+  ZATCA_SANDBOX_BUYER_VAT,
+} from "../core/constants";
 
-/** Build a complete dummy test invoice — no manual input needed. */
-export async function generateTestInvoice(settings) {
+function buildTestSale() {
   const now = new Date().toISOString();
   const saleNumber = generateNumber("TEST");
 
@@ -41,15 +46,39 @@ export async function generateTestInvoice(settings) {
     },
   ];
 
-  const payload = buildSimplifiedInvoicePayload({ sale, items, config: settings });
-  const invoiceHash = computePlaceholderInvoiceHash(payload);
-  const xml = buildTestInvoiceXml(payload);
+  return { sale, items, saleNumber };
+}
+
+/**
+ * Build and cryptographically sign a ZATCA compliance test invoice.
+ * Uses zatca-xml-js — same pipeline as live sale sync.
+ */
+export async function generateTestInvoice(
+  config,
+  { production = false, invoiceKind = ZATCA_INVOICE_KINDS.SIMPLIFIED } = {}
+) {
+  const { sale, items } = buildTestSale();
+  const payload = buildSimplifiedInvoicePayload({ sale, items, config, production });
+
+  if (invoiceKind === ZATCA_INVOICE_KINDS.STANDARD) {
+    payload.buyer = {
+      name: "Test Buyer Company",
+      vatNumber: ZATCA_SANDBOX_BUYER_VAT,
+      crNumber: "1010010001",
+    };
+    payload.customer_name = payload.buyer.name;
+    sale.customer_name = payload.buyer.name;
+  }
+
+  const signed = await signZatcaInvoice(config, payload, { production, invoiceKind });
+  assertInvoiceVatMatchesCertificate(config, signed.signedXml, { production });
+  const egsUuid = signed.egsUuid || resolveEgsUuid(config);
 
   let qrDataUrl = null;
   try {
     qrDataUrl = await generateQrDataUrl({
-      sellerName: settings.company?.name || settings.company?.name || "Test Store",
-      vatNumber: settings.company?.vatNumber,
+      sellerName: config.company?.name || "Test Store",
+      vatNumber: resolveInvoiceVatNumber(config, { production }),
       sale,
     });
   } catch {
@@ -59,77 +88,19 @@ export async function generateTestInvoice(settings) {
   return {
     sale,
     items,
-    uuid: payload.uuid,
-    invoiceHash,
+    uuid: egsUuid,
+    invoiceHash: signed.invoiceHash,
+    invoiceBase64: signed.invoiceBase64,
     payload,
-    xml,
+    xml: signed.signedXml,
+    signedXml: signed.signedXml,
+    qr: signed.qr,
     qrDataUrl,
+    signed: true,
   };
 }
 
-function escapeXml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-/** Simplified UBL-style XML for testing (not yet cryptographically signed). */
-export function buildTestInvoiceXml(payload) {
-  const lines = (payload.lineItems || [])
-    .map(
-      (item) => `
-    <cac:InvoiceLine>
-      <cbc:ID>${item.id}</cbc:ID>
-      <cbc:InvoicedQuantity unitCode="PCE">${item.quantity}</cbc:InvoicedQuantity>
-      <cbc:LineExtensionAmount currencyID="SAR">${item.total.toFixed(2)}</cbc:LineExtensionAmount>
-      <cac:Item><cbc:Name>${escapeXml(item.name)}</cbc:Name></cac:Item>
-      <cac:Price><cbc:PriceAmount currencyID="SAR">${item.unitPrice.toFixed(2)}</cbc:PriceAmount></cac:Price>
-    </cac:InvoiceLine>`
-    )
-    .join("");
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<Invoice xmlns="urn:oasis:names:specification:ubl:schema:xsd:Invoice-2"
-         xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2"
-         xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2">
-  <cbc:UUID>${escapeXml(payload.uuid)}</cbc:UUID>
-  <cbc:ID>${escapeXml(payload.saleNumber)}</cbc:ID>
-  <cbc:IssueDate>${payload.issueDate}</cbc:IssueDate>
-  <cbc:IssueTime>${payload.issueTime}</cbc:IssueTime>
-  <cbc:InvoiceTypeCode name="${payload.invoiceTypeName}">${payload.invoiceType}</cbc:InvoiceTypeCode>
-  <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
-  <cac:AccountingSupplierParty>
-    <cac:Party>
-      <cac:PartyLegalEntity>
-        <cbc:RegistrationName>${escapeXml(payload.seller?.name)}</cbc:RegistrationName>
-      </cac:PartyLegalEntity>
-      <cac:PartyTaxScheme>
-        <cbc:CompanyID>${escapeXml(payload.seller?.vatNumber)}</cbc:CompanyID>
-      </cac:PartyTaxScheme>
-    </cac:Party>
-  </cac:AccountingSupplierParty>
-  <cac:AccountingCustomerParty>
-    <cac:Party>
-      <cac:PartyLegalEntity>
-        <cbc:RegistrationName>${escapeXml(payload.buyer?.name)}</cbc:RegistrationName>
-      </cac:PartyLegalEntity>
-    </cac:Party>
-  </cac:AccountingCustomerParty>
-  ${lines}
-  <cac:TaxTotal>
-    <cbc:TaxAmount currencyID="SAR">${Number(payload.totals?.vat || 0).toFixed(2)}</cbc:TaxAmount>
-  </cac:TaxTotal>
-  <cac:LegalMonetaryTotal>
-    <cbc:TaxExclusiveAmount currencyID="SAR">${Number(payload.totals?.subtotal || 0).toFixed(2)}</cbc:TaxExclusiveAmount>
-    <cbc:TaxInclusiveAmount currencyID="SAR">${Number(payload.totals?.total || 0).toFixed(2)}</cbc:TaxInclusiveAmount>
-    <cbc:PayableAmount currencyID="SAR">${Number(payload.totals?.total || 0).toFixed(2)}</cbc:PayableAmount>
-  </cac:LegalMonetaryTotal>
-</Invoice>`;
-}
-
-/** Phase 2 digital signature placeholder check. */
+/** Phase 2 digital signature readiness check. */
 export function checkDigitalSignatureReadiness(settings) {
   const hasCert = Boolean(settings.credentials?.certificate || settings.credentials?.complianceCsid);
   const hasKey = Boolean(settings.credentials?.privateKey);
@@ -139,8 +110,13 @@ export function checkDigitalSignatureReadiness(settings) {
     passed: hasCert && hasKey && hasSecret,
     message:
       hasCert && hasKey && hasSecret
-        ? "Certificate, private key, and secret are ready for signing (full ECDSA signing coming soon)."
-        : "Missing certificate, private key, or secret — complete ZATCA onboarding first.",
-    fix: !hasCert || !hasKey || !hasSecret ? "Complete Steps 4–5 in Settings → ZATCA." : null,
+        ? "Certificate, private key, and secret are ready for signing."
+        : "Missing certificate, private key, or secret — complete Compliance CSID first.",
+    fix: !hasCert || !hasKey || !hasSecret ? "Complete Steps 3–4 in Settings → ZATCA." : null,
   };
+}
+
+/** @deprecated Preview-only stub — compliance API uses signed XML from generateTestInvoice. */
+export function buildTestInvoiceXml() {
+  return "";
 }

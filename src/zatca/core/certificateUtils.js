@@ -109,6 +109,27 @@ export function normalizeCertificatePem(value) {
   return base64TokenToPem(text);
 }
 
+/** Pick certificate for signing/submission (production vs compliance). */
+export function resolveCertificateForMode(credentials = {}, { production = false } = {}) {
+  const candidates = production
+    ? [
+        credentials.productionCsid,
+        credentials.productionAuthToken,
+        credentials.certificate,
+      ]
+    : [
+        credentials.complianceCsid,
+        credentials.complianceAuthToken,
+        credentials.certificate,
+      ];
+
+  for (const source of candidates) {
+    const normalized = normalizeCertificatePem(source);
+    if (normalized) return normalized;
+  }
+  return "";
+}
+
 /** Pick the best certificate from settings (Compliance CSID or active cert). */
 export function resolveStoredCertificate(credentials = {}) {
   const candidates = [

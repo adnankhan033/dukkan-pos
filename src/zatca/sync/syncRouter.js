@@ -208,10 +208,26 @@ export function describeSyncReadiness(config) {
 
   const creds = config.credentials;
   const token = resolveAuthToken(creds, route.authMode);
-  if (!token || !creds.secret) {
+  const secret =
+    route.authMode === "production"
+      ? creds.productionSecret || creds.secret
+      : creds.complianceSecret || creds.secret;
+  if (!token || !secret) {
     return {
       ready: false,
-      message: "Certificate or secret missing. Re-run Compliance CSID with a fresh OTP.",
+      message:
+        route.authMode === "production"
+          ? "Production CSID or secret missing. Run Step 6 — Production CSID first."
+          : "Certificate or secret missing. Re-run Compliance CSID with a fresh OTP.",
+      route,
+    };
+  }
+
+  if (route.authMode === "production" && !creds.productionCsid?.trim() && !creds.productionAuthToken?.trim()) {
+    return {
+      ready: false,
+      message:
+        "Reporting API requires Production CSID (Step 6). Compliance CSID alone is not enough.",
       route,
     };
   }

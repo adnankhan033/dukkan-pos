@@ -10,6 +10,7 @@ import { zatcaLogger } from "../core/logger";
 import { zatcaInvoiceRepository } from "../repositories/ZatcaInvoiceRepository";
 import { ZatcaApiClient } from "../phase2/apiClient";
 import { signZatcaInvoice } from "../phase2/invoiceSigner";
+import { assertInvoiceVatMatchesCertificate } from "../core/vatResolver";
 import { settingsService } from "../../services/SettingsService";
 import { isOnline, subscribeNetworkStatus } from "./networkMonitor";
 import {
@@ -153,6 +154,9 @@ class ZatcaSyncService {
     let signed;
     try {
       signed = await signZatcaInvoice(config, invoicePayload, {
+        production: useProductionCert,
+      });
+      assertInvoiceVatMatchesCertificate(config, signed.signedXml, {
         production: useProductionCert,
       });
     } catch (signErr) {

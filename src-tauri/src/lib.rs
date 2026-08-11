@@ -12,8 +12,41 @@ pub struct ZatcaHttpResponse {
     pub body: String,
 }
 
+fn resolve_openssl_bin() -> Result<String, String> {
+    if let Ok(custom) = std::env::var("OPENSSL_BIN") {
+        let trimmed = custom.trim();
+        if !trimmed.is_empty() {
+            return Ok(trimmed.to_string());
+        }
+    }
+
+    const CANDIDATES: &[&str] = &[
+        "openssl",
+        "/opt/homebrew/bin/openssl",
+        "/usr/local/bin/openssl",
+        "/usr/bin/openssl",
+    ];
+
+    for bin in CANDIDATES {
+        let ok = Command::new(bin)
+            .arg("version")
+            .output()
+            .map(|output| output.status.success())
+            .unwrap_or(false);
+        if ok {
+            return Ok(bin.to_string());
+        }
+    }
+
+    Err(
+        "OpenSSL not found on this Mac. Install it with: brew install openssl — then restart the app."
+            .to_string(),
+    )
+}
+
 #[tauri::command]
 fn generate_zatca_csr(private_key_pem: String, csr_config: String) -> Result<String, String> {
+    let openssl_bin = resolve_openssl_bin()?;
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_err(|e| e.to_string())?
@@ -25,7 +58,7 @@ fn generate_zatca_csr(private_key_pem: String, csr_config: String) -> Result<Str
     fs::write(&key_path, private_key_pem.trim()).map_err(|e| e.to_string())?;
     fs::write(&config_path, csr_config).map_err(|e| e.to_string())?;
 
-    let output = Command::new("openssl")
+    let output = Command::new(&openssl_bin)
         .args([
             "req",
             "-new",
