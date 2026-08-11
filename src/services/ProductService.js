@@ -1,4 +1,5 @@
 import { query, queryOne, execute, insert } from "../database/connection";
+import { invalidateDashboardCache } from "./DashboardCache";
 
 const LIST_COLUMNS = `
   p.id, p.name, p.name_ar, p.sku, p.barcode, p.category_id, p.unit_id, p.supplier_id,
@@ -187,6 +188,7 @@ class ProductService {
         [id, Number(data.quantity), Number(data.quantity), "Initial stock", "adjustment"]
       );
     }
+    invalidateDashboardCache();
     return { id, ...data, published, has_image: data.image ? 1 : 0 };
   }
 
@@ -244,6 +246,7 @@ class ProductService {
         ]
       );
     }
+    invalidateDashboardCache();
     return { id: numId, ...data, published, has_image: data.image ? 1 : 0 };
   }
 
@@ -265,6 +268,7 @@ class ProductService {
       throw new Error(`Failed to delete "${product.name}". Please restart the app and try again.`);
     }
 
+    invalidateDashboardCache();
     return true;
   }
 
@@ -291,6 +295,7 @@ class ProductService {
       `UPDATE products SET published = $1, updated_at = datetime('now') WHERE id IN (${placeholders})`,
       [published ? 1 : 0, ...ids.map(Number)]
     );
+    invalidateDashboardCache();
     return { updated: ids.length };
   }
 
@@ -299,15 +304,44 @@ class ProductService {
     return row?.total ?? 0;
   }
 
-  async getLowStock() {
-    return query(
-      `SELECT p.*, c.name as category_name, u.symbol AS unit_symbol
+  async countLowStock() {
+    const row = await queryOne(
+      `SELECT COUNT(*) AS total
+       FROM products p
+       WHERE p.quantity <= p.min_stock AND COALESCE(p.published, 1) = 1`
+    );
+    return Number(row?.total ?? 0);
+  }
+
+  async getLowStock({ limit } = {}) {
+    let sql = `SELECT p.id, p.name, p.quantity, p.min_stock,
+              c.name AS category_name, u.symbol AS unit_symbol
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
        LEFT JOIN units u ON p.unit_id = u.id
        WHERE p.quantity <= p.min_stock AND COALESCE(p.published, 1) = 1
-       ORDER BY p.quantity ASC`
-    );
+       ORDER BY p.quantity ASC`;
+
+    if (limit != null) {
+      return query(`${sql} LIMIT $1`, [limit]);
+    }
+    return query(sql);
+  }
+
+  async getLowStockSummary(limit = 8) {
+    const [countRow, items] = await Promise.all([
+      queryOne(
+        `SELECT COUNT(*) AS total
+         FROM products p
+         WHERE p.quantity <= p.min_stock AND COALESCE(p.published, 1) = 1`
+      ),
+      this.getLowStock({ limit }),
+    ]);
+
+    return {
+      count: Number(countRow?.total ?? 0),
+      items,
+    };
   }
 
   async searchForPos(term) {

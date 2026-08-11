@@ -123,6 +123,24 @@ async function getProductColumns() {
   return query("PRAGMA table_info(products)");
 }
 
+async function ensureDashboardPerformanceIndexes() {
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_products_published_qty ON products(published, quantity)"
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_products_low_stock ON products(quantity, min_stock) WHERE COALESCE(published, 1) = 1"
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_sales_status_created ON sales(status, created_at)"
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_sale_items_product ON sale_items(product_id)"
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_sale_items_sale ON sale_items(sale_id)"
+  );
+}
+
 async function runMigrations() {
   let cols = await getProductColumns();
   const hasCol = (name) => cols.some((c) => c.name === name);
@@ -158,6 +176,7 @@ async function runMigrations() {
   await ensureEmployeesSchema();
   await ensureReceiptTemplateDefault();
   await ensureSettingsKeys();
+  await ensureDashboardPerformanceIndexes();
   await migrateUtcTimestampsToBusinessTimezone();
   await migrateSalesTimestampsToIsoUtc();
   await fixSalesUtcTimestampsForRiyadh();

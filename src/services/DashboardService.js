@@ -13,9 +13,14 @@ import {
   getTodayNetSales,
 } from "./FinanceService";
 import { dashboardInsightsService } from "./DashboardInsightsService";
+import {
+  getDashboardCacheEntry,
+  setDashboardCache,
+  trackDashboardRefresh,
+} from "./DashboardCache";
 
 class DashboardService {
-  async getStats() {
+  async fetchStats() {
     const [
       todayGrossSales,
       todayReturns,
@@ -23,11 +28,12 @@ class DashboardService {
       todayPurchases,
       totalProducts,
       totalCustomers,
-      lowStock,
+      lowStockSummary,
       monthlyRevenue,
       monthlyReturns,
       monthlyPurchases,
       monthlyExpenses,
+      monthlyCost,
       recentSales,
       recentReturns,
       heldSales,
@@ -40,11 +46,12 @@ class DashboardService {
       purchaseService.getTodayTotal(),
       productService.count(),
       customerService.count(),
-      productService.getLowStock(),
+      productService.getLowStockSummary(8),
       getMonthlyNetRevenue(),
       getMonthlyReturnsTotal(),
       purchaseService.getMonthlyTotal(),
       expenseService.getMonthlyTotal(),
+      getMonthlyNetCogs(),
       saleService.getRecent(8),
       saleService.getRecentReturns(8),
       saleService.getHeldSales(),
@@ -62,7 +69,6 @@ class DashboardService {
       })),
     ]);
 
-    const monthlyCost = await getMonthlyNetCogs();
     const monthlyProfit = monthlyRevenue - monthlyCost - monthlyExpenses;
 
     return {
@@ -72,8 +78,8 @@ class DashboardService {
       todayPurchases,
       totalProducts,
       totalCustomers,
-      lowStockCount: lowStock.length,
-      lowStock,
+      lowStockCount: lowStockSummary.count,
+      lowStock: lowStockSummary.items,
       monthlyRevenue,
       monthlyReturns,
       monthlyProfit,
@@ -84,6 +90,29 @@ class DashboardService {
       topProducts: smartInsights.topProducts,
       employees: employeeSummary,
     };
+  }
+
+  refreshStatsCache() {
+    const refresh = this.fetchStats()
+      .then((stats) => {
+        setDashboardCache(stats);
+        return stats;
+      })
+      .catch(() => getDashboardCacheEntry());
+
+    trackDashboardRefresh(refresh);
+    return refresh;
+  }
+
+  async getStats({ forceRefresh = false } = {}) {
+    if (!forceRefresh) {
+      const cached = getDashboardCacheEntry();
+      if (cached) return cached;
+    }
+
+    const stats = await this.fetchStats();
+    setDashboardCache(stats);
+    return stats;
   }
 }
 

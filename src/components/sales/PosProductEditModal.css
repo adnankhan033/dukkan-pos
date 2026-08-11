@@ -25,14 +25,25 @@
   line-height: 1.45;
 }
 
-.pos-product-edit-prices {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.875rem;
+.pos-product-edit-image {
+  margin-top: 0.25rem;
 }
 
-@media (max-width: 540px) {
-  .pos-product-edit-prices {
-    grid-template-columns: 1fr;
-  }
+.pos-product-edit-image-status {
+  margin: 0.375rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.pos-product-edit-preview {
+  margin-top: 0.5rem;
+  max-width: 120px;
+  max-height: 120px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.pos-product-edit-form .form-row {
+  margin-top: 0.25rem;
 }

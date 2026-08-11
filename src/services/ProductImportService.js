@@ -1,6 +1,7 @@
 import { query, queryOne, execute, insert, getDatabase } from "../database/connection";
 import { categoryService } from "./CategoryService";
 import { unitService } from "./UnitService";
+import { invalidateDashboardCache } from "./DashboardCache";
 import { PRODUCT_IMPORT_BATCH_SIZE } from "../utils/constants";
 import { IMPORT_MODES } from "../utils/productImport/validate";
 import { templateHeaders, templateSampleRows } from "../utils/productImport/columns";
@@ -376,6 +377,7 @@ class ProductImportService {
     });
 
     report("done");
+    invalidateDashboardCache();
     return summary;
   }
 

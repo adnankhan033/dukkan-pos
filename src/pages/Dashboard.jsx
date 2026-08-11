@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { dashboardService } from "../services/DashboardService";
+import { getDashboardCacheEntry } from "../services/DashboardCache";
 import { usePermissions } from "../hooks/usePermissions";
 import { LoadingSpinner } from "../components/common/Loading";
 import AdminDashboard from "../components/dashboard/AdminDashboard";
@@ -7,19 +8,27 @@ import CashierDashboard from "../components/dashboard/CashierDashboard";
 
 export default function Dashboard() {
   const { isAdmin } = usePermissions();
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(() => getDashboardCacheEntry());
+  const [loading, setLoading] = useState(() => !getDashboardCacheEntry());
 
   useEffect(() => {
-    async function load() {
+    let cancelled = false;
+    const cached = getDashboardCacheEntry();
+
+    (async () => {
       try {
-        const data = await dashboardService.getStats();
-        setStats(data);
+        const data = cached
+          ? await dashboardService.refreshStatsCache()
+          : await dashboardService.getStats({ forceRefresh: true });
+        if (!cancelled && data) setStats(data);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    }
-    load();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) return <LoadingSpinner message="Loading dashboard..." />;

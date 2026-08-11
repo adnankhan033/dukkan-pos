@@ -2,6 +2,7 @@ import { query, queryOne, execute, insert } from "../database/connection";
 import { inventoryService } from "./InventoryService";
 import { settingsService } from "./SettingsService";
 import { zatcaService } from "./ZatcaService";
+import { invalidateDashboardCache } from "./DashboardCache";
 import { generateNumber, formatInvoiceNumber, parseInvoiceSequence } from "../utils/format";
 import { SALE_STATUS } from "../utils/constants";
 
@@ -142,6 +143,7 @@ class SaleService {
     if (saved) {
       if (status === SALE_STATUS.COMPLETED) {
         await processZatcaForSale(saved);
+        invalidateDashboardCache();
       }
       return saved;
     }
@@ -171,6 +173,7 @@ class SaleService {
     const completed = await this.getById(saleId);
     if (completed) {
       await processZatcaForSale(completed);
+      invalidateDashboardCache();
     }
     return completed;
   }
@@ -473,6 +476,8 @@ class SaleService {
       `UPDATE sales SET status = $1, updated_at = datetime('now') WHERE id = $2`,
       [newStatus, saleId]
     );
+
+    invalidateDashboardCache();
 
     return {
       returnId,

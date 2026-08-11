@@ -250,6 +250,9 @@ export default function Sales() {
               name_ar: updated.name_ar,
               barcode: updated.barcode,
               selling_price: updated.selling_price,
+              unit_symbol: updated.unit_symbol || p.unit_symbol,
+              category_name: updated.category_name ?? p.category_name,
+              quantity: updated.quantity ?? p.quantity,
             }
           : p
       );
@@ -267,6 +270,7 @@ export default function Sales() {
               name: updated.name,
               name_ar: updated.name_ar,
               unit_price: updated.selling_price,
+              unit_symbol: updated.unit_symbol || item.unit_symbol,
               total: item.quantity * updated.selling_price,
             }
           : item
