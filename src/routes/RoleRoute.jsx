@@ -2,18 +2,14 @@ import { Navigate, useLocation } from "react-router-dom";
 import { usePermissions } from "../hooks/usePermissions";
 import { useSettingsStore } from "../contexts/store";
 import { getDefaultRouteForUser } from "../utils/modules";
-import { ROUTE_MODULE_MAP } from "../utils/modules";
 import { Alert } from "../components/common/Loading";
 
-export default function RoleRoute({ children, module: moduleProp }) {
+export default function RoleRoute({ children }) {
   const location = useLocation();
   const settings = useSettingsStore((s) => s.settings);
-  const { user, canAccessPath, canAccessModule } = usePermissions();
+  const { user, canAccessPath } = usePermissions();
 
-  const moduleId = moduleProp || ROUTE_MODULE_MAP[location.pathname];
-  const allowed = moduleId
-    ? canAccessModule(moduleId)
-    : canAccessPath(location.pathname);
+  const allowed = canAccessPath(location.pathname);
 
   if (!allowed) {
     const fallback = getDefaultRouteForUser(user, settings);

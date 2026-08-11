@@ -62,6 +62,45 @@
   font-size: 0.75rem;
 }
 
+.settings-menu-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.settings-menu-group {
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-menu-group:last-child {
+  border-bottom: none;
+}
+
+.settings-menu-parent {
+  border-bottom: none;
+}
+
+.settings-menu-children {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0 0 0.5rem 1.75rem;
+}
+
+.settings-menu-children.is-disabled {
+  opacity: 0.55;
+}
+
+.settings-menu-child {
+  padding: 0.375rem 0;
+  border-bottom: none;
+}
+
+.settings-menu-child strong {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
 .settings-backup-actions {
   display: flex;
   flex-wrap: wrap;

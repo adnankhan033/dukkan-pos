@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useAuthStore } from "../contexts/store";
 import { useSettingsStore } from "../contexts/store";
 import { NAV_GROUPS } from "../utils/constants";
-import { canAccessModule, canAccessPath, isModuleEnabled } from "../utils/modules";
+import { canAccessModule, canAccessPath, canAccessMenuItem, isModuleEnabled } from "../utils/modules";
 import { isAdmin, normalizeRole } from "../utils/roles";
 
 export function usePermissions() {
@@ -15,6 +15,7 @@ export function usePermissions() {
       role: normalizeRole(user?.role),
       isAdmin: isAdmin(user),
       canAccessModule: (moduleId) => canAccessModule(user, settings, moduleId),
+      canAccessMenuItem: (menuItemId) => canAccessMenuItem(user, settings, menuItemId),
       canAccessPath: (path) => canAccessPath(user, settings, path),
       isModuleEnabled: (moduleId) => isModuleEnabled(settings, moduleId),
     }),
@@ -23,7 +24,7 @@ export function usePermissions() {
 }
 
 export function useVisibleNavGroups() {
-  const { user, canAccessModule } = usePermissions();
+  const { user, canAccessModule, canAccessMenuItem } = usePermissions();
   const settings = useSettingsStore((s) => s.settings);
 
   return useMemo(() => {
@@ -32,6 +33,7 @@ export function useVisibleNavGroups() {
 
       if (group.items) {
         const items = group.items.filter((item) => {
+          if (item.id) return canAccessMenuItem(item.id);
           const moduleId = item.module || group.module;
           if (!moduleId) return true;
           return canAccessModule(moduleId);
@@ -40,7 +42,9 @@ export function useVisibleNavGroups() {
         return { ...group, items };
       }
 
+      if (group.id && !canAccessMenuItem(group.id)) return null;
+
       return group;
     }).filter(Boolean);
-  }, [user, settings, canAccessModule]);
+  }, [user, settings, canAccessModule, canAccessMenuItem]);
 }

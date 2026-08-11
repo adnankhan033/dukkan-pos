@@ -7,8 +7,18 @@ import { zatcaService } from "../services/ZatcaService";
 import { useSettingsStore, useAuthStore } from "../contexts/store";
 import { useConfirm } from "../hooks/useConfirm";
 import { usePermissions } from "../hooks/usePermissions";
-import { MODULES, ADMIN_MODULES, moduleSettingKey, roleModuleSettingKey } from "../utils/modules";
+import {
+  MODULES,
+  ADMIN_MODULES,
+  moduleSettingKey,
+  roleModuleSettingKey,
+  menuItemSettingKey,
+  roleMenuItemSettingKey,
+  getMenuPermissionGroupsByModule,
+  MENU_ITEMS,
+} from "../utils/modules";
 import { ROLES, ROLE_LABELS } from "../utils/roles";
+import MenuPermissionTree from "../components/settings/MenuPermissionTree";
 import { DATA_CLEAR_SECTIONS } from "../utils/dataClearSections.js";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
@@ -73,6 +83,10 @@ function buildFormFromSettings(settings) {
     form[moduleSettingKey(mod.id)] = settingBool(settings[moduleSettingKey(mod.id)]);
   }
 
+  for (const item of MENU_ITEMS) {
+    form[menuItemSettingKey(item.id)] = settingBool(settings[menuItemSettingKey(item.id)]);
+  }
+
   for (const mod of [...MODULES, ...ADMIN_MODULES]) {
     form[roleModuleSettingKey(ROLES.ADMIN, mod.id)] = settingBool(
       settings[roleModuleSettingKey(ROLES.ADMIN, mod.id)] ??
@@ -81,6 +95,16 @@ function buildFormFromSettings(settings) {
     form[roleModuleSettingKey(ROLES.CASHIER, mod.id)] = settingBool(
       settings[roleModuleSettingKey(ROLES.CASHIER, mod.id)] ??
         (["dashboard", "sales"].includes(mod.id) ? "1" : "0")
+    );
+  }
+
+  for (const item of MENU_ITEMS) {
+    form[roleMenuItemSettingKey(ROLES.ADMIN, item.id)] = settingBool(
+      settings[roleMenuItemSettingKey(ROLES.ADMIN, item.id)] ?? "1"
+    );
+    form[roleMenuItemSettingKey(ROLES.CASHIER, item.id)] = settingBool(
+      settings[roleMenuItemSettingKey(ROLES.CASHIER, item.id)] ??
+        (ADMIN_MODULES.some((mod) => mod.id === item.module) ? "0" : "1")
     );
   }
 
@@ -123,6 +147,10 @@ function formToSettings(form) {
     payload[key] = form[key] ? "1" : "0";
   }
 
+  for (const item of MENU_ITEMS) {
+    payload[menuItemSettingKey(item.id)] = form[menuItemSettingKey(item.id)] ? "1" : "0";
+  }
+
   for (const mod of [...MODULES, ...ADMIN_MODULES]) {
     payload[roleModuleSettingKey(ROLES.ADMIN, mod.id)] = form[roleModuleSettingKey(ROLES.ADMIN, mod.id)]
       ? "1"
@@ -131,6 +159,18 @@ function formToSettings(form) {
       mod.id === "users" || mod.id === "settings"
         ? "0"
         : form[roleModuleSettingKey(ROLES.CASHIER, mod.id)]
+          ? "1"
+          : "0";
+  }
+
+  for (const item of MENU_ITEMS) {
+    payload[roleMenuItemSettingKey(ROLES.ADMIN, item.id)] = form[roleMenuItemSettingKey(ROLES.ADMIN, item.id)]
+      ? "1"
+      : "0";
+    payload[roleMenuItemSettingKey(ROLES.CASHIER, item.id)] =
+      ADMIN_MODULES.some((mod) => mod.id === item.module)
+        ? "0"
+        : form[roleMenuItemSettingKey(ROLES.CASHIER, item.id)]
           ? "1"
           : "0";
   }
@@ -609,76 +649,42 @@ export default function Settings() {
             <Card className="settings-card">
               <h3 className="settings-section-title">Store Modules (Global)</h3>
               <p className="settings-section-desc">
-                Turn modules on or off for the whole store. Disabled modules are hidden from every user.
+                Turn modules and individual menu items on or off for the whole store. Disabled items are hidden from every user.
               </p>
-              <div className="settings-check-list">
-                {MODULES.map((mod) => {
-                  const key = moduleSettingKey(mod.id);
-                  return (
-                    <label key={mod.id} className="settings-check settings-check-block">
-                      <input
-                        type="checkbox"
-                        checked={form[key]}
-                        onChange={(e) => updateField(key, e.target.checked)}
-                      />
-                      <span>
-                        <strong>{mod.label}</strong>
-                        <small>{mod.description}</small>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
+              <MenuPermissionTree
+                groups={getMenuPermissionGroupsByModule()}
+                form={form}
+                updateField={updateField}
+                scope="global"
+              />
             </Card>
 
             <Card className="settings-card">
               <h3 className="settings-section-title">{ROLE_LABELS[ROLES.ADMIN]} — Menu Access</h3>
               <p className="settings-section-desc">
-                Choose which menus administrators can see (when the module is enabled globally).
+                Choose which modules and menu items administrators can see (when enabled globally).
               </p>
-              <div className="settings-check-list">
-                {[...MODULES, ...ADMIN_MODULES].map((mod) => {
-                  const key = roleModuleSettingKey(ROLES.ADMIN, mod.id);
-                  return (
-                    <label key={key} className="settings-check settings-check-block">
-                      <input
-                        type="checkbox"
-                        checked={form[key]}
-                        onChange={(e) => updateField(key, e.target.checked)}
-                      />
-                      <span>
-                        <strong>{mod.label}</strong>
-                        <small>{mod.description}</small>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
+              <MenuPermissionTree
+                groups={getMenuPermissionGroupsByModule({ includeAdmin: true })}
+                form={form}
+                updateField={updateField}
+                scope="role"
+                role={ROLES.ADMIN}
+              />
             </Card>
 
             <Card className="settings-card">
               <h3 className="settings-section-title">{ROLE_LABELS[ROLES.CASHIER]} — Menu Access</h3>
               <p className="settings-section-desc">
-                Choose which menus cashiers can see. User Management and Settings are always admin-only.
+                Choose which modules and menu items cashiers can see. User Management and Settings are always admin-only.
               </p>
-              <div className="settings-check-list">
-                {MODULES.map((mod) => {
-                  const key = roleModuleSettingKey(ROLES.CASHIER, mod.id);
-                  return (
-                    <label key={key} className="settings-check settings-check-block">
-                      <input
-                        type="checkbox"
-                        checked={form[key]}
-                        onChange={(e) => updateField(key, e.target.checked)}
-                      />
-                      <span>
-                        <strong>{mod.label}</strong>
-                        <small>{mod.description}</small>
-                      </span>
-                    </label>
-                  );
-                })}
-              </div>
+              <MenuPermissionTree
+                groups={getMenuPermissionGroupsByModule()}
+                form={form}
+                updateField={updateField}
+                scope="role"
+                role={ROLES.CASHIER}
+              />
             </Card>
           </>
         )}

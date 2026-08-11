@@ -50,7 +50,7 @@ export default function AppRoutes() {
         <Route path="/suppliers" element={withRole("suppliers", <Suppliers />)} />
         <Route path="/sales" element={withRole("sales", <Sales />)} />
         <Route path="/orders" element={withRole("sales", <Orders />)} />
-        <Route path="/purchases" element={withRole("inventory", <Purchases />)} />
+        <Route path="/purchases" element={withRole("suppliers", <Purchases />)} />
         <Route path="/inventory" element={withRole("inventory", <Inventory />)} />
         <Route path="/accounting" element={withRole("accounting", <Accounting />)} />
         <Route path="/employees" element={withRole("accounting", <Employees />)} />

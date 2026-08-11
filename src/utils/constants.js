@@ -1,4 +1,4 @@
-import { getModuleDefaults, getRoleModuleDefaults } from "./modules";
+import { getModuleDefaults, getRoleModuleDefaults, getMenuItemDefaults, getRoleMenuItemDefaults } from "./modules";
 import { getZatcaDefaultSettings } from "../zatca/core/config";
 
 export const DB_NAME = "sqlite:dukkan_pos.db";
@@ -28,6 +28,8 @@ export const DEFAULT_SETTINGS = {
   ...getZatcaDefaultSettings(),
   ...getModuleDefaults(),
   ...getRoleModuleDefaults(),
+  ...getMenuItemDefaults(),
+  ...getRoleMenuItemDefaults(),
 };
 
 export const PAYMENT_METHODS = {
@@ -109,77 +111,4 @@ export const INVENTORY_PAGE_SIZE = 200;
 /** Orders list page size. */
 export const ORDERS_PAGE_SIZE = 100;
 
-/** Grouped sidebar navigation — filtered by role and module settings. */
-export const NAV_GROUPS = [
-  { id: "dashboard", label: "Dashboard", icon: "LayoutDashboard", path: "/", module: "dashboard" },
-  {
-    id: "sales",
-    label: "Sales",
-    icon: "ShoppingCart",
-    module: "sales",
-    items: [
-      { path: "/sales", label: "POS" },
-      { path: "/orders", label: "Orders" },
-      { path: "/zatca-sync", label: "ZATCA Sync" },
-    ],
-  },
-  {
-    id: "products",
-    label: "Products",
-    icon: "Package",
-    module: "products",
-    items: [
-      { path: "/products", label: "Products" },
-      { path: "/categories", label: "Categories" },
-      { path: "/units", label: "Units" },
-    ],
-  },
-  {
-    id: "inventory",
-    label: "Inventory",
-    icon: "Boxes",
-    module: "inventory",
-    items: [{ path: "/inventory", label: "Stock" }],
-  },
-  { id: "customers", label: "Customers", icon: "Users", path: "/customers", module: "customers" },
-  {
-    id: "suppliers",
-    label: "Suppliers",
-    icon: "Building2",
-    module: "suppliers",
-    items: [
-      { path: "/suppliers", label: "Accounts" },
-      { path: "/purchases", label: "Purchases" },
-    ],
-  },
-  {
-    id: "accounting",
-    label: "Accounting",
-    icon: "Receipt",
-    module: "accounting",
-    items: [
-      { path: "/accounting", label: "Expenses" },
-      { path: "/employees", label: "Employees" },
-    ],
-  },
-  { id: "reports", label: "Reports", icon: "BarChart3", path: "/reports", module: "reports" },
-  {
-    id: "subscriptions",
-    label: "Subscriptions",
-    icon: "CreditCard",
-    path: "/subscriptions",
-    module: "dashboard",
-  },
-  {
-    id: "administration",
-    label: "Administration",
-    icon: "Shield",
-    module: "users",
-    items: [
-      { path: "/users", label: "Users", module: "users" },
-      { path: "/settings", label: "Settings", module: "settings" },
-      { path: "/zatca-queue", label: "ZATCA Queue", module: "settings" },
-      { path: "/zatca-test", label: "ZATCA Test Center", module: "settings" },
-    ],
-  },
-];
+export { NAV_GROUPS } from "./nav";
