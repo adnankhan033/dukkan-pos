@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Minus,
   Plus,
@@ -75,6 +75,9 @@ export default function Sales() {
   const [completedSale, setCompletedSale] = useState(null);
   const [returnOpen, setReturnOpen] = useState(false);
 
+  const searchRef = useRef(null);
+  const checkoutRef = useRef({});
+
   useEffect(() => {
     async function init() {
       try {
@@ -144,6 +147,10 @@ export default function Sales() {
     setSearch("");
   }
 
+  function focusSearch() {
+    queueMicrotask(() => searchRef.current?.focus());
+  }
+
   function addToCart(product) {
     setError("");
     setMessage("");
@@ -174,6 +181,7 @@ export default function Sales() {
         },
       ];
     });
+    focusSearch();
   }
 
   function updateQty(productId, delta) {
@@ -226,6 +234,19 @@ export default function Sales() {
     if (!validateBeforeComplete()) return;
     setPendingPaymentMethod(paymentMethod);
     setCompleteStep("confirm");
+  }
+
+  function advanceCashCheckout() {
+    if (!validateBeforeComplete()) return;
+
+    if (paymentTab === PAYMENT_METHODS.CASH) {
+      const currentReceived = Number(cashReceived) || 0;
+      if (currentReceived < grandTotal) {
+        setCashReceived(String(grandTotal));
+      }
+    }
+
+    openCompleteConfirm(paymentTab);
   }
 
   function closeCompleteFlow() {
@@ -307,6 +328,7 @@ export default function Sales() {
       setError(err.message || "Print failed");
     }
     closeCompleteFlow();
+    focusSearch();
   }
 
   function handleSkipPrint() {
@@ -314,7 +336,64 @@ export default function Sales() {
       setMessage(`Sale ${completedSale.sale_number} completed successfully`);
     }
     closeCompleteFlow();
+    focusSearch();
   }
+
+  checkoutRef.current = {
+    cart,
+    completeStep,
+    submitting,
+    search,
+    returnOpen,
+    advanceCashCheckout,
+    handleConfirmComplete,
+    handleSkipPrint,
+  };
+
+  useEffect(() => {
+    function handleCheckoutEnter(e) {
+      if (e.key !== "Enter" || e.repeat) return;
+      if (e.shiftKey || e.ctrlKey || e.altKey || e.metaKey) return;
+
+      const {
+        cart: items,
+        completeStep: step,
+        submitting: busy,
+        search: query,
+        returnOpen: returnModalOpen,
+        advanceCashCheckout: advance,
+        handleConfirmComplete: confirmComplete,
+        handleSkipPrint: skipPrint,
+      } = checkoutRef.current;
+
+      if (returnModalOpen) return;
+
+      const target = e.target;
+      if (target.tagName === "TEXTAREA" || target.tagName === "SELECT") return;
+      if (target.classList?.contains("pos-discount-input")) return;
+      if (target.classList?.contains("pos-search-input") && query.trim()) return;
+
+      if (step === "confirm") {
+        e.preventDefault();
+        if (!busy) confirmComplete();
+        return;
+      }
+
+      if (step === "print") {
+        e.preventDefault();
+        skipPrint();
+        return;
+      }
+
+      if (items.length === 0) return;
+
+      e.preventDefault();
+      advance();
+    }
+
+    window.addEventListener("keydown", handleCheckoutEnter);
+    return () => window.removeEventListener("keydown", handleCheckoutEnter);
+  }, []);
 
   async function completeHeldSale(paymentMethod) {
     if (cart.length === 0) {
@@ -447,6 +526,7 @@ export default function Sales() {
             <div className="pos-search-wrap">
               <Search size={18} className="pos-search-icon" />
               <input
+                ref={searchRef}
                 className="pos-search-input"
                 placeholder="Search name, Arabic, SKU, or scan barcode…"
                 value={search}
