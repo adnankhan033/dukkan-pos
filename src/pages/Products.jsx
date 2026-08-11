@@ -17,6 +17,7 @@ import Table from "../components/common/Table";
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
 import { Input, Select } from "../components/common/Input";
+import SearchableSelect from "../components/common/SearchableSelect";
 import Badge from "../components/common/Badge";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
 import { formatCurrency, formatQuantity } from "../utils/format";
@@ -302,6 +303,14 @@ export default function Products() {
   async function handleBarcodeDuplicate(product) {
     setModalOpen(false);
     await openEdit(product);
+  }
+
+  async function createCategoryOption(name) {
+    const created = await categoryService.create({ name });
+    setCategories((prev) =>
+      [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+    );
+    return String(created.id);
   }
 
   async function handleSubmit(e) {
@@ -618,32 +627,40 @@ export default function Products() {
           <div className="form-row">
             <Input label="SKU" value={form.sku} onChange={(e) => setForm({ ...form, sku: e.target.value })} />
             <Input label="Barcode" value={form.barcode} onChange={(e) => setForm({ ...form, barcode: e.target.value })} />
-            <Select label="Category" value={form.category_id} onChange={(e) => setForm({ ...form, category_id: e.target.value })}>
-              <option value="">None</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </Select>
-            <Select
+            <SearchableSelect
+              label="Category"
+              value={form.category_id}
+              onChange={(categoryId) => setForm({ ...form, category_id: categoryId })}
+              options={categories.map((c) => ({
+                value: String(c.id),
+                label: c.name,
+                hint: c.product_count ? `${c.product_count} products` : undefined,
+              }))}
+              placeholder="Search or create category…"
+              creatable
+              onCreateOption={createCategoryOption}
+            />
+            <SearchableSelect
               label="Unit"
               value={form.unit_id}
-              onChange={(e) => setForm({ ...form, unit_id: e.target.value })}
-            >
-              <option value="">None</option>
-              {units.map((u) => (
-                <option key={u.id} value={u.id}>{u.name} ({u.symbol})</option>
-              ))}
-            </Select>
-            <Select
+              onChange={(unitId) => setForm({ ...form, unit_id: unitId })}
+              options={units.map((u) => ({
+                value: String(u.id),
+                label: u.name,
+                hint: u.symbol,
+              }))}
+              placeholder="Search unit…"
+            />
+            <SearchableSelect
               label="Supplier"
               value={form.supplier_id}
-              onChange={(e) => setForm({ ...form, supplier_id: e.target.value })}
-            >
-              <option value="">None</option>
-              {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>{s.company}</option>
-              ))}
-            </Select>
+              onChange={(supplierId) => setForm({ ...form, supplier_id: supplierId })}
+              options={suppliers.map((s) => ({
+                value: String(s.id),
+                label: s.company,
+              }))}
+              placeholder="Search supplier…"
+            />
             <Input label="Cost Price" type="number" step="0.01" min={0} value={form.cost_price} onChange={(e) => { setForm({ ...form, cost_price: e.target.value }); setErrors((p) => ({ ...p, cost_price: undefined, form: undefined })); }} error={errors.cost_price} />
             <Input label="Selling Price *" type="number" step="0.01" min={0} value={form.selling_price} onChange={(e) => { setForm({ ...form, selling_price: e.target.value }); setErrors((p) => ({ ...p, selling_price: undefined, form: undefined })); }} error={errors.selling_price} />
             <Input label="Quantity " type="number" min={0} value={form.quantity} onChange={(e) => { setForm({ ...form, quantity: e.target.value }); setErrors((p) => ({ ...p, quantity: undefined, form: undefined })); }} error={errors.quantity} />

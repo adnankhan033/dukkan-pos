@@ -7,7 +7,8 @@ import { useSubmitGuard } from "../../hooks/useSubmitGuard";
 import { compressImageFile } from "../../utils/image";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
-import { Input, Select } from "../common/Input";
+import { Input } from "../common/Input";
+import SearchableSelect from "../common/SearchableSelect";
 import ProductNameFields from "../products/ProductNameFields";
 import ProductBarcodeScanner from "../products/ProductBarcodeScanner";
 import FormValidationAlert from "../common/FormValidationAlert";
@@ -170,6 +171,14 @@ export default function PosProductEditModal({ isOpen, productId, currency = "SAR
     });
   }
 
+  async function createCategoryOption(name) {
+    const created = await categoryService.create({ name });
+    setCategories((prev) =>
+      [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+    );
+    return String(created.id);
+  }
+
   async function handleImageChange(e) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -325,38 +334,40 @@ export default function PosProductEditModal({ isOpen, productId, currency = "SAR
               onChange={(e) => updateForm({ barcode: e.target.value })}
               autoComplete="off"
             />
-            <Select
+            <SearchableSelect
               label="Category"
               value={form.category_id}
-              onChange={(e) => updateForm({ category_id: e.target.value })}
-            >
-              <option value="">None</option>
-              {categories.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </Select>
-            <Select label="Unit" value={form.unit_id} onChange={(e) => updateForm({ unit_id: e.target.value })}>
-              <option value="">None</option>
-              {units.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.name} ({u.symbol})
-                </option>
-              ))}
-            </Select>
-            <Select
+              onChange={(categoryId) => updateForm({ category_id: categoryId })}
+              options={categories.map((c) => ({
+                value: String(c.id),
+                label: c.name,
+                hint: c.product_count ? `${c.product_count} products` : undefined,
+              }))}
+              placeholder="Search or create category…"
+              creatable
+              onCreateOption={createCategoryOption}
+            />
+            <SearchableSelect
+              label="Unit"
+              value={form.unit_id}
+              onChange={(unitId) => updateForm({ unit_id: unitId })}
+              options={units.map((u) => ({
+                value: String(u.id),
+                label: u.name,
+                hint: u.symbol,
+              }))}
+              placeholder="Search unit…"
+            />
+            <SearchableSelect
               label="Supplier"
               value={form.supplier_id}
-              onChange={(e) => updateForm({ supplier_id: e.target.value })}
-            >
-              <option value="">None</option>
-              {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.company}
-                </option>
-              ))}
-            </Select>
+              onChange={(supplierId) => updateForm({ supplier_id: supplierId })}
+              options={suppliers.map((s) => ({
+                value: String(s.id),
+                label: s.company,
+              }))}
+              placeholder="Search supplier…"
+            />
             <Input
               label={`Cost price (${currency})`}
               type="number"
