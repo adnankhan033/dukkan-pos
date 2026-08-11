@@ -29,6 +29,7 @@ export const ROUTE_MODULE_MAP = {
   "/customers": "customers",
   "/suppliers": "suppliers",
   "/accounting": "accounting",
+  "/employees": "accounting",
   "/expenses": "accounting",
   "/reports": "reports",
   "/subscriptions": "dashboard",

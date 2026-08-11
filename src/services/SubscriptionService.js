@@ -113,7 +113,7 @@ class SubscriptionService {
     return summary;
   }
 
-  async assign({ userId, plan, startDate }) {
+  async assign({ userId, plan, startDate, expiresAt }) {
     const user = await queryOne("SELECT id, role FROM users WHERE id = $1", [Number(userId)]);
     if (!user) throw new Error("User not found");
     if (user.role === ROLES.ADMIN) {
@@ -121,7 +121,10 @@ class SubscriptionService {
     }
 
     const start = startDate || todayISO();
-    const expiresAt = calculateExpirationDate(start, plan);
+    const end = expiresAt || calculateExpirationDate(start, plan);
+    if (daysBetweenSafe(start, end) < 0) {
+      throw new Error("End date must be on or after the start date");
+    }
     const existing = await this.getRawByUserId(userId);
 
     if (existing) {
@@ -131,14 +134,14 @@ class SubscriptionService {
              next_renewal_at = $3, is_suspended = 0, suspended_at = NULL,
              updated_at = datetime('now')
          WHERE user_id = $4`,
-        [plan, start, expiresAt, Number(userId)]
+        [plan, start, end, Number(userId)]
       );
     } else {
       await insert(
         `INSERT INTO user_subscriptions
          (user_id, plan, start_date, expires_at, last_renewed_at, next_renewal_at, is_suspended)
          VALUES ($1, $2, $3, $4, $3, $4, 0)`,
-        [Number(userId), plan, start, expiresAt]
+        [Number(userId), plan, start, end]
       );
     }
 
@@ -193,21 +196,24 @@ class SubscriptionService {
     return this.getForUser(userId);
   }
 
-  async changePlan(userId, plan, { resetStart = true, startDate } = {}) {
+  async changePlan(userId, plan, { resetStart = true, startDate, expiresAt } = {}) {
     const raw = await this.getRawByUserId(userId);
     if (!raw) {
-      return this.assign({ userId, plan, startDate: startDate || todayISO() });
+      return this.assign({ userId, plan, startDate: startDate || todayISO(), expiresAt });
     }
 
     const start = resetStart ? startDate || todayISO() : raw.start_date?.slice(0, 10) || todayISO();
-    const expiresAt = calculateExpirationDate(start, plan);
+    const end = expiresAt || calculateExpirationDate(start, plan);
+    if (daysBetweenSafe(start, end) < 0) {
+      throw new Error("End date must be on or after the start date");
+    }
 
     await execute(
       `UPDATE user_subscriptions
        SET plan = $1, start_date = $2, expires_at = $3, next_renewal_at = $3,
            last_renewed_at = $2, updated_at = datetime('now')
        WHERE user_id = $4`,
-      [plan, start, expiresAt, Number(userId)]
+      [plan, start, end, Number(userId)]
     );
 
     return this.getForUser(userId);

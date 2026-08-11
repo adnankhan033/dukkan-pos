@@ -16,7 +16,10 @@ import {
   SUBSCRIPTION_FILTER_OPTIONS,
   SUBSCRIPTION_PLANS,
   SUBSCRIPTION_STATUS,
+  EXTEND_MONTH_OPTIONS,
   todayISO,
+  calculateExpirationDate,
+  addMonthsToDate,
 } from "../utils/subscriptions";
 import { formatDate } from "../utils/format";
 import PageHeader from "../components/common/PageHeader";
@@ -27,9 +30,10 @@ import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
 import Badge from "../components/common/Badge";
 import { Card } from "../components/common/Card";
-import { Input, Select } from "../components/common/Input";
+import { Select } from "../components/common/Input";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
 import SubscriptionCard from "../components/subscriptions/SubscriptionCard";
+import SubscriptionDatePicker from "../components/subscriptions/SubscriptionDatePicker";
 import "./Subscriptions.css";
 
 function statusVariant(status) {
@@ -48,6 +52,16 @@ function statusVariant(status) {
 }
 
 const PLAN_OPTIONS = Object.values(SUBSCRIPTION_PLANS);
+
+const EMPTY_FORM = {
+  plan: "monthly",
+  startDate: todayISO(),
+  endDate: calculateExpirationDate(todayISO(), "monthly"),
+  startUseCalendar: false,
+  endUseCalendar: false,
+  endDateTouched: false,
+  extraMonths: "3",
+};
 
 export default function Subscriptions() {
   const user = useAuthStore((s) => s.user);
@@ -68,7 +82,7 @@ export default function Subscriptions() {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState("assign");
   const [selectedUser, setSelectedUser] = useState(null);
-  const [form, setForm] = useState({ plan: "monthly", startDate: todayISO(), extraMonths: "1" });
+  const [form, setForm] = useState(EMPTY_FORM);
 
   const loadAdmin = useCallback(async () => {
     setLoading(true);
@@ -109,17 +123,77 @@ export default function Subscriptions() {
   function openModal(mode, row) {
     setModalMode(mode);
     setSelectedUser(row);
+    const plan = row.subscription?.plan || "monthly";
+    const existingStart = row.subscription?.startDate || todayISO();
+    const existingEnd =
+      row.subscription?.expiresAt || calculateExpirationDate(existingStart, plan);
     setForm({
-      plan: row.subscription?.plan || "monthly",
-      startDate: row.subscription?.startDate || todayISO(),
-      extraMonths: "1",
+      plan,
+      startDate: existingStart,
+      endDate: existingEnd,
+      startUseCalendar: false,
+      endUseCalendar: false,
+      endDateTouched: Boolean(row.subscription?.expiresAt),
+      extraMonths: "3",
     });
     setModalOpen(true);
+  }
+
+  function updatePlan(plan) {
+    setForm((prev) => ({
+      ...prev,
+      plan,
+      endDate: prev.endDateTouched ? prev.endDate : calculateExpirationDate(prev.startDate, plan),
+    }));
+  }
+
+  function updateStartDate(startDate) {
+    setForm((prev) => ({
+      ...prev,
+      startDate,
+      endDate: prev.endDateTouched ? prev.endDate : calculateExpirationDate(startDate, prev.plan),
+    }));
+  }
+
+  function updateEndDate(endDate) {
+    setForm((prev) => ({ ...prev, endDate, endDateTouched: true }));
+  }
+
+  function previewExpiryDate() {
+    try {
+      if (modalMode === "extend") {
+        const baseDate = selectedUser?.subscription?.expiresAt || todayISO();
+        return addMonthsToDate(baseDate, Number(form.extraMonths) || 0);
+      }
+      if (modalMode === "renew") {
+        const today = todayISO();
+        const currentExpiry = selectedUser?.subscription?.expiresAt;
+        const baseDate =
+          currentExpiry && daysBetweenSafe(today, currentExpiry) >= 0 ? currentExpiry : today;
+        return addMonthsToDate(baseDate, SUBSCRIPTION_PLANS[form.plan]?.months ?? 1);
+      }
+      return calculateExpirationDate(form.startDate, form.plan);
+    } catch {
+      return null;
+    }
+  }
+
+  function daysBetweenSafe(fromIso, toIso) {
+    const from = new Date(fromIso);
+    const to = new Date(toIso);
+    return Math.round((to - from) / 86400000);
   }
 
   async function runAction(action) {
     if (!selectedUser) return;
     setAlert("");
+    if (
+      (action === "assign" || action === "update") &&
+      daysBetweenSafe(form.startDate, form.endDate) < 0
+    ) {
+      setAlert("End date must be on or after the start date");
+      return;
+    }
     try {
       await guard(async () => {
         switch (action) {
@@ -128,6 +202,7 @@ export default function Subscriptions() {
               userId: selectedUser.id,
               plan: form.plan,
               startDate: form.startDate,
+              expiresAt: form.endDate,
             });
             break;
           case "renew":
@@ -139,6 +214,7 @@ export default function Subscriptions() {
           case "update":
             await subscriptionService.changePlan(selectedUser.id, form.plan, {
               startDate: form.startDate,
+              expiresAt: form.endDate,
             });
             break;
           case "suspend":
@@ -182,11 +258,20 @@ export default function Subscriptions() {
   }
 
   const modalTitle = {
-    assign: "Create Subscription",
+    assign: "Start Subscription",
     update: "Update Subscription",
     renew: "Renew Subscription",
     extend: "Extend Subscription",
   }[modalMode];
+
+  const modalSaveLabel = {
+    assign: "Start Subscription",
+    update: "Save Changes",
+    renew: "Renew Now",
+    extend: "Extend Subscription",
+  }[modalMode];
+
+  const expiryPreview = previewExpiryDate();
 
   const columns = [
     { key: "username", label: "Username" },
@@ -354,7 +439,7 @@ export default function Subscriptions() {
               Cancel
             </Button>
             <Button onClick={() => runAction(modalMode)} disabled={submitting}>
-              {submitting ? "Saving..." : "Save"}
+              {submitting ? "Saving..." : modalSaveLabel}
             </Button>
           </>
         }
@@ -369,33 +454,75 @@ export default function Subscriptions() {
             <Select
               label="Plan"
               value={form.plan}
-              onChange={(e) => setForm({ ...form, plan: e.target.value })}
+              onChange={(e) => updatePlan(e.target.value)}
             >
               {PLAN_OPTIONS.map((plan) => (
                 <option key={plan.id} value={plan.id}>{plan.label}</option>
               ))}
             </Select>
+
             {(modalMode === "assign" || modalMode === "update") && (
-              <div style={{ marginTop: "1rem" }}>
-                <Input
-                  label="Start Date"
-                  type="date"
+              <div className="subscription-date-sections">
+                <SubscriptionDatePicker
+                  label="Start date"
                   value={form.startDate}
-                  onChange={(e) => setForm({ ...form, startDate: e.target.value })}
+                  useCalendar={form.startUseCalendar}
+                  onChange={updateStartDate}
+                  onModeChange={(useCalendar) =>
+                    setForm((prev) => ({ ...prev, startUseCalendar: useCalendar }))
+                  }
                 />
+                <SubscriptionDatePicker
+                  label="End date"
+                  value={form.endDate}
+                  useCalendar={form.endUseCalendar}
+                  onChange={updateEndDate}
+                  onModeChange={(useCalendar) =>
+                    setForm((prev) => ({ ...prev, endUseCalendar: useCalendar }))
+                  }
+                />
+                {!form.endDateTouched && (
+                  <p className="subscription-modal-note">
+                    End date updates automatically from the plan until you change it.
+                  </p>
+                )}
               </div>
+            )}
+
+            {modalMode === "renew" && selectedUser?.subscription?.expiresAt && (
+              <p className="subscription-modal-note">
+                Renews from {formatDate(selectedUser.subscription.expiresAt)} if still active, otherwise from today.
+              </p>
             )}
           </>
         )}
 
         {modalMode === "extend" && (
-          <Input
-            label="Extra Months"
-            type="number"
-            min="1"
+          <Select
+            label="Extend by"
             value={form.extraMonths}
             onChange={(e) => setForm({ ...form, extraMonths: e.target.value })}
-          />
+          >
+            {EXTEND_MONTH_OPTIONS.map((option) => (
+              <option key={option.id} value={String(option.id)}>{option.label}</option>
+            ))}
+          </Select>
+        )}
+
+        {(modalMode === "extend" || modalMode === "renew") && expiryPreview && (
+          <div className="subscription-expiry-preview">
+            <span>{modalMode === "extend" ? "New end date" : "Expires on"}</span>
+            <strong>{formatDate(expiryPreview)}</strong>
+          </div>
+        )}
+
+        {(modalMode === "assign" || modalMode === "update") && (
+          <div className="subscription-expiry-preview">
+            <span>Subscription period</span>
+            <strong>
+              {formatDate(form.startDate)} → {formatDate(form.endDate)}
+            </strong>
+          </div>
         )}
       </Modal>
     </div>

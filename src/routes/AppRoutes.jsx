@@ -15,6 +15,7 @@ import Orders from "../pages/Orders";
 import Purchases from "../pages/Purchases";
 import Inventory from "../pages/Inventory";
 import Accounting from "../pages/Accounting";
+import Employees from "../pages/Employees";
 import Reports from "../pages/Reports";
 import Settings from "../pages/Settings";
 import Users from "../pages/Users";
@@ -52,6 +53,7 @@ export default function AppRoutes() {
         <Route path="/purchases" element={withRole("inventory", <Purchases />)} />
         <Route path="/inventory" element={withRole("inventory", <Inventory />)} />
         <Route path="/accounting" element={withRole("accounting", <Accounting />)} />
+        <Route path="/employees" element={withRole("accounting", <Employees />)} />
         <Route path="/expenses" element={<Navigate to="/accounting" replace />} />
         <Route path="/reports" element={withRole("reports", <Reports />)} />
         <Route path="/subscriptions" element={withRole("dashboard", <Subscriptions />)} />

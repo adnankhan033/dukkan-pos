@@ -208,4 +208,41 @@ export const SCHEMA_STATEMENTS = [
   )`,
 
   `CREATE INDEX IF NOT EXISTS idx_user_subscriptions_expires ON user_subscriptions(expires_at)`,
+
+  `CREATE TABLE IF NOT EXISTS employees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    full_name TEXT NOT NULL,
+    designation TEXT,
+    phone TEXT,
+    address TEXT,
+    iqama_number TEXT,
+    photo TEXT,
+    start_date TEXT,
+    end_date TEXT,
+    is_current INTEGER NOT NULL DEFAULT 1,
+    user_id INTEGER,
+    notes TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS employee_salaries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER NOT NULL,
+    amount REAL NOT NULL,
+    salary_date TEXT NOT NULL,
+    payment_type TEXT NOT NULL DEFAULT 'salary',
+    period_label TEXT,
+    notes TEXT,
+    expense_id INTEGER,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+    FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE SET NULL
+  )`,
+
+  `CREATE INDEX IF NOT EXISTS idx_employees_current ON employees(is_current)`,
+  `CREATE INDEX IF NOT EXISTS idx_employee_salaries_employee ON employee_salaries(employee_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_employee_salaries_date ON employee_salaries(salary_date)`,
 ];

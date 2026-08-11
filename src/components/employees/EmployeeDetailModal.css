@@ -1,0 +1,280 @@
+.employee-detail-header {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.employee-detail-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  color: #1d4ed8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.employee-detail-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.employee-detail-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.employee-detail-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.employee-detail-tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-bottom: 1rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: var(--color-bg-muted, #f4f4f5);
+}
+
+.employee-detail-tab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.employee-detail-tab.active {
+  background: var(--color-bg, #fff);
+  color: var(--color-text, #18181b);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.employee-detail-alert {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.875rem;
+}
+
+.employee-profile-form,
+.employee-payroll-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.employee-photo-upload {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: fit-content;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  border: 1px dashed var(--color-border, #d4d4d8);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.employee-date-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border-radius: 8px;
+  background: var(--color-bg-muted, #fafafa);
+  border: 1px solid var(--color-border, #e4e4e7);
+}
+
+.employee-current-checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.employee-payroll-form-card {
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-border, #e4e4e7);
+  background: var(--color-bg, #fff);
+}
+
+.employee-payroll-form-card h4,
+.employee-payment-list h4 {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.employee-payroll-form-card p {
+  margin: 0 0 0.85rem;
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+
+.employee-payroll-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.employee-payment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.employee-payment-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-border, #e4e4e7);
+  background: var(--color-bg, #fff);
+}
+
+.employee-payment-row div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.employee-payment-row strong {
+  font-size: 0.95rem;
+}
+
+.employee-payment-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+.employee-payment-row.advance {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.employee-payment-row.editing {
+  flex-direction: column;
+  align-items: stretch;
+  border-color: var(--color-primary, #2563eb);
+}
+
+.employee-payment-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.employee-payment-edit,
+.employee-payment-delete {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0.35rem;
+}
+
+.employee-payment-edit {
+  color: var(--color-primary, #2563eb);
+}
+
+.employee-payment-delete {
+  color: var(--color-danger, #dc2626);
+}
+
+.employee-payment-edit-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.employee-payment-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+@media (max-width: 640px) {
+  .employee-payment-edit-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+.employee-empty-note {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.employee-advance-section {
+  gap: 1rem;
+}
+
+.employee-advance-hero {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.employee-advance-hero div {
+  padding: 1rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5);
+  border: 1px solid #fed7aa;
+}
+
+.employee-advance-hero span {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #9a3412;
+}
+
+.employee-advance-hero strong {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 1.2rem;
+  color: #7c2d12;
+}
+
+.employee-advance-form-card {
+  border-color: #fdba74;
+  background: linear-gradient(180deg, #fff7ed 0%, #fff 100%);
+}
+
+@media (max-width: 640px) {
+  .employee-payroll-form-grid,
+  .employee-advance-hero {
+    grid-template-columns: 1fr;
+  }
+}

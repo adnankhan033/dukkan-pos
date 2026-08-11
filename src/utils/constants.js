@@ -147,7 +147,10 @@ export const NAV_GROUPS = [
     label: "Accounting",
     icon: "Receipt",
     module: "accounting",
-    items: [{ path: "/accounting", label: "Expenses" }],
+    items: [
+      { path: "/accounting", label: "Expenses" },
+      { path: "/employees", label: "Employees" },
+    ],
   },
   { id: "reports", label: "Reports", icon: "BarChart3", path: "/reports", module: "reports" },
   {

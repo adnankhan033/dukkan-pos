@@ -33,6 +33,70 @@ export const SUBSCRIPTION_FILTER_OPTIONS = [
   { id: SUBSCRIPTION_STATUS.NONE, label: "No Subscription" },
 ];
 
+export const START_DATE_PRESETS = [
+  { id: "today", label: "Today" },
+  { id: "tomorrow", label: "Tomorrow" },
+  { id: "month_start", label: "1st of this month" },
+  { id: "next_month", label: "1st of next month" },
+  { id: "custom", label: "Pick a date…" },
+];
+
+export const EXTEND_MONTH_OPTIONS = [
+  { id: 1, label: "1 month" },
+  { id: 3, label: "3 months" },
+  { id: 6, label: "6 months" },
+  { id: 12, label: "12 months" },
+];
+
+export const MONTH_OPTIONS = [
+  { value: 1, label: "January" },
+  { value: 2, label: "February" },
+  { value: 3, label: "March" },
+  { value: 4, label: "April" },
+  { value: 5, label: "May" },
+  { value: 6, label: "June" },
+  { value: 7, label: "July" },
+  { value: 8, label: "August" },
+  { value: 9, label: "September" },
+  { value: 10, label: "October" },
+  { value: 11, label: "November" },
+  { value: 12, label: "December" },
+];
+
+export function getYearOptions(startYear, endYear) {
+  const from = startYear ?? new Date().getFullYear() - 1;
+  const to = endYear ?? new Date().getFullYear() + 5;
+  const years = [];
+  for (let year = from; year <= to; year += 1) years.push(year);
+  return years;
+}
+
+export function splitIsoDate(iso) {
+  const value = String(iso || todayISO()).slice(0, 10);
+  const [year, month, day] = value.split("-").map(Number);
+  return { year, month, day };
+}
+
+export function buildIsoDate({ year, month, day }) {
+  const y = Number(year);
+  const m = Number(month);
+  let d = Number(day);
+  if (!y || !m) return todayISO();
+  const maxDay = getDaysInMonth(y, m);
+  if (!d || d < 1) d = 1;
+  if (d > maxDay) d = maxDay;
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+export function getDaysInMonth(year, month) {
+  return new Date(Number(year), Number(month), 0).getDate();
+}
+
+export function getDayOptions(year, month) {
+  const total = getDaysInMonth(year, month);
+  return Array.from({ length: total }, (_, index) => index + 1);
+}
+
 function parseIsoDate(iso) {
   const [y, m, d] = String(iso).slice(0, 10).split("-").map(Number);
   return new Date(y, m - 1, d);
@@ -44,6 +108,37 @@ export function todayISO() {
   const m = String(now.getMonth() + 1).padStart(2, "0");
   const d = String(now.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+function formatDateParts(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export function resolveStartDatePreset(presetId, customDate = todayISO()) {
+  const now = new Date();
+  switch (presetId) {
+    case "tomorrow": {
+      const date = new Date(now);
+      date.setDate(date.getDate() + 1);
+      return formatDateParts(date);
+    }
+    case "month_start":
+      return formatDateParts(new Date(now.getFullYear(), now.getMonth(), 1));
+    case "next_month":
+      return formatDateParts(new Date(now.getFullYear(), now.getMonth() + 1, 1));
+    case "custom":
+      return String(customDate || todayISO()).slice(0, 10);
+    case "today":
+    default:
+      return todayISO();
+  }
+}
+
+export function getStartDatePresetLabel(presetId) {
+  return START_DATE_PRESETS.find((preset) => preset.id === presetId)?.label ?? "Today";
 }
 
 export function addMonthsToDate(isoDate, months) {

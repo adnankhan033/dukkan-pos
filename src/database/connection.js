@@ -70,22 +70,17 @@ export async function ensureReturnSchema() {
 }
 
 export async function initializeDatabase() {
-  if (schemaInitialized) {
-    return getDatabase();
+  if (!initPromise) {
+    initPromise = bootstrapDatabase().catch((err) => {
+      initPromise = null;
+      schemaInitialized = false;
+      throw err;
+    });
   }
 
-  if (initPromise) {
-    return initPromise;
-  }
-
-  initPromise = bootstrapDatabase();
-  try {
-    await initPromise;
-    return getDatabase();
-  } catch (err) {
-    initPromise = null;
-    throw err;
-  }
+  await initPromise;
+  await ensureEmployeesSchema();
+  return getDatabase();
 }
 
 async function bootstrapDatabase() {
@@ -159,6 +154,7 @@ async function runMigrations() {
   await ensureZatcaSchema();
   await ensureCashierModuleDefaults();
   await ensureUserSubscriptionsSchema();
+  await ensureEmployeesSchema();
   await ensureReceiptTemplateDefault();
   await ensureSettingsKeys();
   await migrateUtcTimestampsToBusinessTimezone();
@@ -287,6 +283,70 @@ async function ensureUserSubscriptionsSchema() {
 
   await execute(
     "INSERT INTO settings (key, value) VALUES ('_user_subscriptions_v1', '1')"
+  );
+}
+
+export async function ensureEmployeeTables() {
+  await ensureEmployeesSchema();
+}
+
+async function ensureEmployeesSchema() {
+  if (!(await tableExists("employees"))) {
+    await execute(
+      `CREATE TABLE employees (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        full_name TEXT NOT NULL,
+        designation TEXT,
+        phone TEXT,
+        address TEXT,
+        iqama_number TEXT,
+        photo TEXT,
+        start_date TEXT,
+        end_date TEXT,
+        is_current INTEGER NOT NULL DEFAULT 1,
+        user_id INTEGER,
+        notes TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+      )`
+    );
+  } else {
+    const employeeCols = await query("PRAGMA table_info(employees)");
+    if (!employeeCols.some((column) => column.name === "designation")) {
+      await execute("ALTER TABLE employees ADD COLUMN designation TEXT");
+    }
+  }
+
+  if (!(await tableExists("employee_salaries"))) {
+    await execute(
+      `CREATE TABLE employee_salaries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        employee_id INTEGER NOT NULL,
+        amount REAL NOT NULL,
+        salary_date TEXT NOT NULL,
+        payment_type TEXT NOT NULL DEFAULT 'salary',
+        period_label TEXT,
+        notes TEXT,
+        expense_id INTEGER,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
+        FOREIGN KEY (employee_id) REFERENCES employees(id) ON DELETE CASCADE,
+        FOREIGN KEY (expense_id) REFERENCES expenses(id) ON DELETE SET NULL
+      )`
+    );
+  }
+
+  await execute("CREATE INDEX IF NOT EXISTS idx_employees_current ON employees(is_current)");
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_employee_salaries_employee ON employee_salaries(employee_id)"
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_employee_salaries_date ON employee_salaries(salary_date)"
+  );
+
+  await execute(
+    "INSERT OR IGNORE INTO settings (key, value) VALUES ('_employees_v1', '1')"
   );
 }
 
@@ -655,16 +715,33 @@ export async function execute(sql, params = []) {
   });
 }
 
+/** Extract row id from a Tauri SQL execute result. */
+export function resolveInsertId(result, fallbackRows) {
+  const candidates = [
+    result?.lastInsertId,
+    result?.last_insert_rowid,
+    result?.lastInsertRowid,
+  ];
+
+  for (const candidate of candidates) {
+    const id = Number(candidate);
+    if (Number.isFinite(id) && id > 0) return id;
+  }
+
+  const fallbackId = Number(fallbackRows?.[0]?.id);
+  if (Number.isFinite(fallbackId) && fallbackId > 0) return fallbackId;
+  return null;
+}
+
 /** Run INSERT and return the new row id from the Tauri SQL plugin. */
 export async function insert(sql, params = []) {
   return enqueueDb(async () => {
     const db = await getDatabase();
     const result = await db.execute(sql, params);
-    const id = result?.lastInsertId;
-    if (id == null || Number(id) <= 0) {
-      throw new Error("Insert failed: could not get new record id");
-    }
-    return Number(id);
+    const rows = await db.select("SELECT last_insert_rowid() AS id");
+    const id = resolveInsertId(result, rows);
+    if (!id) throw new Error("Insert failed: could not get new record id");
+    return id;
   });
 }
 
