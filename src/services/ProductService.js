@@ -76,6 +76,48 @@ class ProductService {
     );
   }
 
+  /** Top-selling published products for POS quick-pick grid (all-time completed sales). */
+  async getTopSellingForPos(limit = 10) {
+    const top = await query(
+      `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity, p.category_id,
+              c.name AS category_name, u.symbol AS unit_symbol,
+              COALESCE(SUM(si.quantity), 0) AS units_sold
+       FROM products p
+       ${BASE_JOINS}
+       LEFT JOIN sale_items si ON si.product_id = p.id
+       LEFT JOIN sales s ON s.id = si.sale_id AND s.status IN ('completed', 'partial_return', 'returned')
+       WHERE COALESCE(p.published, 1) = 1
+       GROUP BY p.id
+       ORDER BY units_sold DESC, p.name ASC
+       LIMIT $1`,
+      [limit]
+    );
+
+    if (top.length >= limit) return top;
+
+    const existingIds = new Set(top.map((row) => row.id));
+    const filler = await query(
+      `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity, p.category_id,
+              c.name AS category_name, u.symbol AS unit_symbol, 0 AS units_sold
+       FROM products p
+       ${BASE_JOINS}
+       WHERE COALESCE(p.published, 1) = 1
+       ORDER BY p.name ASC
+       LIMIT $1`,
+      [limit * 3]
+    );
+
+    for (const product of filler) {
+      if (top.length >= limit) break;
+      if (!existingIds.has(product.id)) {
+        top.push(product);
+        existingIds.add(product.id);
+      }
+    }
+
+    return top.slice(0, limit);
+  }
+
   async getById(id) {
     return queryOne(
       `SELECT p.*, c.name as category_name, u.symbol AS unit_symbol, s.company AS supplier_name

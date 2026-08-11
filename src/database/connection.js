@@ -4,6 +4,7 @@ import { SCHEMA_STATEMENTS } from "./schema";
 import bcrypt from "bcryptjs";
 import { DEFAULT_SETTINGS } from "../utils/constants";
 import { DEFAULT_UNITS } from "../utils/defaultUnits";
+import { getDataClearSection } from "../utils/dataClearSections.js";
 import {
   convertUtcSqliteDatetimeToBusiness,
   resolveBusinessTimezone,
@@ -777,26 +778,155 @@ export async function getLastInsertId() {
   return id && id > 0 ? id : null;
 }
 
+async function assertTablesEmpty(tableNames, message) {
+  for (const table of tableNames) {
+    try {
+      const row = await queryOne(`SELECT COUNT(*) AS count FROM ${table}`);
+      if (Number(row?.count ?? 0) > 0) {
+        throw new Error(message);
+      }
+    } catch (err) {
+      if (err.message === message) throw err;
+      /* table may not exist */
+    }
+  }
+}
+
+async function deleteFromTables(txExecute, tableNames) {
+  for (const table of tableNames) {
+    try {
+      await txExecute(`DELETE FROM ${table}`);
+    } catch {
+      /* table may not exist */
+    }
+  }
+}
+
+/** Clear one business-data section (administrator). Does not reset users or settings. */
+export async function clearDatabaseSection(sectionId) {
+  const section = getDataClearSection(sectionId);
+  if (!section) {
+    throw new Error("Unknown data section");
+  }
+
+  if (section.requiresEmpty?.length) {
+    await assertTablesEmpty(section.requiresEmpty, section.requiresEmptyMessage);
+  }
+
+  await runInTransaction(async ({ execute: txExecute }) => {
+    switch (sectionId) {
+      case "orders":
+        await deleteFromTables(txExecute, [
+          "sale_return_items",
+          "sale_returns",
+          "zatca_api_logs",
+          "zatca_invoices",
+        ]);
+        try {
+          await txExecute("DELETE FROM payments WHERE sale_id IS NOT NULL");
+        } catch {
+          /* ignore */
+        }
+        await deleteFromTables(txExecute, ["sale_items", "sales"]);
+        break;
+
+      case "purchases":
+        await deleteFromTables(txExecute, ["purchase_items", "supplier_payments"]);
+        try {
+          await txExecute("DELETE FROM payments WHERE purchase_id IS NOT NULL");
+        } catch {
+          /* ignore */
+        }
+        await deleteFromTables(txExecute, ["purchases"]);
+        break;
+
+      case "products":
+        await deleteFromTables(txExecute, ["import_logs", "inventory", "products", "categories", "units"]);
+        break;
+
+      case "customers":
+        try {
+          await txExecute("UPDATE sales SET customer_id = NULL WHERE customer_id IS NOT NULL");
+        } catch {
+          /* ignore */
+        }
+        await deleteFromTables(txExecute, ["customers"]);
+        break;
+
+      case "suppliers":
+        try {
+          await txExecute("UPDATE purchases SET supplier_id = NULL WHERE supplier_id IS NOT NULL");
+        } catch {
+          /* ignore */
+        }
+        await deleteFromTables(txExecute, ["suppliers"]);
+        break;
+
+      case "inventory":
+        await deleteFromTables(txExecute, ["inventory"]);
+        break;
+
+      case "accounting":
+        try {
+          await txExecute(
+            "UPDATE employee_salaries SET expense_id = NULL WHERE expense_id IS NOT NULL"
+          );
+        } catch {
+          /* ignore */
+        }
+        await deleteFromTables(txExecute, ["expenses"]);
+        try {
+          await txExecute(
+            "DELETE FROM payments WHERE sale_id IS NULL AND purchase_id IS NULL"
+          );
+        } catch {
+          /* ignore */
+        }
+        break;
+
+      case "employees":
+        await deleteFromTables(txExecute, ["employee_salaries", "employees"]);
+        break;
+
+      case "subscriptions":
+        await deleteFromTables(txExecute, ["user_subscriptions"]);
+        break;
+
+      default:
+        throw new Error("Unknown data section");
+    }
+  });
+
+  if (sectionId === "products") {
+    await ensureUnitsSchema();
+  }
+}
+
 export async function clearDatabaseData() {
   const clearOrder = [
     "sale_return_items",
     "sale_returns",
+    "zatca_api_logs",
     "zatca_invoices",
     "sale_items",
     "sales",
     "purchase_items",
+    "supplier_payments",
     "purchases",
     "payments",
+    "employee_salaries",
+    "employees",
     "inventory",
     "expenses",
+    "import_logs",
     "products",
     "customers",
     "suppliers",
     "categories",
     "units",
+    "user_subscriptions",
     "users",
     "settings",
-    "import_logs",
   ];
 
   await runInTransaction(async ({ execute: txExecute }) => {

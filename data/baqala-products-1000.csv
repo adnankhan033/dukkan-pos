@@ -1,0 +1,1001 @@
+﻿name,name_ar,sku,barcode,category,unit,supplier,cost_price,selling_price,quantity,min_stock,published
+Almarai Fresh Milk 1L,المراعي حليب طازج 1L,BQ-0001-almarai-fresh-milk-1,,Dairy & Eggs,L,,4.88,6.50,0,5,yes
+Almarai Fresh Milk 2L,المراعي حليب طازج 2L,BQ-0002-almarai-fresh-milk-2,,Dairy & Eggs,L,,9.00,12.00,0,5,yes
+Almarai Low Fat Milk 1L,المراعي حليب قليل الدسم 1L,BQ-0003-almarai-low-fat-milk,,Dairy & Eggs,L,,4.50,6.00,0,5,yes
+Almarai Laban 1L,المراعي لبن 1L,BQ-0004-almarai-laban-1l,,Dairy & Eggs,L,,4.13,5.50,0,5,yes
+Almarai Laban 2L,المراعي لبن 2L,BQ-0005-almarai-laban-2l,,Dairy & Eggs,L,,7.50,10.00,0,5,yes
+Almarai Yogurt Plain 170g,المراعي زبادي طبيعي 170g,BQ-0006-almarai-yogurt-plain,,Dairy & Eggs,L,,1.88,2.50,0,5,yes
+Almarai Yogurt Strawberry 170g,المراعي زبادي فراولة 170g,BQ-0007-almarai-yogurt-straw,,Dairy & Eggs,L,,1.88,2.50,0,5,yes
+Almarai Cheese Slices 200g,المراعي جبن شرائح 200g,BQ-0008-almarai-cheese-slice,,Dairy & Eggs,L,,9.00,12.00,0,5,yes
+Almarai Cheddar Cheese 400g,المراعي جبن شيدر 400g,BQ-0009-almarai-cheddar-chee,,Dairy & Eggs,L,,13.50,18.00,0,5,yes
+Almarai Feta Cheese 400g,المراعي جبنة فيتا 400g,BQ-0010-almarai-feta-cheese-,,Dairy & Eggs,L,,11.25,15.00,0,5,yes
+Almarai Cream Cheese 250g,المراعي جبنة كريمية 250g,BQ-0011-almarai-cream-cheese,,Dairy & Eggs,L,,7.50,10.00,0,5,yes
+Almarai Butter 200g,المراعي زبدة 200g,BQ-0012-almarai-butter-200g,,Dairy & Eggs,L,,6.00,8.00,0,5,yes
+Almarai Ghee 800g,المراعي سمن 800g,BQ-0013-almarai-ghee-800g,,Dairy & Eggs,L,,26.25,35.00,0,5,yes
+Almarai Eggs 30 pcs,المراعي بيض 30 pcs,BQ-0014-almarai-eggs-30-pcs,,Dairy & Eggs,L,,16.50,22.00,0,5,yes
+Nadec Fresh Milk 1L,نادك حليب طازج 1L,BQ-0015-nadec-fresh-milk-1l,,Dairy & Eggs,L,,4.50,6.00,0,5,yes
+Nadec Fresh Milk 2L,نادك حليب طازج 2L,BQ-0016-nadec-fresh-milk-2l,,Dairy & Eggs,L,,8.63,11.50,0,5,yes
+Nadec Laban 1L,نادك لبن 1L,BQ-0017-nadec-laban-1l,,Dairy & Eggs,L,,3.75,5.00,0,5,yes
+Nadec Yogurt 170g,نادك زبادي 170g,BQ-0018-nadec-yogurt-170g,,Dairy & Eggs,L,,1.50,2.00,0,5,yes
+Nadec Cheese Spread 240g,نادك جبنة مSpreadable 240g,BQ-0019-nadec-cheese-spread-,,Dairy & Eggs,L,,6.75,9.00,0,5,yes
+Nadec Butter 200g,نادك زبدة 200g,BQ-0020-nadec-butter-200g,,Dairy & Eggs,L,,5.63,7.50,0,5,yes
+Al Rabie Orange Juice 1L,الربيع عصير برتقال 1L,BQ-0021-al-rabie-orange-juic,,Dairy & Eggs,L,,6.00,8.00,0,5,yes
+Al Rabie Apple Juice 1L,الربيع عصير تفاح 1L,BQ-0022-al-rabie-apple-juice,,Dairy & Eggs,L,,6.00,8.00,0,5,yes
+Al Rabie Mango Juice 1L,الربيع عصير مانجو 1L,BQ-0023-al-rabie-mango-juice,,Dairy & Eggs,L,,6.75,9.00,0,5,yes
+Al Rabie Mixed Fruit Juice 1L,الربيع عصير فواكه مشكلة 1L,BQ-0024-al-rabie-mixed-fruit,,Dairy & Eggs,L,,6.38,8.50,0,5,yes
+Al Rabie Tomato Paste 400g,الربيع معجون طماطم 400g,BQ-0025-al-rabie-tomato-past,,Dairy & Eggs,L,,3.75,5.00,0,5,yes
+Saudia Fresh Milk 1L,سعودia حليب طازج 1L,BQ-0026-saudia-fresh-milk-1l,,Dairy & Eggs,L,,4.13,5.50,0,5,yes
+Saudia Laban 1L,سعودia لبن 1L,BQ-0027-saudia-laban-1l,,Dairy & Eggs,L,,3.38,4.50,0,5,yes
+Saudia Evaporated Milk 410g,سعودia حليب م evaporated 410g,BQ-0028-saudia-evaporated-mi,,Dairy & Eggs,L,,4.50,6.00,0,5,yes
+Saudia Condensed Milk 397g,سعودia حليب م condensed 397g,BQ-0029-saudia-condensed-mil,,Dairy & Eggs,L,,5.25,7.00,0,5,yes
+Aquafina Water 600ml,أكوafina مياه 600ml,BQ-0030-aquafina-water-600ml,,Beverages,bottle,,1.13,1.50,0,5,yes
+Aquafina Water 1.5L,أكوafina مياه 1.5L,BQ-0031-aquafina-water-1-5l,,Beverages,bottle,,1.88,2.50,0,5,yes
+Nova Water 330ml,nova مياه 330ml,BQ-0032-nova-water-330ml,,Beverages,bottle,,0.75,1.00,0,5,yes
+Nova Water 600ml,nova مياه 600ml,BQ-0033-nova-water-600ml,,Beverages,bottle,,1.13,1.50,0,5,yes
+Nova Water 1.5L,nova مياه 1.5L,BQ-0034-nova-water-1-5l,,Beverages,bottle,,1.50,2.00,0,5,yes
+Nova Water 2.25L,nova مياه 2.25L,BQ-0035-nova-water-2-25l,,Beverages,bottle,,2.25,3.00,0,5,yes
+Pepsi Cola 330ml,بيبسي كولا 330ml,BQ-0036-pepsi-cola-330ml,,Beverages,can,,1.88,2.50,0,5,yes
+Pepsi Cola 2.25L,بيبسي كولا 2.25L,BQ-0037-pepsi-cola-2-25l,,Beverages,can,,6.00,8.00,0,5,yes
+Pepsi Diet Cola 330ml,بيبسي دايت كولا 330ml,BQ-0038-pepsi-diet-cola-330m,,Beverages,can,,1.88,2.50,0,5,yes
+Pepsi Mirinda Orange 330ml,بيبسي ميرندا برتقال 330ml,BQ-0039-pepsi-mirinda-orange,,Beverages,can,,1.88,2.50,0,5,yes
+Pepsi 7UP 330ml,بيبسي سeven up 330ml,BQ-0040-pepsi-7up-330ml,,Beverages,can,,1.88,2.50,0,5,yes
+Coca-Cola Cola 330ml,كوكا كولا كولا 330ml,BQ-0041-coca-cola-cola-330ml,,Beverages,can,,1.88,2.50,0,5,yes
+Coca-Cola Cola Zero 330ml,كوكا كولا كولا زيرو 330ml,BQ-0042-coca-cola-cola-zero-,,Beverages,can,,1.88,2.50,0,5,yes
+Coca-Cola Sprite 330ml,كوكا كولا سبرايت 330ml,BQ-0043-coca-cola-sprite-330,,Beverages,can,,1.88,2.50,0,5,yes
+Coca-Cola Fanta Orange 330ml,كوكا كولا فانتا برتقال 330ml,BQ-0044-coca-cola-fanta-oran,,Beverages,can,,1.88,2.50,0,5,yes
+Lipton Black Tea 100 bags,لipton شاي أسود 100 bags,BQ-0045-lipton-black-tea-100,,Beverages,box,,11.25,15.00,0,5,yes
+Lipton Green Tea 25 bags,لipton شاي أخضر 25 bags,BQ-0046-lipton-green-tea-25-,,Beverages,box,,9.00,12.00,0,5,yes
+Rabea Black Tea 100 bags,ربea شاي أسود 100 bags,BQ-0047-rabea-black-tea-100-,,Beverages,box,,9.00,12.00,0,5,yes
+Rabea Green Tea 100 bags,ربea شاي أخضر 100 bags,BQ-0048-rabea-green-tea-100-,,Beverages,box,,10.50,14.00,0,5,yes
+Nescafe Classic 200g,نسكafe كلاسيك 200g,BQ-0049-nescafe-classic-200g,,Beverages,jar,,26.25,35.00,0,5,yes
+Nescafe Gold 200g,نسكafe جold 200g,BQ-0050-nescafe-gold-200g,,Beverages,jar,,41.25,55.00,0,5,yes
+Nescafe 3in1 20 sachets,نسكafe ٣ في ١ 20 sachets,BQ-0051-nescafe-3in1-20-sach,,Beverages,jar,,13.50,18.00,0,5,yes
+Al Ameed Arabic Coffee 250g,العمeed قهوة عربية 250g,BQ-0052-al-ameed-arabic-coff,,Beverages,pkt,,18.75,25.00,0,5,yes
+Al Ameed Turkish Coffee 250g,العمeed قهوة تركية 250g,BQ-0053-al-ameed-turkish-cof,,Beverages,pkt,,16.50,22.00,0,5,yes
+Al Ameed Cardamom Coffee 250g,العمeed قهوة بالهيل 250g,BQ-0054-al-ameed-cardamom-co,,Beverages,pkt,,21.00,28.00,0,5,yes
+Red Bull Energy Drink 250ml,ريd Bull مشروب طاقة 250ml,BQ-0055-red-bull-energy-drin,,Beverages,can,,9.00,12.00,0,5,yes
+Sting Energy Drink 250ml,ستing مشروب طاقة 250ml,BQ-0056-sting-energy-drink-2,,Beverages,can,,2.25,3.00,0,5,yes
+Power Horse Energy Drink 250ml,باور هورس 250ml,BQ-0057-power-horse-energy-d,,Beverages,can,,3.75,5.00,0,5,yes
+Capri Sun Orange 200ml,كapri sun برتقال 200ml,BQ-0058-capri-sun-orange-200,,Beverages,pcs,,1.50,2.00,0,5,yes
+Suntop Juice Orange 125ml,صن تop برتقال 125ml,BQ-0059-suntop-juice-orange-,,Beverages,pcs,,1.13,1.50,0,5,yes
+Suntop Juice Apple 125ml,صن تop تفاح 125ml,BQ-0060-suntop-juice-apple-1,,Beverages,pcs,,1.13,1.50,0,5,yes
+Suntop Juice Mango 125ml,صن تop مانجو 125ml,BQ-0061-suntop-juice-mango-1,,Beverages,pcs,,1.13,1.50,0,5,yes
+Rani Float Orange 240ml,رani فلوت برتقال 240ml,BQ-0062-rani-float-orange-24,,Beverages,can,,1.88,2.50,0,5,yes
+Rani Float Mango 240ml,رani فلوت مانجو 240ml,BQ-0063-rani-float-mango-240,,Beverages,can,,1.88,2.50,0,5,yes
+Barbican Apple 330ml,barbican تفاح 330ml,BQ-0064-barbican-apple-330ml,,Beverages,bottle,,2.25,3.00,0,5,yes
+Barbican Pomegranate 330ml,barbican رمان 330ml,BQ-0065-barbican-pomegranate,,Beverages,bottle,,2.25,3.00,0,5,yes
+Moussy Classic 330ml,moussy كلاسيك 330ml,BQ-0066-moussy-classic-330ml,,Beverages,bottle,,3.00,4.00,0,5,yes
+Hollster Malt 330ml,hollster malt 330ml,BQ-0067-hollster-malt-330ml,,Beverages,can,,2.63,3.50,0,5,yes
+Lays Classic Salted 43g,lays ملح كلاسيك 43g,BQ-0068-lays-classic-salted-,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Lays Cheese 43g,lays جبن 43g,BQ-0069-lays-cheese-43g,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Lays Ketchup 43g,lays كاتشup 43g,BQ-0070-lays-ketchup-43g,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Lays Chili 43g,lays حار 43g,BQ-0071-lays-chili-43g,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Lays Family Pack Classic 170g,lays عائلي كلاسيك 170g,BQ-0072-lays-family-pack-cla,,Snacks & Confectionery,pkt,,7.50,10.00,0,5,yes
+Doritos Nacho Cheese 44g,doritos nacho cheese 44g,BQ-0073-doritos-nacho-cheese,,Snacks & Confectionery,pkt,,2.63,3.50,0,5,yes
+Doritos Sweet Chili 44g,doritos sweet chili 44g,BQ-0074-doritos-sweet-chili-,,Snacks & Confectionery,pkt,,2.63,3.50,0,5,yes
+Doritos Family Pack 180g,doritos عائلي 180g,BQ-0075-doritos-family-pack-,,Snacks & Confectionery,pkt,,9.00,12.00,0,5,yes
+Cheetos Crunchy Cheese 35g,cheetos جبn crunchy 35g,BQ-0076-cheetos-crunchy-chee,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Cheetos Flamin Hot 35g,cheetos flamin hot 35g,BQ-0077-cheetos-flamin-hot-3,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Pringles Original 40g,pringles original 40g,BQ-0078-pringles-original-40,,Snacks & Confectionery,can,,3.75,5.00,0,5,yes
+Pringles Sour Cream 40g,pringles sour cream 40g,BQ-0079-pringles-sour-cream-,,Snacks & Confectionery,can,,3.75,5.00,0,5,yes
+Pringles BBQ 165g,pringles bbq 165g,BQ-0080-pringles-bbq-165g,,Snacks & Confectionery,can,,11.25,15.00,0,5,yes
+Galaxy Milk Chocolate 42g,galaxy شokolat milk 42g,BQ-0081-galaxy-milk-chocolat,,Snacks & Confectionery,pcs,,2.63,3.50,0,5,yes
+Galaxy Dark Chocolate 42g,galaxy شokolat dark 42g,BQ-0082-galaxy-dark-chocolat,,Snacks & Confectionery,pcs,,2.63,3.50,0,5,yes
+Galaxy Smooth Milk Bar 110g,galaxy smooth milk 110g,BQ-0083-galaxy-smooth-milk-b,,Snacks & Confectionery,pcs,,6.00,8.00,0,5,yes
+Cadbury Dairy Milk 45g,cadbury dairy milk 45g,BQ-0084-cadbury-dairy-milk-4,,Snacks & Confectionery,pcs,,2.63,3.50,0,5,yes
+Cadbury Flake 32g,cadbury flake 32g,BQ-0085-cadbury-flake-32g,,Snacks & Confectionery,pcs,,2.25,3.00,0,5,yes
+Cadbury Bournville 45g,cadbury bournville 45g,BQ-0086-cadbury-bournville-4,,Snacks & Confectionery,pcs,,3.00,4.00,0,5,yes
+KitKat 4 Finger 41.5g,kitkat 4 fingers 41.5g,BQ-0087-kitkat-4-finger-41-5,,Snacks & Confectionery,pcs,,2.63,3.50,0,5,yes
+KitKat Chunky 40g,kitkat chunky 40g,BQ-0088-kitkat-chunky-40g,,Snacks & Confectionery,pcs,,3.00,4.00,0,5,yes
+Snickers Bar 50g,snickers bar 50g,BQ-0089-snickers-bar-50g,,Snacks & Confectionery,pcs,,2.63,3.50,0,5,yes
+Snickers Mini Pack 180g,snickers mini 180g,BQ-0090-snickers-mini-pack-1,,Snacks & Confectionery,pcs,,9.00,12.00,0,5,yes
+M&M Peanut 45g,m&m peanut 45g,BQ-0091-m-m-peanut-45g,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+M&M Chocolate 45g,m&m chocolate 45g,BQ-0092-m-m-chocolate-45g,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Oreo Original 137g,oreo original 137g,BQ-0093-oreo-original-137g,,Snacks & Confectionery,pkt,,4.50,6.00,0,5,yes
+Oreo Double Stuff 137g,oreo double stuff 137g,BQ-0094-oreo-double-stuff-13,,Snacks & Confectionery,pkt,,5.25,7.00,0,5,yes
+Oreo Mini 55g,oreo mini 55g,BQ-0095-oreo-mini-55g,,Snacks & Confectionery,pkt,,2.63,3.50,0,5,yes
+Tiffany Cream Biscuits 400g,tiffany بiscuits cream 400g,BQ-0096-tiffany-cream-biscui,,Snacks & Confectionery,pkt,,6.00,8.00,0,5,yes
+Tiffany Marie Biscuits 400g,tiffany بiscuits marie 400g,BQ-0097-tiffany-marie-biscui,,Snacks & Confectionery,pkt,,5.25,7.00,0,5,yes
+Tiffany Digestive 400g,tiffany digestive 400g,BQ-0098-tiffany-digestive-40,,Snacks & Confectionery,pkt,,6.75,9.00,0,5,yes
+Ulker Hobby Chocolate 80g,ulker hobby 80g,BQ-0099-ulker-hobby-chocolat,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Ulker Albeni 34g,ulker albeni 34g,BQ-0100-ulker-albeni-34g,,Snacks & Confectionery,pkt,,1.88,2.50,0,5,yes
+Ulker Metro 36g,ulker metro 36g,BQ-0101-ulker-metro-36g,,Snacks & Confectionery,pkt,,1.88,2.50,0,5,yes
+Halawa Plain 500g,حلawa سada 500g,BQ-0102-halawa-plain-500g,,Snacks & Confectionery,pkt,,9.00,12.00,0,5,yes
+Halawa Chocolate 500g,حلawa شokolat 500g,BQ-0103-halawa-chocolate-500,,Snacks & Confectionery,pkt,,10.50,14.00,0,5,yes
+Tahini 900g,طحينة 900g,BQ-0104-tahini-900g,,Snacks & Confectionery,jar,,13.50,18.00,0,5,yes
+Peanuts Roasted 250g,فول سoudani 250g,BQ-0105-peanuts-roasted-250g,,Snacks & Confectionery,pkt,,6.00,8.00,0,5,yes
+Cashews Roasted 250g,كaju 250g,BQ-0106-cashews-roasted-250g,,Snacks & Confectionery,pkt,,18.75,25.00,0,5,yes
+Pistachios 250g,فستق 250g,BQ-0107-pistachios-250g,,Snacks & Confectionery,pkt,,26.25,35.00,0,5,yes
+Almonds 250g,لوز 250g,BQ-0108-almonds-250g,,Snacks & Confectionery,pkt,,21.00,28.00,0,5,yes
+Dates Ajwa 1kg,تمر عجوة 1kg,BQ-0109-dates-ajwa-1kg,,Snacks & Confectionery,pkt,,33.75,45.00,0,5,yes
+Dates Sukkari 1kg,تمر سkkari 1kg,BQ-0110-dates-sukkari-1kg,,Snacks & Confectionery,pkt,,26.25,35.00,0,5,yes
+Dates Khalas 1kg,تمر خلاص 1kg,BQ-0111-dates-khalas-1kg,,Snacks & Confectionery,pkt,,22.50,30.00,0,5,yes
+Choco Balls 150g,كرات شokolat 150g,BQ-0112-choco-balls-150g,,Snacks & Confectionery,pkt,,3.75,5.00,0,5,yes
+Popcorn Microwave 3 bags,فشار microwave 3 bags,BQ-0113-popcorn-microwave-3-,,Snacks & Confectionery,box,,6.00,8.00,0,5,yes
+Sunflower Seeds 200g,لب sunflower 200g,BQ-0114-sunflower-seeds-200g,,Snacks & Confectionery,pkt,,3.75,5.00,0,5,yes
+Pumpkin Seeds 200g,لب pumpkin 200g,BQ-0115-pumpkin-seeds-200g,,Snacks & Confectionery,pkt,,4.50,6.00,0,5,yes
+Abu Kass Basmati Rice 5kg,abu kass أرز basmati 5kg,BQ-0116-abu-kass-basmati-ric,,Rice & Grains,sack,,33.75,45.00,0,5,yes
+Abu Kass Basmati Rice 10kg,abu kass أرز basmati 10kg,BQ-0117-abu-kass-basmati-ric,,Rice & Grains,sack,,63.75,85.00,0,5,yes
+Abu Kass Calrose Rice 5kg,abu kass أرز calrose 5kg,BQ-0118-abu-kass-calrose-ric,,Rice & Grains,sack,,26.25,35.00,0,5,yes
+Sunwhite Basmati Rice 5kg,sunwhite أرز basmati 5kg,BQ-0119-sunwhite-basmati-ric,,Rice & Grains,sack,,31.50,42.00,0,5,yes
+Sunwhite Basmati Rice 10kg,sunwhite أرز basmati 10kg,BQ-0120-sunwhite-basmati-ric,,Rice & Grains,sack,,60.00,80.00,0,5,yes
+Al Alali All Purpose Flour 2kg,al alali دقيق 2kg,BQ-0121-al-alali-all-purpose,,Rice & Grains,pkt,,6.00,8.00,0,5,yes
+Al Alali Self Rising Flour 2kg,al alali دقيق self rising 2kg,BQ-0122-al-alali-self-rising,,Rice & Grains,pkt,,6.75,9.00,0,5,yes
+Al Alali Semolina 1kg,al alali semolina 1kg,BQ-0123-al-alali-semolina-1k,,Rice & Grains,pkt,,4.50,6.00,0,5,yes
+Al Alali Corn Flour 400g,al alali corn flour 400g,BQ-0124-al-alali-corn-flour-,,Rice & Grains,pkt,,3.75,5.00,0,5,yes
+Al Alali Baking Powder 100g,al alali baking powder 100g,BQ-0125-al-alali-baking-powd,,Rice & Grains,pkt,,3.00,4.00,0,5,yes
+Al Alali Vanilla Powder 20g,al alali vanilla 20g,BQ-0126-al-alali-vanilla-pow,,Rice & Grains,pkt,,2.25,3.00,0,5,yes
+Barilla Spaghetti 500g,barilla spaghetti 500g,BQ-0127-barilla-spaghetti-50,,Rice & Grains,pkt,,6.00,8.00,0,5,yes
+Barilla Penne 500g,barilla penne 500g,BQ-0128-barilla-penne-500g,,Rice & Grains,pkt,,6.00,8.00,0,5,yes
+Barilla Fusilli 500g,barilla fusilli 500g,BQ-0129-barilla-fusilli-500g,,Rice & Grains,pkt,,6.00,8.00,0,5,yes
+Pasta Zara Spaghetti 400g,pasta zara spaghetti 400g,BQ-0130-pasta-zara-spaghetti,,Rice & Grains,pkt,,3.00,4.00,0,5,yes
+Pasta Zara Macaroni 400g,pasta zara macaroni 400g,BQ-0131-pasta-zara-macaroni-,,Rice & Grains,pkt,,3.00,4.00,0,5,yes
+Pasta Zara Penne 400g,pasta zara penne 400g,BQ-0132-pasta-zara-penne-400,,Rice & Grains,pkt,,3.00,4.00,0,5,yes
+Pasta Zara Fusilli 400g,pasta zara fusilli 400g,BQ-0133-pasta-zara-fusilli-4,,Rice & Grains,pkt,,3.00,4.00,0,5,yes
+Pasta Zara Lasagna 500g,pasta zara lasagna 500g,BQ-0134-pasta-zara-lasagna-5,,Rice & Grains,pkt,,5.25,7.00,0,5,yes
+White Sugar 1kg,سugar أبيض 1kg,BQ-0135-white-sugar-1kg,,Rice & Grains,pkt,,3.00,4.00,0,5,yes
+Brown Sugar 1kg,سugar بني 1kg,BQ-0136-brown-sugar-1kg,,Rice & Grains,pkt,,3.75,5.00,0,5,yes
+Salt Fine 700g,ملح fine 700g,BQ-0137-salt-fine-700g,,Rice & Grains,pkt,,1.50,2.00,0,5,yes
+Salt Coarse 700g,ملح coarse 700g,BQ-0138-salt-coarse-700g,,Rice & Grains,pkt,,1.50,2.00,0,5,yes
+Lentils Red 1kg,عدس أحمر 1kg,BQ-0139-lentils-red-1kg,,Rice & Grains,pkt,,6.00,8.00,0,5,yes
+Lentils Yellow 1kg,عدس أصفر 1kg,BQ-0140-lentils-yellow-1kg,,Rice & Grains,pkt,,5.25,7.00,0,5,yes
+Chickpeas 1kg,حمص 1kg,BQ-0141-chickpeas-1kg,,Rice & Grains,pkt,,7.50,10.00,0,5,yes
+White Beans 1kg,فاصولia بيضاء 1kg,BQ-0142-white-beans-1kg,,Rice & Grains,pkt,,9.00,12.00,0,5,yes
+Freekeh 1kg,freekeh 1kg,BQ-0143-freekeh-1kg,,Rice & Grains,pkt,,11.25,15.00,0,5,yes
+Bulgur Fine 1kg,bulgur fine 1kg,BQ-0144-bulgur-fine-1kg,,Rice & Grains,pkt,,6.00,8.00,0,5,yes
+Bulgur Coarse 1kg,bulgur coarse 1kg,BQ-0145-bulgur-coarse-1kg,,Rice & Grains,pkt,,6.00,8.00,0,5,yes
+Oats 500g,شofan 500g,BQ-0146-oats-500g,,Rice & Grains,pkt,,6.00,8.00,0,5,yes
+Corn Flakes 500g,corn flakes 500g,BQ-0147-corn-flakes-500g,,Rice & Grains,box,,9.00,12.00,0,5,yes
+Cereal Honey Loops 375g,cereal honey 375g,BQ-0148-cereal-honey-loops-3,,Rice & Grains,box,,11.25,15.00,0,5,yes
+Cereal Choco Rings 375g,cereal choco 375g,BQ-0149-cereal-choco-rings-3,,Rice & Grains,box,,11.25,15.00,0,5,yes
+Quaker Oats 500g,quaker oats 500g,BQ-0150-quaker-oats-500g,,Rice & Grains,pkt,,10.50,14.00,0,5,yes
+Couscous 1kg,couscous 1kg,BQ-0151-couscous-1kg,,Rice & Grains,pkt,,9.00,12.00,0,5,yes
+Vermicelli 400g,vermicelli 400g,BQ-0152-vermicelli-400g,,Rice & Grains,pkt,,3.00,4.00,0,5,yes
+Orzo 400g,orzo 400g,BQ-0153-orzo-400g,,Rice & Grains,pkt,,3.75,5.00,0,5,yes
+Afia Sunflower Oil 1.5L,afia زيت sunflower 1.5L,BQ-0154-afia-sunflower-oil-1,,Oils & Ghee,L,,13.50,18.00,0,5,yes
+Afia Sunflower Oil 2L,afia زيت sunflower 2L,BQ-0155-afia-sunflower-oil-2,,Oils & Ghee,L,,16.50,22.00,0,5,yes
+Afia Corn Oil 1.5L,afia زيت corn 1.5L,BQ-0156-afia-corn-oil-1-5l,,Oils & Ghee,L,,15.00,20.00,0,5,yes
+Afia Olive Oil 500ml,afia زيت olive 500ml,BQ-0157-afia-olive-oil-500ml,,Oils & Ghee,L,,18.75,25.00,0,5,yes
+Afia Olive Oil Extra Virgin 500ml,afia زيت olive extra 500ml,BQ-0158-afia-olive-oil-extra,,Oils & Ghee,L,,26.25,35.00,0,5,yes
+Hayat Sunflower Oil 1.5L,hayat زيت sunflower 1.5L,BQ-0159-hayat-sunflower-oil-,,Oils & Ghee,L,,12.00,16.00,0,5,yes
+Hayat Sunflower Oil 2L,hayat زيت sunflower 2L,BQ-0160-hayat-sunflower-oil-,,Oils & Ghee,L,,15.00,20.00,0,5,yes
+Hayat Canola Oil 1.5L,hayat زيت canola 1.5L,BQ-0161-hayat-canola-oil-1-5,,Oils & Ghee,L,,13.50,18.00,0,5,yes
+Al Osra Sunflower Oil 1.5L,al osra زيت sunflower 1.5L,BQ-0162-al-osra-sunflower-oi,,Oils & Ghee,L,,12.75,17.00,0,5,yes
+Al Osra Corn Oil 1.5L,al osra زيت corn 1.5L,BQ-0163-al-osra-corn-oil-1-5,,Oils & Ghee,L,,14.25,19.00,0,5,yes
+Safa Ghee 800g,safa سمن 800g,BQ-0164-safa-ghee-800g,,Oils & Ghee,L,,24.00,32.00,0,5,yes
+Safa Ghee 1.6kg,safa سمن 1.6kg,BQ-0165-safa-ghee-1-6kg,,Oils & Ghee,L,,45.00,60.00,0,5,yes
+Vegetable Ghee 1kg,سمن vegetable 1kg,BQ-0166-vegetable-ghee-1kg,,Oils & Ghee,pkt,,16.50,22.00,0,5,yes
+Samna Baladi 800g,سمن baladi 800g,BQ-0167-samna-baladi-800g,,Oils & Ghee,jar,,21.00,28.00,0,5,yes
+Sesame Oil 500ml,زيت sesame 500ml,BQ-0168-sesame-oil-500ml,,Oils & Ghee,bottle,,15.00,20.00,0,5,yes
+Coconut Oil 500ml,زيت coconut 500ml,BQ-0169-coconut-oil-500ml,,Oils & Ghee,jar,,18.75,25.00,0,5,yes
+Goody Tuna in Water 185g,goody تuna in water 185g,BQ-0170-goody-tuna-in-water-,,Canned & Preserved,can,,6.00,8.00,0,5,yes
+Goody Tuna in Oil 185g,goody تuna in oil 185g,BQ-0171-goody-tuna-in-oil-18,,Canned & Preserved,can,,6.00,8.00,0,5,yes
+Goody Tomato Paste 135g,goody معجون tomate 135g,BQ-0172-goody-tomato-paste-1,,Canned & Preserved,can,,2.25,3.00,0,5,yes
+Goody Tomato Paste 400g,goody معجون tomate 400g,BQ-0173-goody-tomato-paste-4,,Canned & Preserved,can,,3.75,5.00,0,5,yes
+Goody Peeled Tomatoes 400g,goody طماطم peeled 400g,BQ-0174-goody-peeled-tomatoe,,Canned & Preserved,can,,3.00,4.00,0,5,yes
+Goody Chickpeas 400g,goody حمص canned 400g,BQ-0175-goody-chickpeas-400g,,Canned & Preserved,can,,3.00,4.00,0,5,yes
+Goody White Beans 400g,goody فاصولia canned 400g,BQ-0176-goody-white-beans-40,,Canned & Preserved,can,,3.00,4.00,0,5,yes
+Goody Sweet Corn 340g,goody ذرة sweet 340g,BQ-0177-goody-sweet-corn-340,,Canned & Preserved,can,,3.00,4.00,0,5,yes
+Goody Mushrooms 400g,goody فطر 400g,BQ-0178-goody-mushrooms-400g,,Canned & Preserved,can,,4.50,6.00,0,5,yes
+Goody Pickles Mixed 680g,goody مخلل mixed 680g,BQ-0179-goody-pickles-mixed-,,Canned & Preserved,can,,6.00,8.00,0,5,yes
+Goody Olives Green 450g,goody زيتون green 450g,BQ-0180-goody-olives-green-4,,Canned & Preserved,can,,7.50,10.00,0,5,yes
+Goody Olives Black 450g,goody زيتون black 450g,BQ-0181-goody-olives-black-4,,Canned & Preserved,can,,7.50,10.00,0,5,yes
+California Garden Tuna Light 185g,california garden تuna light 185g,BQ-0182-california-garden-tu,,Canned & Preserved,can,,5.25,7.00,0,5,yes
+California Garden Tomato Paste 400g,california garden معجون tomate 400g,BQ-0183-california-garden-to,,Canned & Preserved,can,,3.38,4.50,0,5,yes
+California Garden Fava Beans 400g,california garden فول 400g,BQ-0184-california-garden-fa,,Canned & Preserved,can,,2.63,3.50,0,5,yes
+California Garden Chickpeas 400g,california garden حمص 400g,BQ-0185-california-garden-ch,,Canned & Preserved,can,,2.63,3.50,0,5,yes
+California Garden Peas 400g,california garden بازilla 400g,BQ-0186-california-garden-pe,,Canned & Preserved,can,,3.00,4.00,0,5,yes
+California Garden Mixed Vegetables 400g,california garden خضار mixed 400g,BQ-0187-california-garden-mi,,Canned & Preserved,can,,3.00,4.00,0,5,yes
+Heinz Ketchup 570g,heinz كاتchup 570g,BQ-0188-heinz-ketchup-570g,,Canned & Preserved,bottle,,9.00,12.00,0,5,yes
+Heinz Ketchup 340g,heinz كاتchup 340g,BQ-0189-heinz-ketchup-340g,,Canned & Preserved,bottle,,6.00,8.00,0,5,yes
+Heinz Mayonnaise 400g,heinz mayonnaise 400g,BQ-0190-heinz-mayonnaise-400,,Canned & Preserved,bottle,,7.50,10.00,0,5,yes
+Heinz Mustard 200g,heinz mustard 200g,BQ-0191-heinz-mustard-200g,,Canned & Preserved,bottle,,6.00,8.00,0,5,yes
+Heinz BBQ Sauce 400g,heinz bbq sauce 400g,BQ-0192-heinz-bbq-sauce-400g,,Canned & Preserved,bottle,,9.00,12.00,0,5,yes
+American Garden Ketchup 567g,american garden كاتchup 567g,BQ-0193-american-garden-ketc,,Canned & Preserved,bottle,,7.50,10.00,0,5,yes
+American Garden Mayonnaise 340g,american garden mayonnaise 340g,BQ-0194-american-garden-mayo,,Canned & Preserved,bottle,,6.75,9.00,0,5,yes
+American Garden Mustard 340g,american garden mustard 340g,BQ-0195-american-garden-must,,Canned & Preserved,bottle,,6.00,8.00,0,5,yes
+American Garden Hot Sauce 355ml,american garden hot sauce 355ml,BQ-0196-american-garden-hot-,,Canned & Preserved,bottle,,7.50,10.00,0,5,yes
+American Garden Pancake Syrup 710ml,american garden pancake syrup 710ml,BQ-0197-american-garden-panc,,Canned & Preserved,bottle,,13.50,18.00,0,5,yes
+Vinegar White 1L,خل white 1L,BQ-0198-vinegar-white-1l,,Canned & Preserved,bottle,,3.00,4.00,0,5,yes
+Vinegar Apple 500ml,خل apple 500ml,BQ-0199-vinegar-apple-500ml,,Canned & Preserved,bottle,,3.75,5.00,0,5,yes
+Soy Sauce 300ml,soy sauce 300ml,BQ-0200-soy-sauce-300ml,,Canned & Preserved,bottle,,6.00,8.00,0,5,yes
+Hot Pepper Sauce 88ml,hot pepper 88ml,BQ-0201-hot-pepper-sauce-88m,,Canned & Preserved,bottle,,4.50,6.00,0,5,yes
+Tahini Sesame 450g,طحينة sesame 450g,BQ-0202-tahini-sesame-450g,,Canned & Preserved,jar,,9.00,12.00,0,5,yes
+Hummus Ready 400g,حمص ready 400g,BQ-0203-hummus-ready-400g,,Canned & Preserved,jar,,6.00,8.00,0,5,yes
+Baba Ghanoush 400g,baba ghanoush 400g,BQ-0204-baba-ghanoush-400g,,Canned & Preserved,jar,,7.50,10.00,0,5,yes
+Labneh Jar 900g,labneh jar 900g,BQ-0205-labneh-jar-900g,,Canned & Preserved,jar,,11.25,15.00,0,5,yes
+Jam Strawberry 400g,مربى strawberry 400g,BQ-0206-jam-strawberry-400g,,Canned & Preserved,jar,,6.00,8.00,0,5,yes
+Jam Apricot 400g,مربى apricot 400g,BQ-0207-jam-apricot-400g,,Canned & Preserved,jar,,6.00,8.00,0,5,yes
+Honey Natural 500g,عسل natural 500g,BQ-0208-honey-natural-500g,,Canned & Preserved,jar,,26.25,35.00,0,5,yes
+Peanut Butter 340g,peanut butter 340g,BQ-0209-peanut-butter-340g,,Canned & Preserved,jar,,9.00,12.00,0,5,yes
+Nutella 350g,nutella 350g,BQ-0210-nutella-350g,,Canned & Preserved,jar,,13.50,18.00,0,5,yes
+Nutella 750g,nutella 750g,BQ-0211-nutella-750g,,Canned & Preserved,jar,,24.00,32.00,0,5,yes
+Al Baker Black Pepper Ground 100g,al baker فلفل أسود 100g,BQ-0212-al-baker-black-peppe,,Spices & Seasonings,pkt,,6.00,8.00,0,5,yes
+Al Baker Cumin Ground 100g,al baker كمون 100g,BQ-0213-al-baker-cumin-groun,,Spices & Seasonings,pkt,,4.50,6.00,0,5,yes
+Al Baker Coriander Ground 100g,al baker كزبرة 100g,BQ-0214-al-baker-coriander-g,,Spices & Seasonings,pkt,,3.75,5.00,0,5,yes
+Al Baker Turmeric 100g,al baker كركم 100g,BQ-0215-al-baker-turmeric-10,,Spices & Seasonings,pkt,,3.75,5.00,0,5,yes
+Al Baker Cinnamon Stick 50g,al baker قرفة 50g,BQ-0216-al-baker-cinnamon-st,,Spices & Seasonings,pkt,,6.00,8.00,0,5,yes
+Al Baker Cardamom Green 50g,al baker هيل 50g,BQ-0217-al-baker-cardamom-gr,,Spices & Seasonings,pkt,,18.75,25.00,0,5,yes
+Al Baker Cloves 50g,al baker قرنفل 50g,BQ-0218-al-baker-cloves-50g,,Spices & Seasonings,pkt,,9.00,12.00,0,5,yes
+Al Baker Bay Leaves 20g,al baker ورق غار 20g,BQ-0219-al-baker-bay-leaves-,,Spices & Seasonings,pkt,,3.00,4.00,0,5,yes
+Al Baker Mixed Spice Biryani 100g,al baker بهارات biryani 100g,BQ-0220-al-baker-mixed-spice,,Spices & Seasonings,pkt,,6.00,8.00,0,5,yes
+Al Baker Mixed Spice Kabsa 100g,al baker بهارات kabsa 100g,BQ-0221-al-baker-mixed-spice,,Spices & Seasonings,pkt,,6.00,8.00,0,5,yes
+Al Baker Mixed Spice Mandi 100g,al baker بهارات mandi 100g,BQ-0222-al-baker-mixed-spice,,Spices & Seasonings,pkt,,6.00,8.00,0,5,yes
+Al Baker Chicken Seasoning 100g,al baker seasoning chicken 100g,BQ-0223-al-baker-chicken-sea,,Spices & Seasonings,pkt,,4.50,6.00,0,5,yes
+Al Baker Meat Seasoning 100g,al baker seasoning meat 100g,BQ-0224-al-baker-meat-season,,Spices & Seasonings,pkt,,4.50,6.00,0,5,yes
+Al Baker Fish Seasoning 100g,al baker seasoning fish 100g,BQ-0225-al-baker-fish-season,,Spices & Seasonings,pkt,,4.50,6.00,0,5,yes
+Al Baker Saffron 1g,al baker زعfran 1g,BQ-0226-al-baker-saffron-1g,,Spices & Seasonings,pkt,,11.25,15.00,0,5,yes
+Al Baker Sumac 100g,al baker sumac 100g,BQ-0227-al-baker-sumac-100g,,Spices & Seasonings,pkt,,6.00,8.00,0,5,yes
+Al Baker Seven Spices 100g,al baker سبع بهارات 100g,BQ-0228-al-baker-seven-spice,,Spices & Seasonings,pkt,,6.00,8.00,0,5,yes
+Dried Lime Black 100g,ليمون أسود 100g,BQ-0229-dried-lime-black-100,,Spices & Seasonings,pkt,,7.50,10.00,0,5,yes
+Dried Mint 50g,نعnaع مجفف 50g,BQ-0230-dried-mint-50g,,Spices & Seasonings,pkt,,3.75,5.00,0,5,yes
+Oregano 50g,oregano 50g,BQ-0231-oregano-50g,,Spices & Seasonings,pkt,,3.75,5.00,0,5,yes
+Paprika 100g,paprika 100g,BQ-0232-paprika-100g,,Spices & Seasonings,pkt,,4.50,6.00,0,5,yes
+Chili Powder 100g,chili powder 100g,BQ-0233-chili-powder-100g,,Spices & Seasonings,pkt,,4.50,6.00,0,5,yes
+Garlic Powder 100g,garlic powder 100g,BQ-0234-garlic-powder-100g,,Spices & Seasonings,pkt,,4.50,6.00,0,5,yes
+Onion Powder 100g,onion powder 100g,BQ-0235-onion-powder-100g,,Spices & Seasonings,pkt,,4.50,6.00,0,5,yes
+Ginger Powder 100g,ginger powder 100g,BQ-0236-ginger-powder-100g,,Spices & Seasonings,pkt,,4.50,6.00,0,5,yes
+Nutmeg 50g,nutmeg 50g,BQ-0237-nutmeg-50g,,Spices & Seasonings,pkt,,7.50,10.00,0,5,yes
+Star Anise 50g,yansoon 50g,BQ-0238-star-anise-50g,,Spices & Seasonings,pkt,,9.00,12.00,0,5,yes
+MSG 100g,msg 100g,BQ-0239-msg-100g,,Spices & Seasonings,pkt,,3.75,5.00,0,5,yes
+Bouillon Chicken 24 cubes,bouillon chicken 24 cubes,BQ-0240-bouillon-chicken-24-,,Spices & Seasonings,box,,6.00,8.00,0,5,yes
+Bouillon Beef 24 cubes,bouillon beef 24 cubes,BQ-0241-bouillon-beef-24-cub,,Spices & Seasonings,box,,6.00,8.00,0,5,yes
+Stock Powder Vegetable 12 cubes,stock vegetable 12 cubes,BQ-0242-stock-powder-vegetab,,Spices & Seasonings,box,,4.50,6.00,0,5,yes
+Arabic Bread 5 pcs,خبز عربي 5 pcs,BQ-0243-arabic-bread-5-pcs,,Bread & Bakery,pkt,,2.25,3.00,0,5,yes
+Samar Bread 6 pcs,خبز samar 6 pcs,BQ-0244-samar-bread-6-pcs,,Bread & Bakery,pkt,,3.00,4.00,0,5,yes
+Toast White 600g,toast white 600g,BQ-0245-toast-white-600g,,Bread & Bakery,pkt,,4.50,6.00,0,5,yes
+Toast Brown 600g,toast brown 600g,BQ-0246-toast-brown-600g,,Bread & Bakery,pkt,,5.25,7.00,0,5,yes
+Croissant Plain 4 pcs,كرواسan 4 pcs,BQ-0247-croissant-plain-4-pc,,Bread & Bakery,pkt,,6.00,8.00,0,5,yes
+Croissant Chocolate 4 pcs,كرواسan chocolate 4 pcs,BQ-0248-croissant-chocolate-,,Bread & Bakery,pkt,,7.50,10.00,0,5,yes
+Pita Bread 6 pcs,خبز pita 6 pcs,BQ-0249-pita-bread-6-pcs,,Bread & Bakery,pkt,,3.00,4.00,0,5,yes
+Burger Buns 6 pcs,burger buns 6 pcs,BQ-0250-burger-buns-6-pcs,,Bread & Bakery,pkt,,3.75,5.00,0,5,yes
+Hot Dog Buns 6 pcs,hot dog buns 6 pcs,BQ-0251-hot-dog-buns-6-pcs,,Bread & Bakery,pkt,,3.75,5.00,0,5,yes
+Cake Plain 400g,cake plain 400g,BQ-0252-cake-plain-400g,,Bread & Bakery,pcs,,9.00,12.00,0,5,yes
+Cake Chocolate 400g,cake chocolate 400g,BQ-0253-cake-chocolate-400g,,Bread & Bakery,pcs,,10.50,14.00,0,5,yes
+Muffin Blueberry 4 pcs,muffin blueberry 4 pcs,BQ-0254-muffin-blueberry-4-p,,Bread & Bakery,pkt,,7.50,10.00,0,5,yes
+Danish Pastry 4 pcs,danish 4 pcs,BQ-0255-danish-pastry-4-pcs,,Bread & Bakery,pkt,,9.00,12.00,0,5,yes
+Puff Pastry 400g,puff pastry 400g,BQ-0256-puff-pastry-400g,,Bread & Bakery,pkt,,7.50,10.00,0,5,yes
+Sambousek Cheese 6 pcs,sambousek cheese 6 pcs,BQ-0257-sambousek-cheese-6-p,,Bread & Bakery,pkt,,6.00,8.00,0,5,yes
+Sambousek Meat 6 pcs,sambousek meat 6 pcs,BQ-0258-sambousek-meat-6-pcs,,Bread & Bakery,pkt,,7.50,10.00,0,5,yes
+Fatayer Spinach 6 pcs,fatayer spinach 6 pcs,BQ-0259-fatayer-spinach-6-pc,,Bread & Bakery,pkt,,6.00,8.00,0,5,yes
+Fatayer Cheese 6 pcs,fatayer cheese 6 pcs,BQ-0260-fatayer-cheese-6-pcs,,Bread & Bakery,pkt,,6.00,8.00,0,5,yes
+Sadia Chicken Whole 900g,sadia دجاج whole 900g,BQ-0261-sadia-chicken-whole-,,Frozen Foods,pkt,,13.50,18.00,0,5,yes
+Sadia Chicken Breast 900g,sadia صدر دجاج 900g,BQ-0262-sadia-chicken-breast,,Frozen Foods,pkt,,16.50,22.00,0,5,yes
+Sadia Chicken Wings 900g,sadia أwings 900g,BQ-0263-sadia-chicken-wings-,,Frozen Foods,pkt,,12.00,16.00,0,5,yes
+Sadia Chicken Nuggets 400g,sadia nuggets 400g,BQ-0264-sadia-chicken-nugget,,Frozen Foods,pkt,,9.00,12.00,0,5,yes
+Sadia Chicken Strips 400g,sadia strips 400g,BQ-0265-sadia-chicken-strips,,Frozen Foods,pkt,,10.50,14.00,0,5,yes
+Sadia Beef Mince 500g,sadia لحم مفروم 500g,BQ-0266-sadia-beef-mince-500,,Frozen Foods,pkt,,15.00,20.00,0,5,yes
+Sadia Beef Burger Patties 4 pcs,sadia burger patties 4 pcs,BQ-0267-sadia-beef-burger-pa,,Frozen Foods,pkt,,11.25,15.00,0,5,yes
+Sadia French Fries 1kg,sadia بطاطس fries 1kg,BQ-0268-sadia-french-fries-1,,Frozen Foods,pkt,,9.00,12.00,0,5,yes
+Sadia Mixed Vegetables 400g,sadia خضار mixed 400g,BQ-0269-sadia-mixed-vegetabl,,Frozen Foods,pkt,,6.00,8.00,0,5,yes
+Sadia Green Peas 400g,sadia بازilla 400g,BQ-0270-sadia-green-peas-400,,Frozen Foods,pkt,,4.50,6.00,0,5,yes
+Sadia Corn Kernels 400g,sadia ذرة 400g,BQ-0271-sadia-corn-kernels-4,,Frozen Foods,pkt,,4.50,6.00,0,5,yes
+Sadia Pizza Margherita 350g,sadia pizza margherita 350g,BQ-0272-sadia-pizza-margheri,,Frozen Foods,pkt,,9.00,12.00,0,5,yes
+Sadia Pizza Pepperoni 350g,sadia pizza pepperoni 350g,BQ-0273-sadia-pizza-pepperon,,Frozen Foods,pkt,,10.50,14.00,0,5,yes
+Al Kabeer Paratha Plain 5 pcs,al kabeer paratha 5 pcs,BQ-0274-al-kabeer-paratha-pl,,Frozen Foods,pkt,,6.00,8.00,0,5,yes
+Al Kabeer Paratha Malabar 5 pcs,al kabeer paratha malabar 5 pcs,BQ-0275-al-kabeer-paratha-ma,,Frozen Foods,pkt,,6.75,9.00,0,5,yes
+Al Kabeer Samosa Potato 12 pcs,al kabeer samosa potato 12 pcs,BQ-0276-al-kabeer-samosa-pot,,Frozen Foods,pkt,,7.50,10.00,0,5,yes
+Al Kabeer Spring Rolls 12 pcs,al kabeer spring rolls 12 pcs,BQ-0277-al-kabeer-spring-rol,,Frozen Foods,pkt,,9.00,12.00,0,5,yes
+Al Kabeer Kibbeh 12 pcs,al kabeer kibbeh 12 pcs,BQ-0278-al-kabeer-kibbeh-12-,,Frozen Foods,pkt,,11.25,15.00,0,5,yes
+Al Kabeer Falafel 12 pcs,al kabeer falafel 12 pcs,BQ-0279-al-kabeer-falafel-12,,Frozen Foods,pkt,,6.00,8.00,0,5,yes
+Al Kabeer Shawarma Chicken 500g,al kabeer shawarma chicken 500g,BQ-0280-al-kabeer-shawarma-c,,Frozen Foods,pkt,,13.50,18.00,0,5,yes
+Al Kabeer Shawarma Meat 500g,al kabeer shawarma meat 500g,BQ-0281-al-kabeer-shawarma-m,,Frozen Foods,pkt,,16.50,22.00,0,5,yes
+Ice Cream Vanilla Tub 1.5L,آيس cream vanilla 1.5L,BQ-0282-ice-cream-vanilla-tu,,Frozen Foods,pcs,,13.50,18.00,0,5,yes
+Ice Cream Chocolate Tub 1.5L,آيس cream chocolate 1.5L,BQ-0283-ice-cream-chocolate-,,Frozen Foods,pcs,,13.50,18.00,0,5,yes
+Ice Cream Mango Tub 1.5L,آيس cream mango 1.5L,BQ-0284-ice-cream-mango-tub-,,Frozen Foods,pcs,,15.00,20.00,0,5,yes
+Ice Cream Pistachio Tub 1L,آيس cream pistachio 1L,BQ-0285-ice-cream-pistachio-,,Frozen Foods,pcs,,16.50,22.00,0,5,yes
+Ice Cream Cone Vanilla 4 pcs,آيس cream cone 4 pcs,BQ-0286-ice-cream-cone-vanil,,Frozen Foods,box,,6.00,8.00,0,5,yes
+Ice Cream Bar Magnum 3 pcs,magnum 3 pcs,BQ-0287-ice-cream-bar-magnum,,Frozen Foods,box,,11.25,15.00,0,5,yes
+Ice Cream Cornetto 4 pcs,cornetto 4 pcs,BQ-0288-ice-cream-cornetto-4,,Frozen Foods,box,,9.00,12.00,0,5,yes
+Tomato 1kg,طماطم 1kg,BQ-0289-tomato-1kg,,Fresh Produce,kg,,3.75,5.00,0,5,yes
+Cucumber 1kg,خيار 1kg,BQ-0290-cucumber-1kg,,Fresh Produce,kg,,3.00,4.00,0,5,yes
+Onion White 1kg,بصل أبيض 1kg,BQ-0291-onion-white-1kg,,Fresh Produce,kg,,2.25,3.00,0,5,yes
+Onion Red 1kg,بصل أحمر 1kg,BQ-0292-onion-red-1kg,,Fresh Produce,kg,,3.00,4.00,0,5,yes
+Potato 1kg,بطاطس 1kg,BQ-0293-potato-1kg,,Fresh Produce,kg,,2.63,3.50,0,5,yes
+Carrot 1kg,جزر 1kg,BQ-0294-carrot-1kg,,Fresh Produce,kg,,3.00,4.00,0,5,yes
+Bell Pepper Green 1kg,فلفل أخضر 1kg,BQ-0295-bell-pepper-green-1k,,Fresh Produce,kg,,6.00,8.00,0,5,yes
+Bell Pepper Red 1kg,فلفل أحمر 1kg,BQ-0296-bell-pepper-red-1kg,,Fresh Produce,kg,,7.50,10.00,0,5,yes
+Eggplant 1kg,باذنجان 1kg,BQ-0297-eggplant-1kg,,Fresh Produce,kg,,4.50,6.00,0,5,yes
+Zucchini 1kg,كوسa 1kg,BQ-0298-zucchini-1kg,,Fresh Produce,kg,,4.50,6.00,0,5,yes
+Cabbage 1 pcs,ملفوف 1 pcs,BQ-0299-cabbage-1-pcs,,Fresh Produce,pcs,,3.00,4.00,0,5,yes
+Lettuce 1 pcs,خس 1 pcs,BQ-0300-lettuce-1-pcs,,Fresh Produce,pcs,,2.25,3.00,0,5,yes
+Spinach 1 bundle,سبانخ 1 bundle,BQ-0301-spinach-1-bundle,,Fresh Produce,bundle,,2.25,3.00,0,5,yes
+Coriander Fresh 1 bundle,كزبرة طازجة 1 bundle,BQ-0302-coriander-fresh-1-bu,,Fresh Produce,bundle,,1.50,2.00,0,5,yes
+Parsley Fresh 1 bundle,بقدونس 1 bundle,BQ-0303-parsley-fresh-1-bund,,Fresh Produce,bundle,,1.50,2.00,0,5,yes
+Mint Fresh 1 bundle,نعnaع طازج 1 bundle,BQ-0304-mint-fresh-1-bundle,,Fresh Produce,bundle,,1.50,2.00,0,5,yes
+Garlic 250g,ثوم 250g,BQ-0305-garlic-250g,,Fresh Produce,pkt,,3.75,5.00,0,5,yes
+Ginger Fresh 250g,زنجبيل 250g,BQ-0306-ginger-fresh-250g,,Fresh Produce,pkt,,4.50,6.00,0,5,yes
+Lemon 1kg,ليمون 1kg,BQ-0307-lemon-1kg,,Fresh Produce,kg,,3.75,5.00,0,5,yes
+Orange 1kg,برتقال 1kg,BQ-0308-orange-1kg,,Fresh Produce,kg,,4.50,6.00,0,5,yes
+Apple Red 1kg,تفاح أحمر 1kg,BQ-0309-apple-red-1kg,,Fresh Produce,kg,,6.00,8.00,0,5,yes
+Apple Green 1kg,تفاح أخضر 1kg,BQ-0310-apple-green-1kg,,Fresh Produce,kg,,6.00,8.00,0,5,yes
+Banana 1kg,موز 1kg,BQ-0311-banana-1kg,,Fresh Produce,kg,,3.75,5.00,0,5,yes
+Grapes Green 1kg,عنب أخضر 1kg,BQ-0312-grapes-green-1kg,,Fresh Produce,kg,,9.00,12.00,0,5,yes
+Grapes Red 1kg,عنب أحمر 1kg,BQ-0313-grapes-red-1kg,,Fresh Produce,kg,,10.50,14.00,0,5,yes
+Watermelon 1 pcs,بطيخ 1 pcs,BQ-0314-watermelon-1-pcs,,Fresh Produce,pcs,,11.25,15.00,0,5,yes
+Melon 1 pcs,شمام 1 pcs,BQ-0315-melon-1-pcs,,Fresh Produce,pcs,,9.00,12.00,0,5,yes
+Pomegranate 1kg,رمان 1kg,BQ-0316-pomegranate-1kg,,Fresh Produce,kg,,11.25,15.00,0,5,yes
+Mango 1kg,مانgo 1kg,BQ-0317-mango-1kg,,Fresh Produce,kg,,9.00,12.00,0,5,yes
+Pineapple 1 pcs,أnanas 1 pcs,BQ-0318-pineapple-1-pcs,,Fresh Produce,pcs,,7.50,10.00,0,5,yes
+Avocado 1 pcs,أvocado 1 pcs,BQ-0319-avocado-1-pcs,,Fresh Produce,pcs,,3.75,5.00,0,5,yes
+Kiwi 1kg,kiwi 1kg,BQ-0320-kiwi-1kg,,Fresh Produce,kg,,13.50,18.00,0,5,yes
+Strawberry 250g,فراولة 250g,BQ-0321-strawberry-250g,,Fresh Produce,pkt,,9.00,12.00,0,5,yes
+Blueberry 125g,blueberry 125g,BQ-0322-blueberry-125g,,Fresh Produce,pkt,,11.25,15.00,0,5,yes
+Dove Soap Bar 135g,dove صابon 135g,BQ-0323-dove-soap-bar-135g,,Personal Care,pcs,,3.75,5.00,0,5,yes
+Dove Body Wash 500ml,dove body wash 500ml,BQ-0324-dove-body-wash-500ml,,Personal Care,pcs,,16.50,22.00,0,5,yes
+Dove Shampoo 400ml,dove shampoo 400ml,BQ-0325-dove-shampoo-400ml,,Personal Care,pcs,,18.75,25.00,0,5,yes
+Dove Conditioner 400ml,dove conditioner 400ml,BQ-0326-dove-conditioner-400,,Personal Care,pcs,,18.75,25.00,0,5,yes
+Dove Deodorant 150ml,dove deodorant 150ml,BQ-0327-dove-deodorant-150ml,,Personal Care,pcs,,13.50,18.00,0,5,yes
+Nivea Cream Blue 150ml,nivea cream blue 150ml,BQ-0328-nivea-cream-blue-150,,Personal Care,pcs,,11.25,15.00,0,5,yes
+Nivea Body Lotion 400ml,nivea body lotion 400ml,BQ-0329-nivea-body-lotion-40,,Personal Care,pcs,,18.75,25.00,0,5,yes
+Nivea Deodorant Roll On 50ml,nivea deodorant 50ml,BQ-0330-nivea-deodorant-roll,,Personal Care,pcs,,9.00,12.00,0,5,yes
+Nivea Lip Balm 4.8g,nivea lip balm 4.8g,BQ-0331-nivea-lip-balm-4-8g,,Personal Care,pcs,,7.50,10.00,0,5,yes
+Nivea Men Shaving Foam 200ml,nivea shaving foam 200ml,BQ-0332-nivea-men-shaving-fo,,Personal Care,pcs,,13.50,18.00,0,5,yes
+Head & Shoulders Shampoo Classic 400ml,head & shoulders shampoo 400ml,BQ-0333-head-shoulders-shamp,,Personal Care,bottle,,21.00,28.00,0,5,yes
+Head & Shoulders Shampoo Menthol 400ml,head & shoulders shampoo menthol 400ml,BQ-0334-head-shoulders-shamp,,Personal Care,bottle,,21.00,28.00,0,5,yes
+Head & Shoulders Shampoo Smooth 400ml,head & shoulders shampoo smooth 400ml,BQ-0335-head-shoulders-shamp,,Personal Care,bottle,,21.00,28.00,0,5,yes
+Colgate Toothpaste Max Fresh 120ml,colgate معجون أسنان 120ml,BQ-0336-colgate-toothpaste-m,,Personal Care,tube,,9.00,12.00,0,5,yes
+Colgate Toothpaste Total 120ml,colgate معجون total 120ml,BQ-0337-colgate-toothpaste-t,,Personal Care,tube,,10.50,14.00,0,5,yes
+Colgate Toothpaste Kids 50ml,colgate معجون kids 50ml,BQ-0338-colgate-toothpaste-k,,Personal Care,tube,,6.00,8.00,0,5,yes
+Colgate Mouthwash 250ml,colgate غargle 250ml,BQ-0339-colgate-mouthwash-25,,Personal Care,tube,,11.25,15.00,0,5,yes
+Signal Toothpaste White 120ml,signal معجون 120ml,BQ-0340-signal-toothpaste-wh,,Personal Care,tube,,6.00,8.00,0,5,yes
+Signal Toothpaste Herbal 120ml,signal معجون herbal 120ml,BQ-0341-signal-toothpaste-he,,Personal Care,tube,,6.00,8.00,0,5,yes
+Pantene Shampoo 400ml,pantene shampoo 400ml,BQ-0342-pantene-shampoo-400m,,Personal Care,bottle,,16.50,22.00,0,5,yes
+Pantene Conditioner 360ml,pantene conditioner 360ml,BQ-0343-pantene-conditioner-,,Personal Care,bottle,,16.50,22.00,0,5,yes
+Pantene Hair Oil 100ml,pantene hair oil 100ml,BQ-0344-pantene-hair-oil-100,,Personal Care,bottle,,13.50,18.00,0,5,yes
+Gillette Razor Blue 2 2 pcs,gillette razor 2 pcs,BQ-0345-gillette-razor-blue-,,Personal Care,pcs,,6.00,8.00,0,5,yes
+Gillette Razor Mach3 1 pcs,gillette mach3 1 pcs,BQ-0346-gillette-razor-mach3,,Personal Care,pcs,,26.25,35.00,0,5,yes
+Gillette Shaving Gel 200ml,gillette shaving gel 200ml,BQ-0347-gillette-shaving-gel,,Personal Care,pcs,,16.50,22.00,0,5,yes
+Gillette Foam Sensitive 200ml,gillette foam 200ml,BQ-0348-gillette-foam-sensit,,Personal Care,pcs,,13.50,18.00,0,5,yes
+Toothbrush Soft 1 pcs,فرشاة أسنان soft 1 pcs,BQ-0349-toothbrush-soft-1-pc,,Personal Care,pcs,,3.75,5.00,0,5,yes
+Toothbrush Medium 1 pcs,فرشاة أسنان medium 1 pcs,BQ-0350-toothbrush-medium-1-,,Personal Care,pcs,,3.75,5.00,0,5,yes
+Dental Floss 50m,dental floss 50m,BQ-0351-dental-floss-50m,,Personal Care,pcs,,6.00,8.00,0,5,yes
+Cotton Buds 200 pcs,cotton buds 200 pcs,BQ-0352-cotton-buds-200-pcs,,Personal Care,box,,4.50,6.00,0,5,yes
+Cotton Pads 80 pcs,cotton pads 80 pcs,BQ-0353-cotton-pads-80-pcs,,Personal Care,pkt,,6.00,8.00,0,5,yes
+Sanitary Pads Regular 10 pcs,فوط صحية 10 pcs,BQ-0354-sanitary-pads-regula,,Personal Care,pkt,,9.00,12.00,0,5,yes
+Sanitary Pads Night 8 pcs,فوط ليلية 8 pcs,BQ-0355-sanitary-pads-night-,,Personal Care,pkt,,10.50,14.00,0,5,yes
+Baby Diapers Size 3 44 pcs,حفاضات size 3 44 pcs,BQ-0356-baby-diapers-size-3-,,Personal Care,pkt,,41.25,55.00,0,5,yes
+Baby Diapers Size 4 40 pcs,حفاضات size 4 40 pcs,BQ-0357-baby-diapers-size-4-,,Personal Care,pkt,,41.25,55.00,0,5,yes
+Baby Diapers Size 5 36 pcs,حفاضات size 5 36 pcs,BQ-0358-baby-diapers-size-5-,,Personal Care,pkt,,41.25,55.00,0,5,yes
+Baby Wipes 80 pcs,مناديل baby 80 pcs,BQ-0359-baby-wipes-80-pcs,,Personal Care,pkt,,9.00,12.00,0,5,yes
+Shampoo Anti Dandruff 400ml,shampoo anti dandruff 400ml,BQ-0360-shampoo-anti-dandruf,,Personal Care,bottle,,15.00,20.00,0,5,yes
+Hair Gel 250ml,gel شعر 250ml,BQ-0361-hair-gel-250ml,,Personal Care,jar,,9.00,12.00,0,5,yes
+Hair Spray 250ml,hair spray 250ml,BQ-0362-hair-spray-250ml,,Personal Care,bottle,,11.25,15.00,0,5,yes
+Face Wash 150ml,face wash 150ml,BQ-0363-face-wash-150ml,,Personal Care,tube,,13.50,18.00,0,5,yes
+Body Soap Antibacterial 125g,صابon antibacterial 125g,BQ-0364-body-soap-antibacter,,Personal Care,pcs,,3.00,4.00,0,5,yes
+Hand Sanitizer 500ml,معقم يد 500ml,BQ-0365-hand-sanitizer-500ml,,Personal Care,bottle,,9.00,12.00,0,5,yes
+Sunscreen SPF 50 100ml,sunscreen 100ml,BQ-0366-sunscreen-spf-50-100,,Personal Care,tube,,26.25,35.00,0,5,yes
+Vaseline Petroleum 100ml,vaseline 100ml,BQ-0367-vaseline-petroleum-1,,Personal Care,jar,,7.50,10.00,0,5,yes
+Aloe Vera Gel 200ml,aloe vera 200ml,BQ-0368-aloe-vera-gel-200ml,,Personal Care,tube,,11.25,15.00,0,5,yes
+Comb 1 pcs,مشط 1 pcs,BQ-0369-comb-1-pcs,,Personal Care,pcs,,2.25,3.00,0,5,yes
+Hair Brush 1 pcs,فرشaة شعر 1 pcs,BQ-0370-hair-brush-1-pcs,,Personal Care,pcs,,6.00,8.00,0,5,yes
+Nail Clipper 1 pcs,مقص أظافر 1 pcs,BQ-0371-nail-clipper-1-pcs,,Personal Care,pcs,,3.75,5.00,0,5,yes
+Razor Disposable 5pk 5 pcs,razor disposable 5 pcs,BQ-0372-razor-disposable-5pk,,Personal Care,pkt,,7.50,10.00,0,5,yes
+Shower Cap 1 pcs,shower cap 1 pcs,BQ-0373-shower-cap-1-pcs,,Personal Care,pcs,,2.25,3.00,0,5,yes
+Persil Detergent Powder 3kg,persil مسحوق غسيل 3kg,BQ-0374-persil-detergent-pow,,Household & Cleaning,pkt,,26.25,35.00,0,5,yes
+Persil Detergent Powder 6kg,persil مسحوق غسيل 6kg,BQ-0375-persil-detergent-pow,,Household & Cleaning,pkt,,45.00,60.00,0,5,yes
+Persil Detergent Liquid 2.5L,persil سائل غسيل 2.5L,BQ-0376-persil-detergent-liq,,Household & Cleaning,pkt,,30.00,40.00,0,5,yes
+Persil Fabric Softener 2L,persil منعم 2L,BQ-0377-persil-fabric-soften,,Household & Cleaning,pkt,,18.75,25.00,0,5,yes
+Tide Detergent Powder 3kg,tide مسحوق 3kg,BQ-0378-tide-detergent-powde,,Household & Cleaning,pkt,,28.50,38.00,0,5,yes
+Tide Detergent Liquid 2.5L,tide سائل 2.5L,BQ-0379-tide-detergent-liqui,,Household & Cleaning,pkt,,31.50,42.00,0,5,yes
+Tide Pods 15 pcs,tide pods 15 pcs,BQ-0380-tide-pods-15-pcs,,Household & Cleaning,pkt,,26.25,35.00,0,5,yes
+Ariel Detergent Powder 3kg,ariel مسحوق 3kg,BQ-0381-ariel-detergent-powd,,Household & Cleaning,pkt,,27.00,36.00,0,5,yes
+Ariel Detergent Liquid 2.5L,ariel سائل 2.5L,BQ-0382-ariel-detergent-liqu,,Household & Cleaning,pkt,,30.00,40.00,0,5,yes
+Ariel Pods 12 pcs,ariel pods 12 pcs,BQ-0383-ariel-pods-12-pcs,,Household & Cleaning,pkt,,22.50,30.00,0,5,yes
+Fairy Dishwashing Liquid 1L,fairy سائل جلي 1L,BQ-0384-fairy-dishwashing-li,,Household & Cleaning,bottle,,9.00,12.00,0,5,yes
+Fairy Dishwashing Liquid Lemon 1L,fairy سائل lemon 1L,BQ-0385-fairy-dishwashing-li,,Household & Cleaning,bottle,,9.00,12.00,0,5,yes
+Fairy Dishwashing Liquid Apple 1L,fairy سائل apple 1L,BQ-0386-fairy-dishwashing-li,,Household & Cleaning,bottle,,9.00,12.00,0,5,yes
+Pril Dishwashing Liquid 1L,pril سائل جلي 1L,BQ-0387-pril-dishwashing-liq,,Household & Cleaning,bottle,,7.50,10.00,0,5,yes
+Pril Dishwashing Liquid Lemon 1L,pril سائل lemon 1L,BQ-0388-pril-dishwashing-liq,,Household & Cleaning,bottle,,7.50,10.00,0,5,yes
+Clorox Bleach 3.78L,clorox كلorox 3.78L,BQ-0389-clorox-bleach-3-78l,,Household & Cleaning,bottle,,11.25,15.00,0,5,yes
+Clorox Bleach 1.89L,clorox كلorox 1.89L,BQ-0390-clorox-bleach-1-89l,,Household & Cleaning,bottle,,7.50,10.00,0,5,yes
+Clorox Toilet Cleaner 750ml,clorox منظف مرحاض 750ml,BQ-0391-clorox-toilet-cleane,,Household & Cleaning,bottle,,9.00,12.00,0,5,yes
+Clorox Multi Surface 750ml,clorox multi surface 750ml,BQ-0392-clorox-multi-surface,,Household & Cleaning,bottle,,10.50,14.00,0,5,yes
+Dettol Antiseptic 750ml,dettol معقم 750ml,BQ-0393-dettol-antiseptic-75,,Household & Cleaning,bottle,,16.50,22.00,0,5,yes
+Dettol Antiseptic 1L,dettol معقم 1L,BQ-0394-dettol-antiseptic-1l,,Household & Cleaning,bottle,,21.00,28.00,0,5,yes
+Dettol Hand Wash 200ml,dettol hand wash 200ml,BQ-0395-dettol-hand-wash-200,,Household & Cleaning,bottle,,9.00,12.00,0,5,yes
+Dettol Surface Cleaner 750ml,dettol surface cleaner 750ml,BQ-0396-dettol-surface-clean,,Household & Cleaning,bottle,,11.25,15.00,0,5,yes
+Fine Tissue Toilet Roll 12 rolls,fine منadil wc 12 rolls,BQ-0397-fine-tissue-toilet-r,,Household & Cleaning,roll,,13.50,18.00,0,5,yes
+Fine Tissue Toilet Roll 24 rolls,fine منadil wc 24 rolls,BQ-0398-fine-tissue-toilet-r,,Household & Cleaning,roll,,24.00,32.00,0,5,yes
+Fine Facial Tissue Box 200 sheets,fine منadil وجه 200 sheets,BQ-0399-fine-facial-tissue-b,,Household & Cleaning,roll,,6.00,8.00,0,5,yes
+Fine Kitchen Towel 2 rolls,fine kitchen towel 2 rolls,BQ-0400-fine-kitchen-towel-2,,Household & Cleaning,roll,,9.00,12.00,0,5,yes
+Fine Wet Wipes 80 pcs,fine wet wipes 80 pcs,BQ-0401-fine-wet-wipes-80-pc,,Household & Cleaning,roll,,7.50,10.00,0,5,yes
+Pampers Baby Diapers Size 1 44 pcs,pampers حفاضات 1 44 pcs,BQ-0402-pampers-baby-diapers,,Household & Cleaning,pkt,,37.50,50.00,0,5,yes
+Pampers Baby Diapers Size 2 44 pcs,pampers حفاضات 2 44 pcs,BQ-0403-pampers-baby-diapers,,Household & Cleaning,pkt,,39.00,52.00,0,5,yes
+Pampers Baby Wipes Sensitive 64 pcs,pampers wipes sensitive 64 pcs,BQ-0404-pampers-baby-wipes-s,,Household & Cleaning,pkt,,10.50,14.00,0,5,yes
+Trash Bags Large 30 pcs,أكياس نفايات 30 pcs,BQ-0405-trash-bags-large-30-,,Household & Cleaning,roll,,9.00,12.00,0,5,yes
+Trash Bags Medium 30 pcs,أكياس medium 30 pcs,BQ-0406-trash-bags-medium-30,,Household & Cleaning,roll,,7.50,10.00,0,5,yes
+Aluminum Foil 30m,ورق أluminum 30m,BQ-0407-aluminum-foil-30m,,Household & Cleaning,roll,,9.00,12.00,0,5,yes
+Cling Film 30m,ناylon 30m,BQ-0408-cling-film-30m,,Household & Cleaning,roll,,6.00,8.00,0,5,yes
+Baking Paper 20 sheets,baking paper 20 sheets,BQ-0409-baking-paper-20-shee,,Household & Cleaning,roll,,6.00,8.00,0,5,yes
+Sponge Scrub 3 pcs,sponge 3 pcs,BQ-0410-sponge-scrub-3-pcs,,Household & Cleaning,pkt,,3.75,5.00,0,5,yes
+Steel Wool 6 pcs,steel wool 6 pcs,BQ-0411-steel-wool-6-pcs,,Household & Cleaning,pkt,,3.00,4.00,0,5,yes
+Floor Cleaner Pine 1.5L,منظف أرضيات 1.5L,BQ-0412-floor-cleaner-pine-1,,Household & Cleaning,bottle,,11.25,15.00,0,5,yes
+Floor Cleaner Lavender 1.5L,منظف lavender 1.5L,BQ-0413-floor-cleaner-lavend,,Household & Cleaning,bottle,,11.25,15.00,0,5,yes
+Glass Cleaner 750ml,glass cleaner 750ml,BQ-0414-glass-cleaner-750ml,,Household & Cleaning,bottle,,7.50,10.00,0,5,yes
+Air Freshener Spray 300ml,معطر 300ml,BQ-0415-air-freshener-spray-,,Household & Cleaning,can,,9.00,12.00,0,5,yes
+Air Freshener Gel 150g,معطر gel 150g,BQ-0416-air-freshener-gel-15,,Household & Cleaning,jar,,6.00,8.00,0,5,yes
+Insect Spray 400ml,رsh insect 400ml,BQ-0417-insect-spray-400ml,,Household & Cleaning,can,,11.25,15.00,0,5,yes
+Moth Balls 100g,moth balls 100g,BQ-0418-moth-balls-100g,,Household & Cleaning,pkt,,4.50,6.00,0,5,yes
+Matches Box 10 boxes,عود ثقاب 10 boxes,BQ-0419-matches-box-10-boxes,,Household & Cleaning,box,,3.75,5.00,0,5,yes
+Lighter Disposable 1 pcs,ولاعة 1 pcs,BQ-0420-lighter-disposable-1,,Household & Cleaning,pcs,,1.50,2.00,0,5,yes
+Charcoal BBQ 3kg,فحم 3kg,BQ-0421-charcoal-bbq-3kg,,Household & Cleaning,bag,,11.25,15.00,0,5,yes
+Fire Starter 24 cubes,fire starter 24 cubes,BQ-0422-fire-starter-24-cube,,Household & Cleaning,box,,6.00,8.00,0,5,yes
+Battery AA 4pk 4 pcs,بطاريات AA 4 pcs,BQ-0423-battery-aa-4pk-4-pcs,,Household & Cleaning,pkt,,6.00,8.00,0,5,yes
+Battery AAA 4pk 4 pcs,بطاريات AAA 4 pcs,BQ-0424-battery-aaa-4pk-4-pc,,Household & Cleaning,pkt,,6.00,8.00,0,5,yes
+Light Bulb LED 9W 1 pcs,لمبة LED 1 pcs,BQ-0425-light-bulb-led-9w-1-,,Household & Cleaning,pcs,,6.00,8.00,0,5,yes
+Extension Cord 3m 1 pcs,موصل كهrb 1 pcs,BQ-0426-extension-cord-3m-1-,,Household & Cleaning,pcs,,18.75,25.00,0,5,yes
+Duct Tape 1 roll,شريط لاصق 1 roll,BQ-0427-duct-tape-1-roll,,Household & Cleaning,roll,,4.50,6.00,0,5,yes
+Super Glue 1 pcs,super glue 1 pcs,BQ-0428-super-glue-1-pcs,,Household & Cleaning,pcs,,3.00,4.00,0,5,yes
+Plastic Cups 50pk 50 pcs,أكواب plastic 50 pcs,BQ-0429-plastic-cups-50pk-50,,Household & Cleaning,pkt,,6.00,8.00,0,5,yes
+Plastic Plates 25pk 25 pcs,أطباق plastic 25 pcs,BQ-0430-plastic-plates-25pk-,,Household & Cleaning,pkt,,7.50,10.00,0,5,yes
+Paper Plates 25pk 25 pcs,أطباق paper 25 pcs,BQ-0431-paper-plates-25pk-25,,Household & Cleaning,pkt,,6.00,8.00,0,5,yes
+Garbage Bin 30L 1 pcs,سلة نفايات 1 pcs,BQ-0432-garbage-bin-30l-1-pc,,Household & Cleaning,pcs,,26.25,35.00,0,5,yes
+Mop Stick 1 pcs,ممسحة 1 pcs,BQ-0433-mop-stick-1-pcs,,Household & Cleaning,pcs,,18.75,25.00,0,5,yes
+Broom 1 pcs,مكنسة 1 pcs,BQ-0434-broom-1-pcs,,Household & Cleaning,pcs,,15.00,20.00,0,5,yes
+Johnson's Baby Shampoo 200ml,johnson's shampoo baby 200ml,BQ-0435-johnson-s-baby-shamp,,Baby Care,bottle,,13.50,18.00,0,5,yes
+Johnson's Baby Oil 200ml,johnson's زيت baby 200ml,BQ-0436-johnson-s-baby-oil-2,,Baby Care,bottle,,11.25,15.00,0,5,yes
+Johnson's Baby Lotion 200ml,johnson's lotion baby 200ml,BQ-0437-johnson-s-baby-lotio,,Baby Care,bottle,,13.50,18.00,0,5,yes
+Johnson's Baby Powder 200g,johnson's powder baby 200g,BQ-0438-johnson-s-baby-powde,,Baby Care,bottle,,9.00,12.00,0,5,yes
+Johnson's Baby Soap 125g,johnson's صابon baby 125g,BQ-0439-johnson-s-baby-soap-,,Baby Care,bottle,,6.00,8.00,0,5,yes
+Johnson's Baby Wipes 72 pcs,johnson's wipes baby 72 pcs,BQ-0440-johnson-s-baby-wipes,,Baby Care,bottle,,10.50,14.00,0,5,yes
+Huggies Diapers Size 3 44 pcs,huggies حفاضات 3 44 pcs,BQ-0441-huggies-diapers-size,,Baby Care,pkt,,43.50,58.00,0,5,yes
+Huggies Diapers Size 4 40 pcs,huggies حفاضات 4 40 pcs,BQ-0442-huggies-diapers-size,,Baby Care,pkt,,43.50,58.00,0,5,yes
+Huggies Diapers Size 5 36 pcs,huggies حفاضات 5 36 pcs,BQ-0443-huggies-diapers-size,,Baby Care,pkt,,43.50,58.00,0,5,yes
+Huggies Pull Ups Size 4 22 pcs,huggies pull ups 4 22 pcs,BQ-0444-huggies-pull-ups-siz,,Baby Care,pkt,,33.75,45.00,0,5,yes
+Baby Formula Stage 1 400g,حليب أطفال 1 400g,BQ-0445-baby-formula-stage-1,,Baby Care,can,,33.75,45.00,0,5,yes
+Baby Formula Stage 2 400g,حليب أطفال 2 400g,BQ-0446-baby-formula-stage-2,,Baby Care,can,,33.75,45.00,0,5,yes
+Baby Formula Stage 3 400g,حليب أطفال 3 400g,BQ-0447-baby-formula-stage-3,,Baby Care,can,,31.50,42.00,0,5,yes
+Baby Cereal Rice 200g,cereal rice 200g,BQ-0448-baby-cereal-rice-200,,Baby Care,box,,11.25,15.00,0,5,yes
+Baby Cereal Wheat 200g,cereal wheat 200g,BQ-0449-baby-cereal-wheat-20,,Baby Care,box,,11.25,15.00,0,5,yes
+Baby Biscuits 150g,biscuits baby 150g,BQ-0450-baby-biscuits-150g,,Baby Care,pkt,,7.50,10.00,0,5,yes
+Baby Bottle 250ml 250ml,bottle baby 250ml,BQ-0451-baby-bottle-250ml-25,,Baby Care,pcs,,18.75,25.00,0,5,yes
+Pacifier 1 pcs,لهاية 1 pcs,BQ-0452-pacifier-1-pcs,,Baby Care,pcs,,9.00,12.00,0,5,yes
+Baby Nail Scissors 1 pcs,مقص أظافر baby 1 pcs,BQ-0453-baby-nail-scissors-1,,Baby Care,pcs,,7.50,10.00,0,5,yes
+Baby Thermometer 1 pcs,thermometer 1 pcs,BQ-0454-baby-thermometer-1-p,,Baby Care,pcs,,26.25,35.00,0,5,yes
+Indomie Instant Noodles Flavor 1,Indomie نoodles 1,BQ-0455-indomie-instant-nood,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Indomie Instant Noodles Flavor 2,Indomie نoodles 2,BQ-0456-indomie-instant-nood,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Indomie Instant Noodles Flavor 3,Indomie نoodles 3,BQ-0457-indomie-instant-nood,,Snacks & Confectionery,pkt,,1.50,2.00,0,5,yes
+Indomie Instant Noodles Flavor 4,Indomie نoodles 4,BQ-0458-indomie-instant-nood,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Indomie Instant Noodles Flavor 5,Indomie نoodles 5,BQ-0459-indomie-instant-nood,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Indomie Instant Noodles Flavor 6,Indomie نoodles 6,BQ-0460-indomie-instant-nood,,Snacks & Confectionery,pkt,,1.50,2.00,0,5,yes
+Indomie Instant Noodles Flavor 7,Indomie نoodles 7,BQ-0461-indomie-instant-nood,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Indomie Instant Noodles Flavor 8,Indomie نoodles 8,BQ-0462-indomie-instant-nood,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Maggi Instant Noodles Flavor 1,Maggi نoodles 1,BQ-0463-maggi-instant-noodle,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Maggi Instant Noodles Flavor 2,Maggi نoodles 2,BQ-0464-maggi-instant-noodle,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Maggi Instant Noodles Flavor 3,Maggi نoodles 3,BQ-0465-maggi-instant-noodle,,Snacks & Confectionery,pkt,,1.50,2.00,0,5,yes
+Maggi Instant Noodles Flavor 4,Maggi نoodles 4,BQ-0466-maggi-instant-noodle,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Maggi Instant Noodles Flavor 5,Maggi نoodles 5,BQ-0467-maggi-instant-noodle,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Maggi Instant Noodles Flavor 6,Maggi نoodles 6,BQ-0468-maggi-instant-noodle,,Snacks & Confectionery,pkt,,1.50,2.00,0,5,yes
+Maggi Instant Noodles Flavor 7,Maggi نoodles 7,BQ-0469-maggi-instant-noodle,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Maggi Instant Noodles Flavor 8,Maggi نoodles 8,BQ-0470-maggi-instant-noodle,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Nissin Instant Noodles Flavor 1,Nissin نoodles 1,BQ-0471-nissin-instant-noodl,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Nissin Instant Noodles Flavor 2,Nissin نoodles 2,BQ-0472-nissin-instant-noodl,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Nissin Instant Noodles Flavor 3,Nissin نoodles 3,BQ-0473-nissin-instant-noodl,,Snacks & Confectionery,pkt,,1.50,2.00,0,5,yes
+Nissin Instant Noodles Flavor 4,Nissin نoodles 4,BQ-0474-nissin-instant-noodl,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Nissin Instant Noodles Flavor 5,Nissin نoodles 5,BQ-0475-nissin-instant-noodl,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Nissin Instant Noodles Flavor 6,Nissin نoodles 6,BQ-0476-nissin-instant-noodl,,Snacks & Confectionery,pkt,,1.50,2.00,0,5,yes
+Nissin Instant Noodles Flavor 7,Nissin نoodles 7,BQ-0477-nissin-instant-noodl,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Nissin Instant Noodles Flavor 8,Nissin نoodles 8,BQ-0478-nissin-instant-noodl,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Samyang Instant Noodles Flavor 1,Samyang نoodles 1,BQ-0479-samyang-instant-nood,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Samyang Instant Noodles Flavor 2,Samyang نoodles 2,BQ-0480-samyang-instant-nood,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Samyang Instant Noodles Flavor 3,Samyang نoodles 3,BQ-0481-samyang-instant-nood,,Snacks & Confectionery,pkt,,1.50,2.00,0,5,yes
+Samyang Instant Noodles Flavor 4,Samyang نoodles 4,BQ-0482-samyang-instant-nood,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Samyang Instant Noodles Flavor 5,Samyang نoodles 5,BQ-0483-samyang-instant-nood,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Samyang Instant Noodles Flavor 6,Samyang نoodles 6,BQ-0484-samyang-instant-nood,,Snacks & Confectionery,pkt,,1.50,2.00,0,5,yes
+Samyang Instant Noodles Flavor 7,Samyang نoodles 7,BQ-0485-samyang-instant-nood,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Samyang Instant Noodles Flavor 8,Samyang نoodles 8,BQ-0486-samyang-instant-nood,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Knorr Instant Noodles Flavor 1,Knorr نoodles 1,BQ-0487-knorr-instant-noodle,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Knorr Instant Noodles Flavor 2,Knorr نoodles 2,BQ-0488-knorr-instant-noodle,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Knorr Instant Noodles Flavor 3,Knorr نoodles 3,BQ-0489-knorr-instant-noodle,,Snacks & Confectionery,pkt,,1.50,2.00,0,5,yes
+Knorr Instant Noodles Flavor 4,Knorr نoodles 4,BQ-0490-knorr-instant-noodle,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Knorr Instant Noodles Flavor 5,Knorr نoodles 5,BQ-0491-knorr-instant-noodle,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Knorr Instant Noodles Flavor 6,Knorr نoodles 6,BQ-0492-knorr-instant-noodle,,Snacks & Confectionery,pkt,,1.50,2.00,0,5,yes
+Knorr Instant Noodles Flavor 7,Knorr نoodles 7,BQ-0493-knorr-instant-noodle,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Knorr Instant Noodles Flavor 8,Knorr نoodles 8,BQ-0494-knorr-instant-noodle,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Heinz Hot Sauce 400g,Heinz Hot صلصة,BQ-0495-heinz-hot-sauce-400g,,Canned & Preserved,bottle,,7.53,10.03,0,5,yes
+Heinz Garlic Sauce 400g,Heinz Garlic صلصة,BQ-0496-heinz-garlic-sauce-4,,Canned & Preserved,bottle,,9.81,13.08,0,5,yes
+Heinz Soy Sauce 400g,Heinz Soy صلصة,BQ-0497-heinz-soy-sauce-400g,,Canned & Preserved,bottle,,6.29,8.39,0,5,yes
+Heinz Teriyaki Sauce 400g,Heinz Teriyaki صلصة,BQ-0498-heinz-teriyaki-sauce,,Canned & Preserved,bottle,,8.92,11.89,0,5,yes
+Heinz Chili Garlic Sauce 400g,Heinz Chili Garlic صلصة,BQ-0499-heinz-chili-garlic-s,,Canned & Preserved,bottle,,8.82,11.76,0,5,yes
+Heinz Ranch Sauce 400g,Heinz Ranch صلصة,BQ-0500-heinz-ranch-sauce-40,,Canned & Preserved,bottle,,7.30,9.74,0,5,yes
+Heinz Caesar Sauce 400g,Heinz Caesar صلصة,BQ-0501-heinz-caesar-sauce-4,,Canned & Preserved,bottle,,9.25,12.34,0,5,yes
+Goody Hot Sauce 400g,Goody Hot صلصة,BQ-0502-goody-hot-sauce-400g,,Canned & Preserved,bottle,,10.23,13.63,0,5,yes
+Goody Garlic Sauce 400g,Goody Garlic صلصة,BQ-0503-goody-garlic-sauce-4,,Canned & Preserved,bottle,,8.15,10.87,0,5,yes
+Goody Soy Sauce 400g,Goody Soy صلصة,BQ-0504-goody-soy-sauce-400g,,Canned & Preserved,bottle,,6.55,8.73,0,5,yes
+Goody Teriyaki Sauce 400g,Goody Teriyaki صلصة,BQ-0505-goody-teriyaki-sauce,,Canned & Preserved,bottle,,8.25,11.00,0,5,yes
+Goody Chili Garlic Sauce 400g,Goody Chili Garlic صلصة,BQ-0506-goody-chili-garlic-s,,Canned & Preserved,bottle,,9.61,12.82,0,5,yes
+Goody BBQ Sauce 400g,Goody BBQ صلصة,BQ-0507-goody-bbq-sauce-400g,,Canned & Preserved,bottle,,10.32,13.76,0,5,yes
+Goody Ranch Sauce 400g,Goody Ranch صلصة,BQ-0508-goody-ranch-sauce-40,,Canned & Preserved,bottle,,7.71,10.29,0,5,yes
+Goody Caesar Sauce 400g,Goody Caesar صلصة,BQ-0509-goody-caesar-sauce-4,,Canned & Preserved,bottle,,8.17,10.89,0,5,yes
+American Garden Hot Sauce 400g,American Garden Hot صلصة,BQ-0510-american-garden-hot-,,Canned & Preserved,bottle,,9.19,12.25,0,5,yes
+American Garden Garlic Sauce 400g,American Garden Garlic صلصة,BQ-0511-american-garden-garl,,Canned & Preserved,bottle,,9.05,12.06,0,5,yes
+American Garden Soy Sauce 400g,American Garden Soy صلصة,BQ-0512-american-garden-soy-,,Canned & Preserved,bottle,,8.12,10.83,0,5,yes
+American Garden Teriyaki Sauce 400g,American Garden Teriyaki صلصة,BQ-0513-american-garden-teri,,Canned & Preserved,bottle,,10.23,13.65,0,5,yes
+American Garden Chili Garlic Sauce 400g,American Garden Chili Garlic صلصة,BQ-0514-american-garden-chil,,Canned & Preserved,bottle,,8.46,11.29,0,5,yes
+American Garden BBQ Sauce 400g,American Garden BBQ صلصة,BQ-0515-american-garden-bbq-,,Canned & Preserved,bottle,,8.94,11.92,0,5,yes
+American Garden Ranch Sauce 400g,American Garden Ranch صلصة,BQ-0516-american-garden-ranc,,Canned & Preserved,bottle,,10.38,13.83,0,5,yes
+American Garden Caesar Sauce 400g,American Garden Caesar صلصة,BQ-0517-american-garden-caes,,Canned & Preserved,bottle,,9.66,12.88,0,5,yes
+Maggi Hot Sauce 400g,Maggi Hot صلصة,BQ-0518-maggi-hot-sauce-400g,,Canned & Preserved,bottle,,9.71,12.95,0,5,yes
+Maggi Garlic Sauce 400g,Maggi Garlic صلصة,BQ-0519-maggi-garlic-sauce-4,,Canned & Preserved,bottle,,7.31,9.75,0,5,yes
+Maggi Soy Sauce 400g,Maggi Soy صلصة,BQ-0520-maggi-soy-sauce-400g,,Canned & Preserved,bottle,,7.21,9.61,0,5,yes
+Maggi Teriyaki Sauce 400g,Maggi Teriyaki صلصة,BQ-0521-maggi-teriyaki-sauce,,Canned & Preserved,bottle,,7.63,10.18,0,5,yes
+Maggi Chili Garlic Sauce 400g,Maggi Chili Garlic صلصة,BQ-0522-maggi-chili-garlic-s,,Canned & Preserved,bottle,,9.26,12.35,0,5,yes
+Maggi BBQ Sauce 400g,Maggi BBQ صلصة,BQ-0523-maggi-bbq-sauce-400g,,Canned & Preserved,bottle,,8.04,10.72,0,5,yes
+Maggi Ranch Sauce 400g,Maggi Ranch صلصة,BQ-0524-maggi-ranch-sauce-40,,Canned & Preserved,bottle,,7.77,10.36,0,5,yes
+Maggi Caesar Sauce 400g,Maggi Caesar صلصة,BQ-0525-maggi-caesar-sauce-4,,Canned & Preserved,bottle,,10.03,13.37,0,5,yes
+Knorr Hot Sauce 400g,Knorr Hot صلصة,BQ-0526-knorr-hot-sauce-400g,,Canned & Preserved,bottle,,6.85,9.14,0,5,yes
+Knorr Garlic Sauce 400g,Knorr Garlic صلصة,BQ-0527-knorr-garlic-sauce-4,,Canned & Preserved,bottle,,8.23,10.97,0,5,yes
+Knorr Soy Sauce 400g,Knorr Soy صلصة,BQ-0528-knorr-soy-sauce-400g,,Canned & Preserved,bottle,,8.39,11.19,0,5,yes
+Knorr Teriyaki Sauce 400g,Knorr Teriyaki صلصة,BQ-0529-knorr-teriyaki-sauce,,Canned & Preserved,bottle,,8.64,11.52,0,5,yes
+Knorr Chili Garlic Sauce 400g,Knorr Chili Garlic صلصة,BQ-0530-knorr-chili-garlic-s,,Canned & Preserved,bottle,,8.47,11.30,0,5,yes
+Knorr BBQ Sauce 400g,Knorr BBQ صلصة,BQ-0531-knorr-bbq-sauce-400g,,Canned & Preserved,bottle,,9.66,12.88,0,5,yes
+Knorr Ranch Sauce 400g,Knorr Ranch صلصة,BQ-0532-knorr-ranch-sauce-40,,Canned & Preserved,bottle,,10.25,13.67,0,5,yes
+Knorr Caesar Sauce 400g,Knorr Caesar صلصة,BQ-0533-knorr-caesar-sauce-4,,Canned & Preserved,bottle,,7.86,10.48,0,5,yes
+Al Rabie Orange Juice 200ml,Al Rabie Orange عصير,BQ-0534-al-rabie-orange-juic,,Beverages,pcs,,1.56,2.09,0,5,yes
+Al Rabie Apple Juice 200ml,Al Rabie Apple عصير,BQ-0535-al-rabie-apple-juice,,Beverages,pcs,,2.27,3.02,0,5,yes
+Al Rabie Mango Juice 200ml,Al Rabie Mango عصير,BQ-0536-al-rabie-mango-juice,,Beverages,pcs,,1.36,1.81,0,5,yes
+Al Rabie Grape Juice 1L,Al Rabie Grape عصير,BQ-0537-al-rabie-grape-juice,,Beverages,L,,7.76,10.34,0,5,yes
+Al Rabie Grape Juice 200ml,Al Rabie Grape عصير,BQ-0538-al-rabie-grape-juice,,Beverages,pcs,,2.48,3.31,0,5,yes
+Al Rabie Mixed Fruit Juice 200ml,Al Rabie Mixed Fruit عصير,BQ-0539-al-rabie-mixed-fruit,,Beverages,pcs,,2.29,3.05,0,5,yes
+Al Rabie Pineapple Juice 1L,Al Rabie Pineapple عصير,BQ-0540-al-rabie-pineapple-j,,Beverages,L,,5.58,7.44,0,5,yes
+Al Rabie Pineapple Juice 200ml,Al Rabie Pineapple عصير,BQ-0541-al-rabie-pineapple-j,,Beverages,pcs,,2.35,3.14,0,5,yes
+Al Rabie Pomegranate Juice 1L,Al Rabie Pomegranate عصير,BQ-0542-al-rabie-pomegranate,,Beverages,L,,8.02,10.69,0,5,yes
+Al Rabie Pomegranate Juice 200ml,Al Rabie Pomegranate عصير,BQ-0543-al-rabie-pomegranate,,Beverages,pcs,,2.18,2.91,0,5,yes
+Al Rabie Peach Juice 1L,Al Rabie Peach عصير,BQ-0544-al-rabie-peach-juice,,Beverages,L,,7.00,9.34,0,5,yes
+Al Rabie Peach Juice 200ml,Al Rabie Peach عصير,BQ-0545-al-rabie-peach-juice,,Beverages,pcs,,1.74,2.32,0,5,yes
+Sun Top Orange Juice 1L,Sun Top Orange عصير,BQ-0546-sun-top-orange-juice,,Beverages,L,,7.90,10.54,0,5,yes
+Sun Top Orange Juice 200ml,Sun Top Orange عصير,BQ-0547-sun-top-orange-juice,,Beverages,pcs,,2.27,3.03,0,5,yes
+Sun Top Apple Juice 1L,Sun Top Apple عصير,BQ-0548-sun-top-apple-juice-,,Beverages,L,,6.85,9.14,0,5,yes
+Sun Top Apple Juice 200ml,Sun Top Apple عصير,BQ-0549-sun-top-apple-juice-,,Beverages,pcs,,2.11,2.81,0,5,yes
+Sun Top Mango Juice 1L,Sun Top Mango عصير,BQ-0550-sun-top-mango-juice-,,Beverages,L,,8.14,10.85,0,5,yes
+Sun Top Mango Juice 200ml,Sun Top Mango عصير,BQ-0551-sun-top-mango-juice-,,Beverages,pcs,,1.61,2.15,0,5,yes
+Sun Top Grape Juice 1L,Sun Top Grape عصير,BQ-0552-sun-top-grape-juice-,,Beverages,L,,7.99,10.66,0,5,yes
+Sun Top Grape Juice 200ml,Sun Top Grape عصير,BQ-0553-sun-top-grape-juice-,,Beverages,pcs,,2.30,3.07,0,5,yes
+Sun Top Mixed Fruit Juice 1L,Sun Top Mixed Fruit عصير,BQ-0554-sun-top-mixed-fruit-,,Beverages,L,,5.46,7.28,0,5,yes
+Sun Top Mixed Fruit Juice 200ml,Sun Top Mixed Fruit عصير,BQ-0555-sun-top-mixed-fruit-,,Beverages,pcs,,2.18,2.91,0,5,yes
+Sun Top Pineapple Juice 1L,Sun Top Pineapple عصير,BQ-0556-sun-top-pineapple-ju,,Beverages,L,,6.41,8.54,0,5,yes
+Sun Top Pineapple Juice 200ml,Sun Top Pineapple عصير,BQ-0557-sun-top-pineapple-ju,,Beverages,pcs,,1.65,2.19,0,5,yes
+Sun Top Pomegranate Juice 1L,Sun Top Pomegranate عصير,BQ-0558-sun-top-pomegranate-,,Beverages,L,,7.72,10.30,0,5,yes
+Sun Top Pomegranate Juice 200ml,Sun Top Pomegranate عصير,BQ-0559-sun-top-pomegranate-,,Beverages,pcs,,1.20,1.60,0,5,yes
+Sun Top Peach Juice 1L,Sun Top Peach عصير,BQ-0560-sun-top-peach-juice-,,Beverages,L,,7.76,10.35,0,5,yes
+Sun Top Peach Juice 200ml,Sun Top Peach عصير,BQ-0561-sun-top-peach-juice-,,Beverages,pcs,,2.22,2.96,0,5,yes
+Capri Sun Orange Juice 1L,Capri Sun Orange عصير,BQ-0562-capri-sun-orange-jui,,Beverages,L,,5.22,6.96,0,5,yes
+Capri Sun Orange Juice 200ml,Capri Sun Orange عصير,BQ-0563-capri-sun-orange-jui,,Beverages,pcs,,2.59,3.45,0,5,yes
+Capri Sun Apple Juice 1L,Capri Sun Apple عصير,BQ-0564-capri-sun-apple-juic,,Beverages,L,,7.52,10.03,0,5,yes
+Capri Sun Apple Juice 200ml,Capri Sun Apple عصير,BQ-0565-capri-sun-apple-juic,,Beverages,pcs,,2.42,3.22,0,5,yes
+Capri Sun Mango Juice 1L,Capri Sun Mango عصير,BQ-0566-capri-sun-mango-juic,,Beverages,L,,8.13,10.84,0,5,yes
+Capri Sun Mango Juice 200ml,Capri Sun Mango عصير,BQ-0567-capri-sun-mango-juic,,Beverages,pcs,,1.34,1.78,0,5,yes
+Capri Sun Grape Juice 1L,Capri Sun Grape عصير,BQ-0568-capri-sun-grape-juic,,Beverages,L,,6.18,8.24,0,5,yes
+Capri Sun Grape Juice 200ml,Capri Sun Grape عصير,BQ-0569-capri-sun-grape-juic,,Beverages,pcs,,2.11,2.81,0,5,yes
+Capri Sun Mixed Fruit Juice 1L,Capri Sun Mixed Fruit عصير,BQ-0570-capri-sun-mixed-frui,,Beverages,L,,5.01,6.68,0,5,yes
+Capri Sun Mixed Fruit Juice 200ml,Capri Sun Mixed Fruit عصير,BQ-0571-capri-sun-mixed-frui,,Beverages,pcs,,1.44,1.92,0,5,yes
+Capri Sun Pineapple Juice 1L,Capri Sun Pineapple عصير,BQ-0572-capri-sun-pineapple-,,Beverages,L,,8.20,10.94,0,5,yes
+Capri Sun Pineapple Juice 200ml,Capri Sun Pineapple عصير,BQ-0573-capri-sun-pineapple-,,Beverages,pcs,,2.01,2.68,0,5,yes
+Capri Sun Pomegranate Juice 1L,Capri Sun Pomegranate عصير,BQ-0574-capri-sun-pomegranat,,Beverages,L,,4.69,6.25,0,5,yes
+Capri Sun Pomegranate Juice 200ml,Capri Sun Pomegranate عصير,BQ-0575-capri-sun-pomegranat,,Beverages,pcs,,2.57,3.43,0,5,yes
+Capri Sun Peach Juice 1L,Capri Sun Peach عصير,BQ-0576-capri-sun-peach-juic,,Beverages,L,,5.01,6.68,0,5,yes
+Capri Sun Peach Juice 200ml,Capri Sun Peach عصير,BQ-0577-capri-sun-peach-juic,,Beverages,pcs,,2.38,3.18,0,5,yes
+Rani Orange Juice 1L,Rani Orange عصير,BQ-0578-rani-orange-juice-1l,,Beverages,L,,5.66,7.55,0,5,yes
+Rani Orange Juice 200ml,Rani Orange عصير,BQ-0579-rani-orange-juice-20,,Beverages,pcs,,1.37,1.83,0,5,yes
+Rani Apple Juice 1L,Rani Apple عصير,BQ-0580-rani-apple-juice-1l,,Beverages,L,,6.50,8.67,0,5,yes
+Rani Apple Juice 200ml,Rani Apple عصير,BQ-0581-rani-apple-juice-200,,Beverages,pcs,,2.13,2.84,0,5,yes
+Rani Mango Juice 1L,Rani Mango عصير,BQ-0582-rani-mango-juice-1l,,Beverages,L,,6.83,9.11,0,5,yes
+Rani Mango Juice 200ml,Rani Mango عصير,BQ-0583-rani-mango-juice-200,,Beverages,pcs,,2.31,3.08,0,5,yes
+Rani Grape Juice 1L,Rani Grape عصير,BQ-0584-rani-grape-juice-1l,,Beverages,L,,7.10,9.47,0,5,yes
+Rani Grape Juice 200ml,Rani Grape عصير,BQ-0585-rani-grape-juice-200,,Beverages,pcs,,1.83,2.44,0,5,yes
+Rani Mixed Fruit Juice 1L,Rani Mixed Fruit عصير,BQ-0586-rani-mixed-fruit-jui,,Beverages,L,,4.97,6.62,0,5,yes
+Rani Mixed Fruit Juice 200ml,Rani Mixed Fruit عصير,BQ-0587-rani-mixed-fruit-jui,,Beverages,pcs,,2.12,2.83,0,5,yes
+Rani Pineapple Juice 1L,Rani Pineapple عصير,BQ-0588-rani-pineapple-juice,,Beverages,L,,6.45,8.60,0,5,yes
+Rani Pineapple Juice 200ml,Rani Pineapple عصير,BQ-0589-rani-pineapple-juice,,Beverages,pcs,,2.11,2.81,0,5,yes
+Rani Pomegranate Juice 1L,Rani Pomegranate عصير,BQ-0590-rani-pomegranate-jui,,Beverages,L,,6.50,8.67,0,5,yes
+Rani Pomegranate Juice 200ml,Rani Pomegranate عصير,BQ-0591-rani-pomegranate-jui,,Beverages,pcs,,1.57,2.10,0,5,yes
+Rani Peach Juice 1L,Rani Peach عصير,BQ-0592-rani-peach-juice-1l,,Beverages,L,,7.28,9.71,0,5,yes
+Rani Peach Juice 200ml,Rani Peach عصير,BQ-0593-rani-peach-juice-200,,Beverages,pcs,,2.61,3.48,0,5,yes
+Tropicana Orange Juice 1L,Tropicana Orange عصير,BQ-0594-tropicana-orange-jui,,Beverages,L,,5.64,7.52,0,5,yes
+Tropicana Orange Juice 200ml,Tropicana Orange عصير,BQ-0595-tropicana-orange-jui,,Beverages,pcs,,1.94,2.58,0,5,yes
+Tropicana Apple Juice 1L,Tropicana Apple عصير,BQ-0596-tropicana-apple-juic,,Beverages,L,,7.24,9.65,0,5,yes
+Tropicana Apple Juice 200ml,Tropicana Apple عصير,BQ-0597-tropicana-apple-juic,,Beverages,pcs,,2.50,3.33,0,5,yes
+Tropicana Mango Juice 1L,Tropicana Mango عصير,BQ-0598-tropicana-mango-juic,,Beverages,L,,7.69,10.26,0,5,yes
+Tropicana Mango Juice 200ml,Tropicana Mango عصير,BQ-0599-tropicana-mango-juic,,Beverages,pcs,,1.76,2.34,0,5,yes
+Tropicana Grape Juice 1L,Tropicana Grape عصير,BQ-0600-tropicana-grape-juic,,Beverages,L,,8.18,10.90,0,5,yes
+Tropicana Grape Juice 200ml,Tropicana Grape عصير,BQ-0601-tropicana-grape-juic,,Beverages,pcs,,2.48,3.30,0,5,yes
+Tropicana Mixed Fruit Juice 1L,Tropicana Mixed Fruit عصير,BQ-0602-tropicana-mixed-frui,,Beverages,L,,6.73,8.98,0,5,yes
+Tropicana Mixed Fruit Juice 200ml,Tropicana Mixed Fruit عصير,BQ-0603-tropicana-mixed-frui,,Beverages,pcs,,1.96,2.62,0,5,yes
+Tropicana Pineapple Juice 1L,Tropicana Pineapple عصير,BQ-0604-tropicana-pineapple-,,Beverages,L,,6.68,8.91,0,5,yes
+Tropicana Pineapple Juice 200ml,Tropicana Pineapple عصير,BQ-0605-tropicana-pineapple-,,Beverages,pcs,,1.74,2.32,0,5,yes
+Tropicana Pomegranate Juice 1L,Tropicana Pomegranate عصير,BQ-0606-tropicana-pomegranat,,Beverages,L,,4.77,6.36,0,5,yes
+Tropicana Pomegranate Juice 200ml,Tropicana Pomegranate عصير,BQ-0607-tropicana-pomegranat,,Beverages,pcs,,1.68,2.24,0,5,yes
+Tropicana Peach Juice 1L,Tropicana Peach عصير,BQ-0608-tropicana-peach-juic,,Beverages,L,,5.60,7.47,0,5,yes
+Tropicana Peach Juice 200ml,Tropicana Peach عصير,BQ-0609-tropicana-peach-juic,,Beverages,pcs,,1.88,2.51,0,5,yes
+Minute Maid Orange Juice 1L,Minute Maid Orange عصير,BQ-0610-minute-maid-orange-j,,Beverages,L,,7.50,10.00,0,5,yes
+Minute Maid Orange Juice 200ml,Minute Maid Orange عصير,BQ-0611-minute-maid-orange-j,,Beverages,pcs,,2.56,3.41,0,5,yes
+Minute Maid Apple Juice 1L,Minute Maid Apple عصير,BQ-0612-minute-maid-apple-ju,,Beverages,L,,5.72,7.62,0,5,yes
+Minute Maid Apple Juice 200ml,Minute Maid Apple عصير,BQ-0613-minute-maid-apple-ju,,Beverages,pcs,,1.65,2.20,0,5,yes
+Minute Maid Mango Juice 1L,Minute Maid Mango عصير,BQ-0614-minute-maid-mango-ju,,Beverages,L,,5.20,6.93,0,5,yes
+Minute Maid Mango Juice 200ml,Minute Maid Mango عصير,BQ-0615-minute-maid-mango-ju,,Beverages,pcs,,1.46,1.95,0,5,yes
+Minute Maid Grape Juice 1L,Minute Maid Grape عصير,BQ-0616-minute-maid-grape-ju,,Beverages,L,,5.77,7.69,0,5,yes
+Minute Maid Grape Juice 200ml,Minute Maid Grape عصير,BQ-0617-minute-maid-grape-ju,,Beverages,pcs,,2.51,3.35,0,5,yes
+Minute Maid Mixed Fruit Juice 1L,Minute Maid Mixed Fruit عصير,BQ-0618-minute-maid-mixed-fr,,Beverages,L,,5.07,6.75,0,5,yes
+Minute Maid Mixed Fruit Juice 200ml,Minute Maid Mixed Fruit عصير,BQ-0619-minute-maid-mixed-fr,,Beverages,pcs,,1.39,1.85,0,5,yes
+Minute Maid Pineapple Juice 1L,Minute Maid Pineapple عصير,BQ-0620-minute-maid-pineappl,,Beverages,L,,5.45,7.27,0,5,yes
+Minute Maid Pineapple Juice 200ml,Minute Maid Pineapple عصير,BQ-0621-minute-maid-pineappl,,Beverages,pcs,,1.68,2.24,0,5,yes
+Minute Maid Pomegranate Juice 1L,Minute Maid Pomegranate عصير,BQ-0622-minute-maid-pomegran,,Beverages,L,,5.30,7.06,0,5,yes
+Minute Maid Pomegranate Juice 200ml,Minute Maid Pomegranate عصير,BQ-0623-minute-maid-pomegran,,Beverages,pcs,,1.95,2.60,0,5,yes
+Minute Maid Peach Juice 1L,Minute Maid Peach عصير,BQ-0624-minute-maid-peach-ju,,Beverages,L,,7.03,9.38,0,5,yes
+Minute Maid Peach Juice 200ml,Minute Maid Peach عصير,BQ-0625-minute-maid-peach-ju,,Beverages,pcs,,1.60,2.13,0,5,yes
+Haribo Gummy Bears,Haribo Gummy Bears,BQ-0626-haribo-gummy-bears,,Snacks & Confectionery,pkt,,2.09,2.78,0,5,yes
+Haribo Lollipops,Haribo Lollipops,BQ-0627-haribo-lollipops,,Snacks & Confectionery,pkt,,2.57,3.43,0,5,yes
+Haribo Chewing Gum,Haribo Chewing Gum,BQ-0628-haribo-chewing-gum,,Snacks & Confectionery,pkt,,1.92,2.56,0,5,yes
+Haribo Mints,Haribo Mints,BQ-0629-haribo-mints,,Snacks & Confectionery,pkt,,3.22,4.30,0,5,yes
+Haribo Hard Candy,Haribo Hard Candy,BQ-0630-haribo-hard-candy,,Snacks & Confectionery,pkt,,3.84,5.12,0,5,yes
+Haribo Jelly,Haribo Jelly,BQ-0631-haribo-jelly,,Snacks & Confectionery,pkt,,1.65,2.20,0,5,yes
+Haribo Marshmallow,Haribo Marshmallow,BQ-0632-haribo-marshmallow,,Snacks & Confectionery,pkt,,2.35,3.13,0,5,yes
+Haribo Toffee,Haribo Toffee,BQ-0633-haribo-toffee,,Snacks & Confectionery,pkt,,4.30,5.74,0,5,yes
+Chupa Chups Gummy Bears,Chupa Chups Gummy Bears,BQ-0634-chupa-chups-gummy-be,,Snacks & Confectionery,pkt,,4.41,5.88,0,5,yes
+Chupa Chups Lollipops,Chupa Chups Lollipops,BQ-0635-chupa-chups-lollipop,,Snacks & Confectionery,pkt,,1.55,2.07,0,5,yes
+Chupa Chups Chewing Gum,Chupa Chups Chewing Gum,BQ-0636-chupa-chups-chewing-,,Snacks & Confectionery,pkt,,1.54,2.06,0,5,yes
+Chupa Chups Mints,Chupa Chups Mints,BQ-0637-chupa-chups-mints,,Snacks & Confectionery,pkt,,3.07,4.09,0,5,yes
+Chupa Chups Hard Candy,Chupa Chups Hard Candy,BQ-0638-chupa-chups-hard-can,,Snacks & Confectionery,pkt,,2.30,3.06,0,5,yes
+Chupa Chups Jelly,Chupa Chups Jelly,BQ-0639-chupa-chups-jelly,,Snacks & Confectionery,pkt,,3.49,4.65,0,5,yes
+Chupa Chups Marshmallow,Chupa Chups Marshmallow,BQ-0640-chupa-chups-marshmal,,Snacks & Confectionery,pkt,,3.85,5.14,0,5,yes
+Chupa Chups Toffee,Chupa Chups Toffee,BQ-0641-chupa-chups-toffee,,Snacks & Confectionery,pkt,,4.12,5.49,0,5,yes
+Extra Gummy Bears,Extra Gummy Bears,BQ-0642-extra-gummy-bears,,Snacks & Confectionery,pkt,,2.70,3.60,0,5,yes
+Extra Lollipops,Extra Lollipops,BQ-0643-extra-lollipops,,Snacks & Confectionery,pkt,,2.88,3.84,0,5,yes
+Extra Chewing Gum,Extra Chewing Gum,BQ-0644-extra-chewing-gum,,Snacks & Confectionery,pkt,,3.23,4.31,0,5,yes
+Extra Mints,Extra Mints,BQ-0645-extra-mints,,Snacks & Confectionery,pkt,,2.74,3.66,0,5,yes
+Extra Hard Candy,Extra Hard Candy,BQ-0646-extra-hard-candy,,Snacks & Confectionery,pkt,,2.17,2.89,0,5,yes
+Extra Jelly,Extra Jelly,BQ-0647-extra-jelly,,Snacks & Confectionery,pkt,,4.33,5.77,0,5,yes
+Extra Marshmallow,Extra Marshmallow,BQ-0648-extra-marshmallow,,Snacks & Confectionery,pkt,,3.84,5.12,0,5,yes
+Extra Toffee,Extra Toffee,BQ-0649-extra-toffee,,Snacks & Confectionery,pkt,,3.32,4.43,0,5,yes
+Mentos Gummy Bears,Mentos Gummy Bears,BQ-0650-mentos-gummy-bears,,Snacks & Confectionery,pkt,,3.97,5.29,0,5,yes
+Mentos Lollipops,Mentos Lollipops,BQ-0651-mentos-lollipops,,Snacks & Confectionery,pkt,,1.86,2.48,0,5,yes
+Mentos Chewing Gum,Mentos Chewing Gum,BQ-0652-mentos-chewing-gum,,Snacks & Confectionery,pkt,,1.60,2.13,0,5,yes
+Mentos Mints,Mentos Mints,BQ-0653-mentos-mints,,Snacks & Confectionery,pkt,,4.25,5.67,0,5,yes
+Mentos Hard Candy,Mentos Hard Candy,BQ-0654-mentos-hard-candy,,Snacks & Confectionery,pkt,,3.28,4.38,0,5,yes
+Mentos Jelly,Mentos Jelly,BQ-0655-mentos-jelly,,Snacks & Confectionery,pkt,,3.47,4.62,0,5,yes
+Mentos Marshmallow,Mentos Marshmallow,BQ-0656-mentos-marshmallow,,Snacks & Confectionery,pkt,,2.36,3.14,0,5,yes
+Mentos Toffee,Mentos Toffee,BQ-0657-mentos-toffee,,Snacks & Confectionery,pkt,,1.66,2.21,0,5,yes
+Alpenliebe Gummy Bears,Alpenliebe Gummy Bears,BQ-0658-alpenliebe-gummy-bea,,Snacks & Confectionery,pkt,,3.51,4.68,0,5,yes
+Alpenliebe Lollipops,Alpenliebe Lollipops,BQ-0659-alpenliebe-lollipops,,Snacks & Confectionery,pkt,,2.27,3.02,0,5,yes
+Alpenliebe Chewing Gum,Alpenliebe Chewing Gum,BQ-0660-alpenliebe-chewing-g,,Snacks & Confectionery,pkt,,4.42,5.90,0,5,yes
+Alpenliebe Mints,Alpenliebe Mints,BQ-0661-alpenliebe-mints,,Snacks & Confectionery,pkt,,3.95,5.27,0,5,yes
+Alpenliebe Hard Candy,Alpenliebe Hard Candy,BQ-0662-alpenliebe-hard-cand,,Snacks & Confectionery,pkt,,3.45,4.60,0,5,yes
+Alpenliebe Jelly,Alpenliebe Jelly,BQ-0663-alpenliebe-jelly,,Snacks & Confectionery,pkt,,3.29,4.39,0,5,yes
+Alpenliebe Marshmallow,Alpenliebe Marshmallow,BQ-0664-alpenliebe-marshmall,,Snacks & Confectionery,pkt,,1.79,2.39,0,5,yes
+Alpenliebe Toffee,Alpenliebe Toffee,BQ-0665-alpenliebe-toffee,,Snacks & Confectionery,pkt,,2.99,3.99,0,5,yes
+Halls Gummy Bears,Halls Gummy Bears,BQ-0666-halls-gummy-bears,,Snacks & Confectionery,pkt,,4.35,5.80,0,5,yes
+Halls Lollipops,Halls Lollipops,BQ-0667-halls-lollipops,,Snacks & Confectionery,pkt,,4.23,5.63,0,5,yes
+Halls Chewing Gum,Halls Chewing Gum,BQ-0668-halls-chewing-gum,,Snacks & Confectionery,pkt,,3.00,4.00,0,5,yes
+Halls Mints,Halls Mints,BQ-0669-halls-mints,,Snacks & Confectionery,pkt,,1.63,2.17,0,5,yes
+Halls Hard Candy,Halls Hard Candy,BQ-0670-halls-hard-candy,,Snacks & Confectionery,pkt,,4.15,5.54,0,5,yes
+Halls Jelly,Halls Jelly,BQ-0671-halls-jelly,,Snacks & Confectionery,pkt,,2.25,3.00,0,5,yes
+Halls Marshmallow,Halls Marshmallow,BQ-0672-halls-marshmallow,,Snacks & Confectionery,pkt,,3.22,4.29,0,5,yes
+Halls Toffee,Halls Toffee,BQ-0673-halls-toffee,,Snacks & Confectionery,pkt,,4.33,5.77,0,5,yes
+Trolli Gummy Bears,Trolli Gummy Bears,BQ-0674-trolli-gummy-bears,,Snacks & Confectionery,pkt,,4.14,5.53,0,5,yes
+Trolli Lollipops,Trolli Lollipops,BQ-0675-trolli-lollipops,,Snacks & Confectionery,pkt,,4.46,5.94,0,5,yes
+Trolli Chewing Gum,Trolli Chewing Gum,BQ-0676-trolli-chewing-gum,,Snacks & Confectionery,pkt,,3.70,4.93,0,5,yes
+Trolli Mints,Trolli Mints,BQ-0677-trolli-mints,,Snacks & Confectionery,pkt,,2.69,3.59,0,5,yes
+Trolli Hard Candy,Trolli Hard Candy,BQ-0678-trolli-hard-candy,,Snacks & Confectionery,pkt,,2.57,3.43,0,5,yes
+Trolli Jelly,Trolli Jelly,BQ-0679-trolli-jelly,,Snacks & Confectionery,pkt,,3.28,4.37,0,5,yes
+Trolli Marshmallow,Trolli Marshmallow,BQ-0680-trolli-marshmallow,,Snacks & Confectionery,pkt,,1.85,2.47,0,5,yes
+Trolli Toffee,Trolli Toffee,BQ-0681-trolli-toffee,,Snacks & Confectionery,pkt,,4.24,5.66,0,5,yes
+Fruittella Gummy Bears,Fruittella Gummy Bears,BQ-0682-fruittella-gummy-bea,,Snacks & Confectionery,pkt,,2.75,3.67,0,5,yes
+Fruittella Lollipops,Fruittella Lollipops,BQ-0683-fruittella-lollipops,,Snacks & Confectionery,pkt,,2.29,3.05,0,5,yes
+Fruittella Chewing Gum,Fruittella Chewing Gum,BQ-0684-fruittella-chewing-g,,Snacks & Confectionery,pkt,,4.31,5.74,0,5,yes
+Fruittella Mints,Fruittella Mints,BQ-0685-fruittella-mints,,Snacks & Confectionery,pkt,,4.25,5.66,0,5,yes
+Fruittella Hard Candy,Fruittella Hard Candy,BQ-0686-fruittella-hard-cand,,Snacks & Confectionery,pkt,,2.60,3.47,0,5,yes
+Fruittella Jelly,Fruittella Jelly,BQ-0687-fruittella-jelly,,Snacks & Confectionery,pkt,,4.46,5.95,0,5,yes
+Fruittella Marshmallow,Fruittella Marshmallow,BQ-0688-fruittella-marshmall,,Snacks & Confectionery,pkt,,4.32,5.76,0,5,yes
+Fruittella Toffee,Fruittella Toffee,BQ-0689-fruittella-toffee,,Snacks & Confectionery,pkt,,3.33,4.44,0,5,yes
+DAC Bathroom Cleaner 750ml,DAC Bathroom منظف,BQ-0690-dac-bathroom-cleaner,,Household & Cleaning,bottle,,11.09,14.79,0,5,yes
+DAC Kitchen Cleaner 750ml,DAC Kitchen منظف,BQ-0691-dac-kitchen-cleaner-,,Household & Cleaning,bottle,,12.71,16.94,0,5,yes
+DAC Floor Cleaner 750ml,DAC Floor منظف,BQ-0692-dac-floor-cleaner-75,,Household & Cleaning,bottle,,13.21,17.61,0,5,yes
+DAC Glass Cleaner 750ml,DAC Glass منظف,BQ-0693-dac-glass-cleaner-75,,Household & Cleaning,bottle,,9.73,12.98,0,5,yes
+DAC Drain Cleaner 750ml,DAC Drain منظف,BQ-0694-dac-drain-cleaner-75,,Household & Cleaning,bottle,,8.32,11.10,0,5,yes
+DAC Oven Cleaner 750ml,DAC Oven منظف,BQ-0695-dac-oven-cleaner-750,,Household & Cleaning,bottle,,10.14,13.52,0,5,yes
+DAC Furniture Cleaner 750ml,DAC Furniture منظف,BQ-0696-dac-furniture-cleane,,Household & Cleaning,bottle,,10.17,13.56,0,5,yes
+DAC Carpet Cleaner 750ml,DAC Carpet منظف,BQ-0697-dac-carpet-cleaner-7,,Household & Cleaning,bottle,,8.02,10.69,0,5,yes
+Mr Muscle Bathroom Cleaner 750ml,Mr Muscle Bathroom منظف,BQ-0698-mr-muscle-bathroom-c,,Household & Cleaning,bottle,,11.22,14.96,0,5,yes
+Mr Muscle Kitchen Cleaner 750ml,Mr Muscle Kitchen منظف,BQ-0699-mr-muscle-kitchen-cl,,Household & Cleaning,bottle,,12.39,16.52,0,5,yes
+Mr Muscle Floor Cleaner 750ml,Mr Muscle Floor منظف,BQ-0700-mr-muscle-floor-clea,,Household & Cleaning,bottle,,8.87,11.83,0,5,yes
+Mr Muscle Glass Cleaner 750ml,Mr Muscle Glass منظف,BQ-0701-mr-muscle-glass-clea,,Household & Cleaning,bottle,,9.89,13.19,0,5,yes
+Mr Muscle Drain Cleaner 750ml,Mr Muscle Drain منظف,BQ-0702-mr-muscle-drain-clea,,Household & Cleaning,bottle,,13.31,17.75,0,5,yes
+Mr Muscle Oven Cleaner 750ml,Mr Muscle Oven منظف,BQ-0703-mr-muscle-oven-clean,,Household & Cleaning,bottle,,9.28,12.37,0,5,yes
+Mr Muscle Furniture Cleaner 750ml,Mr Muscle Furniture منظف,BQ-0704-mr-muscle-furniture-,,Household & Cleaning,bottle,,12.90,17.19,0,5,yes
+Mr Muscle Carpet Cleaner 750ml,Mr Muscle Carpet منظف,BQ-0705-mr-muscle-carpet-cle,,Household & Cleaning,bottle,,12.50,16.66,0,5,yes
+Vanish Bathroom Cleaner 750ml,Vanish Bathroom منظف,BQ-0706-vanish-bathroom-clea,,Household & Cleaning,bottle,,10.87,14.49,0,5,yes
+Vanish Kitchen Cleaner 750ml,Vanish Kitchen منظف,BQ-0707-vanish-kitchen-clean,,Household & Cleaning,bottle,,10.84,14.45,0,5,yes
+Vanish Floor Cleaner 750ml,Vanish Floor منظف,BQ-0708-vanish-floor-cleaner,,Household & Cleaning,bottle,,11.28,15.04,0,5,yes
+Vanish Glass Cleaner 750ml,Vanish Glass منظف,BQ-0709-vanish-glass-cleaner,,Household & Cleaning,bottle,,13.48,17.97,0,5,yes
+Vanish Drain Cleaner 750ml,Vanish Drain منظف,BQ-0710-vanish-drain-cleaner,,Household & Cleaning,bottle,,10.36,13.82,0,5,yes
+Vanish Oven Cleaner 750ml,Vanish Oven منظف,BQ-0711-vanish-oven-cleaner-,,Household & Cleaning,bottle,,9.44,12.58,0,5,yes
+Vanish Furniture Cleaner 750ml,Vanish Furniture منظف,BQ-0712-vanish-furniture-cle,,Household & Cleaning,bottle,,8.25,11.00,0,5,yes
+Vanish Carpet Cleaner 750ml,Vanish Carpet منظف,BQ-0713-vanish-carpet-cleane,,Household & Cleaning,bottle,,8.69,11.58,0,5,yes
+Harpic Bathroom Cleaner 750ml,Harpic Bathroom منظف,BQ-0714-harpic-bathroom-clea,,Household & Cleaning,bottle,,9.84,13.12,0,5,yes
+Harpic Kitchen Cleaner 750ml,Harpic Kitchen منظف,BQ-0715-harpic-kitchen-clean,,Household & Cleaning,bottle,,10.40,13.86,0,5,yes
+Harpic Floor Cleaner 750ml,Harpic Floor منظف,BQ-0716-harpic-floor-cleaner,,Household & Cleaning,bottle,,11.95,15.94,0,5,yes
+Harpic Glass Cleaner 750ml,Harpic Glass منظف,BQ-0717-harpic-glass-cleaner,,Household & Cleaning,bottle,,12.49,16.65,0,5,yes
+Harpic Drain Cleaner 750ml,Harpic Drain منظف,BQ-0718-harpic-drain-cleaner,,Household & Cleaning,bottle,,9.51,12.68,0,5,yes
+Harpic Oven Cleaner 750ml,Harpic Oven منظف,BQ-0719-harpic-oven-cleaner-,,Household & Cleaning,bottle,,10.72,14.30,0,5,yes
+Harpic Furniture Cleaner 750ml,Harpic Furniture منظف,BQ-0720-harpic-furniture-cle,,Household & Cleaning,bottle,,10.47,13.96,0,5,yes
+Harpic Carpet Cleaner 750ml,Harpic Carpet منظف,BQ-0721-harpic-carpet-cleane,,Household & Cleaning,bottle,,11.13,14.84,0,5,yes
+Jif Bathroom Cleaner 750ml,Jif Bathroom منظف,BQ-0722-jif-bathroom-cleaner,,Household & Cleaning,bottle,,7.83,10.44,0,5,yes
+Jif Kitchen Cleaner 750ml,Jif Kitchen منظف,BQ-0723-jif-kitchen-cleaner-,,Household & Cleaning,bottle,,11.61,15.48,0,5,yes
+Jif Floor Cleaner 750ml,Jif Floor منظف,BQ-0724-jif-floor-cleaner-75,,Household & Cleaning,bottle,,8.11,10.82,0,5,yes
+Jif Glass Cleaner 750ml,Jif Glass منظف,BQ-0725-jif-glass-cleaner-75,,Household & Cleaning,bottle,,11.33,15.11,0,5,yes
+Jif Drain Cleaner 750ml,Jif Drain منظف,BQ-0726-jif-drain-cleaner-75,,Household & Cleaning,bottle,,13.16,17.55,0,5,yes
+Jif Oven Cleaner 750ml,Jif Oven منظف,BQ-0727-jif-oven-cleaner-750,,Household & Cleaning,bottle,,10.66,14.21,0,5,yes
+Jif Furniture Cleaner 750ml,Jif Furniture منظف,BQ-0728-jif-furniture-cleane,,Household & Cleaning,bottle,,7.80,10.40,0,5,yes
+Jif Carpet Cleaner 750ml,Jif Carpet منظف,BQ-0729-jif-carpet-cleaner-7,,Household & Cleaning,bottle,,11.59,15.45,0,5,yes
+Ajax Bathroom Cleaner 750ml,Ajax Bathroom منظف,BQ-0730-ajax-bathroom-cleane,,Household & Cleaning,bottle,,8.31,11.09,0,5,yes
+Ajax Kitchen Cleaner 750ml,Ajax Kitchen منظف,BQ-0731-ajax-kitchen-cleaner,,Household & Cleaning,bottle,,8.29,11.06,0,5,yes
+Ajax Floor Cleaner 750ml,Ajax Floor منظف,BQ-0732-ajax-floor-cleaner-7,,Household & Cleaning,bottle,,10.06,13.42,0,5,yes
+Ajax Glass Cleaner 750ml,Ajax Glass منظف,BQ-0733-ajax-glass-cleaner-7,,Household & Cleaning,bottle,,10.12,13.50,0,5,yes
+Ajax Drain Cleaner 750ml,Ajax Drain منظف,BQ-0734-ajax-drain-cleaner-7,,Household & Cleaning,bottle,,7.58,10.11,0,5,yes
+Ajax Oven Cleaner 750ml,Ajax Oven منظف,BQ-0735-ajax-oven-cleaner-75,,Household & Cleaning,bottle,,11.61,15.48,0,5,yes
+Ajax Furniture Cleaner 750ml,Ajax Furniture منظف,BQ-0736-ajax-furniture-clean,,Household & Cleaning,bottle,,8.21,10.94,0,5,yes
+Ajax Carpet Cleaner 750ml,Ajax Carpet منظف,BQ-0737-ajax-carpet-cleaner-,,Household & Cleaning,bottle,,13.12,17.49,0,5,yes
+Pledge Bathroom Cleaner 750ml,Pledge Bathroom منظف,BQ-0738-pledge-bathroom-clea,,Household & Cleaning,bottle,,10.55,14.07,0,5,yes
+Pledge Kitchen Cleaner 750ml,Pledge Kitchen منظف,BQ-0739-pledge-kitchen-clean,,Household & Cleaning,bottle,,10.29,13.72,0,5,yes
+Pledge Floor Cleaner 750ml,Pledge Floor منظف,BQ-0740-pledge-floor-cleaner,,Household & Cleaning,bottle,,9.94,13.26,0,5,yes
+Pledge Glass Cleaner 750ml,Pledge Glass منظف,BQ-0741-pledge-glass-cleaner,,Household & Cleaning,bottle,,12.70,16.94,0,5,yes
+Pledge Drain Cleaner 750ml,Pledge Drain منظف,BQ-0742-pledge-drain-cleaner,,Household & Cleaning,bottle,,8.23,10.98,0,5,yes
+Pledge Oven Cleaner 750ml,Pledge Oven منظف,BQ-0743-pledge-oven-cleaner-,,Household & Cleaning,bottle,,11.37,15.16,0,5,yes
+Pledge Furniture Cleaner 750ml,Pledge Furniture منظف,BQ-0744-pledge-furniture-cle,,Household & Cleaning,bottle,,9.88,13.17,0,5,yes
+Pledge Carpet Cleaner 750ml,Pledge Carpet منظف,BQ-0745-pledge-carpet-cleane,,Household & Cleaning,bottle,,13.24,17.65,0,5,yes
+Glade Bathroom Cleaner 750ml,Glade Bathroom منظف,BQ-0746-glade-bathroom-clean,,Household & Cleaning,bottle,,7.81,10.41,0,5,yes
+Glade Kitchen Cleaner 750ml,Glade Kitchen منظف,BQ-0747-glade-kitchen-cleane,,Household & Cleaning,bottle,,10.86,14.48,0,5,yes
+Glade Floor Cleaner 750ml,Glade Floor منظف,BQ-0748-glade-floor-cleaner-,,Household & Cleaning,bottle,,8.15,10.86,0,5,yes
+Glade Glass Cleaner 750ml,Glade Glass منظف,BQ-0749-glade-glass-cleaner-,,Household & Cleaning,bottle,,12.49,16.65,0,5,yes
+Glade Drain Cleaner 750ml,Glade Drain منظف,BQ-0750-glade-drain-cleaner-,,Household & Cleaning,bottle,,13.41,17.88,0,5,yes
+Glade Oven Cleaner 750ml,Glade Oven منظف,BQ-0751-glade-oven-cleaner-7,,Household & Cleaning,bottle,,13.50,18.00,0,5,yes
+Glade Furniture Cleaner 750ml,Glade Furniture منظف,BQ-0752-glade-furniture-clea,,Household & Cleaning,bottle,,10.31,13.75,0,5,yes
+Glade Carpet Cleaner 750ml,Glade Carpet منظف,BQ-0753-glade-carpet-cleaner,,Household & Cleaning,bottle,,12.41,16.55,0,5,yes
+Clear Anti Dandruff Shampoo 400ml,Clear Anti Dandruff شامبو,BQ-0754-clear-anti-dandruff-,,Personal Care,bottle,,19.69,26.25,0,5,yes
+Clear Anti Dandruff Conditioner 360ml,Clear Anti Dandruff بلسم,BQ-0755-clear-anti-dandruff-,,Personal Care,bottle,,17.55,23.40,0,5,yes
+Clear Smooth Shampoo 400ml,Clear Smooth شامبو,BQ-0756-clear-smooth-shampoo,,Personal Care,bottle,,14.92,19.89,0,5,yes
+Clear Smooth Conditioner 360ml,Clear Smooth بلسم,BQ-0757-clear-smooth-conditi,,Personal Care,bottle,,18.61,24.81,0,5,yes
+Clear Volume Shampoo 400ml,Clear Volume شامبو,BQ-0758-clear-volume-shampoo,,Personal Care,bottle,,14.15,18.87,0,5,yes
+Clear Volume Conditioner 360ml,Clear Volume بلسم,BQ-0759-clear-volume-conditi,,Personal Care,bottle,,17.61,23.48,0,5,yes
+Clear Repair Shampoo 400ml,Clear Repair شامبو,BQ-0760-clear-repair-shampoo,,Personal Care,bottle,,20.41,27.21,0,5,yes
+Clear Repair Conditioner 360ml,Clear Repair بلسم,BQ-0761-clear-repair-conditi,,Personal Care,bottle,,15.74,20.98,0,5,yes
+Clear Color Shampoo 400ml,Clear Color شامبو,BQ-0762-clear-color-shampoo-,,Personal Care,bottle,,16.68,22.24,0,5,yes
+Clear Color Conditioner 360ml,Clear Color بلسم,BQ-0763-clear-color-conditio,,Personal Care,bottle,,14.34,19.12,0,5,yes
+Clear Keratin Shampoo 400ml,Clear Keratin شامبو,BQ-0764-clear-keratin-shampo,,Personal Care,bottle,,22.06,29.41,0,5,yes
+Clear Keratin Conditioner 360ml,Clear Keratin بلسم,BQ-0765-clear-keratin-condit,,Personal Care,bottle,,12.58,16.77,0,5,yes
+Clear Argan Shampoo 400ml,Clear Argan شامبو,BQ-0766-clear-argan-shampoo-,,Personal Care,bottle,,15.04,20.05,0,5,yes
+Clear Argan Conditioner 360ml,Clear Argan بلسم,BQ-0767-clear-argan-conditio,,Personal Care,bottle,,20.81,27.75,0,5,yes
+Clear Coconut Shampoo 400ml,Clear Coconut شامبو,BQ-0768-clear-coconut-shampo,,Personal Care,bottle,,19.03,25.38,0,5,yes
+Clear Coconut Conditioner 360ml,Clear Coconut بلسم,BQ-0769-clear-coconut-condit,,Personal Care,bottle,,12.69,16.92,0,5,yes
+Sunsilk Anti Dandruff Shampoo 400ml,Sunsilk Anti Dandruff شامبو,BQ-0770-sunsilk-anti-dandruf,,Personal Care,bottle,,12.69,16.92,0,5,yes
+Sunsilk Anti Dandruff Conditioner 360ml,Sunsilk Anti Dandruff بلسم,BQ-0771-sunsilk-anti-dandruf,,Personal Care,bottle,,12.04,16.05,0,5,yes
+Sunsilk Smooth Shampoo 400ml,Sunsilk Smooth شامبو,BQ-0772-sunsilk-smooth-shamp,,Personal Care,bottle,,19.93,26.58,0,5,yes
+Sunsilk Smooth Conditioner 360ml,Sunsilk Smooth بلسم,BQ-0773-sunsilk-smooth-condi,,Personal Care,bottle,,16.20,21.61,0,5,yes
+Sunsilk Volume Shampoo 400ml,Sunsilk Volume شامبو,BQ-0774-sunsilk-volume-shamp,,Personal Care,bottle,,20.29,27.05,0,5,yes
+Sunsilk Volume Conditioner 360ml,Sunsilk Volume بلسم,BQ-0775-sunsilk-volume-condi,,Personal Care,bottle,,18.59,24.79,0,5,yes
+Sunsilk Repair Shampoo 400ml,Sunsilk Repair شامبو,BQ-0776-sunsilk-repair-shamp,,Personal Care,bottle,,16.78,22.38,0,5,yes
+Sunsilk Repair Conditioner 360ml,Sunsilk Repair بلسم,BQ-0777-sunsilk-repair-condi,,Personal Care,bottle,,16.48,21.97,0,5,yes
+Sunsilk Color Shampoo 400ml,Sunsilk Color شامبو,BQ-0778-sunsilk-color-shampo,,Personal Care,bottle,,15.02,20.03,0,5,yes
+Sunsilk Color Conditioner 360ml,Sunsilk Color بلسم,BQ-0779-sunsilk-color-condit,,Personal Care,bottle,,19.38,25.84,0,5,yes
+Sunsilk Keratin Shampoo 400ml,Sunsilk Keratin شامبو,BQ-0780-sunsilk-keratin-sham,,Personal Care,bottle,,16.03,21.38,0,5,yes
+Sunsilk Keratin Conditioner 360ml,Sunsilk Keratin بلسم,BQ-0781-sunsilk-keratin-cond,,Personal Care,bottle,,14.60,19.46,0,5,yes
+Sunsilk Argan Shampoo 400ml,Sunsilk Argan شامبو,BQ-0782-sunsilk-argan-shampo,,Personal Care,bottle,,14.13,18.84,0,5,yes
+Sunsilk Argan Conditioner 360ml,Sunsilk Argan بلسم,BQ-0783-sunsilk-argan-condit,,Personal Care,bottle,,18.63,24.84,0,5,yes
+Sunsilk Coconut Shampoo 400ml,Sunsilk Coconut شامبو,BQ-0784-sunsilk-coconut-sham,,Personal Care,bottle,,14.12,18.83,0,5,yes
+Sunsilk Coconut Conditioner 360ml,Sunsilk Coconut بلسم,BQ-0785-sunsilk-coconut-cond,,Personal Care,bottle,,12.23,16.30,0,5,yes
+Herbal Essences Anti Dandruff Shampoo 400ml,Herbal Essences Anti Dandruff شامبو,BQ-0786-herbal-essences-anti,,Personal Care,bottle,,11.72,15.63,0,5,yes
+Herbal Essences Anti Dandruff Conditioner 360ml,Herbal Essences Anti Dandruff بلسم,BQ-0787-herbal-essences-anti,,Personal Care,bottle,,21.38,28.50,0,5,yes
+Herbal Essences Smooth Shampoo 400ml,Herbal Essences Smooth شامبو,BQ-0788-herbal-essences-smoo,,Personal Care,bottle,,22.17,29.56,0,5,yes
+Herbal Essences Smooth Conditioner 360ml,Herbal Essences Smooth بلسم,BQ-0789-herbal-essences-smoo,,Personal Care,bottle,,18.32,24.43,0,5,yes
+Herbal Essences Volume Shampoo 400ml,Herbal Essences Volume شامبو,BQ-0790-herbal-essences-volu,,Personal Care,bottle,,18.34,24.45,0,5,yes
+Herbal Essences Volume Conditioner 360ml,Herbal Essences Volume بلسم,BQ-0791-herbal-essences-volu,,Personal Care,bottle,,18.33,24.45,0,5,yes
+Herbal Essences Repair Shampoo 400ml,Herbal Essences Repair شامبو,BQ-0792-herbal-essences-repa,,Personal Care,bottle,,16.19,21.59,0,5,yes
+Herbal Essences Repair Conditioner 360ml,Herbal Essences Repair بلسم,BQ-0793-herbal-essences-repa,,Personal Care,bottle,,18.86,25.15,0,5,yes
+Herbal Essences Color Shampoo 400ml,Herbal Essences Color شامبو,BQ-0794-herbal-essences-colo,,Personal Care,bottle,,15.35,20.47,0,5,yes
+Herbal Essences Color Conditioner 360ml,Herbal Essences Color بلسم,BQ-0795-herbal-essences-colo,,Personal Care,bottle,,19.18,25.57,0,5,yes
+Herbal Essences Keratin Shampoo 400ml,Herbal Essences Keratin شامبو,BQ-0796-herbal-essences-kera,,Personal Care,bottle,,14.41,19.21,0,5,yes
+Herbal Essences Keratin Conditioner 360ml,Herbal Essences Keratin بلسم,BQ-0797-herbal-essences-kera,,Personal Care,bottle,,19.03,25.37,0,5,yes
+Herbal Essences Argan Shampoo 400ml,Herbal Essences Argan شامبو,BQ-0798-herbal-essences-arga,,Personal Care,bottle,,15.83,21.11,0,5,yes
+Herbal Essences Argan Conditioner 360ml,Herbal Essences Argan بلسم,BQ-0799-herbal-essences-arga,,Personal Care,bottle,,15.52,20.69,0,5,yes
+Herbal Essences Coconut Shampoo 400ml,Herbal Essences Coconut شامبو,BQ-0800-herbal-essences-coco,,Personal Care,bottle,,17.91,23.89,0,5,yes
+Herbal Essences Coconut Conditioner 360ml,Herbal Essences Coconut بلسم,BQ-0801-herbal-essences-coco,,Personal Care,bottle,,18.27,24.37,0,5,yes
+Tresemme Anti Dandruff Shampoo 400ml,Tresemme Anti Dandruff شامبو,BQ-0802-tresemme-anti-dandru,,Personal Care,bottle,,21.06,28.08,0,5,yes
+Tresemme Anti Dandruff Conditioner 360ml,Tresemme Anti Dandruff بلسم,BQ-0803-tresemme-anti-dandru,,Personal Care,bottle,,17.24,22.98,0,5,yes
+Tresemme Smooth Shampoo 400ml,Tresemme Smooth شامبو,BQ-0804-tresemme-smooth-sham,,Personal Care,bottle,,19.67,26.23,0,5,yes
+Tresemme Smooth Conditioner 360ml,Tresemme Smooth بلسم,BQ-0805-tresemme-smooth-cond,,Personal Care,bottle,,12.85,17.13,0,5,yes
+Tresemme Volume Shampoo 400ml,Tresemme Volume شامبو,BQ-0806-tresemme-volume-sham,,Personal Care,bottle,,13.37,17.82,0,5,yes
+Tresemme Volume Conditioner 360ml,Tresemme Volume بلسم,BQ-0807-tresemme-volume-cond,,Personal Care,bottle,,19.08,25.43,0,5,yes
+Tresemme Repair Shampoo 400ml,Tresemme Repair شامبو,BQ-0808-tresemme-repair-sham,,Personal Care,bottle,,22.03,29.37,0,5,yes
+Tresemme Repair Conditioner 360ml,Tresemme Repair بلسم,BQ-0809-tresemme-repair-cond,,Personal Care,bottle,,21.63,28.84,0,5,yes
+Tresemme Color Shampoo 400ml,Tresemme Color شامبو,BQ-0810-tresemme-color-shamp,,Personal Care,bottle,,21.67,28.90,0,5,yes
+Tresemme Color Conditioner 360ml,Tresemme Color بلسم,BQ-0811-tresemme-color-condi,,Personal Care,bottle,,18.26,24.35,0,5,yes
+Tresemme Keratin Shampoo 400ml,Tresemme Keratin شامبو,BQ-0812-tresemme-keratin-sha,,Personal Care,bottle,,11.72,15.63,0,5,yes
+Tresemme Keratin Conditioner 360ml,Tresemme Keratin بلسم,BQ-0813-tresemme-keratin-con,,Personal Care,bottle,,16.92,22.56,0,5,yes
+Tresemme Argan Shampoo 400ml,Tresemme Argan شامبو,BQ-0814-tresemme-argan-shamp,,Personal Care,bottle,,14.30,19.06,0,5,yes
+Tresemme Argan Conditioner 360ml,Tresemme Argan بلسم,BQ-0815-tresemme-argan-condi,,Personal Care,bottle,,19.87,26.49,0,5,yes
+Tresemme Coconut Shampoo 400ml,Tresemme Coconut شامبو,BQ-0816-tresemme-coconut-sha,,Personal Care,bottle,,13.15,17.54,0,5,yes
+Tresemme Coconut Conditioner 360ml,Tresemme Coconut بلسم,BQ-0817-tresemme-coconut-con,,Personal Care,bottle,,15.89,21.19,0,5,yes
+L'Oreal Anti Dandruff Shampoo 400ml,L'Oreal Anti Dandruff شامبو,BQ-0818-l-oreal-anti-dandruf,,Personal Care,bottle,,14.23,18.97,0,5,yes
+L'Oreal Anti Dandruff Conditioner 360ml,L'Oreal Anti Dandruff بلسم,BQ-0819-l-oreal-anti-dandruf,,Personal Care,bottle,,20.10,26.80,0,5,yes
+L'Oreal Smooth Shampoo 400ml,L'Oreal Smooth شامبو,BQ-0820-l-oreal-smooth-shamp,,Personal Care,bottle,,22.30,29.73,0,5,yes
+L'Oreal Smooth Conditioner 360ml,L'Oreal Smooth بلسم,BQ-0821-l-oreal-smooth-condi,,Personal Care,bottle,,14.88,19.83,0,5,yes
+L'Oreal Volume Shampoo 400ml,L'Oreal Volume شامبو,BQ-0822-l-oreal-volume-shamp,,Personal Care,bottle,,16.50,22.00,0,5,yes
+L'Oreal Volume Conditioner 360ml,L'Oreal Volume بلسم,BQ-0823-l-oreal-volume-condi,,Personal Care,bottle,,21.36,28.48,0,5,yes
+L'Oreal Repair Shampoo 400ml,L'Oreal Repair شامبو,BQ-0824-l-oreal-repair-shamp,,Personal Care,bottle,,13.39,17.85,0,5,yes
+L'Oreal Repair Conditioner 360ml,L'Oreal Repair بلسم,BQ-0825-l-oreal-repair-condi,,Personal Care,bottle,,19.61,26.14,0,5,yes
+L'Oreal Color Shampoo 400ml,L'Oreal Color شامبو,BQ-0826-l-oreal-color-shampo,,Personal Care,bottle,,12.62,16.83,0,5,yes
+L'Oreal Color Conditioner 360ml,L'Oreal Color بلسم,BQ-0827-l-oreal-color-condit,,Personal Care,bottle,,21.43,28.57,0,5,yes
+L'Oreal Keratin Shampoo 400ml,L'Oreal Keratin شامبو,BQ-0828-l-oreal-keratin-sham,,Personal Care,bottle,,22.12,29.49,0,5,yes
+L'Oreal Keratin Conditioner 360ml,L'Oreal Keratin بلسم,BQ-0829-l-oreal-keratin-cond,,Personal Care,bottle,,15.34,20.45,0,5,yes
+L'Oreal Argan Shampoo 400ml,L'Oreal Argan شامبو,BQ-0830-l-oreal-argan-shampo,,Personal Care,bottle,,12.18,16.24,0,5,yes
+L'Oreal Argan Conditioner 360ml,L'Oreal Argan بلسم,BQ-0831-l-oreal-argan-condit,,Personal Care,bottle,,19.32,25.77,0,5,yes
+L'Oreal Coconut Shampoo 400ml,L'Oreal Coconut شامبو,BQ-0832-l-oreal-coconut-sham,,Personal Care,bottle,,13.65,18.20,0,5,yes
+L'Oreal Coconut Conditioner 360ml,L'Oreal Coconut بلسم,BQ-0833-l-oreal-coconut-cond,,Personal Care,bottle,,18.72,24.96,0,5,yes
+Garnier Anti Dandruff Shampoo 400ml,Garnier Anti Dandruff شامبو,BQ-0834-garnier-anti-dandruf,,Personal Care,bottle,,16.60,22.13,0,5,yes
+Garnier Anti Dandruff Conditioner 360ml,Garnier Anti Dandruff بلسم,BQ-0835-garnier-anti-dandruf,,Personal Care,bottle,,17.25,23.00,0,5,yes
+Garnier Smooth Shampoo 400ml,Garnier Smooth شامبو,BQ-0836-garnier-smooth-shamp,,Personal Care,bottle,,15.16,20.21,0,5,yes
+Garnier Smooth Conditioner 360ml,Garnier Smooth بلسم,BQ-0837-garnier-smooth-condi,,Personal Care,bottle,,15.28,20.38,0,5,yes
+Garnier Volume Shampoo 400ml,Garnier Volume شامبو,BQ-0838-garnier-volume-shamp,,Personal Care,bottle,,17.46,23.28,0,5,yes
+Garnier Volume Conditioner 360ml,Garnier Volume بلسم,BQ-0839-garnier-volume-condi,,Personal Care,bottle,,13.65,18.20,0,5,yes
+Garnier Repair Shampoo 400ml,Garnier Repair شامبو,BQ-0840-garnier-repair-shamp,,Personal Care,bottle,,15.07,20.09,0,5,yes
+Garnier Repair Conditioner 360ml,Garnier Repair بلسم,BQ-0841-garnier-repair-condi,,Personal Care,bottle,,12.45,16.60,0,5,yes
+Garnier Color Shampoo 400ml,Garnier Color شامبو,BQ-0842-garnier-color-shampo,,Personal Care,bottle,,21.87,29.17,0,5,yes
+Garnier Color Conditioner 360ml,Garnier Color بلسم,BQ-0843-garnier-color-condit,,Personal Care,bottle,,13.21,17.61,0,5,yes
+Garnier Keratin Shampoo 400ml,Garnier Keratin شامبو,BQ-0844-garnier-keratin-sham,,Personal Care,bottle,,18.05,24.06,0,5,yes
+Garnier Keratin Conditioner 360ml,Garnier Keratin بلسم,BQ-0845-garnier-keratin-cond,,Personal Care,bottle,,18.74,24.98,0,5,yes
+Garnier Argan Shampoo 400ml,Garnier Argan شامبو,BQ-0846-garnier-argan-shampo,,Personal Care,bottle,,12.62,16.83,0,5,yes
+Garnier Argan Conditioner 360ml,Garnier Argan بلسم,BQ-0847-garnier-argan-condit,,Personal Care,bottle,,11.93,15.90,0,5,yes
+Garnier Coconut Shampoo 400ml,Garnier Coconut شامبو,BQ-0848-garnier-coconut-sham,,Personal Care,bottle,,20.06,26.74,0,5,yes
+Garnier Coconut Conditioner 360ml,Garnier Coconut بلسم,BQ-0849-garnier-coconut-cond,,Personal Care,bottle,,14.51,19.34,0,5,yes
+Vatika Anti Dandruff Shampoo 400ml,Vatika Anti Dandruff شامبو,BQ-0850-vatika-anti-dandruff,,Personal Care,bottle,,19.49,25.99,0,5,yes
+Vatika Anti Dandruff Conditioner 360ml,Vatika Anti Dandruff بلسم,BQ-0851-vatika-anti-dandruff,,Personal Care,bottle,,11.37,15.15,0,5,yes
+Vatika Smooth Shampoo 400ml,Vatika Smooth شامبو,BQ-0852-vatika-smooth-shampo,,Personal Care,bottle,,12.49,16.65,0,5,yes
+Vatika Smooth Conditioner 360ml,Vatika Smooth بلسم,BQ-0853-vatika-smooth-condit,,Personal Care,bottle,,14.00,18.67,0,5,yes
+Vatika Volume Shampoo 400ml,Vatika Volume شامبو,BQ-0854-vatika-volume-shampo,,Personal Care,bottle,,17.26,23.02,0,5,yes
+Vatika Volume Conditioner 360ml,Vatika Volume بلسم,BQ-0855-vatika-volume-condit,,Personal Care,bottle,,22.29,29.71,0,5,yes
+Vatika Repair Shampoo 400ml,Vatika Repair شامبو,BQ-0856-vatika-repair-shampo,,Personal Care,bottle,,21.95,29.27,0,5,yes
+Vatika Repair Conditioner 360ml,Vatika Repair بلسم,BQ-0857-vatika-repair-condit,,Personal Care,bottle,,13.54,18.05,0,5,yes
+Vatika Color Shampoo 400ml,Vatika Color شامبو,BQ-0858-vatika-color-shampoo,,Personal Care,bottle,,19.13,25.51,0,5,yes
+Vatika Color Conditioner 360ml,Vatika Color بلسم,BQ-0859-vatika-color-conditi,,Personal Care,bottle,,17.19,22.91,0,5,yes
+Vatika Keratin Shampoo 400ml,Vatika Keratin شامبو,BQ-0860-vatika-keratin-shamp,,Personal Care,bottle,,13.60,18.13,0,5,yes
+Vatika Keratin Conditioner 360ml,Vatika Keratin بلسم,BQ-0861-vatika-keratin-condi,,Personal Care,bottle,,19.85,26.47,0,5,yes
+Vatika Argan Shampoo 400ml,Vatika Argan شامبو,BQ-0862-vatika-argan-shampoo,,Personal Care,bottle,,15.37,20.50,0,5,yes
+Vatika Argan Conditioner 360ml,Vatika Argan بلسم,BQ-0863-vatika-argan-conditi,,Personal Care,bottle,,20.48,27.30,0,5,yes
+Vatika Coconut Shampoo 400ml,Vatika Coconut شامبو,BQ-0864-vatika-coconut-shamp,,Personal Care,bottle,,19.11,25.48,0,5,yes
+Vatika Coconut Conditioner 360ml,Vatika Coconut بلسم,BQ-0865-vatika-coconut-condi,,Personal Care,bottle,,15.14,20.18,0,5,yes
+Dabur Anti Dandruff Shampoo 400ml,Dabur Anti Dandruff شامبو,BQ-0866-dabur-anti-dandruff-,,Personal Care,bottle,,13.75,18.34,0,5,yes
+Dabur Anti Dandruff Conditioner 360ml,Dabur Anti Dandruff بلسم,BQ-0867-dabur-anti-dandruff-,,Personal Care,bottle,,16.87,22.49,0,5,yes
+Dabur Smooth Shampoo 400ml,Dabur Smooth شامبو,BQ-0868-dabur-smooth-shampoo,,Personal Care,bottle,,19.96,26.61,0,5,yes
+Dabur Smooth Conditioner 360ml,Dabur Smooth بلسم,BQ-0869-dabur-smooth-conditi,,Personal Care,bottle,,14.91,19.88,0,5,yes
+Dabur Volume Shampoo 400ml,Dabur Volume شامبو,BQ-0870-dabur-volume-shampoo,,Personal Care,bottle,,17.05,22.73,0,5,yes
+Dabur Volume Conditioner 360ml,Dabur Volume بلسم,BQ-0871-dabur-volume-conditi,,Personal Care,bottle,,18.59,24.79,0,5,yes
+Dabur Repair Shampoo 400ml,Dabur Repair شامبو,BQ-0872-dabur-repair-shampoo,,Personal Care,bottle,,18.58,24.77,0,5,yes
+Dabur Repair Conditioner 360ml,Dabur Repair بلسم,BQ-0873-dabur-repair-conditi,,Personal Care,bottle,,22.25,29.67,0,5,yes
+Dabur Color Shampoo 400ml,Dabur Color شامبو,BQ-0874-dabur-color-shampoo-,,Personal Care,bottle,,16.15,21.53,0,5,yes
+Dabur Color Conditioner 360ml,Dabur Color بلسم,BQ-0875-dabur-color-conditio,,Personal Care,bottle,,17.91,23.88,0,5,yes
+Dabur Keratin Shampoo 400ml,Dabur Keratin شامبو,BQ-0876-dabur-keratin-shampo,,Personal Care,bottle,,18.20,24.27,0,5,yes
+Dabur Keratin Conditioner 360ml,Dabur Keratin بلسم,BQ-0877-dabur-keratin-condit,,Personal Care,bottle,,20.70,27.60,0,5,yes
+Dabur Argan Shampoo 400ml,Dabur Argan شامبو,BQ-0878-dabur-argan-shampoo-,,Personal Care,bottle,,22.34,29.78,0,5,yes
+Dabur Argan Conditioner 360ml,Dabur Argan بلسم,BQ-0879-dabur-argan-conditio,,Personal Care,bottle,,16.55,22.07,0,5,yes
+Dabur Coconut Shampoo 400ml,Dabur Coconut شامبو,BQ-0880-dabur-coconut-shampo,,Personal Care,bottle,,18.59,24.79,0,5,yes
+Dabur Coconut Conditioner 360ml,Dabur Coconut بلسم,BQ-0881-dabur-coconut-condit,,Personal Care,bottle,,19.07,25.43,0,5,yes
+Abu Kass Basmati Rice 1kg,Abu Kass Basmati أرز,BQ-0882-abu-kass-basmati-ric,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Abu Kass Basmati Rice 2kg,Abu Kass Basmati أرز,BQ-0883-abu-kass-basmati-ric,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Abu Kass Calrose Rice 1kg,Abu Kass Calrose أرز,BQ-0884-abu-kass-calrose-ric,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Abu Kass Calrose Rice 2kg,Abu Kass Calrose أرز,BQ-0885-abu-kass-calrose-ric,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Abu Kass Calrose Rice 10kg,Abu Kass Calrose أرز,BQ-0886-abu-kass-calrose-ric,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Abu Kass Jasmine Rice 1kg,Abu Kass Jasmine أرز,BQ-0887-abu-kass-jasmine-ric,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Abu Kass Jasmine Rice 2kg,Abu Kass Jasmine أرز,BQ-0888-abu-kass-jasmine-ric,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Abu Kass Jasmine Rice 5kg,Abu Kass Jasmine أرز,BQ-0889-abu-kass-jasmine-ric,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Abu Kass Jasmine Rice 10kg,Abu Kass Jasmine أرز,BQ-0890-abu-kass-jasmine-ric,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Abu Kass Sushi Rice 1kg,Abu Kass Sushi أرز,BQ-0891-abu-kass-sushi-rice-,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Abu Kass Sushi Rice 2kg,Abu Kass Sushi أرز,BQ-0892-abu-kass-sushi-rice-,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Abu Kass Sushi Rice 5kg,Abu Kass Sushi أرز,BQ-0893-abu-kass-sushi-rice-,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Abu Kass Sushi Rice 10kg,Abu Kass Sushi أرز,BQ-0894-abu-kass-sushi-rice-,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Abu Kass Brown Rice 1kg,Abu Kass Brown أرز,BQ-0895-abu-kass-brown-rice-,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Abu Kass Brown Rice 2kg,Abu Kass Brown أرز,BQ-0896-abu-kass-brown-rice-,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Abu Kass Brown Rice 5kg,Abu Kass Brown أرز,BQ-0897-abu-kass-brown-rice-,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Abu Kass Brown Rice 10kg,Abu Kass Brown أرز,BQ-0898-abu-kass-brown-rice-,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Abu Kass Wild Rice 1kg,Abu Kass Wild أرز,BQ-0899-abu-kass-wild-rice-1,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Abu Kass Wild Rice 2kg,Abu Kass Wild أرز,BQ-0900-abu-kass-wild-rice-2,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Abu Kass Wild Rice 5kg,Abu Kass Wild أرز,BQ-0901-abu-kass-wild-rice-5,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Abu Kass Wild Rice 10kg,Abu Kass Wild أرز,BQ-0902-abu-kass-wild-rice-1,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Abu Kass Parboiled Rice 1kg,Abu Kass Parboiled أرز,BQ-0903-abu-kass-parboiled-r,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Abu Kass Parboiled Rice 2kg,Abu Kass Parboiled أرز,BQ-0904-abu-kass-parboiled-r,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Abu Kass Parboiled Rice 5kg,Abu Kass Parboiled أرز,BQ-0905-abu-kass-parboiled-r,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Abu Kass Parboiled Rice 10kg,Abu Kass Parboiled أرز,BQ-0906-abu-kass-parboiled-r,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Abu Kass Premium Rice 1kg,Abu Kass Premium أرز,BQ-0907-abu-kass-premium-ric,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Abu Kass Premium Rice 2kg,Abu Kass Premium أرز,BQ-0908-abu-kass-premium-ric,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Abu Kass Premium Rice 5kg,Abu Kass Premium أرز,BQ-0909-abu-kass-premium-ric,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Abu Kass Premium Rice 10kg,Abu Kass Premium أرز,BQ-0910-abu-kass-premium-ric,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Sunwhite Basmati Rice 1kg,Sunwhite Basmati أرز,BQ-0911-sunwhite-basmati-ric,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Sunwhite Basmati Rice 2kg,Sunwhite Basmati أرز,BQ-0912-sunwhite-basmati-ric,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Sunwhite Calrose Rice 1kg,Sunwhite Calrose أرز,BQ-0913-sunwhite-calrose-ric,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Sunwhite Calrose Rice 2kg,Sunwhite Calrose أرز,BQ-0914-sunwhite-calrose-ric,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Sunwhite Calrose Rice 5kg,Sunwhite Calrose أرز,BQ-0915-sunwhite-calrose-ric,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Sunwhite Calrose Rice 10kg,Sunwhite Calrose أرز,BQ-0916-sunwhite-calrose-ric,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Sunwhite Jasmine Rice 1kg,Sunwhite Jasmine أرز,BQ-0917-sunwhite-jasmine-ric,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Sunwhite Jasmine Rice 2kg,Sunwhite Jasmine أرز,BQ-0918-sunwhite-jasmine-ric,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Sunwhite Jasmine Rice 5kg,Sunwhite Jasmine أرز,BQ-0919-sunwhite-jasmine-ric,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Sunwhite Jasmine Rice 10kg,Sunwhite Jasmine أرز,BQ-0920-sunwhite-jasmine-ric,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Sunwhite Sushi Rice 1kg,Sunwhite Sushi أرز,BQ-0921-sunwhite-sushi-rice-,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Sunwhite Sushi Rice 2kg,Sunwhite Sushi أرز,BQ-0922-sunwhite-sushi-rice-,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Sunwhite Sushi Rice 5kg,Sunwhite Sushi أرز,BQ-0923-sunwhite-sushi-rice-,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Sunwhite Sushi Rice 10kg,Sunwhite Sushi أرز,BQ-0924-sunwhite-sushi-rice-,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Sunwhite Brown Rice 1kg,Sunwhite Brown أرز,BQ-0925-sunwhite-brown-rice-,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Sunwhite Brown Rice 2kg,Sunwhite Brown أرز,BQ-0926-sunwhite-brown-rice-,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Sunwhite Brown Rice 5kg,Sunwhite Brown أرز,BQ-0927-sunwhite-brown-rice-,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Sunwhite Brown Rice 10kg,Sunwhite Brown أرز,BQ-0928-sunwhite-brown-rice-,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Sunwhite Wild Rice 1kg,Sunwhite Wild أرز,BQ-0929-sunwhite-wild-rice-1,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Sunwhite Wild Rice 2kg,Sunwhite Wild أرز,BQ-0930-sunwhite-wild-rice-2,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Sunwhite Wild Rice 5kg,Sunwhite Wild أرز,BQ-0931-sunwhite-wild-rice-5,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Sunwhite Wild Rice 10kg,Sunwhite Wild أرز,BQ-0932-sunwhite-wild-rice-1,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Sunwhite Parboiled Rice 1kg,Sunwhite Parboiled أرز,BQ-0933-sunwhite-parboiled-r,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Sunwhite Parboiled Rice 2kg,Sunwhite Parboiled أرز,BQ-0934-sunwhite-parboiled-r,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Sunwhite Parboiled Rice 5kg,Sunwhite Parboiled أرز,BQ-0935-sunwhite-parboiled-r,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Sunwhite Parboiled Rice 10kg,Sunwhite Parboiled أرز,BQ-0936-sunwhite-parboiled-r,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Sunwhite Premium Rice 1kg,Sunwhite Premium أرز,BQ-0937-sunwhite-premium-ric,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Sunwhite Premium Rice 2kg,Sunwhite Premium أرز,BQ-0938-sunwhite-premium-ric,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Sunwhite Premium Rice 5kg,Sunwhite Premium أرز,BQ-0939-sunwhite-premium-ric,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Sunwhite Premium Rice 10kg,Sunwhite Premium أرز,BQ-0940-sunwhite-premium-ric,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Tilda Basmati Rice 1kg,Tilda Basmati أرز,BQ-0941-tilda-basmati-rice-1,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Tilda Basmati Rice 2kg,Tilda Basmati أرز,BQ-0942-tilda-basmati-rice-2,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Tilda Basmati Rice 5kg,Tilda Basmati أرز,BQ-0943-tilda-basmati-rice-5,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Tilda Basmati Rice 10kg,Tilda Basmati أرز,BQ-0944-tilda-basmati-rice-1,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Tilda Calrose Rice 1kg,Tilda Calrose أرز,BQ-0945-tilda-calrose-rice-1,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Tilda Calrose Rice 2kg,Tilda Calrose أرز,BQ-0946-tilda-calrose-rice-2,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Tilda Calrose Rice 5kg,Tilda Calrose أرز,BQ-0947-tilda-calrose-rice-5,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Tilda Calrose Rice 10kg,Tilda Calrose أرز,BQ-0948-tilda-calrose-rice-1,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Tilda Jasmine Rice 1kg,Tilda Jasmine أرز,BQ-0949-tilda-jasmine-rice-1,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Tilda Jasmine Rice 2kg,Tilda Jasmine أرز,BQ-0950-tilda-jasmine-rice-2,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Tilda Jasmine Rice 5kg,Tilda Jasmine أرز,BQ-0951-tilda-jasmine-rice-5,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Tilda Jasmine Rice 10kg,Tilda Jasmine أرز,BQ-0952-tilda-jasmine-rice-1,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Tilda Sushi Rice 1kg,Tilda Sushi أرز,BQ-0953-tilda-sushi-rice-1kg,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Tilda Sushi Rice 2kg,Tilda Sushi أرز,BQ-0954-tilda-sushi-rice-2kg,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Tilda Sushi Rice 5kg,Tilda Sushi أرز,BQ-0955-tilda-sushi-rice-5kg,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Tilda Sushi Rice 10kg,Tilda Sushi أرز,BQ-0956-tilda-sushi-rice-10k,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Tilda Brown Rice 1kg,Tilda Brown أرز,BQ-0957-tilda-brown-rice-1kg,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Tilda Brown Rice 2kg,Tilda Brown أرز,BQ-0958-tilda-brown-rice-2kg,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Tilda Brown Rice 5kg,Tilda Brown أرز,BQ-0959-tilda-brown-rice-5kg,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Tilda Brown Rice 10kg,Tilda Brown أرز,BQ-0960-tilda-brown-rice-10k,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Tilda Wild Rice 1kg,Tilda Wild أرز,BQ-0961-tilda-wild-rice-1kg,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Tilda Wild Rice 2kg,Tilda Wild أرز,BQ-0962-tilda-wild-rice-2kg,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Tilda Wild Rice 5kg,Tilda Wild أرز,BQ-0963-tilda-wild-rice-5kg,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Tilda Wild Rice 10kg,Tilda Wild أرز,BQ-0964-tilda-wild-rice-10kg,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Tilda Parboiled Rice 1kg,Tilda Parboiled أرز,BQ-0965-tilda-parboiled-rice,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Tilda Parboiled Rice 2kg,Tilda Parboiled أرز,BQ-0966-tilda-parboiled-rice,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Tilda Parboiled Rice 5kg,Tilda Parboiled أرز,BQ-0967-tilda-parboiled-rice,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Tilda Parboiled Rice 10kg,Tilda Parboiled أرز,BQ-0968-tilda-parboiled-rice,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Tilda Premium Rice 1kg,Tilda Premium أرز,BQ-0969-tilda-premium-rice-1,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Tilda Premium Rice 2kg,Tilda Premium أرز,BQ-0970-tilda-premium-rice-2,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Tilda Premium Rice 5kg,Tilda Premium أرز,BQ-0971-tilda-premium-rice-5,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Tilda Premium Rice 10kg,Tilda Premium أرز,BQ-0972-tilda-premium-rice-1,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Royal Basmati Rice 1kg,Royal Basmati أرز,BQ-0973-royal-basmati-rice-1,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Royal Basmati Rice 2kg,Royal Basmati أرز,BQ-0974-royal-basmati-rice-2,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Royal Basmati Rice 5kg,Royal Basmati أرز,BQ-0975-royal-basmati-rice-5,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Royal Basmati Rice 10kg,Royal Basmati أرز,BQ-0976-royal-basmati-rice-1,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Royal Calrose Rice 1kg,Royal Calrose أرز,BQ-0977-royal-calrose-rice-1,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Royal Calrose Rice 2kg,Royal Calrose أرز,BQ-0978-royal-calrose-rice-2,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Royal Calrose Rice 5kg,Royal Calrose أرز,BQ-0979-royal-calrose-rice-5,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Royal Calrose Rice 10kg,Royal Calrose أرز,BQ-0980-royal-calrose-rice-1,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Royal Jasmine Rice 1kg,Royal Jasmine أرز,BQ-0981-royal-jasmine-rice-1,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Royal Jasmine Rice 2kg,Royal Jasmine أرز,BQ-0982-royal-jasmine-rice-2,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Royal Jasmine Rice 5kg,Royal Jasmine أرز,BQ-0983-royal-jasmine-rice-5,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Royal Jasmine Rice 10kg,Royal Jasmine أرز,BQ-0984-royal-jasmine-rice-1,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Royal Sushi Rice 1kg,Royal Sushi أرز,BQ-0985-royal-sushi-rice-1kg,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Royal Sushi Rice 2kg,Royal Sushi أرز,BQ-0986-royal-sushi-rice-2kg,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Royal Sushi Rice 5kg,Royal Sushi أرز,BQ-0987-royal-sushi-rice-5kg,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Royal Sushi Rice 10kg,Royal Sushi أرز,BQ-0988-royal-sushi-rice-10k,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Royal Brown Rice 1kg,Royal Brown أرز,BQ-0989-royal-brown-rice-1kg,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Royal Brown Rice 2kg,Royal Brown أرز,BQ-0990-royal-brown-rice-2kg,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Royal Brown Rice 5kg,Royal Brown أرز,BQ-0991-royal-brown-rice-5kg,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Royal Brown Rice 10kg,Royal Brown أرز,BQ-0992-royal-brown-rice-10k,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Royal Wild Rice 1kg,Royal Wild أرز,BQ-0993-royal-wild-rice-1kg,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Royal Wild Rice 2kg,Royal Wild أرز,BQ-0994-royal-wild-rice-2kg,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Royal Wild Rice 5kg,Royal Wild أرز,BQ-0995-royal-wild-rice-5kg,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Royal Wild Rice 10kg,Royal Wild أرز,BQ-0996-royal-wild-rice-10kg,,Rice & Grains,sack,,56.25,75.00,0,5,yes
+Royal Parboiled Rice 1kg,Royal Parboiled أرز,BQ-0997-royal-parboiled-rice,,Rice & Grains,sack,,7.50,10.00,0,5,yes
+Royal Parboiled Rice 2kg,Royal Parboiled أرز,BQ-0998-royal-parboiled-rice,,Rice & Grains,sack,,13.50,18.00,0,5,yes
+Royal Parboiled Rice 5kg,Royal Parboiled أرز,BQ-0999-royal-parboiled-rice,,Rice & Grains,sack,,30.00,40.00,0,5,yes
+Royal Parboiled Rice 10kg,Royal Parboiled أرز,BQ-1000-royal-parboiled-rice,,Rice & Grains,sack,,56.25,75.00,0,5,yes

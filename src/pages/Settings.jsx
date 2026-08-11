@@ -1,13 +1,15 @@
 import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckCircle2, Download, RotateCcw, Trash2 } from "lucide-react";
+import { CheckCircle2, Download, RotateCcw, Trash2, ShieldAlert } from "lucide-react";
 import { settingsService } from "../services/SettingsService";
 import { backupService } from "../services/BackupService";
 import { zatcaService } from "../services/ZatcaService";
 import { useSettingsStore, useAuthStore } from "../contexts/store";
 import { useConfirm } from "../hooks/useConfirm";
+import { usePermissions } from "../hooks/usePermissions";
 import { MODULES, ADMIN_MODULES, moduleSettingKey, roleModuleSettingKey } from "../utils/modules";
 import { ROLES, ROLE_LABELS } from "../utils/roles";
+import { DATA_CLEAR_SECTIONS } from "../utils/dataClearSections.js";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import Modal from "../components/common/Modal";
@@ -141,12 +143,14 @@ export default function Settings() {
   const setSettings = useSettingsStore((s) => s.setSettings);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const { isAdmin } = usePermissions();
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [tab, setTab] = useState("store");
   const [form, setForm] = useState(() => buildFormFromSettings(settings));
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [backupBusy, setBackupBusy] = useState(false);
+  const [sectionCounts, setSectionCounts] = useState({});
   const [feedbackModal, setFeedbackModal] = useState(null);
   const restoreInputRef = useRef(null);
 
@@ -162,6 +166,32 @@ export default function Settings() {
 
   const businessTimePreview = getBusinessDateTimeLabelFromForm(form);
   void clockTick;
+
+  useEffect(() => {
+    if (tab !== "backup" || !isAdmin) return undefined;
+    let cancelled = false;
+    backupService
+      .getSectionRowCounts()
+      .then((counts) => {
+        if (!cancelled) setSectionCounts(counts);
+      })
+      .catch(() => {
+        if (!cancelled) setSectionCounts({});
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, isAdmin, backupBusy]);
+
+  async function refreshSectionCounts() {
+    if (!isAdmin) return;
+    try {
+      const counts = await backupService.getSectionRowCounts();
+      setSectionCounts(counts);
+    } catch {
+      setSectionCounts({});
+    }
+  }
 
   async function persistForm(mergedForm) {
     const payload = formToSettings(mergedForm ?? form);
@@ -293,6 +323,47 @@ export default function Settings() {
         title: "Restore Failed",
         icon: "error",
         body: <p>{err.message || "Could not restore backup file."}</p>,
+      });
+    } finally {
+      setBackupBusy(false);
+    }
+  }
+
+  async function handleClearSectionClick(section) {
+    const count = sectionCounts[section.id] ?? 0;
+    const ok = await confirm({
+      title: `Clear ${section.label}`,
+      size: "lg",
+      variant: "danger",
+      confirmLabel: "Delete Section Data",
+      cancelLabel: "Cancel",
+      children: (
+        <>
+          <p>{section.description}</p>
+          <p>
+            <strong>{count.toLocaleString()}</strong> record{count === 1 ? "" : "s"} will be
+            permanently deleted.
+          </p>
+          <div className="confirm-note confirm-note-danger">
+            This cannot be undone. Download a backup first if you need to keep this data.
+          </div>
+        </>
+      ),
+    });
+    if (!ok) return;
+
+    setBackupBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      await backupService.clearSection(section.id);
+      await refreshSectionCounts();
+      setMessage(`${section.label} data cleared successfully.`);
+    } catch (err) {
+      setFeedbackModal({
+        title: "Clear Failed",
+        icon: "error",
+        body: <p>{err.message || `Could not clear ${section.label.toLowerCase()}.`}</p>,
       });
     } finally {
       setBackupBusy(false);
@@ -654,6 +725,45 @@ export default function Settings() {
               </div>
             </Card>
 
+            {isAdmin && (
+              <Card className="settings-card settings-danger-card">
+                <h3 className="settings-section-title settings-danger-title">
+                  <ShieldAlert size={18} style={{ verticalAlign: "middle", marginRight: "0.375rem" }} />
+                  Clear Data by Section
+                </h3>
+                <p className="settings-section-desc">
+                  Administrator only. Delete one part of the database without wiping everything.
+                  Users and store settings are kept unless you use Clear All Data below.
+                </p>
+                <div className="settings-clear-sections">
+                  {DATA_CLEAR_SECTIONS.map((section) => {
+                    const count = sectionCounts[section.id] ?? 0;
+                    return (
+                      <div key={section.id} className="settings-clear-section">
+                        <div className="settings-clear-section-body">
+                          <strong>{section.label}</strong>
+                          <span className="settings-clear-section-desc">{section.description}</span>
+                          <span className="settings-clear-section-count">
+                            {count.toLocaleString()} record{count === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          disabled={backupBusy || count === 0}
+                          onClick={() => handleClearSectionClick(section)}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            )}
+
+            {isAdmin && (
             <Card className="settings-card settings-danger-card">
               <h3 className="settings-section-title settings-danger-title">Clear Database</h3>
               <p className="settings-section-desc">
@@ -672,6 +782,7 @@ export default function Settings() {
                 {backupBusy ? "Clearing..." : "Clear All Data"}
               </Button>
             </Card>
+            )}
           </>
         )}
 

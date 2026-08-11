@@ -28,7 +28,7 @@ import ProductBilingualName from "../components/products/ProductBilingualName";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
 import { formatCurrency, calcVat, calcGrandTotal, formatQuantity } from "../utils/format";
 import { printReceipt } from "../utils/receipt";
-import { PAYMENT_METHODS, SALE_STATUS } from "../utils/constants";
+import { PAYMENT_METHODS, SALE_STATUS, POS_TOP_SELLERS_LIMIT } from "../utils/constants";
 import { resolveActivePhase } from "../zatca/core/config";
 import { ZATCA_PHASES } from "../zatca/core/constants";
 import "./Sales.css";
@@ -55,10 +55,11 @@ export default function Sales() {
   const zatcaPhase2 = resolveActivePhase(settings) === ZATCA_PHASES.PHASE2;
   const { submitting, guard } = useSubmitGuard();
 
-  const [catalog, setCatalog] = useState([]);
+  const [topProducts, setTopProducts] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
   const [customers, setCustomers] = useState([]);
   const [cart, setCart] = useState([]);
   const [customerId, setCustomerId] = useState("");
@@ -82,11 +83,11 @@ export default function Sales() {
     async function init() {
       try {
         const [products, customerResult, held] = await Promise.all([
-          productService.getPosCatalog(),
+          productService.getTopSellingForPos(POS_TOP_SELLERS_LIMIT),
           customerService.getAll({ limit: 100, page: 1 }),
           saleService.getHeldSales(),
         ]);
-        setCatalog(products);
+        setTopProducts(products);
         setCustomers(customerResult.items);
         setHeldSales(held);
       } catch (err) {
@@ -98,17 +99,30 @@ export default function Sales() {
     init();
   }, []);
 
-  const categories = useMemo(() => {
-    const map = new Map();
-    for (const product of catalog) {
-      if (product.category_id && product.category_name) {
-        map.set(product.category_id, product.category_name);
-      }
+  useEffect(() => {
+    const term = search.trim();
+    if (!term) {
+      setSearchResults([]);
+      setSearchLoading(false);
+      return undefined;
     }
-    return Array.from(map.entries())
-      .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [catalog]);
+
+    setSearchLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const results = await productService.searchForPos(term);
+        setSearchResults(results);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const isSearching = search.trim().length > 0;
 
   const cartQtyMap = useMemo(() => {
     const map = new Map();
@@ -119,30 +133,22 @@ export default function Sales() {
   }, [cart]);
 
   const displayedProducts = useMemo(() => {
-    const term = search.trim().toLowerCase();
-    return catalog.filter((p) => {
-      const matchesCategory =
-        categoryFilter === "all" || String(p.category_id) === String(categoryFilter);
-      if (!matchesCategory) return false;
-      if (!term) return true;
-      return (
-        p.name?.toLowerCase().includes(term) ||
-        p.name_ar?.toLowerCase().includes(term) ||
-        p.sku?.toLowerCase().includes(term) ||
-        p.barcode?.toLowerCase().includes(term)
-      );
-    });
-  }, [catalog, search, categoryFilter]);
+    if (isSearching) return searchResults;
+    return topProducts;
+  }, [isSearching, searchResults, topProducts]);
 
   async function handleBarcodeSearch(e) {
     if (e.key !== "Enter" || !search.trim()) return;
-    const exact = catalog.find((p) => p.barcode === search.trim());
+    const code = search.trim();
+    const exact =
+      topProducts.find((p) => p.barcode === code) ||
+      searchResults.find((p) => p.barcode === code);
     if (exact) {
       addToCart(exact);
       setSearch("");
       return;
     }
-    const product = await productService.getByBarcode(search.trim());
+    const product = await productService.getByBarcode(code);
     if (product) addToCart(product);
     setSearch("");
   }
@@ -216,9 +222,9 @@ export default function Sales() {
   const balanceDue = Math.max(0, grandTotal - received);
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
-  async function refreshCatalog() {
-    const products = await productService.getPosCatalog();
-    setCatalog(products);
+  async function refreshTopProducts() {
+    const products = await productService.getTopSellingForPos(POS_TOP_SELLERS_LIMIT);
+    setTopProducts(products);
   }
 
   function validateBeforeComplete() {
@@ -305,7 +311,7 @@ export default function Sales() {
         setCart([]);
         setDiscount(0);
         setCashReceived("");
-        await refreshCatalog();
+        await refreshTopProducts();
         setCompleteStep("print");
       });
     } catch (err) {
@@ -473,7 +479,9 @@ export default function Sales() {
             </div>
             <div>
               <h1 className="pos-topbar-title">Point of Sale</h1>
-              <p className="pos-topbar-subtitle">Tap products or scan a barcode to sell</p>
+              <p className="pos-topbar-subtitle">
+                Top {POS_TOP_SELLERS_LIMIT} sellers · search or scan for other products
+              </p>
             </div>
           </div>
 
@@ -550,35 +558,18 @@ export default function Sales() {
               )}
             </div>
 
-            <div className="pos-category-scroll">
-              <button
-                type="button"
-                className={`pos-category-chip ${categoryFilter === "all" ? "active" : ""}`}
-                onClick={() => setCategoryFilter("all")}
-              >
-                All
-                <span className="pos-category-count">{catalog.length}</span>
-              </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  type="button"
-                  className={`pos-category-chip ${categoryFilter === String(cat.id) ? "active" : ""}`}
-                  onClick={() => setCategoryFilter(String(cat.id))}
-                >
-                  {cat.name}
-                  <span className="pos-category-count">
-                    {catalog.filter((p) => String(p.category_id) === String(cat.id)).length}
-                  </span>
-                </button>
-              ))}
+            <div className="pos-top-sellers-label">
+              <Sparkles size={16} />
+              <span>{isSearching ? "Search results" : `Top ${POS_TOP_SELLERS_LIMIT} sellers`}</span>
             </div>
           </div>
 
           <div className="pos-catalog-meta">
             <span>
-              {displayedProducts.length} product{displayedProducts.length !== 1 ? "s" : ""}
-              {search ? ` matching “${search.trim()}”` : ""}
+              {searchLoading
+                ? "Searching…"
+                : `${displayedProducts.length} product${displayedProducts.length !== 1 ? "s" : ""}`}
+              {isSearching ? ` matching “${search.trim()}”` : " shown"}
             </span>
           </div>
 
@@ -619,20 +610,13 @@ export default function Sales() {
               );
             })}
 
-            {!displayedProducts.length && (
+            {!displayedProducts.length && !searchLoading && (
               <div className="pos-empty-catalog">
                 <Search size={32} strokeWidth={1.5} />
-                <p>{search ? "No products match your search" : "No products in this category"}</p>
-                {(search || categoryFilter !== "all") && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => {
-                      setSearch("");
-                      setCategoryFilter("all");
-                    }}
-                  >
-                    Clear filters
+                <p>{isSearching ? "No products match your search" : "No top sellers yet"}</p>
+                {isSearching && (
+                  <Button variant="secondary" size="sm" onClick={() => setSearch("")}>
+                    Clear search
                   </Button>
                 )}
               </div>
@@ -873,7 +857,7 @@ export default function Sales() {
           setMessage(
             `Return ${result.returnNumber} — ${formatCurrency(result.totalRefund, currency)} refunded`
           );
-          refreshCatalog();
+          refreshTopProducts();
         }}
         currency={currency}
       />

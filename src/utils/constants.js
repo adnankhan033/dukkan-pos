@@ -76,6 +76,7 @@ export const ORDER_RETURN_FILTERS = {
 };
 
 export const PRODUCT_IMPORT_BATCH_SIZE = 50;
+export const POS_TOP_SELLERS_LIMIT = 10;
 
 export const EXPENSE_CATEGORIES = [
   { id: "rent", label: "Rent" },

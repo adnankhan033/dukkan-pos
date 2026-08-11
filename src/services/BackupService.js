@@ -1,4 +1,5 @@
-import { query, queryOne, execute, runInTransaction, clearDatabaseData } from "../database/connection";
+import { query, queryOne, execute, runInTransaction, clearDatabaseData, clearDatabaseSection } from "../database/connection";
+import { DATA_CLEAR_SECTIONS } from "../utils/dataClearSections.js";
 
 const BACKUP_TABLES = [
   "settings",
@@ -20,6 +21,10 @@ const BACKUP_TABLES = [
   "sale_return_items",
   "zatca_invoices",
   "zatca_api_logs",
+  "employees",
+  "employee_salaries",
+  "supplier_payments",
+  "import_logs",
 ];
 
 class BackupService {
@@ -104,6 +109,28 @@ class BackupService {
   /** Delete all data and restore default admin, cashier, settings, and units. */
   async clearAllData() {
     await clearDatabaseData();
+    return true;
+  }
+
+  async getSectionRowCounts() {
+    const counts = {};
+    for (const section of DATA_CLEAR_SECTIONS) {
+      let total = 0;
+      for (const table of section.tables) {
+        try {
+          const row = await queryOne(`SELECT COUNT(*) AS count FROM ${table}`);
+          total += Number(row?.count ?? 0);
+        } catch {
+          /* table may not exist */
+        }
+      }
+      counts[section.id] = total;
+    }
+    return counts;
+  }
+
+  async clearSection(sectionId) {
+    await clearDatabaseSection(sectionId);
     return true;
   }
 }
