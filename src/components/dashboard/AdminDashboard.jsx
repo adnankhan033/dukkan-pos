@@ -15,6 +15,7 @@ import { StatCard, Card } from "../common/Card";
 import Badge from "../common/Badge";
 import { formatCurrency, formatDateTime } from "../../utils/format";
 import ZatcaSyncWidget from "./ZatcaSyncWidget";
+import EmployeesDashboardWidget from "./EmployeesDashboardWidget";
 import DashboardInsights from "./DashboardInsights";
 import "../../pages/Dashboard.css";
 
@@ -92,6 +93,8 @@ export default function AdminDashboard({ stats }) {
           />
         )}
       </div>
+
+      <EmployeesDashboardWidget employees={stats.employees} currency={currency} />
 
       <DashboardInsights
         insights={stats.smartInsights}

@@ -3,6 +3,7 @@ import { purchaseService } from "./PurchaseService";
 import { productService } from "./ProductService";
 import { customerService } from "./CustomerService";
 import { expenseService } from "./ExpenseService";
+import { employeeService } from "./EmployeeService";
 import {
   getMonthlyNetRevenue,
   getMonthlyNetCogs,
@@ -31,6 +32,7 @@ class DashboardService {
       recentReturns,
       heldSales,
       smartInsights,
+      employeeSummary,
     ] = await Promise.all([
       getTodayGrossSales(),
       getTodayReturnsTotal(),
@@ -47,6 +49,17 @@ class DashboardService {
       saleService.getRecentReturns(8),
       saleService.getHeldSales(),
       dashboardInsightsService.getInsights(),
+      employeeService.getSummary().catch(() => ({
+        total: 0,
+        current: 0,
+        finished: 0,
+        monthlySalary: 0,
+        monthlyAdvance: 0,
+        monthlyPayments: 0,
+        totalSalaryPaid: 0,
+        totalAdvancePaid: 0,
+        totalPayments: 0,
+      })),
     ]);
 
     const monthlyCost = await getMonthlyNetCogs();
@@ -69,6 +82,7 @@ class DashboardService {
       heldCount: heldSales?.length ?? 0,
       smartInsights: smartInsights.insights,
       topProducts: smartInsights.topProducts,
+      employees: employeeSummary,
     };
   }
 }

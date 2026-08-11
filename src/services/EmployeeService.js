@@ -73,7 +73,7 @@ class EmployeeService {
 
   async getSummary() {
     await this.ready();
-    const [totals, payments] = await Promise.all([
+    const [totals, payments, allTime] = await Promise.all([
       queryOne(
         `SELECT
            COUNT(*) AS total,
@@ -89,6 +89,13 @@ class EmployeeService {
          FROM employee_salaries
          WHERE strftime('%Y-%m', salary_date) = strftime('%Y-%m', 'now')`
       ),
+      queryOne(
+        `SELECT
+           COALESCE(SUM(CASE WHEN payment_type = 'salary' THEN amount ELSE 0 END), 0) AS salary_total,
+           COALESCE(SUM(CASE WHEN payment_type = 'advance' THEN amount ELSE 0 END), 0) AS advance_total,
+           COUNT(*) AS payment_count
+         FROM employee_salaries`
+      ),
     ]);
 
     return {
@@ -98,6 +105,9 @@ class EmployeeService {
       monthlySalary: Number(payments?.salary_total ?? 0),
       monthlyAdvance: Number(payments?.advance_total ?? 0),
       monthlyPayments: Number(payments?.payment_count ?? 0),
+      totalSalaryPaid: Number(allTime?.salary_total ?? 0),
+      totalAdvancePaid: Number(allTime?.advance_total ?? 0),
+      totalPayments: Number(allTime?.payment_count ?? 0),
     };
   }
 
