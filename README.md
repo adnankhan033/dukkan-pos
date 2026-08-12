@@ -280,21 +280,6 @@ dukkan-pos/
 
 ---
 
-## Upgrading from Portal POS
-
-If you previously used **Portal POS** or the old **`tauri-app/`** folder:
-
-1. Reopen the project from **`dukkan-pos/`**
-2. Clear Rust build cache:
-   ```bash
-   cargo clean --manifest-path src-tauri/Cargo.toml
-   bun run tauri dev
-   ```
-3. **Database:** The app uses `dukkan_pos.db`. Rename `portal_pos.db` → `dukkan_pos.db` in the Tauri app data directory, or restore from a JSON backup.
-4. Rebuild installers: `bun run build:mac-dmg` or `bun run build:win-exe`
-
----
-
 ## IDE setup (optional)
 
 - [VS Code](https://code.visualstudio.com/) + [Tauri extension](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
