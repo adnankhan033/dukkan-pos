@@ -175,6 +175,7 @@ async function runMigrations() {
   await ensureUserSubscriptionsSchema();
   await ensureEmployeesSchema();
   await ensureReceiptTemplateDefault();
+  await ensureBackupLogsSchema();
   await ensureSettingsKeys();
   await ensureDashboardPerformanceIndexes();
   await migrateUtcTimestampsToBusinessTimezone();
@@ -249,6 +250,24 @@ async function ensureZatcaSchema() {
   );
   await execute(
     "CREATE INDEX IF NOT EXISTS idx_zatca_api_logs_created ON zatca_api_logs(created_at DESC)"
+  );
+}
+
+async function ensureBackupLogsSchema() {
+  await execute(
+    `CREATE TABLE IF NOT EXISTS backup_logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      backup_type TEXT NOT NULL,
+      destination TEXT NOT NULL,
+      status TEXT NOT NULL,
+      file_size_bytes INTEGER,
+      table_count INTEGER,
+      error_message TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )`
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_backup_logs_created ON backup_logs(created_at DESC)"
   );
 }
 

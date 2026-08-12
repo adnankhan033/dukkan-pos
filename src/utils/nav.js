@@ -53,6 +53,13 @@ export const NAV_GROUPS = [
   },
   { id: "reports", label: "Reports", icon: "BarChart3", path: "/reports", module: "reports" },
   {
+    id: "backup",
+    label: "Backup",
+    icon: "CloudUpload",
+    module: "settings",
+    items: [{ id: "cloud-backup", path: "/cloud-backup", label: "Gmail Backup", module: "settings" }],
+  },
+  {
     id: "subscriptions",
     label: "Subscriptions",
     icon: "CreditCard",

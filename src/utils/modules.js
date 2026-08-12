@@ -33,6 +33,7 @@ export const ROUTE_MODULE_MAP = {
   "/employees": "accounting",
   "/expenses": "accounting",
   "/reports": "reports",
+  "/cloud-backup": "settings",
   "/subscriptions": "dashboard",
   "/users": "users",
   "/settings": "settings",

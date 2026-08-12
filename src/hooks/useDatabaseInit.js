@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { initializeDatabase } from "../database/connection";
 import { settingsService } from "../services/SettingsService";
 import { zatcaService } from "../services/ZatcaService";
+import { backupSyncService } from "../services/BackupSyncService";
 import { useAppStore, useSettingsStore } from "../contexts/store";
 
 export function useDatabaseInit() {
@@ -19,6 +20,7 @@ export function useDatabaseInit() {
           setSettings(settings);
           setDbReady(true);
           zatcaService.startBackgroundSync();
+          backupSyncService.startBackgroundSync();
         }
       } catch (err) {
         if (mounted) {

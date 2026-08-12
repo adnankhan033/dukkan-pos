@@ -12,6 +12,7 @@ import {
   Settings,
   Shield,
   CreditCard,
+  CloudUpload,
   LogOut,
   Moon,
   Sun,
@@ -37,6 +38,7 @@ const ICONS = {
   Settings,
   Shield,
   CreditCard,
+  CloudUpload,
 };
 
 function isPathActive(pathname, path) {

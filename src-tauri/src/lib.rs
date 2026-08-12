@@ -4,6 +4,10 @@ use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use base64::Engine;
+use lettre::message::header::ContentType;
+use lettre::message::{Attachment, Message, MultiPart, SinglePart};
+use lettre::transport::smtp::authentication::Credentials;
+use lettre::Transport;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -435,6 +439,125 @@ fn sign_zatca_invoice(input_json: String) -> Result<String, String> {
     Ok(result)
 }
 
+fn normalize_gmail_app_password(password: &str) -> String {
+    password.chars().filter(|c| !c.is_whitespace()).collect()
+}
+
+fn gmail_auth_error_message(raw: &str) -> Option<String> {
+    if raw.contains("535")
+        || raw.contains("BadCredentials")
+        || raw.contains("Username and Password not accepted")
+    {
+        Some(
+            "Gmail rejected the login. You must use a 16-character App Password — not your normal Gmail password. \
+             Steps: Google Account → Security → turn on 2-Step Verification → App passwords → create one for Mail. \
+             Paste the 16 characters with no spaces."
+                .to_string(),
+        )
+    } else {
+        None
+    }
+}
+
+#[tauri::command]
+fn send_backup_email(
+    gmail: String,
+    app_password: String,
+    recipient: String,
+    subject: String,
+    body_text: String,
+    attachment_name: String,
+    attachment_json: String,
+) -> Result<(), String> {
+    let from = gmail.trim();
+    let to = recipient.trim();
+    let password = normalize_gmail_app_password(&app_password);
+    if from.is_empty() {
+        return Err("Gmail address is required.".to_string());
+    }
+    if password.is_empty() {
+        return Err("Gmail app password is required.".to_string());
+    }
+    if password.len() != 16 {
+        return Err(
+            "Gmail App Password must be 16 characters (spaces removed). Create one at Google Account → Security → App passwords."
+                .to_string(),
+        );
+    }
+    if to.is_empty() {
+        return Err("Recipient email is required.".to_string());
+    }
+
+    let from_addr = from
+        .parse()
+        .map_err(|_| format!("Invalid sender email: {from}"))?;
+    let to_addr = to
+        .parse()
+        .map_err(|_| format!("Invalid recipient email: {to}"))?;
+
+    let email = Message::builder()
+        .from(from_addr)
+        .to(to_addr)
+        .subject(subject)
+        .multipart(
+            MultiPart::mixed()
+                .singlepart(
+                    SinglePart::builder()
+                        .header(ContentType::TEXT_PLAIN)
+                        .body(body_text),
+                )
+                .singlepart(
+                    Attachment::new(attachment_name)
+                        .body(attachment_json, ContentType::parse("application/json").unwrap()),
+                ),
+        )
+        .map_err(|e| format!("Could not build email: {e}"))?;
+
+    let creds = Credentials::new(from.to_string(), password);
+    // Gmail requires STARTTLS on port 587 (not plain port 25).
+    let mailer = lettre::SmtpTransport::starttls_relay("smtp.gmail.com")
+        .map_err(|e| format!("SMTP setup failed: {e}"))?
+        .credentials(creds)
+        .build();
+
+    if let Err(err) = mailer.send(&email) {
+        let raw = err.to_string();
+        return Err(
+            gmail_auth_error_message(&raw).unwrap_or_else(|| format!("Could not send backup email: {raw}")),
+        );
+    }
+
+    Ok(())
+}
+
+fn backup_dir() -> Result<std::path::PathBuf, String> {
+    let dir = dirs::document_dir()
+        .ok_or("Could not find Documents folder on this computer.")?
+        .join("DukkanPOS")
+        .join("backups");
+    std::fs::create_dir_all(&dir).map_err(|e| format!("Could not create backup folder: {e}"))?;
+    Ok(dir)
+}
+
+#[tauri::command]
+fn get_backup_folder() -> Result<String, String> {
+    Ok(backup_dir()?.to_string_lossy().into_owned())
+}
+
+#[tauri::command]
+fn save_backup_file(filename: String, content: String) -> Result<String, String> {
+    let safe_name = std::path::Path::new(filename.trim())
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or("Invalid backup filename.")?;
+    if !safe_name.ends_with(".json") {
+        return Err("Backup file must be a .json file.".to_string());
+    }
+    let path = backup_dir()?.join(safe_name);
+    std::fs::write(&path, content).map_err(|e| format!("Could not save local backup: {e}"))?;
+    Ok(path.to_string_lossy().into_owned())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -444,7 +567,10 @@ pub fn run() {
             generate_zatca_csr,
             zatca_http_request,
             validate_zatca_certificate,
-            sign_zatca_invoice
+            sign_zatca_invoice,
+            send_backup_email,
+            get_backup_folder,
+            save_backup_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

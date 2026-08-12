@@ -498,6 +498,85 @@ export default function Settings() {
         ))}
       </div>
 
+      {tab === "backup" ? (
+        <>
+            <Card className="settings-card">
+              <h3 className="settings-section-title">Database Backup</h3>
+              <p className="settings-section-desc">
+                Export or restore all store data including products, sales, users, and settings.
+                For Gmail cloud backup, use <strong>Backup → Gmail Backup</strong> in the sidebar.
+              </p>
+              <div className="settings-backup-actions">
+                <Button type="button" variant="secondary" onClick={handleBackupClick} disabled={backupBusy}>
+                  {backupBusy ? "Working..." : "Download Backup"}
+                </Button>
+                <Button type="button" onClick={handleRestoreClick} disabled={backupBusy}>
+                  Restore from File
+                </Button>
+                <input ref={restoreInputRef} type="file" accept=".json,application/json" hidden onChange={handleRestoreFile} />
+              </div>
+            </Card>
+
+            {isAdmin && (
+              <Card className="settings-card settings-danger-card">
+                <h3 className="settings-section-title settings-danger-title">
+                  <ShieldAlert size={18} style={{ verticalAlign: "middle", marginRight: "0.375rem" }} />
+                  Clear Data by Section
+                </h3>
+                <p className="settings-section-desc">
+                  Administrator only. Delete one part of the database without wiping everything.
+                  Users and store settings are kept unless you use Clear All Data below.
+                </p>
+                <div className="settings-clear-sections">
+                  {DATA_CLEAR_SECTIONS.map((section) => {
+                    const count = sectionCounts[section.id] ?? 0;
+                    return (
+                      <div key={section.id} className="settings-clear-section">
+                        <div className="settings-clear-section-body">
+                          <strong>{section.label}</strong>
+                          <span className="settings-clear-section-desc">{section.description}</span>
+                          <span className="settings-clear-section-count">
+                            {count.toLocaleString()} record{count === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          disabled={backupBusy || count === 0}
+                          onClick={() => handleClearSectionClick(section)}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            )}
+
+            {isAdmin && (
+            <Card className="settings-card settings-danger-card">
+              <h3 className="settings-section-title settings-danger-title">Clear Database</h3>
+              <p className="settings-section-desc">
+                Remove all business data and reset to factory defaults. This cannot be undone.
+                Download a backup first if you need to keep your data.
+              </p>
+              <ul className="settings-danger-list">
+                <li>Products, sales, orders, purchases, inventory</li>
+                <li>Customers, suppliers, expenses</li>
+                <li>Custom settings (store name, VAT, modules)</li>
+              </ul>
+              <p className="settings-section-desc">
+                Restored after clear: default admin (<strong>admin</strong> / admin123) and cashier (<strong>cashier</strong> / cashier123).
+              </p>
+              <Button type="button" variant="danger" onClick={handleClearDataClick} disabled={backupBusy}>
+                {backupBusy ? "Clearing..." : "Clear All Data"}
+              </Button>
+            </Card>
+            )}
+        </>
+      ) : (
       <form onSubmit={handleSave}>
         {tab === "store" && (
           <>
@@ -713,89 +792,9 @@ export default function Settings() {
           </Card>
         )}
 
-        {tab === "backup" && (
-          <>
-            <Card className="settings-card">
-              <h3 className="settings-section-title">Database Backup</h3>
-              <p className="settings-section-desc">
-                Export or restore all store data including products, sales, users, and settings.
-              </p>
-              <div className="settings-backup-actions">
-                <Button type="button" variant="secondary" onClick={handleBackupClick} disabled={backupBusy}>
-                  {backupBusy ? "Working..." : "Download Backup"}
-                </Button>
-                <Button type="button" onClick={handleRestoreClick} disabled={backupBusy}>
-                  Restore from File
-                </Button>
-                <input ref={restoreInputRef} type="file" accept=".json,application/json" hidden onChange={handleRestoreFile} />
-              </div>
-            </Card>
-
-            {isAdmin && (
-              <Card className="settings-card settings-danger-card">
-                <h3 className="settings-section-title settings-danger-title">
-                  <ShieldAlert size={18} style={{ verticalAlign: "middle", marginRight: "0.375rem" }} />
-                  Clear Data by Section
-                </h3>
-                <p className="settings-section-desc">
-                  Administrator only. Delete one part of the database without wiping everything.
-                  Users and store settings are kept unless you use Clear All Data below.
-                </p>
-                <div className="settings-clear-sections">
-                  {DATA_CLEAR_SECTIONS.map((section) => {
-                    const count = sectionCounts[section.id] ?? 0;
-                    return (
-                      <div key={section.id} className="settings-clear-section">
-                        <div className="settings-clear-section-body">
-                          <strong>{section.label}</strong>
-                          <span className="settings-clear-section-desc">{section.description}</span>
-                          <span className="settings-clear-section-count">
-                            {count.toLocaleString()} record{count === 1 ? "" : "s"}
-                          </span>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="danger"
-                          size="sm"
-                          disabled={backupBusy || count === 0}
-                          onClick={() => handleClearSectionClick(section)}
-                        >
-                          Clear
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </Card>
-            )}
-
-            {isAdmin && (
-            <Card className="settings-card settings-danger-card">
-              <h3 className="settings-section-title settings-danger-title">Clear Database</h3>
-              <p className="settings-section-desc">
-                Remove all business data and reset to factory defaults. This cannot be undone.
-                Download a backup first if you need to keep your data.
-              </p>
-              <ul className="settings-danger-list">
-                <li>Products, sales, orders, purchases, inventory</li>
-                <li>Customers, suppliers, expenses</li>
-                <li>Custom settings (store name, VAT, modules)</li>
-              </ul>
-              <p className="settings-section-desc">
-                Restored after clear: default admin (<strong>admin</strong> / admin123) and cashier (<strong>cashier</strong> / cashier123).
-              </p>
-              <Button type="button" variant="danger" onClick={handleClearDataClick} disabled={backupBusy}>
-                {backupBusy ? "Clearing..." : "Clear All Data"}
-              </Button>
-            </Card>
-            )}
-          </>
-        )}
-
-        {tab !== "backup" && (
-          <Button type="submit" style={{ marginTop: "0.5rem" }}>Save Settings</Button>
-        )}
+        <Button type="submit" style={{ marginTop: "0.5rem" }}>Save Settings</Button>
       </form>
+      )}
 
       {confirmDialog}
 
