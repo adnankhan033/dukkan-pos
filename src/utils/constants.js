@@ -67,6 +67,7 @@ export const ORDER_PERIODS = {
   TODAY: "today",
   WEEK: "week",
   MONTH: "month",
+  CUSTOM: "custom",
 };
 
 export const ORDER_RETURN_FILTERS = {

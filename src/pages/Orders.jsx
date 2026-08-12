@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { ClipboardList, DollarSign, Eye, RotateCcw, ShoppingBag, Trash2, ShieldAlert } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { CalendarRange, ClipboardList, DollarSign, Eye, RefreshCw, RotateCcw, ShoppingBag, Trash2, ShieldAlert } from "lucide-react";
 import { saleService } from "../services/SaleService";
 import { zatcaService } from "../services/ZatcaService";
 import { ensureReturnSchema } from "../database/connection";
@@ -21,8 +21,9 @@ import ZatcaOrderStatusBadge from "../components/zatca/ZatcaOrderStatusBadge";
 import ZatcaXmlDownloadLink from "../components/zatca/ZatcaXmlDownloadLink";
 import OrderDetailModal from "../components/orders/OrderDetailModal";
 import SaleReturnModal from "../components/sales/SaleReturnModal";
+import { Input } from "../components/common/Input";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
-import { formatCurrency, formatOrderDateTime } from "../utils/format";
+import { formatCurrency, formatDate, formatOrderDateTime, getPeriodDateRange, todayISO } from "../utils/format";
 import { printReceipt } from "../utils/receipt";
 import "./Orders.css";
 
@@ -30,7 +31,21 @@ const PERIOD_TABS = [
   { id: ORDER_PERIODS.TODAY, label: "Today" },
   { id: ORDER_PERIODS.WEEK, label: "This Week" },
   { id: ORDER_PERIODS.MONTH, label: "This Month" },
+  { id: ORDER_PERIODS.CUSTOM, label: "Custom Range" },
 ];
+
+function periodToRangeKey(period) {
+  if (period === ORDER_PERIODS.WEEK) return "weekly";
+  if (period === ORDER_PERIODS.MONTH) return "monthly";
+  return "daily";
+}
+
+function formatOrdersPeriodLabel(period, from, to) {
+  if (period === ORDER_PERIODS.TODAY) return `Today · ${formatDate(from)}`;
+  if (period === ORDER_PERIODS.WEEK) return `This Week · ${formatDate(from)} – ${formatDate(to)}`;
+  if (period === ORDER_PERIODS.MONTH) return `This Month · ${formatDate(from)} – ${formatDate(to)}`;
+  return `${formatDate(from)} – ${formatDate(to)}`;
+}
 
 const RETURN_FILTER_TABS = [
   { id: ORDER_RETURN_FILTERS.ALL, label: "All Orders" },
@@ -57,6 +72,10 @@ export default function Orders() {
   const showZatcaColumn = zatcaPhase === ZATCA_PHASES.PHASE2;
 
   const [period, setPeriod] = useState(ORDER_PERIODS.TODAY);
+  const [from, setFrom] = useState(() => todayISO());
+  const [to, setTo] = useState(() => todayISO());
+  const [draftFrom, setDraftFrom] = useState(() => todayISO());
+  const [draftTo, setDraftTo] = useState(() => todayISO());
   const [returnFilter, setReturnFilter] = useState(ORDER_RETURN_FILTERS.ALL);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -81,20 +100,26 @@ export default function Orders() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
+  const periodLabel = useMemo(
+    () => formatOrdersPeriodLabel(period, from, to),
+    [period, from, to]
+  );
+
   const loadOrders = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
       await ensureReturnSchema();
+      const rangeArgs = { period, from, to };
       const [result, periodStats] = await Promise.all([
         saleService.getByPeriodPaginated({
-          period,
+          ...rangeArgs,
           page,
           limit: ORDERS_PAGE_SIZE,
           returnFilter,
           search: debouncedSearch,
         }),
-        saleService.getPeriodStats(period),
+        saleService.getPeriodStats(period, from, to),
       ]);
       setOrders(result.items);
       setTotal(result.total);
@@ -116,7 +141,7 @@ export default function Orders() {
     } finally {
       setLoading(false);
     }
-  }, [period, page, returnFilter, debouncedSearch, showZatcaColumn]);
+  }, [period, from, to, page, returnFilter, debouncedSearch, showZatcaColumn]);
 
   useEffect(() => {
     loadOrders();
@@ -124,6 +149,28 @@ export default function Orders() {
 
   function changePeriod(next) {
     setPeriod(next);
+    setPage(1);
+    if (next === ORDER_PERIODS.CUSTOM) {
+      setDraftFrom(from);
+      setDraftTo(to);
+      return;
+    }
+    const range = getPeriodDateRange(periodToRangeKey(next));
+    setFrom(range.from);
+    setTo(range.to);
+    setDraftFrom(range.from);
+    setDraftTo(range.to);
+  }
+
+  function applyCustomRange() {
+    if (draftFrom > draftTo) {
+      setError("Start date must be before or equal to end date.");
+      return;
+    }
+    setError("");
+    setPeriod(ORDER_PERIODS.CUSTOM);
+    setFrom(draftFrom);
+    setTo(draftTo);
     setPage(1);
   }
 
@@ -377,12 +424,14 @@ export default function Orders() {
     },
   ];
 
-  const periodLabel =
+  const statsPeriodLabel =
     period === ORDER_PERIODS.TODAY
       ? "today"
       : period === ORDER_PERIODS.WEEK
         ? "this week"
-        : "this month";
+        : period === ORDER_PERIODS.MONTH
+          ? "this month"
+          : "in period";
 
   return (
     <div className="orders-page">
@@ -405,23 +454,69 @@ export default function Orders() {
       {message && <Alert type="success">{message}</Alert>}
       {error && <Alert>{error}</Alert>}
 
-      <div className="orders-period-tabs">
-        {PERIOD_TABS.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            className={`orders-period-tab ${period === tab.id ? "active" : ""}`}
-            onClick={() => changePeriod(tab.id)}
+      <div className="orders-filter-panel">
+        <div className="orders-filter-panel-header">
+          <div className="orders-filter-panel-title">
+            <CalendarRange size={18} />
+            <span>Date Filter</span>
+          </div>
+          <span className="orders-period-badge">{periodLabel}</span>
+        </div>
+
+        <div className="orders-period-tabs">
+          {PERIOD_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              className={`orders-period-tab ${period === tab.id ? "active" : ""}`}
+              onClick={() => changePeriod(tab.id)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="orders-date-row">
+          <Input
+            label="From"
+            type="date"
+            value={draftFrom}
+            onChange={(e) => {
+              setDraftFrom(e.target.value);
+              setPeriod(ORDER_PERIODS.CUSTOM);
+            }}
+          />
+          <span className="orders-date-separator">to</span>
+          <Input
+            label="To"
+            type="date"
+            value={draftTo}
+            onChange={(e) => {
+              setDraftTo(e.target.value);
+              setPeriod(ORDER_PERIODS.CUSTOM);
+            }}
+          />
+          <Button
+            variant="primary"
+            onClick={() => {
+              if (period === ORDER_PERIODS.CUSTOM && draftFrom === from && draftTo === to) {
+                loadOrders();
+              } else {
+                applyCustomRange();
+              }
+            }}
+            disabled={loading}
           >
-            {tab.label}
-          </button>
-        ))}
+            <RefreshCw size={16} className={loading ? "orders-spin" : ""} />
+            Apply
+          </Button>
+        </div>
       </div>
 
       {stats && (
         <div className="orders-stats">
           <StatCard
-            label={`Orders ${periodLabel}`}
+            label={`Orders ${statsPeriodLabel}`}
             value={String(stats.orderCount)}
             icon={ClipboardList}
             variant="primary"
@@ -520,8 +615,8 @@ export default function Orders() {
               onRowClick={openOrderDetail}
               emptyMessage={
                 returnFilter === ORDER_RETURN_FILTERS.ALL
-                  ? `No orders ${periodLabel}`
-                  : `No matching orders ${periodLabel} for this return filter`
+                  ? `No orders for ${periodLabel.toLowerCase()}`
+                  : `No matching orders for ${periodLabel.toLowerCase()} with this return filter`
               }
             />
             <Pagination

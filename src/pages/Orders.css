@@ -2,11 +2,97 @@
   min-height: 100%;
 }
 
+.orders-filter-panel {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.orders-filter-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.875rem;
+}
+
+.orders-filter-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.orders-period-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .orders-period-tabs {
   display: flex;
   gap: 0.5rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.875rem;
   flex-wrap: wrap;
+}
+
+.orders-date-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.orders-date-row .form-group {
+  min-width: 160px;
+  flex: 1;
+  max-width: 220px;
+  margin: 0;
+}
+
+.orders-date-separator {
+  align-self: center;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  padding-bottom: 0.625rem;
+}
+
+.orders-date-row .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin-bottom: 0.125rem;
+}
+
+@keyframes orders-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.orders-spin {
+  animation: orders-spin 0.8s linear infinite;
+}
+
+@media (max-width: 640px) {
+  .orders-date-row .form-group {
+    max-width: none;
+  }
+
+  .orders-date-separator {
+    display: none;
+  }
 }
 
 .orders-period-tab {
