@@ -1,4 +1,4 @@
-import { localDateISO, localDateTimeISO } from "./format";
+import { localDateISO, localDateTimeISO, getPeriodDateRange } from "./format";
 import {
   DEFAULT_BUSINESS_TIMEZONE,
   getDateTimePartsInTimezone,
@@ -112,6 +112,14 @@ export function getBusinessDateTimeLabelFromForm(form) {
     business_date_override: form.business_date_override,
     business_time_override: form.business_time_override,
   });
+}
+
+/** Period ranges (daily/weekly/monthly) using the store business calendar. */
+export function getBusinessPeriodDateRange(periodKey, settings) {
+  const businessDate = getBusinessDateISO(settings);
+  const [year, month, day] = businessDate.split("-").map(Number);
+  const ref = new Date(year, month - 1, day, 12, 0, 0, 0);
+  return getPeriodDateRange(periodKey, ref);
 }
 
 export { DEFAULT_BUSINESS_TIMEZONE };

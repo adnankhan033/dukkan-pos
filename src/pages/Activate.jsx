@@ -6,13 +6,12 @@ import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import {
   isSystemActivated,
   normalizeActivationKey,
-  ACTIVATION_RECIPIENT_EMAIL,
   ACTIVATION_SETTING_KEYS,
 } from "../utils/activationConfig";
 import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
-import AuthBrand from "../components/auth/AuthBrand";
+import AuthShell from "../components/auth/AuthShell";
 
 export default function Activate() {
   const settings = useSettingsStore((s) => s.settings);
@@ -57,10 +56,10 @@ export default function Activate() {
         setSettings(updated);
         if (sent) {
           setNotice(
-            "Registration sent successfully. Enter the activation key once you receive it from the developer."
+            "Your request has been sent. Contact our team for your activation key."
           );
         } else {
-          setError(sendError || "Registration saved but email could not be sent. Use Resend on the next screen.");
+          setError(sendError || "Your details were saved, but the request could not be sent. Tap Resend Request on the next screen.");
         }
       });
     } catch (err) {
@@ -78,7 +77,7 @@ export default function Activate() {
         setSettings(updated);
         navigate("/login", {
           replace: true,
-          state: { message: "System activated. Sign in to continue." },
+          state: { showWelcome: true },
         });
       });
     } catch (err) {
@@ -103,9 +102,9 @@ export default function Activate() {
         const { settingsService: settingsApi } = await import("../services/SettingsService.js");
         setSettings(await settingsApi.getAll());
         if (result.success) {
-          setNotice("Registration email sent again.");
+          setNotice("Your request has been sent again. Contact our team for your activation key.");
         } else {
-          setResendError(result.error || "Could not send registration email.");
+          setResendError(result.error || "Could not send your request. Please try again.");
         }
       });
     } catch (err) {
@@ -114,17 +113,17 @@ export default function Activate() {
   }
 
   return (
-    <div className="auth-card activate-card">
-      <AuthBrand
-        title={registrationSubmitted ? "Activate DukkanPOS" : "Register DukkanPOS"}
-        subtitle={
-          registrationSubmitted
-            ? "Enter the activation key you received after registration"
-            : "Fill in your details to request activation for this computer"
-        }
-        step={registrationSubmitted ? 2 : 1}
-      />
-
+    <AuthShell
+      wide
+      step={registrationSubmitted ? 2 : 1}
+      formTitle={registrationSubmitted ? "Activate System" : "Register Your Store"}
+      formSubtitle={
+        registrationSubmitted
+          ? "Your activation key has been sent to our team. Contact them to receive it, then enter it below to start using DukkanPOS."
+          : "Enter your store details to request activation for this computer."
+      }
+      footer="Once activated, sign in with your username and password."
+    >
       {notice && <Alert type="success">{notice}</Alert>}
       {error && <Alert>{error}</Alert>}
 
@@ -167,7 +166,7 @@ export default function Activate() {
             disabled={registering}
             style={{ width: "100%", marginTop: "1.5rem" }}
           >
-            {registering ? "Sending..." : "Submit & Send Request"}
+            {registering ? "Sending..." : "Submit Request"}
           </Button>
           {emailError && (
             <p style={{ marginTop: "1rem", fontSize: "0.8125rem", color: "var(--color-danger)" }}>
@@ -177,18 +176,19 @@ export default function Activate() {
         </form>
       ) : (
         <>
-          <div style={{ marginBottom: "1.25rem", fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
-            <p>
-              Your registration was sent to <strong>{ACTIVATION_RECIPIENT_EMAIL}</strong>
-              {emailSent ? " with your details and activation key." : "."}
-              {!emailSent && emailError ? ` Email could not be sent: ${emailError}` : ""}
+          {!emailSent && emailError && (
+            <p style={{ marginBottom: "1rem", fontSize: "0.8125rem", color: "var(--color-danger)" }}>
+              {emailError}
             </p>
-            {deviceId && (
-              <p style={{ marginTop: "0.75rem" }}>
-                Device ID: <code>{deviceId}</code>
-              </p>
-            )}
-          </div>
+          )}
+
+          {deviceId && (
+            <div className="auth-device-id">
+              <span className="auth-device-id-label">Device ID</span>
+              <code className="auth-device-id-value">{deviceId}</code>
+              <p className="auth-device-id-hint">Use this ID to find your request in email.</p>
+            </div>
+          )}
 
           <form onSubmit={handleActivate}>
             <Input
@@ -217,15 +217,11 @@ export default function Activate() {
               style={{ width: "100%" }}
               onClick={handleResendEmail}
             >
-              {resending ? "Sending..." : "Resend Registration Email"}
+              {resending ? "Sending..." : "Resend Request"}
             </Button>
           </div>
         </>
       )}
-
-      <p style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center" }}>
-        After activation, sign in with your username and password.
-      </p>
-    </div>
+    </AuthShell>
   );
 }

@@ -183,6 +183,7 @@ async function runMigrations() {
   await migrateUtcTimestampsToBusinessTimezone();
   await migrateSalesTimestampsToIsoUtc();
   await fixSalesUtcTimestampsForRiyadh();
+  await migrateSalesTimestampsToBusinessWallV4();
 }
 
 async function ensureZatcaColumn(table, column, definition) {
@@ -662,6 +663,55 @@ async function fixSalesUtcTimestampsForRiyadh() {
 
   await execute(
     "INSERT INTO settings (key, value) VALUES ('_sales_riyadh_fix_v3', '1')"
+  );
+}
+
+/** Sales timestamps must be business wall-clock (YYYY-MM-DD HH:mm:ss) for Orders/ZATCA date filters. */
+async function migrateSalesTimestampsToBusinessWallV4() {
+  const done = await queryOne(
+    "SELECT value FROM settings WHERE key = '_sales_business_wall_v4' LIMIT 1"
+  );
+  if (done) return;
+
+  if (!(await tableExists("sales"))) {
+    await execute(
+      "INSERT INTO settings (key, value) VALUES ('_sales_business_wall_v4', '1')"
+    );
+    return;
+  }
+
+  const settingsRows = await query("SELECT key, value FROM settings");
+  const settings = Object.fromEntries(settingsRows.map((row) => [row.key, row.value]));
+  const tz = resolveBusinessTimezone(settings);
+
+  const tables = [
+    { table: "sales", column: "created_at" },
+    { table: "sale_returns", column: "created_at" },
+  ];
+
+  for (const { table, column } of tables) {
+    if (!(await tableExists(table))) continue;
+
+    const rows = await query(
+      `SELECT id, ${column} AS ts FROM ${table} WHERE ${column} IS NOT NULL AND ${column} != ''`
+    );
+
+    for (const row of rows) {
+      const raw = String(row.ts).trim();
+      if (!/^\d{4}-\d{2}-\d{2}T/.test(raw)) continue;
+
+      const converted = convertUtcSqliteDatetimeToBusiness(raw, tz);
+      if (converted && converted !== raw) {
+        await execute(`UPDATE ${table} SET ${column} = $1 WHERE id = $2`, [
+          converted,
+          row.id,
+        ]);
+      }
+    }
+  }
+
+  await execute(
+    "INSERT INTO settings (key, value) VALUES ('_sales_business_wall_v4', '1')"
   );
 }
 

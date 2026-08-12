@@ -1,0 +1,287 @@
+.welcome-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: welcome-fade-in 0.45s ease-out;
+}
+
+.welcome-backdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, #030712 72%, transparent);
+  backdrop-filter: blur(8px);
+  overflow: hidden;
+}
+
+.welcome-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.5;
+  animation: welcome-orb-float 10s ease-in-out infinite;
+}
+
+.welcome-orb--1 {
+  width: 28rem;
+  height: 28rem;
+  top: -8rem;
+  left: -6rem;
+  background: #06b6d4;
+}
+
+.welcome-orb--2 {
+  width: 22rem;
+  height: 22rem;
+  bottom: -6rem;
+  right: -4rem;
+  background: #10b981;
+  animation-delay: -3s;
+}
+
+.welcome-orb--3 {
+  width: 16rem;
+  height: 16rem;
+  top: 40%;
+  left: 55%;
+  background: #3b82f6;
+  animation-delay: -6s;
+}
+
+.welcome-spark {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 12px #06b6d4;
+  animation: welcome-sparkle 3s ease-in-out infinite;
+}
+
+.welcome-spark--1 { top: 18%; left: 22%; animation-delay: 0s; }
+.welcome-spark--2 { top: 28%; right: 20%; animation-delay: 0.8s; }
+.welcome-spark--3 { bottom: 30%; left: 18%; animation-delay: 1.6s; }
+.welcome-spark--4 { bottom: 22%; right: 28%; animation-delay: 2.2s; }
+
+.welcome-card {
+  position: relative;
+  width: 100%;
+  max-width: 28rem;
+  border-radius: calc(var(--radius-lg) + 6px);
+  overflow: hidden;
+  background: var(--color-card);
+  border: 1px solid color-mix(in srgb, #06b6d4 25%, var(--color-border));
+  box-shadow:
+    0 32px 64px color-mix(in srgb, #000 40%, transparent),
+    0 0 0 1px color-mix(in srgb, #fff 8%, transparent) inset;
+  animation: welcome-card-rise 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.welcome-card-hero {
+  position: relative;
+  padding: 2rem 2rem 1.5rem;
+  text-align: center;
+  background: linear-gradient(155deg, #090d16 0%, #111827 50%, #0f172a 100%);
+  overflow: hidden;
+}
+
+.welcome-card-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, color-mix(in srgb, #06b6d4 22%, transparent), transparent 65%);
+  pointer-events: none;
+}
+
+.welcome-icon-wrap {
+  position: relative;
+  z-index: 1;
+  width: 5.5rem;
+  height: 5.5rem;
+  margin: 0 auto 1rem;
+  padding: 4px;
+  border-radius: 22%;
+  background: linear-gradient(145deg, #06b6d4, #3b82f6, #10b981);
+  box-shadow: 0 16px 40px color-mix(in srgb, #000 45%, transparent);
+}
+
+.welcome-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 20%;
+  object-fit: cover;
+}
+
+.welcome-badge {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #ecfdf5;
+  background: color-mix(in srgb, #10b981 35%, transparent);
+  border: 1px solid color-mix(in srgb, #10b981 55%, transparent);
+}
+
+.welcome-card-body {
+  padding: 1.75rem 2rem 2rem;
+}
+
+.welcome-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--color-primary) 85%, #06b6d4);
+}
+
+.welcome-title {
+  margin: 0 0 0.75rem;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--color-text);
+}
+
+.welcome-lead {
+  margin: 0 0 1.5rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--color-text-muted);
+}
+
+.welcome-lead strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.welcome-features {
+  margin: 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.welcome-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: var(--radius-md, 0.5rem);
+  background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
+  border: 1px solid var(--color-border);
+}
+
+.welcome-feature-icon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.65rem;
+  color: #fff;
+}
+
+.welcome-feature-icon--sales {
+  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+}
+
+.welcome-feature-icon--store {
+  background: linear-gradient(135deg, #10b981, #059669);
+}
+
+.welcome-feature-icon--reports {
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+}
+
+.welcome-features li div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.welcome-features li strong {
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.welcome-features li span {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--color-text-muted);
+}
+
+.welcome-cta {
+  width: 100%;
+  font-weight: 700;
+}
+
+.welcome-footer-note {
+  margin: 1rem 0 0;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--color-text-muted);
+}
+
+@keyframes welcome-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes welcome-card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes welcome-orb-float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(10px, -12px); }
+}
+
+@keyframes welcome-sparkle {
+  0%, 100% { opacity: 0.2; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-overlay,
+  .welcome-card,
+  .welcome-orb,
+  .welcome-spark {
+    animation: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-card-body {
+    padding: 1.5rem 1.25rem 1.75rem;
+  }
+
+  .welcome-title {
+    font-size: 1.5rem;
+  }
+}

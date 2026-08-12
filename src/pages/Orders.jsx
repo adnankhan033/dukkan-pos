@@ -23,7 +23,8 @@ import OrderDetailModal from "../components/orders/OrderDetailModal";
 import SaleReturnModal from "../components/sales/SaleReturnModal";
 import { Input } from "../components/common/Input";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
-import { formatCurrency, formatDate, formatOrderDateTime, getPeriodDateRange, todayISO } from "../utils/format";
+import { formatCurrency, formatDate, formatOrderDateTime } from "../utils/format";
+import { getBusinessDateISO, getBusinessPeriodDateRange } from "../utils/businessDate";
 import { printReceipt } from "../utils/receipt";
 import "./Orders.css";
 
@@ -71,11 +72,13 @@ export default function Orders() {
   const zatcaPhase = resolveActivePhase(settings);
   const showZatcaColumn = zatcaPhase === ZATCA_PHASES.PHASE2;
 
+  const businessToday = useMemo(() => getBusinessDateISO(settings), [settings]);
+
   const [period, setPeriod] = useState(ORDER_PERIODS.TODAY);
-  const [from, setFrom] = useState(() => todayISO());
-  const [to, setTo] = useState(() => todayISO());
-  const [draftFrom, setDraftFrom] = useState(() => todayISO());
-  const [draftTo, setDraftTo] = useState(() => todayISO());
+  const [from, setFrom] = useState(() => getBusinessDateISO({}));
+  const [to, setTo] = useState(() => getBusinessDateISO({}));
+  const [draftFrom, setDraftFrom] = useState(() => getBusinessDateISO({}));
+  const [draftTo, setDraftTo] = useState(() => getBusinessDateISO({}));
   const [returnFilter, setReturnFilter] = useState(ORDER_RETURN_FILTERS.ALL);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -104,6 +107,15 @@ export default function Orders() {
     () => formatOrdersPeriodLabel(period, from, to),
     [period, from, to]
   );
+
+  useEffect(() => {
+    if (period === ORDER_PERIODS.CUSTOM) return;
+    const range = getBusinessPeriodDateRange(periodToRangeKey(period), settings);
+    setFrom(range.from);
+    setTo(range.to);
+    setDraftFrom(range.from);
+    setDraftTo(range.to);
+  }, [businessToday, period, settings]);
 
   const loadOrders = useCallback(async () => {
     setLoading(true);
@@ -155,7 +167,7 @@ export default function Orders() {
       setDraftTo(to);
       return;
     }
-    const range = getPeriodDateRange(periodToRangeKey(next));
+    const range = getBusinessPeriodDateRange(periodToRangeKey(next), settings);
     setFrom(range.from);
     setTo(range.to);
     setDraftFrom(range.from);

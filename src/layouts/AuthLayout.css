@@ -5,42 +5,7 @@
   justify-content: center;
   padding: 1.5rem;
   background:
-    radial-gradient(ellipse 90% 60% at 50% -15%, color-mix(in srgb, #06b6d4 14%, transparent), transparent 55%),
-    radial-gradient(ellipse 70% 50% at 100% 100%, color-mix(in srgb, #10b981 10%, transparent), transparent 50%),
-    radial-gradient(ellipse 50% 40% at 0% 80%, color-mix(in srgb, #3b82f6 8%, transparent), transparent 45%),
+    radial-gradient(ellipse 90% 60% at 50% -15%, color-mix(in srgb, #06b6d4 12%, transparent), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 100% 100%, color-mix(in srgb, #10b981 8%, transparent), transparent 50%),
     var(--color-bg);
-}
-
-.auth-card {
-  width: 100%;
-  max-width: 420px;
-  background: color-mix(in srgb, var(--color-card) 92%, transparent);
-  backdrop-filter: blur(12px);
-  border: 1px solid color-mix(in srgb, var(--color-border) 80%, #06b6d4 20%);
-  border-radius: var(--radius-lg);
-  padding: 2rem 2rem 1.75rem;
-  box-shadow:
-    var(--shadow-lg),
-    0 0 0 1px color-mix(in srgb, #fff 4%, transparent) inset;
-}
-
-.auth-card.activate-card {
-  max-width: 480px;
-}
-
-.auth-brand {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.auth-brand h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  margin-bottom: 0.25rem;
-}
-
-.auth-brand p {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
 }

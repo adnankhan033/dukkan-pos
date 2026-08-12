@@ -19,6 +19,7 @@ export const ACTIVATION_SETTING_KEYS = {
   CUSTOMER_PHONE: "activation_customer_phone",
   CUSTOMER_STORE: "activation_customer_store",
   CUSTOMER_ADDRESS: "activation_customer_address",
+  WELCOME_SHOWN: "welcome_shown",
 };
 
 export const ACTIVATION_STATUS = {

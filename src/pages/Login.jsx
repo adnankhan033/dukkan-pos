@@ -8,7 +8,8 @@ import { useSettingsStore } from "../contexts/store";
 import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
-import AuthBrand from "../components/auth/AuthBrand";
+import AuthShell from "../components/auth/AuthShell";
+import { ACTIVATION_SETTING_KEYS } from "../utils/activationConfig";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -32,7 +33,12 @@ export default function Login() {
         }
         login(user);
         const settings = useSettingsStore.getState().settings;
-        navigate(getDefaultRouteForUser(user, settings));
+        const showWelcome =
+          location.state?.showWelcome === true ||
+          settings[ACTIVATION_SETTING_KEYS.WELCOME_SHOWN] !== "1";
+        navigate(getDefaultRouteForUser(user, settings), {
+          state: showWelcome ? { showWelcome: true } : undefined,
+        });
       });
     } catch (err) {
       setError(err.message || "Login failed");
@@ -40,12 +46,11 @@ export default function Login() {
   }
 
   return (
-    <div className="auth-card">
-      <AuthBrand
-        title="DukkanPOS"
-        subtitle="Sign in to your point of sale system"
-      />
-
+    <AuthShell
+      formTitle="Sign In"
+      formSubtitle="Enter your credentials to access your store"
+      footer="Admin: admin / admin123 · Cashier: cashier / cashier123"
+    >
       {notice && <Alert type="warning">{notice}</Alert>}
       {error && <Alert>{error}</Alert>}
 
@@ -70,10 +75,6 @@ export default function Login() {
           {submitting ? "Signing in..." : "Sign In"}
         </Button>
       </form>
-
-      <p style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center" }}>
-        Admin: admin / admin123 · Cashier: cashier / cashier123
-      </p>
-    </div>
+    </AuthShell>
   );
 }

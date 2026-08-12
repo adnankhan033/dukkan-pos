@@ -6,6 +6,8 @@ import {
   ZATCA_MAX_RETRY_COUNT,
 } from "../core/constants";
 import { settingsService } from "../../services/SettingsService";
+import { getBusinessDateISO } from "../../utils/businessDate";
+import { appendBusinessDateEqualsFilter } from "../../utils/businessDateFilter";
 import { computeNextRetryAt } from "../sync/retryBackoff";
 
 function normalizeStatus(status) {
@@ -335,6 +337,9 @@ class ZatcaInvoiceRepository {
   }
 
   async getDailySyncItems(businessDate = null) {
+    const settings = await settingsService.getAll();
+    const dateKey = businessDate || getBusinessDateISO(settings);
+
     let sql = `
       SELECT zi.*,
              s.id AS sale_id,
@@ -351,13 +356,7 @@ class ZatcaInvoiceRepository {
       WHERE zi.phase = $1
     `;
     const params = [ZATCA_PHASES.PHASE2];
-
-    if (businessDate) {
-      params.push(businessDate);
-      sql += ` AND date(s.created_at) = date($${params.length})`;
-    } else {
-      sql += ` AND date(s.created_at) = date('now')`;
-    }
+    sql += appendBusinessDateEqualsFilter("s.created_at", dateKey, params, settings);
 
     sql += ` ORDER BY s.created_at DESC`;
     const rows = await query(sql, params);

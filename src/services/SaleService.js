@@ -4,6 +4,8 @@ import { settingsService } from "./SettingsService";
 import { zatcaService } from "./ZatcaService";
 import { invalidateDashboardCache } from "./DashboardCache";
 import { generateNumber, formatInvoiceNumber, parseInvoiceSequence, getPeriodDateRange } from "../utils/format";
+import { getBusinessDateTimeISO } from "../utils/businessDate";
+import { appendBusinessDateRangeFilter } from "../utils/businessDateFilter";
 import { SALE_STATUS } from "../utils/constants";
 
 async function processZatcaForSale(sale) {
@@ -101,7 +103,8 @@ class SaleService {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const total = Math.max(0, subtotal - discount + vat);
     const saleNumber = await this.getNextInvoiceNumber();
-    const createdAt = new Date().toISOString();
+    const settings = await settingsService.getAll();
+    const createdAt = getBusinessDateTimeISO(settings);
 
     const saleId = await insert(
       `INSERT INTO sales (sale_number, customer_id, subtotal, discount, vat, total, payment_method, status, notes, created_at)
@@ -321,18 +324,15 @@ class SaleService {
     return getPeriodDateRange("daily");
   }
 
-  _appendDateRangeFilter(column, range, params) {
-    params.push(range.from, range.to);
-    const fromIdx = params.length - 1;
-    const toIdx = params.length;
-    return ` AND date(${column}) >= date($${fromIdx}) AND date(${column}) <= date($${toIdx})`;
+  _appendDateRangeFilter(column, range, params, settings) {
+    return appendBusinessDateRangeFilter(column, range, params, settings);
   }
 
-  _buildOrdersQueryFilters(period, returnFilter = "all", search = "", from = null, to = null) {
+  _buildOrdersQueryFilters(period, returnFilter = "all", search = "", from = null, to = null, settings = {}) {
     let where = `WHERE s.status IN ('completed', 'partial_return', 'returned', 'held')`;
     const params = [];
     const range = this._resolveDateRange(period, from, to);
-    where += this._appendDateRangeFilter("s.created_at", range, params);
+    where += this._appendDateRangeFilter("s.created_at", range, params, settings);
 
     if (returnFilter === "no_return") {
       where += " AND s.status = 'completed'";
@@ -362,7 +362,15 @@ class SaleService {
     returnFilter = "all",
     search = "",
   } = {}) {
-    const { where, params } = this._buildOrdersQueryFilters(period, returnFilter, search, from, to);
+    const settings = await settingsService.getAll();
+    const { where, params } = this._buildOrdersQueryFilters(
+      period,
+      returnFilter,
+      search,
+      from,
+      to,
+      settings
+    );
     const safePage = Math.max(1, Number(page) || 1);
     const safeLimit = Math.max(1, Number(limit) || 100);
     const offset = (safePage - 1) * safeLimit;
@@ -402,9 +410,10 @@ class SaleService {
   }
 
   async getPeriodStats(period = "today", from = null, to = null) {
+    const settings = await settingsService.getAll();
     const range = this._resolveDateRange(period, from, to);
     const salesParams = [];
-    const periodFilter = this._appendDateRangeFilter("s.created_at", range, salesParams);
+    const periodFilter = this._appendDateRangeFilter("s.created_at", range, salesParams, settings);
     const salesRow = await queryOne(
       `SELECT
          COUNT(CASE WHEN s.status != 'held' THEN 1 END) AS order_count,
@@ -419,7 +428,7 @@ class SaleService {
     let returnsTotal = 0;
     try {
       const returnsParams = [];
-      const returnsFilter = this._appendDateRangeFilter("sr.created_at", range, returnsParams);
+      const returnsFilter = this._appendDateRangeFilter("sr.created_at", range, returnsParams, settings);
       const returnsRow = await queryOne(
         `SELECT COALESCE(SUM(total_refund), 0) AS total FROM sale_returns sr WHERE 1=1 ${returnsFilter}`,
         returnsParams
