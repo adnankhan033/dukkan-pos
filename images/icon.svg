@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Dark Background Gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#090D16"/>
+      <stop offset="50%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#030712"/>
+    </linearGradient>
+
+    <!-- Emerald Success Gradient -->
+    <linearGradient id="emeraldNeon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+
+    <!-- Cyan Electric Gradient -->
+    <linearGradient id="cyanNeon" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#3B82F6"/>
+    </linearGradient>
+
+    <!-- Gold EMV Chip -->
+    <linearGradient id="goldChip" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FBBF24"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+
+    <filter id="glowEffect" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="30" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <filter id="shadowEffect" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Base -->
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="url(#bgGradient)"/>
+  <rect x="32" y="32" width="960" height="960" rx="220" fill="none" stroke="url(#cyanNeon)" stroke-width="6" stroke-opacity="0.35"/>
+
+  <!-- POS Terminal & Card Graphics -->
+  <g filter="url(#shadowEffect)">
+    <!-- Top Emerging Receipt -->
+    <path d="M 380 230 L 640 230 L 620 150 Q 620 130 600 130 L 420 130 Q 400 130 400 150 Z" fill="#F8FAFC"/>
+    <line x1="430" y1="165" x2="590" y2="165" stroke="#10B981" stroke-width="8" stroke-linecap="round"/>
+    <line x1="430" y1="195" x2="530" y2="195" stroke="#94A3B8" stroke-width="6" stroke-linecap="round"/>
+
+    <!-- Main Terminal Body -->
+    <rect x="256" y="230" width="512" height="580" rx="56" fill="#1E293B" stroke="#334155" stroke-width="6"/>
+
+    <!-- Display Screen Frame -->
+    <rect x="296" y="270" width="432" height="320" rx="32" fill="#020617"/>
+
+    <!-- Screen UI Elements -->
+    <rect x="336" y="310" width="160" height="28" rx="14" fill="url(#emeraldNeon)"/>
+    <rect x="336" y="354" width="100" height="16" rx="8" fill="#475569"/>
+
+    <!-- Verification Badge -->
+    <circle cx="640" cy="350" r="40" fill="url(#emeraldNeon)" filter="url(#glowEffect)"/>
+    <path d="M 622 350 L 634 362 L 658 336" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+    <!-- Transaction Wave Graphics -->
+    <rect x="336" y="420" width="352" height="130" rx="20" fill="#0F172A" stroke="#1E293B" stroke-width="4"/>
+    <path d="M 366 485 Q 436 445, 506 485 T 656 470" fill="none" stroke="url(#cyanNeon)" stroke-width="10" stroke-linecap="round"/>
+
+    <!-- Floating Contactless Payment Card -->
+    <g transform="rotate(-10, 512, 680)">
+      <rect x="290" y="570" width="440" height="220" rx="28" fill="url(#cyanNeon)" stroke="#FFFFFF" stroke-width="3" stroke-opacity="0.5"/>
+      <rect x="338" y="620" width="52" height="40" rx="8" fill="url(#goldChip)"/>
+      <path d="M 640 620 A 20 20 0 0 1 640 660 M 655 610 A 35 35 0 0 1 655 670" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity="0.9"/>
+      <rect x="338" y="720" width="200" height="16" rx="8" fill="#FFFFFF" opacity="0.85"/>
+    </g>
+  </g>
+</svg>

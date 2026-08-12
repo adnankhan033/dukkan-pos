@@ -8,6 +8,7 @@ import { useSettingsStore } from "../contexts/store";
 import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
+import AuthBrand from "../components/auth/AuthBrand";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -40,10 +41,10 @@ export default function Login() {
 
   return (
     <div className="auth-card">
-      <div className="auth-brand">
-        <h1>DukkanPOS</h1>
-        <p>Sign in to your point of sale system</p>
-      </div>
+      <AuthBrand
+        title="DukkanPOS"
+        subtitle="Sign in to your point of sale system"
+      />
 
       {notice && <Alert type="warning">{notice}</Alert>}
       {error && <Alert>{error}</Alert>}

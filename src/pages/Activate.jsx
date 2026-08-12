@@ -12,7 +12,7 @@ import {
 import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
-import "./Activate.css";
+import AuthBrand from "../components/auth/AuthBrand";
 
 export default function Activate() {
   const settings = useSettingsStore((s) => s.settings);
@@ -115,14 +115,15 @@ export default function Activate() {
 
   return (
     <div className="auth-card activate-card">
-      <div className="auth-brand">
-        <h1>{registrationSubmitted ? "Activate DukkanPOS" : "Register DukkanPOS"}</h1>
-        <p>
-          {registrationSubmitted
+      <AuthBrand
+        title={registrationSubmitted ? "Activate DukkanPOS" : "Register DukkanPOS"}
+        subtitle={
+          registrationSubmitted
             ? "Enter the activation key you received after registration"
-            : "Fill in your details to request activation for this computer"}
-        </p>
-      </div>
+            : "Fill in your details to request activation for this computer"
+        }
+        step={registrationSubmitted ? 2 : 1}
+      />
 
       {notice && <Alert type="success">{notice}</Alert>}
       {error && <Alert>{error}</Alert>}
