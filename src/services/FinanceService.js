@@ -183,3 +183,59 @@ export async function getMonthlyReturns() {
      ORDER BY sr.created_at DESC`
   );
 }
+
+/** Sales totals grouped by payment method for a date range. */
+export async function getPaymentBreakdownInRange(from, to) {
+  const { clause, params } = saleDateRangeClause(from, to);
+  const rows = await query(
+    `SELECT payment_method,
+            COUNT(*) AS sale_count,
+            COALESCE(SUM(total), 0) AS gross_total
+     FROM sales
+     WHERE status IN ${SALE_STATUSES} ${clause}
+     GROUP BY payment_method`,
+    params
+  );
+
+  const breakdown = { cash: { count: 0, gross: 0, returns: 0, net: 0 }, card: { count: 0, gross: 0, returns: 0, net: 0 } };
+  for (const row of rows) {
+    const method = String(row.payment_method || "cash").toLowerCase() === "card" ? "card" : "cash";
+    breakdown[method].count += Number(row.sale_count ?? 0);
+    breakdown[method].gross += Number(row.gross_total ?? 0);
+  }
+
+  const { clause: retClause, params: retParams } = saleDateRangeClause(from, to, "sr.created_at");
+  let returnRows = [];
+  try {
+    returnRows = await query(
+      `SELECT s.payment_method, COALESCE(SUM(sr.total_refund), 0) AS refund_total
+       FROM sale_returns sr
+       JOIN sales s ON s.id = sr.sale_id
+       WHERE 1=1 ${retClause}
+       GROUP BY s.payment_method`,
+      retParams
+    );
+  } catch {
+    returnRows = [];
+  }
+
+  for (const row of returnRows) {
+    const key = String(row.payment_method || "cash").toLowerCase() === "card" ? "card" : "cash";
+    breakdown[key].returns += Number(row.refund_total ?? 0);
+  }
+
+  for (const key of ["cash", "card"]) {
+    breakdown[key].net = Math.max(0, breakdown[key].gross - breakdown[key].returns);
+  }
+
+  return breakdown;
+}
+
+export async function getHeldOrdersCountInRange(from, to) {
+  const { clause, params } = saleDateRangeClause(from, to);
+  const row = await queryOne(
+    `SELECT COUNT(*) AS count FROM sales WHERE status = 'held' ${clause}`,
+    params
+  );
+  return Number(row?.count ?? 0);
+}

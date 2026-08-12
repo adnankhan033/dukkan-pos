@@ -17,6 +17,7 @@ import Inventory from "../pages/Inventory";
 import Accounting from "../pages/Accounting";
 import Employees from "../pages/Employees";
 import Reports from "../pages/Reports";
+import DailyClose from "../pages/DailyClose";
 import Settings from "../pages/Settings";
 import Users from "../pages/Users";
 import ZatcaQueue from "../pages/ZatcaQueue";
@@ -57,6 +58,7 @@ export default function AppRoutes() {
         <Route path="/employees" element={withRole("accounting", <Employees />)} />
         <Route path="/expenses" element={<Navigate to="/accounting" replace />} />
         <Route path="/reports" element={withRole("reports", <Reports />)} />
+        <Route path="/daily-close" element={withRole("reports", <DailyClose />)} />
         <Route path="/subscriptions" element={withRole("dashboard", <Subscriptions />)} />
         <Route path="/settings" element={withRole("settings", <Settings />)} />
         <Route path="/cloud-backup" element={withRole("settings", <CloudBackup />)} />

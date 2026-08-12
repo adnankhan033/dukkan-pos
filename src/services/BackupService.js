@@ -35,6 +35,7 @@ const BACKUP_TABLES = [
   "employee_salaries",
   "supplier_payments",
   "import_logs",
+  "daily_closes",
 ];
 
 class BackupService {

@@ -81,6 +81,7 @@ export async function initializeDatabase() {
 
   await initPromise;
   await ensureEmployeesSchema();
+  await ensureDailyClosesSchema();
   return getDatabase();
 }
 
@@ -176,6 +177,7 @@ async function runMigrations() {
   await ensureEmployeesSchema();
   await ensureReceiptTemplateDefault();
   await ensureBackupLogsSchema();
+  await ensureDailyClosesSchema();
   await ensureSettingsKeys();
   await ensureDashboardPerformanceIndexes();
   await migrateUtcTimestampsToBusinessTimezone();
@@ -251,6 +253,40 @@ async function ensureZatcaSchema() {
   await execute(
     "CREATE INDEX IF NOT EXISTS idx_zatca_api_logs_created ON zatca_api_logs(created_at DESC)"
   );
+}
+
+async function ensureDailyClosesSchema() {
+  await execute(
+    `CREATE TABLE IF NOT EXISTS daily_closes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      business_date TEXT NOT NULL UNIQUE,
+      closed_at TEXT NOT NULL,
+      closed_by_user_id INTEGER,
+      closed_by_username TEXT,
+      gross_sales REAL NOT NULL DEFAULT 0,
+      returns_total REAL NOT NULL DEFAULT 0,
+      net_sales REAL NOT NULL DEFAULT 0,
+      cash_total REAL NOT NULL DEFAULT 0,
+      card_total REAL NOT NULL DEFAULT 0,
+      sales_count INTEGER NOT NULL DEFAULT 0,
+      returns_count INTEGER NOT NULL DEFAULT 0,
+      held_count INTEGER NOT NULL DEFAULT 0,
+      expenses_total REAL NOT NULL DEFAULT 0,
+      cash_counted REAL,
+      cash_variance REAL,
+      notes TEXT,
+      snapshot_json TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_daily_closes_date ON daily_closes(business_date)"
+  );
+}
+
+export async function ensureDailyCloseSchema() {
+  return ensureDailyClosesSchema();
 }
 
 async function ensureBackupLogsSchema() {
