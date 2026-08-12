@@ -4,6 +4,9 @@ import AuthLayout from "../layouts/AuthLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleRoute from "./RoleRoute";
 import Login from "../pages/Login";
+import Activate from "../pages/Activate";
+import ActivationRoute from "./ActivationRoute";
+import DefaultRedirect from "./DefaultRedirect";
 import Dashboard from "../pages/Dashboard";
 import Products from "../pages/Products";
 import Categories from "../pages/Categories";
@@ -34,14 +37,24 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route element={<AuthLayout />}>
-        <Route path="/login" element={<Login />} />
+        <Route path="/activate" element={<Activate />} />
+        <Route
+          path="/login"
+          element={
+            <ActivationRoute>
+              <Login />
+            </ActivationRoute>
+          }
+        />
       </Route>
 
       <Route
         element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
+          <ActivationRoute>
+            <ProtectedRoute>
+              <MainLayout />
+            </ProtectedRoute>
+          </ActivationRoute>
         }
       >
         <Route path="/" element={withRole("dashboard", <Dashboard />)} />
@@ -68,7 +81,7 @@ export default function AppRoutes() {
         <Route path="/users" element={withRole("users", <Users />)} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<DefaultRedirect />} />
     </Routes>
   );
 }

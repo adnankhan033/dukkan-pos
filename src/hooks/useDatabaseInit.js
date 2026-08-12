@@ -15,7 +15,11 @@ export function useDatabaseInit() {
     async function init() {
       try {
         await initializeDatabase();
-        const settings = await settingsService.getAll();
+        let settings = await settingsService.getAll();
+
+        const { activationService } = await import("../services/ActivationService.js");
+        settings = await activationService.ensureSystemActivation(settings);
+
         if (mounted) {
           setSettings(settings);
           setDbReady(true);

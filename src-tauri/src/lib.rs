@@ -1,5 +1,7 @@
+use std::collections::hash_map::DefaultHasher;
 use std::collections::HashMap;
 use std::fs;
+use std::hash::{Hash, Hasher};
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -459,6 +461,266 @@ fn gmail_auth_error_message(raw: &str) -> Option<String> {
     }
 }
 
+const DEFAULT_ACTIVATION_RECIPIENT: &str = "dev.adnankhan@gmail.com";
+
+fn activation_smtp_credentials() -> Option<(String, String)> {
+    let gmail = option_env!("DUKKAN_ACTIVATION_GMAIL")?;
+    let password = option_env!("DUKKAN_ACTIVATION_GMAIL_APP_PASSWORD")?;
+    Some((gmail.to_string(), password.to_string()))
+}
+
+fn send_plain_text_email(
+    gmail: &str,
+    app_password: &str,
+    recipient: &str,
+    subject: &str,
+    body_text: &str,
+) -> Result<(), String> {
+    let from = gmail.trim();
+    let to = recipient.trim();
+    let password = normalize_gmail_app_password(app_password);
+    if from.is_empty() {
+        return Err("Gmail address is required.".to_string());
+    }
+    if password.is_empty() {
+        return Err("Gmail app password is required.".to_string());
+    }
+    if password.len() != 16 {
+        return Err(
+            "Gmail App Password must be 16 characters (spaces removed). Create one at Google Account → Security → App passwords."
+                .to_string(),
+        );
+    }
+    if to.is_empty() {
+        return Err("Recipient email is required.".to_string());
+    }
+
+    let from_addr = from
+        .parse()
+        .map_err(|_| format!("Invalid sender email: {from}"))?;
+    let to_addr = to
+        .parse()
+        .map_err(|_| format!("Invalid recipient email: {to}"))?;
+
+    let email = Message::builder()
+        .from(from_addr)
+        .to(to_addr)
+        .subject(subject)
+        .singlepart(
+            SinglePart::builder()
+                .header(ContentType::TEXT_PLAIN)
+                .body(body_text.to_string()),
+        )
+        .map_err(|e| format!("Could not build email: {e}"))?;
+
+    let creds = Credentials::new(from.to_string(), password);
+    let mailer = lettre::SmtpTransport::starttls_relay("smtp.gmail.com")
+        .map_err(|e| format!("SMTP setup failed: {e}"))?
+        .credentials(creds)
+        .build();
+
+    if let Err(err) = mailer.send(&email) {
+        let raw = err.to_string();
+        return Err(
+            gmail_auth_error_message(&raw).unwrap_or_else(|| format!("Could not send email: {raw}")),
+        );
+    }
+
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn platform_device_uuid() -> Option<String> {
+    let output = Command::new("ioreg")
+        .args(["-rd1", "-c", "IOPlatformExpertDevice"])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let text = String::from_utf8_lossy(&output.stdout);
+    for line in text.lines() {
+        if line.contains("IOPlatformUUID") {
+            if let Some(raw) = line.split('=').nth(1) {
+                return Some(raw.trim().trim_matches('"').to_string());
+            }
+        }
+    }
+    None
+}
+
+#[cfg(target_os = "windows")]
+fn platform_device_uuid() -> Option<String> {
+    let output = Command::new("wmic")
+        .args(["csproduct", "get", "uuid"])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let text = String::from_utf8_lossy(&output.stdout);
+    for line in text.lines().skip(1) {
+        let trimmed = line.trim();
+        if !trimmed.is_empty() && trimmed != "UUID" {
+            return Some(trimmed.to_string());
+        }
+    }
+    None
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn platform_device_uuid() -> Option<String> {
+    fs::read_to_string("/etc/machine-id")
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+}
+
+fn collect_machine_identity_parts() -> Vec<String> {
+    let mut parts = Vec::new();
+    if let Ok(name) = std::env::var("COMPUTERNAME").or_else(|_| std::env::var("HOSTNAME")) {
+        if !name.trim().is_empty() {
+            parts.push(name.trim().to_string());
+        }
+    }
+    if let Ok(user) = std::env::var("USER").or_else(|_| std::env::var("USERNAME")) {
+        if !user.trim().is_empty() {
+            parts.push(user.trim().to_string());
+        }
+    }
+    parts.push(std::env::consts::OS.to_string());
+    parts.push(std::env::consts::ARCH.to_string());
+    if let Some(uuid) = platform_device_uuid() {
+        parts.push(uuid);
+    }
+    parts
+}
+
+fn hash_machine_identity(parts: &[String]) -> String {
+    let mut hasher = DefaultHasher::new();
+    parts.join("|").hash(&mut hasher);
+    format!("{:016X}", hasher.finish())
+}
+
+fn generate_activation_key_code() -> String {
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_nanos())
+        .unwrap_or(0);
+    let seed = nanos as u64 ^ (nanos >> 64) as u64;
+    format!(
+        "DKP-{:04X}-{:04X}-{:04X}",
+        ((seed >> 48) & 0xFFFF) as u16,
+        ((seed >> 32) & 0xFFFF) as u16,
+        ((seed >> 16) & 0xFFFF) as u16
+    )
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SystemActivationInfo {
+    pub device_id: String,
+    pub activation_key: String,
+    pub hostname: String,
+}
+
+#[tauri::command]
+fn generate_system_activation() -> Result<SystemActivationInfo, String> {
+    let parts = collect_machine_identity_parts();
+    let hostname = parts
+        .first()
+        .cloned()
+        .unwrap_or_else(|| "DukkanPOS".to_string());
+    let device_id = hash_machine_identity(&parts);
+    let activation_key = generate_activation_key_code();
+    Ok(SystemActivationInfo {
+        device_id,
+        activation_key,
+        hostname,
+    })
+}
+
+#[tauri::command]
+fn send_activation_email(
+    recipient: String,
+    device_id: String,
+    activation_key: String,
+    hostname: String,
+    gmail: Option<String>,
+    app_password: Option<String>,
+    customer_name: Option<String>,
+    customer_phone: Option<String>,
+    store_name: Option<String>,
+    store_address: Option<String>,
+) -> Result<(), String> {
+    let to = recipient.trim();
+    let to = if to.is_empty() {
+        DEFAULT_ACTIVATION_RECIPIENT
+    } else {
+        to
+    };
+    if to.is_empty() {
+        return Err("Recipient email is required.".to_string());
+    }
+
+    let (gmail, app_password) = match (
+        gmail.as_deref().map(str::trim).filter(|s| !s.is_empty()),
+        app_password.as_deref().map(str::trim).filter(|s| !s.is_empty()),
+    ) {
+        (Some(from), Some(password)) => (from.to_string(), password.to_string()),
+        _ => activation_smtp_credentials().ok_or(
+            "Activation email is not configured. Add VITE_ACTIVATION_GMAIL and VITE_ACTIVATION_GMAIL_APP_PASSWORD to .env.local (dev) or set DUKKAN_ACTIVATION_GMAIL and DUKKAN_ACTIVATION_GMAIL_APP_PASSWORD when building."
+                .to_string(),
+        )?,
+    };
+
+    let host_label = if hostname.trim().is_empty() {
+        "Unknown device".to_string()
+    } else {
+        hostname.trim().to_string()
+    };
+
+    let name = customer_name.unwrap_or_default().trim().to_string();
+    let phone = customer_phone.unwrap_or_default().trim().to_string();
+    let store = store_name.unwrap_or_default().trim().to_string();
+    let address = store_address.unwrap_or_default().trim().to_string();
+
+    let subject = if store.is_empty() {
+        format!("DukkanPOS Activation Key — {host_label}")
+    } else {
+        format!("DukkanPOS Activation — {store}")
+    };
+
+    let mut body = String::from("New DukkanPOS registration request\n\n");
+
+    if !name.is_empty() || !phone.is_empty() || !store.is_empty() || !address.is_empty() {
+        body.push_str("Customer details:\n");
+        if !name.is_empty() {
+            body.push_str(&format!("  Name: {name}\n"));
+        }
+        if !phone.is_empty() {
+            body.push_str(&format!("  Phone: {phone}\n"));
+        }
+        if !store.is_empty() {
+            body.push_str(&format!("  Store name: {store}\n"));
+        }
+        if !address.is_empty() {
+            body.push_str(&format!("  Address: {address}\n"));
+        }
+        body.push('\n');
+    }
+
+    body.push_str(&format!(
+        "System:\n\
+         Device: {host_label}\n\
+         Device ID: {device_id}\n\
+         Activation key: {activation_key}\n\n\
+         Share this activation key with the customer after approval.\n\n\
+         — DukkanPOS"
+    ));
+
+    send_plain_text_email(&gmail, &app_password, to, &subject, &body)
+}
+
 #[tauri::command]
 fn send_backup_email(
     gmail: String,
@@ -568,6 +830,8 @@ pub fn run() {
             zatca_http_request,
             validate_zatca_certificate,
             sign_zatca_invoice,
+            generate_system_activation,
+            send_activation_email,
             send_backup_email,
             get_backup_folder,
             save_backup_file

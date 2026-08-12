@@ -289,3 +289,19 @@ dukkan-pos/
 ## License
 
 Private project — DukkanPOS v1.0.0
+
+
+
+sqlite3 "$HOME/Library/Application Support/com.sharedtechadnan.dukkan-pos/dukkan_pos.db" "DELETE FROM settings WHERE key IN (
+  'system_activation_key',
+  'system_activation_status',
+  'system_device_id',
+  'system_activation_email_sent',
+  'system_activation_created_at',
+  'system_activation_email_error',
+  'activation_customer_name',
+  'activation_customer_phone',
+  'activation_customer_store',
+  'activation_customer_address',
+  'system_hostname'
+);"
