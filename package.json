@@ -9,10 +9,9 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "postinstall": "node scripts/patch-zatca-xml-js.mjs",
-    "build:mac-dmg": "tauri build --bundles dmg",
-    "build:win-exe": "tauri build --bundles nsis",
-    "package:mac-dmg": "mkdir -p releases && cp \"src-tauri/target/release/bundle/dmg/\"*.dmg releases/",
-    "package:win-zip": "powershell -Command \"Compress-Archive -Path src-tauri/target/release/bundle/nsis/*-setup.exe -DestinationPath DukkanPOS-Windows.zip -Force\""
+    "build:mac-dmg": "tauri build --bundles dmg && node scripts/copy-release.mjs dmg",
+    "build:win-exe": "node scripts/build-win-exe.mjs",
+    "setup:win-cross": "rustup target add x86_64-pc-windows-msvc && cargo install cargo-xwin --locked && brew install makensis llvm"
   },
   "dependencies": {
     "@fidm/x509": "^1.2.1",
