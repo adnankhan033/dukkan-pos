@@ -291,6 +291,7 @@ dukkan-pos/
 Private project — DukkanPOS v1.0.0
 
 
+## clear activations 
 
 sqlite3 "$HOME/Library/Application Support/com.sharedtechadnan.dukkan-pos/dukkan_pos.db" "DELETE FROM settings WHERE key IN (
   'system_activation_key',
@@ -305,3 +306,4 @@ sqlite3 "$HOME/Library/Application Support/com.sharedtechadnan.dukkan-pos/dukkan
   'activation_customer_address',
   'system_hostname'
 );"
+
