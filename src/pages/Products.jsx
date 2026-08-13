@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Plus, Pencil, Trash2, Package, FileSpreadsheet } from "lucide-react";
 import { productService } from "../services/ProductService";
+import { onCatalogChanged } from "../services/CatalogSync";
 import { categoryService } from "../services/CategoryService";
 import { unitService } from "../services/UnitService";
 import { supplierService } from "../services/SupplierService";
@@ -8,6 +9,7 @@ import { useSettingsStore } from "../contexts/store";
 import { useDebounce } from "../hooks/usePagination";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import { useConfirm } from "../hooks/useConfirm";
+import { usePermissions } from "../hooks/usePermissions";
 import { compressImageFile } from "../utils/image";
 import { PRODUCTS_PAGE_SIZE } from "../utils/constants";
 import PageHeader from "../components/common/PageHeader";
@@ -51,6 +53,10 @@ export default function Products() {
   const currency = useSettingsStore((s) => s.settings.currency) || "SAR";
   const { submitting, guard } = useSubmitGuard();
   const { confirm, dialog: confirmDialog } = useConfirm();
+  const { canPerformAction } = usePermissions();
+  const canCreate = canPerformAction("products_create");
+  const canEdit = canPerformAction("products_edit");
+  const canDelete = canPerformAction("products_delete");
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [units, setUnits] = useState([]);
@@ -113,6 +119,12 @@ export default function Products() {
 
   useEffect(() => {
     loadProducts();
+  }, [loadProducts]);
+
+  useEffect(() => {
+    return onCatalogChanged(() => {
+      loadProducts(true);
+    });
   }, [loadProducts]);
 
   function openCreate() {
@@ -432,27 +444,31 @@ export default function Products() {
       label: "Actions",
       render: (row) => (
         <div className="table-actions">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="btn-icon"
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              openEdit(row);
-            }}
-          >
-            <Pencil size={16} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="btn-icon"
-            type="button"
-            onClick={(e) => handleDelete(row.id, e)}
-          >
-            <Trash2 size={16} />
-          </Button>
+          {canEdit && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="btn-icon"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                openEdit(row);
+              }}
+            >
+              <Pencil size={16} />
+            </Button>
+          )}
+          {canDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="btn-icon"
+              type="button"
+              onClick={(e) => handleDelete(row.id, e)}
+            >
+              <Trash2 size={16} />
+            </Button>
+          )}
         </div>
       ),
     },
@@ -468,9 +484,11 @@ export default function Products() {
             <Button variant="secondary" onClick={() => setImportExportOpen(true)}>
               <FileSpreadsheet size={16} /> Import / Export
             </Button>
-            <Button onClick={openCreate}>
-              <Plus size={16} /> Add Product
-            </Button>
+            {canCreate && (
+              <Button onClick={openCreate}>
+                <Plus size={16} /> Add Product
+              </Button>
+            )}
           </>
         }
       />
@@ -525,25 +543,31 @@ export default function Products() {
           </span>
           {selectedIds.size > 0 && (
             <>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={bulkPublishing || bulkDeleting}
-                onClick={() => handleBulkPublish(true)}
-              >
-                {bulkPublishing ? "Updating..." : "Publish Selected"}
-              </Button>
-              <Button
-                variant="secondary"
-                size="sm"
-                disabled={bulkPublishing || bulkDeleting}
-                onClick={() => handleBulkPublish(false)}
-              >
-                {bulkPublishing ? "Updating..." : "Unpublish Selected"}
-              </Button>
-              <Button variant="danger" size="sm" disabled={bulkDeleting || bulkPublishing} onClick={handleBulkDelete}>
-                {bulkDeleting ? "Deleting..." : "Delete Selected"}
-              </Button>
+              {canEdit && (
+                <>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={bulkPublishing || bulkDeleting}
+                    onClick={() => handleBulkPublish(true)}
+                  >
+                    {bulkPublishing ? "Updating..." : "Publish Selected"}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    disabled={bulkPublishing || bulkDeleting}
+                    onClick={() => handleBulkPublish(false)}
+                  >
+                    {bulkPublishing ? "Updating..." : "Unpublish Selected"}
+                  </Button>
+                </>
+              )}
+              {canDelete && (
+                <Button variant="danger" size="sm" disabled={bulkDeleting || bulkPublishing} onClick={handleBulkDelete}>
+                  {bulkDeleting ? "Deleting..." : "Delete Selected"}
+                </Button>
+              )}
               <Button variant="ghost" size="sm" onClick={() => setSelectedIds(new Set())}>
                 Clear
               </Button>

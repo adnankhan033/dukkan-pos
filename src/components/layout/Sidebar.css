@@ -32,6 +32,19 @@
   color: var(--color-text-muted);
 }
 
+.sidebar-drupal-badge {
+  display: inline-block;
+  margin-top: 0.35rem;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: #0d9488;
+  border-radius: 4px;
+}
+
 .sidebar-nav {
   flex: 1;
   overflow-y: auto;

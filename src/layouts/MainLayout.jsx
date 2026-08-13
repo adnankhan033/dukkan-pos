@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../components/layout/Sidebar";
+import DrupalStatusBar from "../components/layout/DrupalStatusBar";
 import ZatcaSyncIndicator from "../components/zatca/ZatcaSyncIndicator";
 import SubscriptionBlocked from "../components/subscriptions/SubscriptionBlocked";
 import WelcomeModal from "../components/auth/WelcomeModal";
@@ -9,10 +10,14 @@ import { useSubscription } from "../hooks/useSubscription";
 import { LoadingSpinner } from "../components/common/Loading";
 import { settingsService } from "../services/SettingsService";
 import { ACTIVATION_SETTING_KEYS } from "../utils/activationConfig";
+import { verifyDrupalSession } from "../api/drupalBootstrap";
+import { startCatalogSyncPolling, stopCatalogSyncPolling } from "../services/CatalogSync";
 import "./MainLayout.css";
 
 export default function MainLayout() {
   const user = useAuthStore((s) => s.user);
+  const drupalConnected = useAuthStore((s) => s.drupalConnected);
+  const logout = useAuthStore((s) => s.logout);
   const settings = useSettingsStore((s) => s.settings);
   const setSettings = useSettingsStore((s) => s.setSettings);
   const location = useLocation();
@@ -20,6 +25,36 @@ export default function MainLayout() {
   const { subscription, loading, allowsAccess, isAdmin, refresh } = useSubscription();
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const initialCheck = !isAdmin && loading && subscription === null;
+
+  useEffect(() => {
+    if (!drupalConnected) {
+      stopCatalogSyncPolling();
+      return undefined;
+    }
+
+    startCatalogSyncPolling();
+    return () => {
+      stopCatalogSyncPolling();
+    };
+  }, [drupalConnected]);
+
+  useEffect(() => {
+    if (!drupalConnected) return;
+
+    let cancelled = false;
+    verifyDrupalSession().catch(() => {
+      if (cancelled) return;
+      logout();
+      navigate("/login", {
+        replace: true,
+        state: { message: "Drupal session expired. Please sign in again." },
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [drupalConnected, logout, navigate]);
 
   useEffect(() => {
     if (settings[ACTIVATION_SETTING_KEYS.WELCOME_SHOWN] === "1") {
@@ -73,6 +108,7 @@ export default function MainLayout() {
       <div className="main-layout">
         <Sidebar />
         <main className="main-content">
+          <DrupalStatusBar />
           <ZatcaSyncIndicator />
           <Outlet />
         </main>

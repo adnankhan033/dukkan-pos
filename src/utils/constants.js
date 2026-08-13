@@ -1,4 +1,5 @@
 import { getModuleDefaults, getRoleModuleDefaults, getMenuItemDefaults, getRoleMenuItemDefaults } from "./modules";
+import { getRoleActionDefaults } from "./actions";
 import { getZatcaDefaultSettings } from "../zatca/core/config";
 
 export const DB_NAME = "sqlite:dukkan_pos.db";
@@ -25,11 +26,14 @@ export const DEFAULT_SETTINGS = {
   dashboard_admin_show_profit: "1",
   dashboard_admin_show_purchases: "1",
   dashboard_cashier_show_recent: "1",
+  api_base_url: "",
+  terminal_code: "REG1",
   ...getZatcaDefaultSettings(),
   ...getModuleDefaults(),
   ...getRoleModuleDefaults(),
   ...getMenuItemDefaults(),
   ...getRoleMenuItemDefaults(),
+  ...getRoleActionDefaults(),
 };
 
 export const PAYMENT_METHODS = {

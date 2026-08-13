@@ -14,12 +14,14 @@ export default function Dashboard() {
   useEffect(() => {
     let cancelled = false;
     const cached = getDashboardCacheEntry();
+    if (cached) {
+      setStats(cached);
+      setLoading(false);
+    }
 
     (async () => {
       try {
-        const data = cached
-          ? await dashboardService.refreshStatsCache()
-          : await dashboardService.getStats({ forceRefresh: true });
+        const data = await dashboardService.refreshStatsCache();
         if (!cancelled && data) setStats(data);
       } finally {
         if (!cancelled) setLoading(false);

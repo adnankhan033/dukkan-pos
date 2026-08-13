@@ -1,8 +1,29 @@
 import { query, queryOne, execute } from "../database/connection";
 import { formatDbError } from "../utils/format";
+import { apiClient } from "../api/ApiClient";
+import { isDrupalMode } from "../api/drupalMode";
 
 class UnitService {
   async getAll({ search = "" } = {}) {
+    if (await isDrupalMode()) {
+      const result = await apiClient.getUnits();
+      let items = result.items || [];
+      const term = search.trim().toLowerCase();
+      if (term) {
+        items = items.filter(
+          (u) =>
+            u.name?.toLowerCase().includes(term) ||
+            u.symbol?.toLowerCase().includes(term) ||
+            (u.example || "").toLowerCase().includes(term)
+        );
+      }
+      return items.map((u) => ({
+        ...u,
+        id: Number(u.id),
+        product_count: Number(u.product_count ?? 0),
+      }));
+    }
+
     const term = search.trim();
     let sql = `
       SELECT u.*,
@@ -30,12 +51,22 @@ class UnitService {
   }
 
   async getById(id) {
+    if (await isDrupalMode()) {
+      const row = await apiClient.getUnit(Number(id));
+      return row ? { ...row, id: Number(row.id) } : null;
+    }
     return queryOne("SELECT * FROM units WHERE id = $1", [Number(id)]);
   }
 
   async getBySymbol(symbol) {
     const trimmed = String(symbol || "").trim();
     if (!trimmed) return null;
+
+    if (await isDrupalMode()) {
+      const items = await this.getAll();
+      return items.find((u) => u.symbol?.trim().toLowerCase() === trimmed.toLowerCase()) || null;
+    }
+
     return queryOne(
       "SELECT * FROM units WHERE lower(trim(symbol)) = $1",
       [trimmed.toLowerCase()]
@@ -43,16 +74,33 @@ class UnitService {
   }
 
   async getDefaultUnit() {
-    return (
-      (await this.getBySymbol("pcs")) ||
-      (await queryOne("SELECT * FROM units ORDER BY id ASC LIMIT 1"))
-    );
+    const bySymbol = await this.getBySymbol("pcs");
+    if (bySymbol) return bySymbol;
+
+    if (await isDrupalMode()) {
+      const items = await this.getAll();
+      return items[0] || null;
+    }
+
+    return queryOne("SELECT * FROM units ORDER BY id ASC LIMIT 1");
   }
 
   async findByNameOrSymbol({ name, symbol }, excludeId = null) {
     const normName = String(name || "").trim().toLowerCase();
     const normSymbol = String(symbol || "").trim().toLowerCase();
     if (!normName && !normSymbol) return null;
+
+    if (await isDrupalMode()) {
+      const items = await this.getAll();
+      return (
+        items.find((u) => {
+          if (excludeId != null && Number(u.id) === Number(excludeId)) return false;
+          const uName = u.name?.trim().toLowerCase();
+          const uSymbol = u.symbol?.trim().toLowerCase();
+          return uName === normName || uSymbol === normSymbol;
+        }) || null
+      );
+    }
 
     if (excludeId != null) {
       return queryOne(
@@ -71,11 +119,22 @@ class UnitService {
   }
 
   async create(data) {
+    if (await isDrupalMode()) {
+      const name = String(data.name || "").trim();
+      const symbol = String(data.symbol || "").trim();
+      if (!symbol) throw new Error("Unit symbol is required");
+      const created = await apiClient.createUnit({
+        name: name || symbol,
+        symbol,
+        example: String(data.example || "").trim() || null,
+      });
+      return { ...created, id: Number(created.id), product_count: 0 };
+    }
+
     const name = String(data.name || "").trim();
     const symbol = String(data.symbol || "").trim();
     const example = String(data.example || "").trim();
 
-    // if (!name) throw new Error("Unit name is required");
     if (!symbol) throw new Error("Unit symbol is required");
 
     const existing = await this.findByNameOrSymbol({ name, symbol });
@@ -108,12 +167,18 @@ class UnitService {
     const symbol = String(data.symbol || "").trim();
     const example = String(data.example || "").trim();
 
-    // if (!name) throw new Error("Unit name is required");
-    // if (!symbol) throw new Error("Unit symbol is required");
-
     const existing = await this.findByNameOrSymbol({ name, symbol }, numId);
     if (existing) {
       throw new Error(`Unit "${name}" or symbol "${symbol}" already exists`);
+    }
+
+    if (await isDrupalMode()) {
+      const updated = await apiClient.updateUnit(numId, {
+        name,
+        symbol,
+        example: example || null,
+      });
+      return { ...updated, id: Number(updated.id) };
     }
 
     try {
@@ -136,6 +201,11 @@ class UnitService {
   }
 
   async getProductCount(id) {
+    if (await isDrupalMode()) {
+      const products = await apiClient.getAllProducts();
+      return products.filter((p) => Number(p.unit_id) === Number(id)).length;
+    }
+
     const row = await queryOne(
       "SELECT COUNT(*) AS count FROM products WHERE unit_id = $1",
       [Number(id)]
@@ -151,6 +221,20 @@ class UnitService {
       throw new Error(
         `Cannot delete — ${productCount} product(s) use this unit. Confirm delete to unassign them first.`
       );
+    }
+
+    if (await isDrupalMode()) {
+      if (productCount > 0) {
+        const defaultUnit = await this.getDefaultUnit();
+        const fallbackId =
+          defaultUnit && Number(defaultUnit.id) !== numId ? defaultUnit.id : null;
+        const products = await apiClient.getAllProducts();
+        for (const product of products.filter((p) => Number(p.unit_id) === numId)) {
+          await apiClient.updateProduct(product.id, { unit_id: fallbackId });
+        }
+      }
+      await apiClient.deleteUnit(numId);
+      return { productCount };
     }
 
     const defaultUnit = await this.getDefaultUnit();

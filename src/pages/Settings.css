@@ -793,3 +793,15 @@
   margin-top: 0.75rem;
   font-size: 0.875rem;
 }
+
+.settings-action-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.settings-action-group-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}

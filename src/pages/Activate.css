@@ -1,0 +1,71 @@
+.activate-onboarding {
+  display: grid;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary, #06b6d4) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-primary, #06b6d4) 18%, transparent);
+}
+
+.activate-onboarding-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.activate-onboarding-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #06b6d4, #10b981);
+}
+
+.activate-onboarding-step strong {
+  display: block;
+  font-size: 0.9375rem;
+}
+
+.activate-onboarding-step p {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.activate-form-gap {
+  margin-top: 1rem;
+}
+
+.activate-field-hint {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.activate-key-input input {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.activate-server-note {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.activate-server-note code {
+  user-select: all;
+}
+
+.activate-submit {
+  width: 100%;
+  margin-top: 1.5rem;
+}

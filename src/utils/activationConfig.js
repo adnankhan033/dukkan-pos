@@ -19,6 +19,8 @@ export const ACTIVATION_SETTING_KEYS = {
   CUSTOMER_PHONE: "activation_customer_phone",
   CUSTOMER_STORE: "activation_customer_store",
   CUSTOMER_ADDRESS: "activation_customer_address",
+  MARKET_NAME: "activation_market_name",
+  ACTIVATED_AT: "activation_activated_at",
   WELCOME_SHOWN: "welcome_shown",
 };
 

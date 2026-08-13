@@ -1,6 +1,23 @@
 import { query, queryOne } from "../database/connection";
+import { isDrupalMode } from "../api/drupalMode";
+import { apiClient } from "../api/ApiClient";
+import { getPeriodDateRange } from "../utils/format";
 
 const SALE_STATUSES = "('completed', 'partial_return', 'returned')";
+
+const drupalStatsInflight = new Map();
+
+async function getDrupalSalesStats(from, to) {
+  const key = `${from}|${to}`;
+  if (drupalStatsInflight.has(key)) {
+    return drupalStatsInflight.get(key);
+  }
+  const promise = apiClient
+    .getSalesStats({ from, to })
+    .finally(() => drupalStatsInflight.delete(key));
+  drupalStatsInflight.set(key, promise);
+  return promise;
+}
 
 function saleDateRangeClause(from, to, column = "created_at") {
   return {
@@ -101,6 +118,12 @@ export async function getReturnsCountInRange(from, to) {
 }
 
 export async function getMonthlyGrossSales() {
+  if (await isDrupalMode()) {
+    const range = getPeriodDateRange("monthly");
+    const stats = await getDrupalSalesStats(range.from, range.to);
+    return stats.salesTotal;
+  }
+
   const row = await queryOne(
     `SELECT COALESCE(SUM(total), 0) AS total FROM sales
      WHERE status IN ${SALE_STATUSES}
@@ -110,6 +133,12 @@ export async function getMonthlyGrossSales() {
 }
 
 export async function getMonthlyReturnsTotal() {
+  if (await isDrupalMode()) {
+    const range = getPeriodDateRange("monthly");
+    const stats = await getDrupalSalesStats(range.from, range.to);
+    return stats.returnsTotal;
+  }
+
   const row = await queryOne(
     `SELECT COALESCE(SUM(total_refund), 0) AS total FROM sale_returns
      WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`
@@ -153,6 +182,12 @@ export async function getMonthlyNetCogs() {
 }
 
 export async function getTodayGrossSales() {
+  if (await isDrupalMode()) {
+    const range = getPeriodDateRange("daily");
+    const stats = await getDrupalSalesStats(range.from, range.to);
+    return stats.salesTotal;
+  }
+
   const row = await queryOne(
     `SELECT COALESCE(SUM(total), 0) AS total FROM sales
      WHERE status IN ${SALE_STATUSES}
@@ -162,6 +197,12 @@ export async function getTodayGrossSales() {
 }
 
 export async function getTodayReturnsTotal() {
+  if (await isDrupalMode()) {
+    const range = getPeriodDateRange("daily");
+    const stats = await getDrupalSalesStats(range.from, range.to);
+    return stats.returnsTotal;
+  }
+
   const row = await queryOne(
     `SELECT COALESCE(SUM(total_refund), 0) AS total FROM sale_returns
      WHERE date(created_at) = date('now')`
@@ -170,6 +211,11 @@ export async function getTodayReturnsTotal() {
 }
 
 export async function getTodayNetSales() {
+  if (await isDrupalMode()) {
+    const range = getPeriodDateRange("daily");
+    const stats = await getDrupalSalesStats(range.from, range.to);
+    return stats.netTotal;
+  }
   return Math.max(0, (await getTodayGrossSales()) - (await getTodayReturnsTotal()));
 }
 

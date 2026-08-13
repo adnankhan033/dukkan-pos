@@ -7,18 +7,6 @@ import { zatcaService } from "../services/ZatcaService";
 import { useSettingsStore, useAuthStore } from "../contexts/store";
 import { useConfirm } from "../hooks/useConfirm";
 import { usePermissions } from "../hooks/usePermissions";
-import {
-  MODULES,
-  ADMIN_MODULES,
-  moduleSettingKey,
-  roleModuleSettingKey,
-  menuItemSettingKey,
-  roleMenuItemSettingKey,
-  getMenuPermissionGroupsByModule,
-  MENU_ITEMS,
-} from "../utils/modules";
-import { ROLES, ROLE_LABELS } from "../utils/roles";
-import MenuPermissionTree from "../components/settings/MenuPermissionTree";
 import { DATA_CLEAR_SECTIONS } from "../utils/dataClearSections.js";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
@@ -33,15 +21,17 @@ import { DEFAULT_BUSINESS_TIMEZONE, BUSINESS_TIMEZONES } from "../utils/timezone
 import { getBusinessDateTimeLabelFromForm } from "../utils/businessDate";
 import { getZatcaDefaultSettings } from "../zatca/core/config";
 import { ZATCA_PHASES, ZATCA_SETTING_KEYS as ZK } from "../zatca/core/constants";
+import { apiClient } from "../api/ApiClient";
+import { isDrupalConfigured } from "../api/apiConfig";
 import "./Settings.css";
 
 const ZATCA_DEFAULTS = getZatcaDefaultSettings();
 
 const TABS = [
   { id: "store", label: "Store" },
+  { id: "backend", label: "Backend" },
   { id: "receipt", label: "Receipt" },
   { id: "zatca", label: "ZATCA" },
-  { id: "modules", label: "Modules" },
   { id: "dashboard", label: "Dashboard" },
   { id: "backup", label: "Backup" },
 ];
@@ -73,39 +63,12 @@ function buildFormFromSettings(settings) {
     dashboard_admin_show_profit: settingBool(settings.dashboard_admin_show_profit),
     dashboard_admin_show_purchases: settingBool(settings.dashboard_admin_show_purchases),
     dashboard_cashier_show_recent: settingBool(settings.dashboard_cashier_show_recent),
+    api_base_url: settings.api_base_url || "",
+    terminal_code: settings.terminal_code || "REG1",
   };
 
   for (const [key, defaultVal] of Object.entries(ZATCA_DEFAULTS)) {
     form[key] = settings[key] ?? defaultVal;
-  }
-
-  for (const mod of MODULES) {
-    form[moduleSettingKey(mod.id)] = settingBool(settings[moduleSettingKey(mod.id)]);
-  }
-
-  for (const item of MENU_ITEMS) {
-    form[menuItemSettingKey(item.id)] = settingBool(settings[menuItemSettingKey(item.id)]);
-  }
-
-  for (const mod of [...MODULES, ...ADMIN_MODULES]) {
-    form[roleModuleSettingKey(ROLES.ADMIN, mod.id)] = settingBool(
-      settings[roleModuleSettingKey(ROLES.ADMIN, mod.id)] ??
-        (mod.id === "users" || mod.id === "settings" ? "1" : "1")
-    );
-    form[roleModuleSettingKey(ROLES.CASHIER, mod.id)] = settingBool(
-      settings[roleModuleSettingKey(ROLES.CASHIER, mod.id)] ??
-        (["dashboard", "sales"].includes(mod.id) ? "1" : "0")
-    );
-  }
-
-  for (const item of MENU_ITEMS) {
-    form[roleMenuItemSettingKey(ROLES.ADMIN, item.id)] = settingBool(
-      settings[roleMenuItemSettingKey(ROLES.ADMIN, item.id)] ?? "1"
-    );
-    form[roleMenuItemSettingKey(ROLES.CASHIER, item.id)] = settingBool(
-      settings[roleMenuItemSettingKey(ROLES.CASHIER, item.id)] ??
-        (ADMIN_MODULES.some((mod) => mod.id === item.module) ? "0" : "1")
-    );
   }
 
   return form;
@@ -134,6 +97,8 @@ function formToSettings(form) {
     dashboard_admin_show_profit: form.dashboard_admin_show_profit ? "1" : "0",
     dashboard_admin_show_purchases: form.dashboard_admin_show_purchases ? "1" : "0",
     dashboard_cashier_show_recent: form.dashboard_cashier_show_recent ? "1" : "0",
+    api_base_url: (form.api_base_url || "").trim(),
+    terminal_code: (form.terminal_code || "REG1").trim().toUpperCase(),
   };
 
   for (const key of Object.keys(ZATCA_DEFAULTS)) {
@@ -142,39 +107,6 @@ function formToSettings(form) {
   payload[ZK.ENABLED] =
     payload[ZK.ACTIVE_PHASE] !== ZATCA_PHASES.DISABLED ? "1" : "0";
 
-  for (const mod of MODULES) {
-    const key = moduleSettingKey(mod.id);
-    payload[key] = form[key] ? "1" : "0";
-  }
-
-  for (const item of MENU_ITEMS) {
-    payload[menuItemSettingKey(item.id)] = form[menuItemSettingKey(item.id)] ? "1" : "0";
-  }
-
-  for (const mod of [...MODULES, ...ADMIN_MODULES]) {
-    payload[roleModuleSettingKey(ROLES.ADMIN, mod.id)] = form[roleModuleSettingKey(ROLES.ADMIN, mod.id)]
-      ? "1"
-      : "0";
-    payload[roleModuleSettingKey(ROLES.CASHIER, mod.id)] =
-      mod.id === "users" || mod.id === "settings"
-        ? "0"
-        : form[roleModuleSettingKey(ROLES.CASHIER, mod.id)]
-          ? "1"
-          : "0";
-  }
-
-  for (const item of MENU_ITEMS) {
-    payload[roleMenuItemSettingKey(ROLES.ADMIN, item.id)] = form[roleMenuItemSettingKey(ROLES.ADMIN, item.id)]
-      ? "1"
-      : "0";
-    payload[roleMenuItemSettingKey(ROLES.CASHIER, item.id)] =
-      ADMIN_MODULES.some((mod) => mod.id === item.module)
-        ? "0"
-        : form[roleMenuItemSettingKey(ROLES.CASHIER, item.id)]
-          ? "1"
-          : "0";
-  }
-
   return payload;
 }
 
@@ -182,6 +114,7 @@ export default function Settings() {
   const settings = useSettingsStore((s) => s.settings);
   const setSettings = useSettingsStore((s) => s.setSettings);
   const logout = useAuthStore((s) => s.logout);
+  const drupalConnected = useAuthStore((s) => s.drupalConnected);
   const navigate = useNavigate();
   const { isAdmin } = usePermissions();
   const { confirm, dialog: confirmDialog } = useConfirm();
@@ -192,6 +125,7 @@ export default function Settings() {
   const [backupBusy, setBackupBusy] = useState(false);
   const [sectionCounts, setSectionCounts] = useState({});
   const [feedbackModal, setFeedbackModal] = useState(null);
+  const [backendTest, setBackendTest] = useState(null);
   const restoreInputRef = useRef(null);
 
   function updateField(key, value) {
@@ -242,12 +176,44 @@ export default function Settings() {
     return updated;
   }
 
+  async function handleBackendTest() {
+    setBackendTest(null);
+    setError("");
+    try {
+      const testSettings = {
+        ...settings,
+        api_base_url: form.api_base_url,
+        terminal_code: form.terminal_code,
+      };
+      const health = await apiClient.health(testSettings);
+      setBackendTest(`Connected: ${health.service} v${health.version}`);
+    } catch (err) {
+      setBackendTest(null);
+      setError(err.message || "Connection failed");
+    }
+  }
+
   async function handleSave(e) {
     e.preventDefault();
     try {
+      const backendChanged =
+        (form.api_base_url || "").trim() !== (settings.api_base_url || "").trim() ||
+        (form.terminal_code || "").trim() !== (settings.terminal_code || "").trim();
+
       const updated = await persistForm(form);
       setMessage("Settings saved successfully");
       setError("");
+
+      if (backendChanged && isDrupalConfigured(updated)) {
+        logout();
+        navigate("/login", {
+          replace: true,
+          state: {
+            message:
+              "Backend settings saved. Sign in with your Drupal POS account to load products and orders from the server.",
+          },
+        });
+      }
     } catch (err) {
       setError(err.message);
     }
@@ -423,7 +389,7 @@ export default function Settings() {
           <ul className="confirm-list">
             <li>Products, sales, orders, purchases, inventory</li>
             <li>Customers, suppliers, expenses</li>
-            <li>Custom settings (store name, VAT, modules)</li>
+            <li>Custom settings (store name, VAT)</li>
           </ul>
           <div className="confirm-note confirm-note-danger">
             This cannot be undone. Download a backup first if you need to keep your data.
@@ -479,7 +445,7 @@ export default function Settings() {
     <div>
       <PageHeader
         title="Settings"
-        subtitle="Store configuration, modules, receipts, dashboards, and backups."
+        subtitle="Store configuration, receipts, dashboards, and backups."
       />
 
       {message && <Alert type="success">{message}</Alert>}
@@ -565,7 +531,7 @@ export default function Settings() {
               <ul className="settings-danger-list">
                 <li>Products, sales, orders, purchases, inventory</li>
                 <li>Customers, suppliers, expenses</li>
-                <li>Custom settings (store name, VAT, modules)</li>
+                <li>Custom settings (store name, VAT)</li>
               </ul>
               <p className="settings-section-desc">
                 Restored after clear: default admin (<strong>admin</strong> / admin123) and cashier (<strong>cashier</strong> / cashier123).
@@ -650,6 +616,46 @@ export default function Settings() {
           </>
         )}
 
+        {tab === "backend" && (
+          <>
+            <Card className="settings-card">
+              <h3 className="settings-section-title">Drupal Backend (Direct API)</h3>
+              <p className="settings-section-desc">
+                When API URL is set, the desktop app uses Drupal as the only database for
+                users, products, categories, units, inventory, and orders. Create or edit
+                in the desktop app or Drupal admin (<strong>/admin/dukkan-pos</strong>) —
+                both see the same data. After saving, sign in again with your Drupal POS account.
+              </p>
+              {drupalConnected && isDrupalConfigured(form) && (
+                <Alert type="success">Currently connected to Drupal (JWT active).</Alert>
+              )}
+              <Input
+                label="API Base URL"
+                value={form.api_base_url}
+                onChange={(e) => updateField("api_base_url", e.target.value)}
+                placeholder="https://your-site.ngrok-free.app"
+              />
+              <div style={{ marginTop: "1rem" }}>
+                <Input
+                  label="Terminal code"
+                  value={form.terminal_code}
+                  onChange={(e) => updateField("terminal_code", e.target.value.toUpperCase())}
+                  placeholder="REG1"
+                />
+              </div>
+              <div style={{ marginTop: "1rem", display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                <Button type="button" variant="secondary" onClick={handleBackendTest}>
+                  Test connection
+                </Button>
+                {backendTest && <span style={{ color: "var(--success, green)" }}>{backendTest}</span>}
+              </div>
+              <p className="settings-section-desc" style={{ marginTop: "1rem" }}>
+                Drupal admin: <strong>/admin/dukkan-pos</strong> · Default login: admin / admin123
+              </p>
+            </Card>
+          </>
+        )}
+
         {tab === "receipt" && (
           <div className="settings-receipt-layout">
             <Card className="settings-card settings-receipt-form">
@@ -721,51 +727,6 @@ export default function Settings() {
             baseSettings={settings}
             saveForm={persistForm}
           />
-        )}
-
-        {tab === "modules" && (
-          <>
-            <Card className="settings-card">
-              <h3 className="settings-section-title">Store Modules (Global)</h3>
-              <p className="settings-section-desc">
-                Turn modules and individual menu items on or off for the whole store. Disabled items are hidden from every user.
-              </p>
-              <MenuPermissionTree
-                groups={getMenuPermissionGroupsByModule()}
-                form={form}
-                updateField={updateField}
-                scope="global"
-              />
-            </Card>
-
-            <Card className="settings-card">
-              <h3 className="settings-section-title">{ROLE_LABELS[ROLES.ADMIN]} — Menu Access</h3>
-              <p className="settings-section-desc">
-                Choose which modules and menu items administrators can see (when enabled globally).
-              </p>
-              <MenuPermissionTree
-                groups={getMenuPermissionGroupsByModule({ includeAdmin: true })}
-                form={form}
-                updateField={updateField}
-                scope="role"
-                role={ROLES.ADMIN}
-              />
-            </Card>
-
-            <Card className="settings-card">
-              <h3 className="settings-section-title">{ROLE_LABELS[ROLES.CASHIER]} — Menu Access</h3>
-              <p className="settings-section-desc">
-                Choose which modules and menu items cashiers can see. User Management and Settings are always admin-only.
-              </p>
-              <MenuPermissionTree
-                groups={getMenuPermissionGroupsByModule()}
-                form={form}
-                updateField={updateField}
-                scope="role"
-                role={ROLES.CASHIER}
-              />
-            </Card>
-          </>
         )}
 
         {tab === "dashboard" && (

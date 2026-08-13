@@ -306,4 +306,3 @@ sqlite3 "$HOME/Library/Application Support/com.sharedtechadnan.dukkan-pos/dukkan
   'activation_customer_address',
   'system_hostname'
 );"
-

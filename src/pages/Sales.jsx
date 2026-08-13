@@ -17,10 +17,12 @@ import {
   Pencil,
 } from "lucide-react";
 import { productService } from "../services/ProductService";
+import { onCatalogChanged } from "../services/CatalogSync";
 import { customerService } from "../services/CustomerService";
 import { saleService } from "../services/SaleService";
 import { useSettingsStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
+import { usePermissions } from "../hooks/usePermissions";
 import Button from "../components/common/Button";
 import { Select } from "../components/common/Input";
 import SaleCompleteModal from "../components/sales/SaleCompleteModal";
@@ -56,6 +58,8 @@ export default function Sales() {
   const vatPercent = Number(settings.vat_percent) || 0;
   const zatcaPhase2 = resolveActivePhase(settings) === ZATCA_PHASES.PHASE2;
   const { submitting, guard } = useSubmitGuard();
+  const { canPerformAction } = usePermissions();
+  const canEditProducts = canPerformAction("products_edit");
 
   const [topProducts, setTopProducts] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
@@ -100,6 +104,22 @@ export default function Sales() {
       }
     }
     init();
+  }, []);
+
+  useEffect(() => {
+    return onCatalogChanged(async () => {
+      try {
+        const [products, catalog] = await Promise.all([
+          productService.getTopSellingForPos(POS_TOP_SELLERS_LIMIT),
+          productService.getPosCatalog(500),
+        ]);
+        setTopProducts(products);
+        const catalogIds = new Set(catalog.map((p) => p.id));
+        setCart((prev) => prev.filter((item) => catalogIds.has(item.product_id)));
+      } catch {
+        // Ignore background refresh errors.
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -643,15 +663,17 @@ export default function Sales() {
                   className={`pos-product-card ${lowStock ? "low-stock" : ""} ${inCart ? "in-cart" : ""}`}
                   style={{ "--product-accent": `${hue}` }}
                 >
-                  <button
-                    type="button"
-                    className="pos-product-edit-btn"
-                    onClick={(e) => openProductEdit(p.id, e)}
-                    aria-label={`Edit ${p.name}`}
-                    title="Edit product"
-                  >
-                    <Pencil size={12} />
-                  </button>
+                  {canEditProducts && (
+                    <button
+                      type="button"
+                      className="pos-product-edit-btn"
+                      onClick={(e) => openProductEdit(p.id, e)}
+                      aria-label={`Edit ${p.name}`}
+                      title="Edit product"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  )}
                   {inCart > 0 && <span className="pos-product-badge">{inCart}</span>}
                   <button type="button" className="pos-product-card-body" onClick={() => addToCart(p)}>
                   <div className="pos-product-thumb">{productInitial(p.name)}</div>
@@ -736,15 +758,17 @@ export default function Sales() {
                     <div className="pos-cart-item-main">
                       <div className="pos-cart-item-title-row">
                         <ProductBilingualName name={item.name} nameAr={item.name_ar} size="sm" />
-                        <button
-                          type="button"
-                          className="pos-cart-edit-btn"
-                          onClick={() => openProductEdit(item.product_id)}
-                          aria-label={`Edit ${item.name}`}
-                          title="Edit product"
-                        >
-                          <Pencil size={13} />
-                        </button>
+                        {canEditProducts && (
+                          <button
+                            type="button"
+                            className="pos-cart-edit-btn"
+                            onClick={() => openProductEdit(item.product_id)}
+                            aria-label={`Edit ${item.name}`}
+                            title="Edit product"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                        )}
                       </div>
                       <div className="pos-cart-item-price">
                         {formatCurrency(item.unit_price, currency)} each

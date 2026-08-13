@@ -2,6 +2,9 @@ import { query, queryOne, execute } from "../database/connection";
 import { INVENTORY_PAGE_SIZE } from "../utils/constants";
 import { invalidateInventoryCache } from "./InventoryCache";
 import { invalidateDashboardCache } from "./DashboardCache";
+import { isDrupalMode, normalizeProduct } from "../api/drupalMode";
+import { apiClient } from "../api/ApiClient";
+import { paginateList } from "../api/pagination";
 
 const LIST_COLUMNS = `
   p.id, p.name, p.name_ar, p.sku, p.barcode, p.quantity, p.min_stock,
@@ -34,6 +37,37 @@ function orderByForFilter(filter) {
   return "p.name ASC";
 }
 
+function filterDrupalProducts(products, filter, search) {
+  let items = products.map(normalizeProduct);
+  const term = search.trim().toLowerCase();
+
+  if (filter === "low") {
+    items = items.filter(
+      (p) => Number(p.quantity) <= Number(p.min_stock) && Number(p.quantity) > 0
+    );
+  } else if (filter === "out") {
+    items = items.filter((p) => Number(p.quantity) <= 0);
+  }
+
+  if (term) {
+    items = items.filter(
+      (p) =>
+        p.name?.toLowerCase().includes(term) ||
+        p.name_ar?.toLowerCase().includes(term) ||
+        p.sku?.toLowerCase().includes(term) ||
+        p.barcode?.toLowerCase().includes(term)
+    );
+  }
+
+  if (filter === "low" || filter === "out") {
+    items.sort((a, b) => Number(a.quantity) - Number(b.quantity) || a.name.localeCompare(b.name));
+  } else {
+    items.sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  return items;
+}
+
 class InventoryService {
   async getAll({
     filter = "all",
@@ -41,6 +75,15 @@ class InventoryService {
     limit = INVENTORY_PAGE_SIZE,
     search = "",
   } = {}) {
+    if (await isDrupalMode()) {
+      const products = await apiClient.getAllProducts(
+        search.trim() ? { search: search.trim() } : {}
+      );
+      const filtered = filterDrupalProducts(products, filter, search);
+      const paged = paginateList(filtered, page, limit);
+      return paged;
+    }
+
     const { where, params } = buildWhere(filter, search);
     const countParams = [...params];
     const safePage = Math.max(1, Number(page) || 1);
@@ -69,6 +112,18 @@ class InventoryService {
   }
 
   async getSummaryCounts() {
+    if (await isDrupalMode()) {
+      const products = await apiClient.getAllProducts();
+      const normalized = products.map(normalizeProduct);
+      return {
+        all: normalized.length,
+        low: normalized.filter(
+          (p) => Number(p.quantity) <= Number(p.min_stock) && Number(p.quantity) > 0
+        ).length,
+        out: normalized.filter((p) => Number(p.quantity) <= 0).length,
+      };
+    }
+
     const row = await queryOne(
       `SELECT
          COUNT(*) AS total,
@@ -85,6 +140,15 @@ class InventoryService {
   }
 
   async adjustStock(productId, newQuantity, reason = "Manual adjustment") {
+    if (await isDrupalMode()) {
+      const updated = await apiClient.updateProduct(Number(productId), {
+        quantity: Number(newQuantity),
+      });
+      invalidateInventoryCache();
+      invalidateDashboardCache();
+      return normalizeProduct(updated);
+    }
+
     const product = await queryOne("SELECT * FROM products WHERE id = $1", [productId]);
     if (!product) throw new Error("Product not found");
 
@@ -106,6 +170,10 @@ class InventoryService {
   }
 
   async reduceStock(productId, quantity, referenceType, referenceId) {
+    if (await isDrupalMode()) {
+      return;
+    }
+
     const product = await queryOne("SELECT * FROM products WHERE id = $1", [productId]);
     if (!product) throw new Error("Product not found");
 
@@ -125,6 +193,10 @@ class InventoryService {
   }
 
   async increaseStock(productId, quantity, referenceType, referenceId) {
+    if (await isDrupalMode()) {
+      return;
+    }
+
     const product = await queryOne("SELECT * FROM products WHERE id = $1", [productId]);
     if (!product) throw new Error("Product not found");
 
@@ -150,6 +222,10 @@ class InventoryService {
   }
 
   async getHistory(productId) {
+    if (await isDrupalMode()) {
+      return [];
+    }
+
     return query(
       `SELECT * FROM inventory WHERE product_id = $1 ORDER BY created_at DESC LIMIT 50`,
       [productId]

@@ -71,6 +71,8 @@ export default function SaleReturnModal({
         name: item.name,
         name_ar: item.name_ar,
         unit_price: item.unit_price,
+        sold_qty: item.quantity,
+        returned_qty: item.returned_qty,
         returnable_qty: item.returnable_qty,
         return_qty: 0,
       }))
@@ -197,6 +199,7 @@ export default function SaleReturnModal({
           </div>
           <div className="return-muted">
             Original total: {formatCurrency(sale.total, currency)}
+            {sale.status === "partial_return" && " · Partial return — remaining items can still be returned"}
           </div>
         </div>
       )}
@@ -209,7 +212,9 @@ export default function SaleReturnModal({
               <ProductBilingualName name={line.name} nameAr={line.name_ar} size="sm" />
               <div className="return-line-meta">
                 <span>{formatCurrency(line.unit_price, currency)} each</span>
-                <span>Max: {line.returnable_qty}</span>
+                <span>Sold: {line.sold_qty}</span>
+                {line.returned_qty > 0 && <span>Returned: {line.returned_qty}</span>}
+                <span>Left to return: {line.returnable_qty}</span>
               </div>
               <div className="return-qty-row">
                 <Button

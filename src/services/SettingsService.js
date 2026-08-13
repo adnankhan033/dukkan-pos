@@ -1,4 +1,4 @@
-import { query, queryOne, execute, getLastInsertId } from "../database/connection";
+import { query, queryOne, execute, enqueueDbOperation } from "../database/connection";
 
 class SettingsService {
   async getAll() {
@@ -23,10 +23,37 @@ class SettingsService {
   }
 
   async updateMany(settings) {
-    for (const [key, value] of Object.entries(settings)) {
-      await this.set(key, value);
+    const entries = Object.entries(settings || {});
+    if (entries.length === 0) {
+      return this.getAll();
     }
-    return this.getAll();
+
+    return enqueueDbOperation(async (db) => {
+      await db.execute("BEGIN IMMEDIATE");
+      try {
+        for (const [key, value] of entries) {
+          await db.execute(
+            `INSERT INTO settings (key, value) VALUES ($1, $2)
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+            [key, String(value)]
+          );
+        }
+        await db.execute("COMMIT");
+      } catch (err) {
+        try {
+          await db.execute("ROLLBACK");
+        } catch {
+          /* ignore */
+        }
+        throw err;
+      }
+      return db.select("SELECT key, value FROM settings");
+    }).then((rows) =>
+      rows.reduce((acc, row) => {
+        acc[row.key] = row.value;
+        return acc;
+      }, {})
+    );
   }
 }
 

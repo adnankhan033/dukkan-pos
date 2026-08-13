@@ -1,9 +1,28 @@
-import { query, queryOne, execute, insert, runInTransaction } from "../database/connection";
+import { query, queryOne, execute, insert } from "../database/connection";
 import bcrypt from "bcryptjs";
 import { ROLES } from "../utils/roles";
+import { apiClient } from "../api/ApiClient";
+import { isDrupalMode, normalizeUser } from "../api/drupalMode";
+import { isDrupalConfigured, withResolvedApiUrl } from "../api/apiConfig";
+import { settingsService } from "./SettingsService";
 
 class UserService {
   async authenticate(username, password) {
+    const settings = withResolvedApiUrl(await settingsService.getAll());
+    if (isDrupalConfigured(settings)) {
+      const session = await apiClient.login(username, password, settings);
+      if (!session?.user) {
+        return null;
+      }
+      return {
+        user: normalizeUser(session.user),
+        session: {
+          token: session.token,
+          terminal: session.terminal,
+        },
+      };
+    }
+
     const user = await queryOne(
       "SELECT * FROM users WHERE username = $1 AND COALESCE(is_active, 1) = 1",
       [username]
@@ -14,10 +33,15 @@ class UserService {
     if (!valid) return null;
 
     const { password_hash, ...safeUser } = user;
-    return safeUser;
+    return { user: safeUser, session: {} };
   }
 
   async getById(id) {
+    if (await isDrupalMode()) {
+      const user = await apiClient.getUser(Number(id));
+      return user ? normalizeUser(user) : null;
+    }
+
     const user = await queryOne("SELECT * FROM users WHERE id = $1", [id]);
     if (!user) return null;
     const { password_hash, ...safeUser } = user;
@@ -25,6 +49,20 @@ class UserService {
   }
 
   async getAll({ page = 1, limit = 10, search = "" } = {}) {
+    if (await isDrupalMode()) {
+      const result = await apiClient.getUsers({
+        page,
+        limit,
+        search: search.trim() || undefined,
+      });
+      return {
+        items: (result.items || []).map(normalizeUser),
+        total: result.total ?? 0,
+        page: result.page ?? page,
+        limit: result.limit ?? limit,
+      };
+    }
+
     const params = [];
     let where = "";
     if (search.trim()) {
@@ -39,7 +77,7 @@ class UserService {
     const total = countRow?.total ?? 0;
 
     const items = await query(
-      `SELECT id, username, full_name, role, is_active, created_at, updated_at
+      `SELECT id, username, full_name, phone, email, designation, notes, role, is_active, created_at, updated_at
        FROM users ${where}
        ORDER BY created_at DESC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
@@ -49,7 +87,22 @@ class UserService {
     return { items, total, page, limit };
   }
 
-  async create({ username, password, full_name, role, is_active = true }) {
+  async create({ username, password, full_name, role, is_active = true, phone, email, designation, notes }) {
+    if (await isDrupalMode()) {
+      const created = await apiClient.createUser({
+        username: username.trim(),
+        password,
+        full_name: full_name?.trim() || username.trim(),
+        role: role || ROLES.CASHIER,
+        is_active: is_active ? 1 : 0,
+        phone: phone?.trim() || null,
+        email: email?.trim() || null,
+        designation: designation?.trim() || null,
+        notes: notes?.trim() || null,
+      });
+      return normalizeUser(created);
+    }
+
     const existing = await queryOne(
       "SELECT id FROM users WHERE username = $1",
       [username.trim()]
@@ -58,12 +111,16 @@ class UserService {
 
     const passwordHash = bcrypt.hashSync(password, 10);
     const id = await insert(
-      `INSERT INTO users (username, password_hash, full_name, role, is_active)
-       VALUES ($1, $2, $3, $4, $5)`,
+      `INSERT INTO users (username, password_hash, full_name, phone, email, designation, notes, role, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       [
         username.trim(),
         passwordHash,
         full_name?.trim() || username.trim(),
+        phone?.trim() || null,
+        email?.trim() || null,
+        designation?.trim() || null,
+        notes?.trim() || null,
         role || ROLES.CASHIER,
         is_active ? 1 : 0,
       ]
@@ -71,7 +128,22 @@ class UserService {
     return this.getById(id);
   }
 
-  async update(id, { username, full_name, role, is_active, password }) {
+  async update(id, { username, full_name, role, is_active, password, phone, email, designation, notes }) {
+    if (await isDrupalMode()) {
+      const body = {};
+      if (username != null) body.username = username.trim();
+      if (full_name != null) body.full_name = full_name.trim();
+      if (role != null) body.role = role;
+      if (is_active != null) body.is_active = is_active ? 1 : 0;
+      if (password) body.password = password;
+      if (phone != null) body.phone = phone.trim();
+      if (email != null) body.email = email.trim();
+      if (designation != null) body.designation = designation.trim();
+      if (notes != null) body.notes = notes.trim();
+      const updated = await apiClient.updateUser(Number(id), body);
+      return normalizeUser(updated);
+    }
+
     const user = await this.getById(id);
     if (!user) throw new Error("User not found");
 
@@ -93,6 +165,22 @@ class UserService {
     if (full_name != null) {
       fields.push(`full_name = $${params.length + 1}`);
       params.push(full_name.trim());
+    }
+    if (phone != null) {
+      fields.push(`phone = $${params.length + 1}`);
+      params.push(phone.trim() || null);
+    }
+    if (email != null) {
+      fields.push(`email = $${params.length + 1}`);
+      params.push(email.trim() || null);
+    }
+    if (designation != null) {
+      fields.push(`designation = $${params.length + 1}`);
+      params.push(designation.trim() || null);
+    }
+    if (notes != null) {
+      fields.push(`notes = $${params.length + 1}`);
+      params.push(notes.trim() || null);
     }
     if (role != null) {
       fields.push(`role = $${params.length + 1}`);
@@ -120,6 +208,17 @@ class UserService {
   }
 
   async delete(id) {
+    if (await isDrupalMode()) {
+      const admins = await this.countAdmins();
+      const user = await this.getById(id);
+      if (!user) throw new Error("User not found");
+      if (user.role === ROLES.ADMIN && admins <= 1) {
+        throw new Error("Cannot delete the last active administrator");
+      }
+      await apiClient.updateUser(Number(id), { is_active: 0 });
+      return true;
+    }
+
     const admins = await queryOne(
       "SELECT COUNT(*) as count FROM users WHERE role = $1 AND COALESCE(is_active, 1) = 1",
       [ROLES.ADMIN]
@@ -134,6 +233,13 @@ class UserService {
   }
 
   async countAdmins() {
+    if (await isDrupalMode()) {
+      const result = await apiClient.getUsers({ page: 1, limit: 500 });
+      return (result.items || []).filter(
+        (u) => u.role === ROLES.ADMIN && Number(u.is_active ?? 1) === 1
+      ).length;
+    }
+
     const row = await queryOne(
       "SELECT COUNT(*) as count FROM users WHERE role = $1 AND COALESCE(is_active, 1) = 1",
       [ROLES.ADMIN]

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { activationService } from "../services/ActivationService";
 import { useSettingsStore } from "../contexts/store";
@@ -6,78 +6,60 @@ import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import {
   isSystemActivated,
   normalizeActivationKey,
-  ACTIVATION_SETTING_KEYS,
 } from "../utils/activationConfig";
+import {
+  DEFAULT_DRUPAL_API_URL,
+  normalizeApiBaseUrl,
+} from "../api/apiConfig";
 import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
 import AuthShell from "../components/auth/AuthShell";
+import "./Activate.css";
+
+function resolveDefaultServerUrl() {
+  const fromEnv = normalizeApiBaseUrl(import.meta.env.VITE_DRUPAL_API_URL);
+  if (fromEnv) return fromEnv;
+  if (import.meta.env.DEV) return normalizeApiBaseUrl(DEFAULT_DRUPAL_API_URL);
+  return "";
+}
 
 export default function Activate() {
   const settings = useSettingsStore((s) => s.settings);
   const setSettings = useSettingsStore((s) => s.setSettings);
-  const [name, setName] = useState(settings[ACTIVATION_SETTING_KEYS.CUSTOMER_NAME] || "");
-  const [phone, setPhone] = useState(settings[ACTIVATION_SETTING_KEYS.CUSTOMER_PHONE] || "");
-  const [storeName, setStoreName] = useState(settings[ACTIVATION_SETTING_KEYS.CUSTOMER_STORE] || "");
-  const [address, setAddress] = useState(settings[ACTIVATION_SETTING_KEYS.CUSTOMER_ADDRESS] || "");
+  const defaultServerUrl = useMemo(() => resolveDefaultServerUrl(), []);
+  const hideServerField = Boolean(defaultServerUrl) && !import.meta.env.DEV;
+
+  const [serverUrl, setServerUrl] = useState(
+    normalizeApiBaseUrl(settings.api_base_url) || defaultServerUrl
+  );
   const [activationKey, setActivationKey] = useState("");
+  const [previewMarket, setPreviewMarket] = useState("");
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const [resendError, setResendError] = useState("");
   const { submitting, guard } = useSubmitGuard();
-  const { submitting: registering, guard: registerGuard } = useSubmitGuard();
-  const { submitting: resending, guard: resendGuard } = useSubmitGuard();
   const navigate = useNavigate();
 
   if (isSystemActivated(settings)) {
     return <Navigate to="/login" replace />;
   }
 
-  const registrationSubmitted = Boolean(
-    settings[ACTIVATION_SETTING_KEYS.CUSTOMER_NAME]?.trim()
-  );
-  const emailSent = settings[ACTIVATION_SETTING_KEYS.EMAIL_SENT] === "1";
-  const emailError = settings[ACTIVATION_SETTING_KEYS.EMAIL_ERROR] || "";
-  const deviceId = settings[ACTIVATION_SETTING_KEYS.DEVICE_ID] || "";
-
-  async function handleRegister(e) {
-    e.preventDefault();
-    setError("");
-    setNotice("");
-    try {
-      await registerGuard(async () => {
-        const { settings: updated, emailSent: sent, emailError: sendError } =
-          await activationService.submitRegistration({
-            name,
-            phone,
-            storeName,
-            address,
-          });
-        setSettings(updated);
-        if (sent) {
-          setNotice(
-            "Your request has been sent. Contact our team for your activation key."
-          );
-        } else {
-          setError(sendError || "Your details were saved, but the request could not be sent. Tap Resend Request on the next screen.");
-        }
-      });
-    } catch (err) {
-      setError(err.message || "Registration failed");
-    }
-  }
-
   async function handleActivate(e) {
     e.preventDefault();
     setError("");
-    setNotice("");
+    setPreviewMarket("");
     try {
       await guard(async () => {
-        const updated = await activationService.activate(activationKey);
-        setSettings(updated);
+        const result = await activationService.activateWithDrupal(serverUrl, activationKey);
+        setSettings(result.settings);
+        setPreviewMarket(result.marketName || "");
         navigate("/login", {
           replace: true,
-          state: { showWelcome: true },
+          state: {
+            showWelcome: true,
+            message: result.marketName
+              ? `Connected to ${result.marketName}. Sign in with your POS username.`
+              : "Connected to your market. Sign in with your POS username.",
+          },
         });
       });
     } catch (err) {
@@ -85,143 +67,86 @@ export default function Activate() {
     }
   }
 
-  async function handleResendEmail() {
-    setResendError("");
-    setNotice("");
-    try {
-      await resendGuard(async () => {
-        const result = await activationService.sendActivationEmail({
-          deviceId,
-          activationKey: settings[ACTIVATION_SETTING_KEYS.KEY],
-          hostname: settings.system_hostname,
-          customerName: settings[ACTIVATION_SETTING_KEYS.CUSTOMER_NAME],
-          customerPhone: settings[ACTIVATION_SETTING_KEYS.CUSTOMER_PHONE],
-          storeName: settings[ACTIVATION_SETTING_KEYS.CUSTOMER_STORE],
-          storeAddress: settings[ACTIVATION_SETTING_KEYS.CUSTOMER_ADDRESS],
-        });
-        const { settingsService: settingsApi } = await import("../services/SettingsService.js");
-        setSettings(await settingsApi.getAll());
-        if (result.success) {
-          setNotice("Your request has been sent again. Contact our team for your activation key.");
-        } else {
-          setResendError(result.error || "Could not send your request. Please try again.");
-        }
-      });
-    } catch (err) {
-      setResendError(err.message || "Could not resend registration email.");
-    }
-  }
-
   return (
     <AuthShell
       wide
-      step={registrationSubmitted ? 2 : 1}
-      formTitle={registrationSubmitted ? "Activate System" : "Register Your Store"}
-      formSubtitle={
-        registrationSubmitted
-          ? "Your activation key has been sent to our team. Contact them to receive it, then enter it below to start using DukkanPOS."
-          : "Enter your store details to request activation for this computer."
-      }
-      footer="Once activated, sign in with your username and password."
+      step={1}
+      formTitle="Connect Your Market"
+      formSubtitle="Enter the server URL and activation key from your market admin panel. After connecting, sign in with your POS user."
+      footer="Need help? Ask your market admin for the key from Drupal → Dukkan POS → Market setup."
     >
-      {notice && <Alert type="success">{notice}</Alert>}
+      <div className="activate-onboarding">
+        <div className="activate-onboarding-step">
+          <span className="activate-onboarding-num">1</span>
+          <div>
+            <strong>Server URL</strong>
+            <p>Your Drupal market site address</p>
+          </div>
+        </div>
+        <div className="activate-onboarding-step">
+          <span className="activate-onboarding-num">2</span>
+          <div>
+            <strong>Activation key</strong>
+            <p>One-time key from Market setup</p>
+          </div>
+        </div>
+        <div className="activate-onboarding-step">
+          <span className="activate-onboarding-num">3</span>
+          <div>
+            <strong>Sign in</strong>
+            <p>Use your POS username and password</p>
+          </div>
+        </div>
+      </div>
+
       {error && <Alert>{error}</Alert>}
+      {previewMarket && (
+        <Alert type="success">
+          Connected to <strong>{previewMarket}</strong>
+        </Alert>
+      )}
 
-      {!registrationSubmitted ? (
-        <form onSubmit={handleRegister}>
-          <Input
-            label="Your Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Full name"
-            autoFocus
-          />
-          <div style={{ marginTop: "1rem" }}>
+      <form onSubmit={handleActivate} className="activate-form">
+        {!hideServerField && (
+          <>
             <Input
-              label="Phone Number"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="e.g. 0501234567"
-            />
-          </div>
-          <div style={{ marginTop: "1rem" }}>
-            <Input
-              label="Store Name"
-              value={storeName}
-              onChange={(e) => setStoreName(e.target.value)}
-              placeholder="Your shop or business name"
-            />
-          </div>
-          <div style={{ marginTop: "1rem" }}>
-            <Input
-              label="Address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="Store address"
-            />
-          </div>
-          <Button
-            type="submit"
-            className="btn-lg"
-            disabled={registering}
-            style={{ width: "100%", marginTop: "1.5rem" }}
-          >
-            {registering ? "Sending..." : "Submit Request"}
-          </Button>
-          {emailError && (
-            <p style={{ marginTop: "1rem", fontSize: "0.8125rem", color: "var(--color-danger)" }}>
-              {emailError}
-            </p>
-          )}
-        </form>
-      ) : (
-        <>
-          {!emailSent && emailError && (
-            <p style={{ marginBottom: "1rem", fontSize: "0.8125rem", color: "var(--color-danger)" }}>
-              {emailError}
-            </p>
-          )}
-
-          {deviceId && (
-            <div className="auth-device-id">
-              <span className="auth-device-id-label">Device ID</span>
-              <code className="auth-device-id-value">{deviceId}</code>
-              <p className="auth-device-id-hint">Use this ID to find your request in email.</p>
-            </div>
-          )}
-
-          <form onSubmit={handleActivate}>
-            <Input
-              label="Activation Key"
-              value={activationKey}
-              onChange={(e) => setActivationKey(normalizeActivationKey(e.target.value))}
-              placeholder="DKP-XXXX-XXXX-XXXX"
+              label="Server URL"
+              value={serverUrl}
+              onChange={(e) => setServerUrl(normalizeApiBaseUrl(e.target.value))}
+              placeholder="https://your-market.example.com"
               autoFocus
             />
-            <Button
-              type="submit"
-              className="btn-lg"
-              disabled={submitting}
-              style={{ width: "100%", marginTop: "1.5rem" }}
-            >
-              {submitting ? "Activating..." : "Activate System"}
-            </Button>
-          </form>
+            <p className="activate-field-hint">
+              Same URL shown on the Market setup page in Drupal admin.
+            </p>
+          </>
+        )}
 
-          <div style={{ marginTop: "1rem" }}>
-            {resendError && <Alert>{resendError}</Alert>}
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={resending}
-              style={{ width: "100%" }}
-              onClick={handleResendEmail}
-            >
-              {resending ? "Sending..." : "Resend Request"}
-            </Button>
-          </div>
-        </>
-      )}
+        <div className={hideServerField ? "" : "activate-form-gap"}>
+          <Input
+            label="Activation Key"
+            value={activationKey}
+            onChange={(e) => setActivationKey(normalizeActivationKey(e.target.value))}
+            placeholder="DKP-XXXX-XXXX-XXXX"
+            autoFocus={hideServerField}
+            className="activate-key-input"
+          />
+        </div>
+
+        {hideServerField && (
+          <p className="activate-server-note">
+            Server: <code>{serverUrl}</code>
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          className="btn-lg activate-submit"
+          disabled={submitting}
+        >
+          {submitting ? "Connecting to your market…" : "Connect & Continue to Sign In"}
+        </Button>
+      </form>
     </AuthShell>
   );
 }

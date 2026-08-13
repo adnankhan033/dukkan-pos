@@ -3,6 +3,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { purchaseService } from "../services/PurchaseService";
 import { supplierService } from "../services/SupplierService";
 import { productService } from "../services/ProductService";
+import { onCatalogChanged } from "../services/CatalogSync";
 import { useSettingsStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import {
@@ -68,6 +69,12 @@ export default function Purchases() {
     }
     init();
   }, [loadPurchases]);
+
+  useEffect(() => {
+    return onCatalogChanged(() => {
+      productService.getPosCatalog().then(setCatalog).catch(() => {});
+    });
+  }, []);
 
   const searchResults = useMemo(() => {
     const term = productSearch.trim().toLowerCase();

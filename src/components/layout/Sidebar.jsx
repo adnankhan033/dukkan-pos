@@ -55,6 +55,8 @@ function groupHasActiveChild(group, pathname) {
 export default function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const drupalConnected = useAuthStore((s) => s.drupalConnected);
+  const terminal = useAuthStore((s) => s.terminal);
   const settings = useSettingsStore((s) => s.settings);
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -96,6 +98,11 @@ export default function Sidebar() {
           </p>
         )}
         <span>DukkanPOS v1.0</span>
+        {drupalConnected && (
+          <span className="sidebar-drupal-badge" title="All data live from Drupal">
+            Drupal · Live
+          </span>
+        )}
       </div>
 
       <nav className="sidebar-nav">
@@ -164,6 +171,7 @@ export default function Sidebar() {
             <span className="sidebar-user-name">{user?.full_name || user?.username}</span>
             <span className="sidebar-user-role">
               {ROLE_LABELS[normalizeRole(user?.role)] || user?.role || "user"}
+              {drupalConnected && terminal?.code && ` · ${terminal.code}`}
             </span>
           </div>
           <div className="sidebar-actions">

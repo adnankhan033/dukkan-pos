@@ -3,6 +3,7 @@ import { useAuthStore } from "../contexts/store";
 import { useSettingsStore } from "../contexts/store";
 import { NAV_GROUPS } from "../utils/constants";
 import { canAccessModule, canAccessPath, canAccessMenuItem, isModuleEnabled } from "../utils/modules";
+import { canPerformAction } from "../utils/actions";
 import { isAdmin, normalizeRole } from "../utils/roles";
 
 export function usePermissions() {
@@ -18,6 +19,7 @@ export function usePermissions() {
       canAccessMenuItem: (menuItemId) => canAccessMenuItem(user, settings, menuItemId),
       canAccessPath: (path) => canAccessPath(user, settings, path),
       isModuleEnabled: (moduleId) => isModuleEnabled(settings, moduleId),
+      canPerformAction: (actionId) => canPerformAction(user, settings, actionId),
     }),
     [user, settings]
   );

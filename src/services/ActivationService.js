@@ -5,6 +5,7 @@ import {
   decodeBackupSecret,
   normalizeGmailAppPassword,
 } from "../utils/backupSettings.js";
+import { API_SETTING_KEYS, API_PATH_PREFIX, normalizeApiBaseUrl } from "../api/apiConfig";
 import {
   ACTIVATION_RECIPIENT_EMAIL,
   ACTIVATION_SETTING_KEYS,
@@ -15,6 +16,81 @@ import {
 } from "../utils/activationConfig";
 
 class ActivationService {
+  async activateWithDrupal(apiBaseUrl, activationKey) {
+    const base = normalizeApiBaseUrl(apiBaseUrl);
+    const key = normalizeActivationKey(activationKey);
+
+    if (!base) {
+      throw new Error("Server URL is required. Enter your Drupal market site address.");
+    }
+    if (!key) {
+      throw new Error("Activation key is required.");
+    }
+
+    const response = await fetch(`${base}${API_PATH_PREFIX}/activate`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "ngrok-skip-browser-warning": "1",
+      },
+      body: JSON.stringify({ activation_key: key }),
+    });
+
+    let data = null;
+    const text = await response.text();
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { raw: text };
+      }
+    }
+
+    if (!response.ok) {
+      const message =
+        data?.error ||
+        data?.message ||
+        (response.status === 403
+          ? "Invalid activation key. Check the key from Market setup in Drupal admin."
+          : `Could not connect (${response.status}). Check the server URL and try again.`);
+      throw new Error(message);
+    }
+
+    if (!data?.valid) {
+      throw new Error("Activation was rejected by the server.");
+    }
+
+    await settingsService.set(API_SETTING_KEYS.BASE_URL, base);
+    await settingsService.set(ACTIVATION_SETTING_KEYS.STATUS, ACTIVATION_STATUS.ACTIVATED);
+    await settingsService.set(ACTIVATION_SETTING_KEYS.KEY, key);
+    await settingsService.set(
+      ACTIVATION_SETTING_KEYS.MARKET_NAME,
+      data.market_name || data.store?.store_name || ""
+    );
+    await settingsService.set(ACTIVATION_SETTING_KEYS.ACTIVATED_AT, new Date().toISOString());
+
+    if (data.terminal_code) {
+      await settingsService.set(API_SETTING_KEYS.TERMINAL_CODE, String(data.terminal_code));
+    }
+
+    if (data.store && typeof data.store === "object") {
+      for (const [settingKey, value] of Object.entries(data.store)) {
+        if (value !== undefined && value !== null) {
+          await settingsService.set(settingKey, String(value));
+        }
+      }
+    }
+
+    const settings = await settingsService.getAll();
+    return {
+      settings,
+      marketName: data.market_name || data.store?.store_name || "",
+      apiUrl: base,
+    };
+  }
+
+  /** @deprecated Local email activation — use activateWithDrupal for Drupal-backed markets. */
   async resolveSmtpCredentials(settings = null) {
     const fromEnv = resolveActivationSmtpFromEnv();
     if (fromEnv) return fromEnv;
@@ -46,37 +122,7 @@ class ActivationService {
     return null;
   }
   async ensureSystemActivation(existingSettings = null) {
-    const settings = existingSettings || (await settingsService.getAll());
-    if (isSystemActivated(settings)) {
-      return settings;
-    }
-
-    let activationKey = settings[ACTIVATION_SETTING_KEYS.KEY];
-    let deviceId = settings[ACTIVATION_SETTING_KEYS.DEVICE_ID];
-
-    if (!activationKey || !deviceId) {
-      if (!isTauri()) {
-        throw new Error("System activation requires the DukkanPOS desktop app.");
-      }
-
-      const generated = await invoke("generate_system_activation");
-      activationKey = generated.activation_key;
-      deviceId = generated.device_id;
-
-      await settingsService.set(ACTIVATION_SETTING_KEYS.KEY, activationKey);
-      await settingsService.set(ACTIVATION_SETTING_KEYS.DEVICE_ID, deviceId);
-      await settingsService.set("system_hostname", generated.hostname || "DukkanPOS");
-      await settingsService.set(ACTIVATION_SETTING_KEYS.STATUS, ACTIVATION_STATUS.PENDING);
-      await settingsService.set(
-        ACTIVATION_SETTING_KEYS.CREATED_AT,
-        new Date().toISOString()
-      );
-    } else if (!settings[ACTIVATION_SETTING_KEYS.STATUS]) {
-      await settingsService.set(ACTIVATION_SETTING_KEYS.STATUS, ACTIVATION_STATUS.PENDING);
-    }
-
-    const latest = await settingsService.getAll();
-    return latest;
+    return existingSettings || (await settingsService.getAll());
   }
 
   async submitRegistration({ name, phone, storeName, address }) {

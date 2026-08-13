@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { userService } from "../services/UserService";
-import { useAuthStore } from "../contexts/store";
+import { useAuthStore, useSettingsStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import { getDefaultRouteForUser } from "../utils/modules";
-import { useSettingsStore } from "../contexts/store";
+import { bootstrapDrupalSession } from "../api/drupalBootstrap";
+import { isDrupalConfigured, resolveApiBaseUrl } from "../api/apiConfig";
 import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
@@ -15,28 +16,61 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [syncNote, setSyncNote] = useState("");
   const { submitting, guard } = useSubmitGuard();
   const login = useAuthStore((s) => s.login);
+  const logout = useAuthStore((s) => s.logout);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const token = useAuthStore((s) => s.token);
+  const settings = useSettingsStore((s) => s.settings);
   const navigate = useNavigate();
   const location = useLocation();
   const notice = location.state?.message;
 
+  const drupalBackend = isDrupalConfigured(settings);
+  const backendHost = resolveApiBaseUrl(settings);
+  const marketName = settings[ACTIVATION_SETTING_KEYS.MARKET_NAME]?.trim();
+
+  useEffect(() => {
+    if (drupalBackend && isAuthenticated && !token) {
+      logout();
+    }
+  }, [drupalBackend, isAuthenticated, token, logout]);
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
+    setSyncNote("");
     try {
       await guard(async () => {
-        const user = await userService.authenticate(username, password);
-        if (!user) {
-          setError("Invalid username or password");
+        const result = await userService.authenticate(username, password);
+        if (!result?.user) {
+          setError(
+            drupalBackend
+              ? "Invalid Drupal POS username or password"
+              : "Invalid username or password"
+          );
           return;
         }
-        login(user);
-        const settings = useSettingsStore.getState().settings;
+        login(result.user, result.session ?? {});
+
+        if (result.session?.token) {
+          try {
+            setSyncNote("Connecting to Drupal and loading store data…");
+            await bootstrapDrupalSession();
+          } catch (err) {
+            console.warn("Could not sync with Drupal:", err);
+            setError(err.message || "Connected but could not load data from Drupal");
+            logout();
+            return;
+          }
+        }
+
+        const latestSettings = useSettingsStore.getState().settings;
         const showWelcome =
           location.state?.showWelcome === true ||
-          settings[ACTIVATION_SETTING_KEYS.WELCOME_SHOWN] !== "1";
-        navigate(getDefaultRouteForUser(user, settings), {
+          latestSettings[ACTIVATION_SETTING_KEYS.WELCOME_SHOWN] !== "1";
+        navigate(getDefaultRouteForUser(result.user, latestSettings), {
           state: showWelcome ? { showWelcome: true } : undefined,
         });
       });
@@ -47,19 +81,35 @@ export default function Login() {
 
   return (
     <AuthShell
-      formTitle="Sign In"
-      formSubtitle="Enter your credentials to access your store"
-      footer="Admin: admin / admin123 · Cashier: cashier / cashier123"
+      formTitle={drupalBackend ? (marketName ? `Sign in to ${marketName}` : "Sign in to your market") : "Sign In"}
+      formSubtitle={
+        drupalBackend
+          ? "Products, orders, and users are loaded live from your Drupal backend"
+          : "Enter your credentials to access your store"
+      }
+      footer={
+        drupalBackend
+          ? `Drupal POS · ${settings.terminal_code || "REG1"} · Default: admin / admin123`
+          : "Local mode · Admin: admin / admin123 · Cashier: cashier / cashier123"
+      }
     >
       {notice && <Alert type="warning">{notice}</Alert>}
+      {drupalBackend && (
+        <Alert type="success">
+          Backend: <strong>{backendHost}</strong>
+          <br />
+          Create products here or in Drupal admin — both use the same database.
+        </Alert>
+      )}
       {error && <Alert>{error}</Alert>}
+      {syncNote && !error && <Alert type="success">{syncNote}</Alert>}
 
       <form onSubmit={handleSubmit}>
         <Input
           label="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder="Enter username"
+          placeholder={drupalBackend ? "Drupal POS username" : "Enter username"}
           autoFocus
         />
         <div style={{ marginTop: "1rem" }}>
@@ -72,7 +122,7 @@ export default function Login() {
           />
         </div>
         <Button type="submit" className="btn-lg" disabled={submitting} style={{ width: "100%", marginTop: "1.5rem" }}>
-          {submitting ? "Signing in..." : "Sign In"}
+          {submitting ? (drupalBackend ? "Connecting to Drupal…" : "Signing in…") : "Sign In"}
         </Button>
       </form>
     </AuthShell>

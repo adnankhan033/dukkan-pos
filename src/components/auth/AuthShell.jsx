@@ -2,8 +2,8 @@ import appIcon from "../../../images/icon.svg";
 import "./AuthShell.css";
 
 const ACTIVATION_STEPS = [
-  { id: 1, label: "Register" },
-  { id: 2, label: "Activate" },
+  { id: 1, label: "Connect" },
+  { id: 2, label: "Sign in" },
 ];
 
 export default function AuthShell({

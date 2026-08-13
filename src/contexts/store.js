@@ -5,9 +5,34 @@ export const useAuthStore = create(
   persist(
     (set) => ({
       user: null,
+      token: null,
+      terminal: null,
+      drupalConnected: false,
       isAuthenticated: false,
-      login: (user) => set({ user, isAuthenticated: true }),
-      logout: () => set({ user: null, isAuthenticated: false }),
+      login: (user, session) => {
+        const safeSession = session && typeof session === "object" ? session : {};
+        set({
+          user,
+          token: safeSession.token ?? null,
+          terminal: safeSession.terminal ?? null,
+          drupalConnected: Boolean(safeSession.token),
+          isAuthenticated: true,
+        });
+      },
+      setDrupalProfile: (user, terminal) =>
+        set((state) => ({
+          user,
+          terminal: terminal ?? null,
+          drupalConnected: Boolean(state.token),
+        })),
+      logout: () =>
+        set({
+          user: null,
+          token: null,
+          terminal: null,
+          drupalConnected: false,
+          isAuthenticated: false,
+        }),
     }),
     { name: "dukkan-pos-auth" }
   )

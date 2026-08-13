@@ -7,6 +7,7 @@ import {
   setInventoryListCache,
   setInventorySummaryCache,
 } from "../services/InventoryCache";
+import { onCatalogChanged } from "../services/CatalogSync";
 import { useSettingsStore } from "../contexts/store";
 import { useDebounce } from "../hooks/usePagination";
 import { INVENTORY_PAGE_SIZE } from "../utils/constants";
@@ -90,6 +91,12 @@ export default function Inventory() {
 
   useEffect(() => {
     loadItems();
+  }, [loadItems]);
+
+  useEffect(() => {
+    return onCatalogChanged(() => {
+      loadItems();
+    });
   }, [loadItems]);
 
   function changeFilter(next) {

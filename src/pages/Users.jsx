@@ -19,6 +19,10 @@ import FormValidationAlert from "../components/common/FormValidationAlert";
 const emptyForm = {
   username: "",
   full_name: "",
+  phone: "",
+  email: "",
+  designation: "",
+  notes: "",
   password: "",
   role: ROLES.CASHIER,
   is_active: true,
@@ -66,6 +70,10 @@ export default function Users() {
     setForm({
       username: user.username,
       full_name: user.full_name || "",
+      designation: user.designation || "",
+      phone: user.phone || "",
+      email: user.email || "",
+      notes: user.notes || "",
       password: "",
       role: user.role || ROLES.CASHIER,
       is_active: user.is_active !== 0,
@@ -106,6 +114,10 @@ export default function Users() {
           await userService.update(editing.id, {
             username: form.username,
             full_name: form.full_name,
+            designation: form.designation,
+            phone: form.phone,
+            email: form.email,
+            notes: form.notes,
             role: form.role,
             is_active: form.is_active,
             password: form.password || undefined,
@@ -126,6 +138,8 @@ export default function Users() {
   const columns = [
     { key: "username", label: "Username" },
     { key: "full_name", label: "Full Name" },
+    { key: "designation", label: "Designation" },
+    { key: "phone", label: "Phone" },
     {
       key: "role",
       label: "Role",
@@ -226,6 +240,33 @@ export default function Users() {
               value={form.full_name}
               onChange={(e) => setForm({ ...form, full_name: e.target.value })}
               error={errors.full_name}
+            />
+          </div>
+          <div className="form-row" style={{ marginTop: "1rem" }}>
+            <Input
+              label="Designation"
+              value={form.designation}
+              onChange={(e) => setForm({ ...form, designation: e.target.value })}
+            />
+            <Input
+              label="Phone"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            />
+          </div>
+          <div className="form-row" style={{ marginTop: "1rem" }}>
+            <Input
+              label="Email"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+            />
+          </div>
+          <div style={{ marginTop: "1rem" }}>
+            <Input
+              label="Notes"
+              value={form.notes}
+              onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
           </div>
           <div className="form-row" style={{ marginTop: "1rem" }}>

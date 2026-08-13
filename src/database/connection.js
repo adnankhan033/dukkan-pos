@@ -28,6 +28,14 @@ function enqueueDb(operation) {
   return run;
 }
 
+/** Run multiple statements in one queue slot (e.g. settings batch writes). */
+export async function enqueueDbOperation(operation) {
+  return enqueueDb(async () => {
+    const db = await getDatabase();
+    return operation(db);
+  });
+}
+
 async function configureDatabase(db) {
   if (dbConfigured) return;
 
@@ -80,8 +88,6 @@ export async function initializeDatabase() {
   }
 
   await initPromise;
-  await ensureEmployeesSchema();
-  await ensureDailyClosesSchema();
   return getDatabase();
 }
 
@@ -171,6 +177,7 @@ async function runMigrations() {
   await ensureUnitsSchema();
   await ensureUsersAndExpensesSchema();
   await ensureSupplierLedgerSchema();
+  await ensureAttributionSchema();
   await ensureZatcaSchema();
   await ensureCashierModuleDefaults();
   await ensureUserSubscriptionsSchema();
@@ -460,6 +467,24 @@ async function ensureReceiptTemplateDefault() {
   }
 }
 
+async function ensureAttributionSchema() {
+  const productCols = await query("PRAGMA table_info(products)");
+  if (!productCols.some((c) => c.name === "created_by")) {
+    await execute("ALTER TABLE products ADD COLUMN created_by INTEGER REFERENCES users(id)");
+    await execute("CREATE INDEX IF NOT EXISTS idx_products_created_by ON products(created_by)");
+  }
+
+  let saleCols = await query("PRAGMA table_info(sales)");
+  if (!saleCols.some((c) => c.name === "cashier_id")) {
+    await execute("ALTER TABLE sales ADD COLUMN cashier_id INTEGER REFERENCES users(id)");
+    await execute("CREATE INDEX IF NOT EXISTS idx_sales_cashier ON sales(cashier_id)");
+    saleCols = await query("PRAGMA table_info(sales)");
+  }
+  if (!saleCols.some((c) => c.name === "terminal_id")) {
+    await execute("ALTER TABLE sales ADD COLUMN terminal_id INTEGER");
+  }
+}
+
 async function ensureSupplierLedgerSchema() {
   let purchaseCols = await query("PRAGMA table_info(purchases)");
   const addPurchaseCol = async (name, ddl) => {
@@ -515,11 +540,22 @@ async function ensureSupplierLedgerSchema() {
 }
 
 async function ensureUsersAndExpensesSchema() {
-  const userCols = await query("PRAGMA table_info(users)");
+  let userCols = await query("PRAGMA table_info(users)");
   if (!userCols.some((c) => c.name === "is_active")) {
     await execute(
       "ALTER TABLE users ADD COLUMN is_active INTEGER NOT NULL DEFAULT 1"
     );
+    userCols = await query("PRAGMA table_info(users)");
+  }
+  for (const col of ["phone", "email", "designation", "notes"]) {
+    if (!userCols.some((c) => c.name === col)) {
+      await execute(`ALTER TABLE users ADD COLUMN ${col} TEXT`);
+    }
+  }
+  for (const col of ["phone", "email", "designation", "notes"]) {
+    if (!userCols.some((c) => c.name === col)) {
+      await execute(`ALTER TABLE users ADD COLUMN ${col} TEXT`);
+    }
   }
 
   const expenseCols = await query("PRAGMA table_info(expenses)");
