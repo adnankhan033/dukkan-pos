@@ -1,16 +1,43 @@
 import { resolveBusinessTimezone, wallClockInTimezoneToIso } from "./timezones";
 
+function normalizeClock(value, fallback) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return fallback;
+  if (/^\d{2}:\d{2}:\d{2}$/.test(raw)) return raw;
+  if (/^\d{2}:\d{2}$/.test(raw)) return `${raw}:00`;
+  return fallback;
+}
+
+function buildWallClockRange(range) {
+  const fromTime = normalizeClock(range.fromTime, "00:00:00");
+  const toTime = normalizeClock(range.toTime, "23:59:59");
+  const toNormalized =
+    toTime.length === 8 && toTime.endsWith(":00") && range.toTime?.length === 5
+      ? `${range.toTime}:59`
+      : toTime;
+
+  return {
+    fromDateTime: `${range.from} ${fromTime}`,
+    toDateTime: `${range.to} ${toNormalized}`,
+    fromTime,
+    toTime: toNormalized,
+  };
+}
+
 /**
  * SQL filter matching timestamps stored as ISO UTC (…T…Z) or business wall-clock (YYYY-MM-DD HH:mm:ss).
+ * Supports optional fromTime / toTime on the range object (HH:mm or HH:mm:ss).
  */
 export function appendBusinessDateRangeFilter(column, range, params, settings = {}) {
   const tz = resolveBusinessTimezone(settings);
-  params.push(range.from, range.to);
-  const fromIdx = params.length - 1;
-  const toIdx = params.length;
+  const { fromDateTime, toDateTime } = buildWallClockRange(range);
 
-  const startIso = wallClockInTimezoneToIso(`${range.from} 00:00:00`, tz);
-  const endIso = wallClockInTimezoneToIso(`${range.to} 23:59:59`, tz);
+  params.push(fromDateTime, toDateTime);
+  const fromWallIdx = params.length - 1;
+  const toWallIdx = params.length;
+
+  const startIso = wallClockInTimezoneToIso(fromDateTime, tz);
+  const endIso = wallClockInTimezoneToIso(toDateTime, tz);
   params.push(startIso, endIso);
   const startIdx = params.length - 1;
   const endIdx = params.length;
@@ -18,24 +45,15 @@ export function appendBusinessDateRangeFilter(column, range, params, settings = 
   return ` AND (
     (${column} LIKE '%T%' AND ${column} >= $${startIdx} AND ${column} <= $${endIdx})
     OR
-    (${column} NOT LIKE '%T%' AND date(${column}) >= date($${fromIdx}) AND date(${column}) <= date($${toIdx}))
+    (${column} NOT LIKE '%T%' AND ${column} >= $${fromWallIdx} AND ${column} <= $${toWallIdx})
   )`;
 }
 
 export function appendBusinessDateEqualsFilter(column, businessDate, params, settings = {}) {
-  const tz = resolveBusinessTimezone(settings);
-  params.push(businessDate);
-  const dateIdx = params.length;
-
-  const startIso = wallClockInTimezoneToIso(`${businessDate} 00:00:00`, tz);
-  const endIso = wallClockInTimezoneToIso(`${businessDate} 23:59:59`, tz);
-  params.push(startIso, endIso);
-  const startIdx = params.length - 1;
-  const endIdx = params.length;
-
-  return ` AND (
-    (${column} LIKE '%T%' AND ${column} >= $${startIdx} AND ${column} <= $${endIdx})
-    OR
-    (${column} NOT LIKE '%T%' AND date(${column}) = date($${dateIdx}))
-  )`;
+  return appendBusinessDateRangeFilter(
+    column,
+    { from: businessDate, to: businessDate, fromTime: "00:00:00", toTime: "23:59:59" },
+    params,
+    settings
+  );
 }

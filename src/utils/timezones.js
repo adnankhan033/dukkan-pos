@@ -91,8 +91,8 @@ export function formatDateTimeInTimezone(date, timeZone) {
   return `${get("day")} ${get("month")} ${get("year")} at ${get("hour")}:${get("minute")} ${dayPeriod}`;
 }
 
-/** Parse DB timestamps (UTC ISO, UTC sqlite string, or ISO without Z) into a Date instant. */
-export function parseStoredTimestampToInstant(raw) {
+/** Parse DB timestamps into a Date instant. Wall-clock strings use the store timezone (default Riyadh). */
+export function parseStoredTimestampToInstant(raw, timeZone = DEFAULT_BUSINESS_TIMEZONE) {
   const value = String(raw ?? "").trim();
   if (!value) return null;
 
@@ -104,7 +104,9 @@ export function parseStoredTimestampToInstant(raw) {
   }
 
   if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(value)) {
-    const instant = new Date(`${value.slice(0, 10)}T${value.slice(11, 19)}Z`);
+    const iso = wallClockInTimezoneToIso(value, timeZone);
+    if (!/^\d{4}-\d{2}-\d{2}T/.test(iso)) return null;
+    const instant = new Date(iso);
     return Number.isNaN(instant.getTime()) ? null : instant;
   }
 

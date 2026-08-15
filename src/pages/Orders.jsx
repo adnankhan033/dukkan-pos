@@ -41,11 +41,26 @@ function periodToRangeKey(period) {
   return "daily";
 }
 
-function formatOrdersPeriodLabel(period, from, to) {
-  if (period === ORDER_PERIODS.TODAY) return `Today · ${formatDate(from)}`;
+function formatOrdersPeriodLabel(period, from, to, fromTime = "00:00", toTime = "23:59") {
+  const ft = String(fromTime).slice(0, 5);
+  const tt = String(toTime).slice(0, 5);
+  if (period === ORDER_PERIODS.TODAY) return `Today · ${formatDate(from)} (${ft}–${tt})`;
   if (period === ORDER_PERIODS.WEEK) return `This Week · ${formatDate(from)} – ${formatDate(to)}`;
   if (period === ORDER_PERIODS.MONTH) return `This Month · ${formatDate(from)} – ${formatDate(to)}`;
-  return `${formatDate(from)} – ${formatDate(to)}`;
+  return `${formatDate(from)} ${ft} – ${formatDate(to)} ${tt}`;
+}
+
+function toTimeInputValue(value) {
+  const raw = String(value ?? "").trim();
+  if (/^\d{2}:\d{2}$/.test(raw)) return raw;
+  if (/^\d{2}:\d{2}:\d{2}$/.test(raw)) return raw.slice(0, 5);
+  return "00:00";
+}
+
+function compareDateTimeRange(fromDate, fromTime, toDate, toTime) {
+  const start = `${fromDate}T${toTimeInputValue(fromTime)}`;
+  const end = `${toDate}T${toTimeInputValue(toTime)}`;
+  return start <= end;
 }
 
 const RETURN_FILTER_TABS = [
@@ -79,6 +94,10 @@ export default function Orders() {
   const [to, setTo] = useState(() => getBusinessDateISO({}));
   const [draftFrom, setDraftFrom] = useState(() => getBusinessDateISO({}));
   const [draftTo, setDraftTo] = useState(() => getBusinessDateISO({}));
+  const [fromTime, setFromTime] = useState("00:00");
+  const [toTime, setToTime] = useState("23:59");
+  const [draftFromTime, setDraftFromTime] = useState("00:00");
+  const [draftToTime, setDraftToTime] = useState("23:59");
   const [returnFilter, setReturnFilter] = useState(ORDER_RETURN_FILTERS.ALL);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -104,8 +123,8 @@ export default function Orders() {
   const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const periodLabel = useMemo(
-    () => formatOrdersPeriodLabel(period, from, to),
-    [period, from, to]
+    () => formatOrdersPeriodLabel(period, from, to, fromTime, toTime),
+    [period, from, to, fromTime, toTime]
   );
 
   useEffect(() => {
@@ -122,7 +141,7 @@ export default function Orders() {
     setError("");
     try {
       await ensureReturnSchema();
-      const rangeArgs = { period, from, to };
+      const rangeArgs = { period, from, to, fromTime, toTime };
       const [result, periodStats] = await Promise.all([
         saleService.getByPeriodPaginated({
           ...rangeArgs,
@@ -131,7 +150,7 @@ export default function Orders() {
           returnFilter,
           search: debouncedSearch,
         }),
-        saleService.getPeriodStats(period, from, to),
+        saleService.getPeriodStats(period, from, to, fromTime, toTime),
       ]);
       setOrders(result.items);
       setTotal(result.total);
@@ -153,7 +172,7 @@ export default function Orders() {
     } finally {
       setLoading(false);
     }
-  }, [period, from, to, page, returnFilter, debouncedSearch, showZatcaColumn]);
+  }, [period, from, to, fromTime, toTime, page, returnFilter, debouncedSearch, showZatcaColumn]);
 
   useEffect(() => {
     loadOrders();
@@ -165,8 +184,14 @@ export default function Orders() {
     if (next === ORDER_PERIODS.CUSTOM) {
       setDraftFrom(from);
       setDraftTo(to);
+      setDraftFromTime(fromTime);
+      setDraftToTime(toTime);
       return;
     }
+    setFromTime("00:00");
+    setToTime("23:59");
+    setDraftFromTime("00:00");
+    setDraftToTime("23:59");
     const range = getBusinessPeriodDateRange(periodToRangeKey(next), settings);
     setFrom(range.from);
     setTo(range.to);
@@ -179,10 +204,16 @@ export default function Orders() {
       setError("Start date must be before or equal to end date.");
       return;
     }
+    if (!compareDateTimeRange(draftFrom, draftFromTime, draftTo, draftToTime)) {
+      setError("Start date/time must be before or equal to end date/time.");
+      return;
+    }
     setError("");
     setPeriod(ORDER_PERIODS.CUSTOM);
     setFrom(draftFrom);
     setTo(draftTo);
+    setFromTime(draftFromTime);
+    setToTime(draftToTime);
     setPage(1);
   }
 
@@ -470,7 +501,7 @@ export default function Orders() {
         <div className="orders-filter-panel-header">
           <div className="orders-filter-panel-title">
             <CalendarRange size={18} />
-            <span>Date Filter</span>
+            <span>Date &amp; Time Filter</span>
           </div>
           <span className="orders-period-badge">{periodLabel}</span>
         </div>
@@ -490,7 +521,7 @@ export default function Orders() {
 
         <div className="orders-date-row">
           <Input
-            label="From"
+            label="From date"
             type="date"
             value={draftFrom}
             onChange={(e) => {
@@ -498,9 +529,18 @@ export default function Orders() {
               setPeriod(ORDER_PERIODS.CUSTOM);
             }}
           />
+          <Input
+            label="From time"
+            type="time"
+            value={toTimeInputValue(draftFromTime)}
+            onChange={(e) => {
+              setDraftFromTime(e.target.value);
+              setPeriod(ORDER_PERIODS.CUSTOM);
+            }}
+          />
           <span className="orders-date-separator">to</span>
           <Input
-            label="To"
+            label="To date"
             type="date"
             value={draftTo}
             onChange={(e) => {
@@ -508,10 +548,19 @@ export default function Orders() {
               setPeriod(ORDER_PERIODS.CUSTOM);
             }}
           />
+          <Input
+            label="To time"
+            type="time"
+            value={toTimeInputValue(draftToTime)}
+            onChange={(e) => {
+              setDraftToTime(e.target.value);
+              setPeriod(ORDER_PERIODS.CUSTOM);
+            }}
+          />
           <Button
             variant="primary"
             onClick={() => {
-              if (period === ORDER_PERIODS.CUSTOM && draftFrom === from && draftTo === to) {
+              if (period === ORDER_PERIODS.CUSTOM && draftFrom === from && draftTo === to && draftFromTime === fromTime && draftToTime === toTime) {
                 loadOrders();
               } else {
                 applyCustomRange();
@@ -523,6 +572,9 @@ export default function Orders() {
             Apply
           </Button>
         </div>
+        <p className="orders-filter-timezone-note">
+          Times use your store region ({settings.business_timezone || "Asia/Riyadh"}).
+        </p>
       </div>
 
       {stats && (

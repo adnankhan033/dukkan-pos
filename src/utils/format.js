@@ -40,8 +40,9 @@ export function formatDate(dateStr) {
 
 export function formatDateTime(dateStr) {
   if (!dateStr) return "-";
-  const tz = resolveBusinessTimezone(useSettingsStore.getState().settings);
-  const instant = parseStoredTimestampToInstant(dateStr);
+  const settings = useSettingsStore.getState().settings;
+  const tz = resolveBusinessTimezone(settings);
+  const instant = parseStoredTimestampToInstant(dateStr, tz);
   if (instant) {
     return formatDateTimeInTimezone(instant, tz);
   }
@@ -53,7 +54,7 @@ export function formatOrderDateTime(dateStr) {
   if (!dateStr) return "-";
   const settings = useSettingsStore.getState().settings;
   const tz = resolveBusinessTimezone(settings);
-  const instant = parseStoredTimestampToInstant(dateStr);
+  const instant = parseStoredTimestampToInstant(dateStr, tz);
   if (instant) {
     return formatDateTimeInTimezone(instant, tz);
   }

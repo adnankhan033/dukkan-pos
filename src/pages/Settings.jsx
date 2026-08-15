@@ -16,6 +16,7 @@ import { Input, Textarea, Select } from "../components/common/Input";
 import { Alert } from "../components/common/Loading";
 import ReceiptPreview from "../components/settings/ReceiptPreview";
 import ZatcaSettingsPanel from "../components/settings/ZatcaSettingsPanel";
+import PermissionsPanel from "../components/settings/PermissionsPanel";
 import { DEFAULT_RECEIPT_TEMPLATE } from "../utils/receiptTemplates";
 import { DEFAULT_BUSINESS_TIMEZONE, BUSINESS_TIMEZONES } from "../utils/timezones";
 import { getBusinessDateTimeLabelFromForm } from "../utils/businessDate";
@@ -28,12 +29,14 @@ import {
   mirrorStoreFields,
 } from "../utils/settingsSync";
 import { notify } from "../utils/notify";
+import { getAllPermissionSettingKeys } from "../utils/actions";
 import "./Settings.css";
 
 const ZATCA_DEFAULTS = getZatcaDefaultSettings();
 
 const TABS = [
   { id: "store", label: "Store" },
+  { id: "permissions", label: "Permissions", adminOnly: true },
   { id: "backend", label: "Backend" },
   { id: "receipt", label: "Receipt" },
   { id: "zatca", label: "ZATCA" },
@@ -78,6 +81,10 @@ function buildFormFromSettings(settings) {
     form[key] = settings[key] ?? defaultVal;
   }
 
+  for (const key of getAllPermissionSettingKeys()) {
+    form[key] = settingBool(settings[key]);
+  }
+
   return form;
 }
 
@@ -116,6 +123,12 @@ function formToSettings(form) {
   payload[ZK.ENABLED] =
     payload[ZK.ACTIVE_PHASE] !== ZATCA_PHASES.DISABLED ? "1" : "0";
 
+  for (const key of getAllPermissionSettingKeys()) {
+    if (form[key] !== undefined) {
+      payload[key] = form[key] ? "1" : "0";
+    }
+  }
+
   return payload;
 }
 
@@ -139,6 +152,11 @@ export default function Settings() {
   function updateField(key, value) {
     formDirtyRef.current = true;
     setForm((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function updateFields(patch) {
+    formDirtyRef.current = true;
+    setForm((prev) => ({ ...prev, ...patch }));
   }
 
   useEffect(() => {
@@ -227,7 +245,13 @@ export default function Settings() {
         (form.terminal_code || "").trim() !== (settings.terminal_code || "").trim();
 
       const updated = await persistForm(form);
-      notify.success("Your store configuration was saved.", { title: "Settings saved" });
+      const savedLabel =
+        tab === "permissions"
+          ? "Role and menu permissions were saved."
+          : "Your store configuration was saved.";
+      notify.success(savedLabel, {
+        title: tab === "permissions" ? "Permissions saved" : "Settings saved",
+      });
 
       if (backendChanged && isDrupalConfigured(updated)) {
         logout();
@@ -468,7 +492,7 @@ export default function Settings() {
       />
 
       <div className="settings-tabs">
-        {TABS.map((t) => (
+        {TABS.filter((t) => !t.adminOnly || isAdmin).map((t) => (
           <button
             key={t.id}
             type="button"
@@ -587,8 +611,8 @@ export default function Settings() {
             <Card className="settings-card">
               <h3 className="settings-section-title">Business Region & Time</h3>
               <p className="settings-section-desc">
-                Select your store region. Accounting filters (Today, Week, Month) and default expense dates
-                use this timezone automatically — no toggle needed.
+                Select your store region (default: Saudi Arabia — Riyadh). Receipts, invoices, and order
+                filters use this timezone automatically.
               </p>
               <Select
                 label="Region / timezone"
@@ -613,7 +637,7 @@ export default function Settings() {
                 )}
               </div>
               <p className="settings-section-desc" style={{ marginTop: "1rem" }}>
-                Optional: set a fixed date/time for new expense records (leave empty to always use live region time).
+                Optional: set a fixed date/time for new sales, expenses, and reports (leave empty to use live Saudi/business time).
               </p>
               <div className="form-row">
                 <Input
@@ -638,6 +662,19 @@ export default function Settings() {
               </div>
             </Card>
           </>
+        )}
+
+        {tab === "permissions" && isAdmin && (
+          <PermissionsPanel
+            form={form}
+            updateField={updateField}
+            updateFields={updateFields}
+            onResetRole={(role) =>
+              notify.info(`${role === "admin" ? "Administrator" : "Cashier"} menu defaults restored. Click Save Settings to apply.`, {
+                title: "Defaults loaded",
+              })
+            }
+          />
         )}
 
         {tab === "backend" && (

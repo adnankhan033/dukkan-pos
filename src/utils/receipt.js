@@ -68,7 +68,7 @@ function buildBilingualTotalRow(enLabel, arLabel, amountHtml, showBilingual, ext
 function formatReceiptDateTime(dateStr, settings) {
   if (!dateStr) return "-";
   const tz = resolveBusinessTimezone(settings);
-  const instant = parseStoredTimestampToInstant(dateStr);
+  const instant = parseStoredTimestampToInstant(dateStr, tz);
   if (!instant) return formatOrderDateTime(dateStr);
 
   const parts = new Intl.DateTimeFormat("en-GB", {

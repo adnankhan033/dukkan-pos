@@ -401,21 +401,44 @@ class SaleService {
     }
   }
 
-  _resolveDateRange(period, from, to) {
-    if (from && to) return { from, to };
-    if (period === "week") return getPeriodDateRange("weekly");
-    if (period === "month") return getPeriodDateRange("monthly");
-    return getPeriodDateRange("daily");
+  _resolveDateRange(period, from, to, fromTime = null, toTime = null) {
+    if (from && to) {
+      return {
+        from,
+        to,
+        fromTime: fromTime || "00:00:00",
+        toTime: toTime || "23:59:59",
+      };
+    }
+    if (period === "week") {
+      const range = getPeriodDateRange("weekly");
+      return { ...range, fromTime: "00:00:00", toTime: "23:59:59" };
+    }
+    if (period === "month") {
+      const range = getPeriodDateRange("monthly");
+      return { ...range, fromTime: "00:00:00", toTime: "23:59:59" };
+    }
+    const range = getPeriodDateRange("daily");
+    return { ...range, fromTime: "00:00:00", toTime: "23:59:59" };
   }
 
   _appendDateRangeFilter(column, range, params, settings) {
     return appendBusinessDateRangeFilter(column, range, params, settings);
   }
 
-  _buildOrdersQueryFilters(period, returnFilter = "all", search = "", from = null, to = null, settings = {}) {
+  _buildOrdersQueryFilters(
+    period,
+    returnFilter = "all",
+    search = "",
+    from = null,
+    to = null,
+    settings = {},
+    fromTime = null,
+    toTime = null
+  ) {
     let where = `WHERE s.status IN ('completed', 'partial_return', 'returned', 'held')`;
     const params = [];
-    const range = this._resolveDateRange(period, from, to);
+    const range = this._resolveDateRange(period, from, to, fromTime, toTime);
     where += this._appendDateRangeFilter("s.created_at", range, params, settings);
 
     if (returnFilter === "no_return") {
@@ -441,13 +464,15 @@ class SaleService {
     period = "today",
     from = null,
     to = null,
+    fromTime = null,
+    toTime = null,
     page = 1,
     limit = 100,
     returnFilter = "all",
     search = "",
   } = {}) {
     if (await isDrupalMode()) {
-      const range = this._resolveDateRange(period, from, to);
+      const range = this._resolveDateRange(period, from, to, fromTime, toTime);
       const returnFilterParam = drupalReturnFilterParam(returnFilter);
       const result = await apiClient.getSales({
         page,
@@ -472,7 +497,9 @@ class SaleService {
       search,
       from,
       to,
-      settings
+      settings,
+      fromTime,
+      toTime
     );
     const safePage = Math.max(1, Number(page) || 1);
     const safeLimit = Math.max(1, Number(limit) || 100);
@@ -512,14 +539,14 @@ class SaleService {
     return result.items;
   }
 
-  async getPeriodStats(period = "today", from = null, to = null) {
+  async getPeriodStats(period = "today", from = null, to = null, fromTime = null, toTime = null) {
     if (await isDrupalMode()) {
-      const range = this._resolveDateRange(period, from, to);
+      const range = this._resolveDateRange(period, from, to, fromTime, toTime);
       return apiClient.getSalesStats({ from: range.from, to: range.to });
     }
 
     const settings = await settingsService.getAll();
-    const range = this._resolveDateRange(period, from, to);
+    const range = this._resolveDateRange(period, from, to, fromTime, toTime);
     const salesParams = [];
     const periodFilter = this._appendDateRangeFilter("s.created_at", range, salesParams, settings);
     const salesRow = await queryOne(

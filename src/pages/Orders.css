@@ -48,10 +48,16 @@
 }
 
 .orders-date-row {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(120px, 1fr)) auto;
   gap: 0.75rem;
-  align-items: flex-end;
+  align-items: end;
+}
+
+.orders-filter-timezone-note {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
 }
 
 .orders-date-row .form-group {
@@ -83,6 +89,17 @@
 
 .orders-spin {
   animation: orders-spin 0.8s linear infinite;
+}
+
+@media (max-width: 900px) {
+  .orders-date-row {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .orders-date-row .btn {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
 }
 
 @media (max-width: 640px) {
