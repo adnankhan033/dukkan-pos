@@ -528,17 +528,46 @@ fn node_runner_candidates() -> Vec<String> {
         .collect()
 }
 
+fn signer_dir_has_runtime(dir: &std::path::Path) -> bool {
+    if !dir.is_dir() {
+        return false;
+    }
+    let node_bin = if cfg!(target_os = "windows") {
+        dir.join("node.exe")
+    } else {
+        dir.join("node")
+    };
+    node_bin.is_file() && dir.join("sign-zatca-invoice.mjs").is_file()
+}
+
 fn resolve_signer_dir(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
+    let mut candidates: Vec<std::path::PathBuf> = Vec::new();
+
     if let Ok(resource_dir) = app.path().resource_dir() {
-        let bundled = resource_dir.join("zatca-signer");
-        if bundled.is_dir() {
-            return Some(bundled);
+        candidates.push(resource_dir.join("zatca-signer"));
+    }
+
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(exe_dir) = exe.parent() {
+            candidates.push(exe_dir.join("resources").join("zatca-signer"));
+            candidates.push(exe_dir.join("zatca-signer"));
         }
     }
 
-    let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    let dev_bundled = manifest_dir.join("resources/zatca-signer");
-    dev_bundled.is_dir().then_some(dev_bundled)
+    #[cfg(debug_assertions)]
+    {
+        let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        candidates.push(manifest_dir.join("resources/zatca-signer"));
+    }
+
+    let mut seen = std::collections::HashSet::new();
+    for dir in candidates {
+        if seen.insert(dir.clone()) && signer_dir_has_runtime(&dir) {
+            return Some(dir);
+        }
+    }
+
+    None
 }
 
 fn resolve_bundled_signer(app: &tauri::AppHandle) -> Option<(std::path::PathBuf, std::path::PathBuf, std::path::PathBuf)> {
@@ -572,8 +601,6 @@ fn run_node_signer(
 
 fn run_sign_script(
     app: &tauri::AppHandle,
-    project_root: &std::path::Path,
-    script: &std::path::Path,
     input_path: &std::path::Path,
 ) -> Result<std::process::Output, String> {
     if let Some((node_bin, bundled_script, workdir)) = resolve_bundled_signer(app) {
@@ -585,16 +612,25 @@ fn run_sign_script(
         );
     }
 
-    if script.is_file() {
-        for node_bin in node_runner_candidates() {
-            if let Ok(output) = run_node_signer(&node_bin, script, project_root, input_path) {
-                return Ok(output);
+    #[cfg(debug_assertions)]
+    {
+        let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+        if let Some(project_root) = manifest_dir.parent() {
+            let script = project_root.join("scripts/sign-zatca-invoice.mjs");
+            if script.is_file() {
+                for node_bin in node_runner_candidates() {
+                    if let Ok(output) =
+                        run_node_signer(&node_bin, &script, project_root, input_path)
+                    {
+                        return Ok(output);
+                    }
+                }
             }
         }
     }
 
     Err(
-        "ZATCA invoice signing runtime was not found. Rebuild the app with `npm run build:mac-dmg` or install Node.js (nodejs.org)."
+        "ZATCA invoice signing runtime was not found. Reinstall the application or rebuild with the bundled signer."
             .to_string(),
     )
 }
@@ -624,21 +660,7 @@ fn sign_zatca_invoice(app: tauri::AppHandle, input_json: String) -> Result<Strin
     )
     .map_err(|e| e.to_string())?;
 
-    let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    let project_root = manifest_dir
-        .parent()
-        .ok_or("Could not resolve project root for signing script.")?;
-    let script = project_root.join("scripts/sign-zatca-invoice.mjs");
-
-    if !script.exists() {
-        let _ = fs::remove_file(&input_path);
-        return Err(format!(
-            "Signing script not found at {}. Reinstall the application.",
-            script.display()
-        ));
-    }
-
-    let output = run_sign_script(&app, project_root, &script, &input_path)?;
+    let output = run_sign_script(&app, &input_path)?;
 
     let _ = fs::remove_file(&input_path);
 
