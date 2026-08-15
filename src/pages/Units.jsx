@@ -11,7 +11,8 @@ import Table from "../components/common/Table";
 import Badge from "../components/common/Badge";
 import Modal from "../components/common/Modal";
 import { Input } from "../components/common/Input";
-import { Alert, LoadingSpinner } from "../components/common/Loading";
+import { LoadingSpinner } from "../components/common/Loading";
+import { notify } from "../utils/notify";
 import { required, runFormValidation, FORM_VALIDATION_MESSAGE } from "../utils/validation";
 import FormValidationAlert from "../components/common/FormValidationAlert";
 import { formatDateTime, formatDbError } from "../utils/format";
@@ -29,8 +30,6 @@ export default function Units() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
-  const [alert, setAlert] = useState("");
-  const [message, setMessage] = useState("");
   const debouncedSearch = useDebounce(search);
 
   const load = useCallback(async ({ silent = false, search: searchOverride } = {}) => {
@@ -38,10 +37,9 @@ export default function Units() {
     try {
       const term = searchOverride !== undefined ? searchOverride : debouncedSearch;
       setUnits(await unitService.getAll({ search: term }));
-      if (!silent) setAlert("");
     } catch (err) {
       setUnits([]);
-      setAlert(formatDbError(err) || "Failed to load units");
+      notify.error(formatDbError(err) || "Failed to load units", { title: "Load failed" });
     } finally {
       if (!silent) setLoading(false);
     }
@@ -55,7 +53,6 @@ export default function Units() {
     setEditing(null);
     setForm(emptyForm);
     setErrors({});
-    setMessage("");
     setModalOpen(true);
   }
 
@@ -67,12 +64,10 @@ export default function Units() {
       example: unit.example || "",
     });
     setErrors({});
-    setMessage("");
     setModalOpen(true);
   }
 
   async function handleDelete(unit) {
-    setAlert("");
     const productCount = await unitService.getProductCount(unit.id);
     const message =
       productCount > 0
@@ -90,15 +85,14 @@ export default function Units() {
     try {
       await unitService.delete(unit.id, { unassignProducts: productCount > 0 });
       await load();
-      setMessage(`Unit "${unit.name}" deleted.`);
+      notify.success(`Unit "${unit.name}" deleted.`, { title: "Unit deleted" });
     } catch (err) {
-      setAlert(formatDbError(err) || "Delete failed");
+      notify.error(formatDbError(err) || "Delete failed", { title: "Delete failed" });
     }
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setAlert("");
 
     const payload = {
       name: form.name.trim(),
@@ -126,13 +120,18 @@ export default function Units() {
 
       setModalOpen(false);
       setErrors({});
-      setMessage(`Unit "${payload.name}" (${payload.symbol}) ${editing ? "updated" : "created"} successfully.`);
+      notify.success(
+        `Unit "${payload.name}" (${payload.symbol}) ${editing ? "updated" : "created"}.`,
+        { title: editing ? "Unit updated" : "Unit created" }
+      );
       if (!editing) setSearch("");
 
       try {
         await load({ silent: true, search: editing ? undefined : "" });
       } catch (loadErr) {
-        setAlert(formatDbError(loadErr) || "Unit saved, but the list failed to refresh.");
+        notify.warning(formatDbError(loadErr) || "Unit saved, but the list failed to refresh.", {
+          title: "Refresh delayed",
+        });
       }
     } catch (err) {
       const msg = formatDbError(err);
@@ -198,9 +197,6 @@ export default function Units() {
           </Button>
         }
       />
-
-      {message && <Alert type="success">{message}</Alert>}
-      {alert && <Alert>{alert}</Alert>}
 
       <div className="page-header-actions" style={{ marginBottom: "1rem" }}>
         <SearchBar

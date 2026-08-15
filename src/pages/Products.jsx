@@ -21,7 +21,8 @@ import Modal from "../components/common/Modal";
 import { Input, Select } from "../components/common/Input";
 import SearchableSelect from "../components/common/SearchableSelect";
 import Badge from "../components/common/Badge";
-import { Alert, LoadingSpinner } from "../components/common/Loading";
+import { LoadingSpinner } from "../components/common/Loading";
+import { notify } from "../utils/notify";
 import { formatCurrency, formatQuantity } from "../utils/format";
 import { required, positiveNumber, runFormValidation } from "../utils/validation";
 import { translateToArabic } from "../utils/translate";
@@ -74,7 +75,6 @@ export default function Products() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
-  const [alert, setAlert] = useState("");
   const [imageLoading, setImageLoading] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [importExportOpen, setImportExportOpen] = useState(false);
@@ -95,11 +95,12 @@ export default function Products() {
       setProducts(result.items);
       setTotal(result.total);
       setSelectedIds(new Set());
-      setAlert("");
     } catch (err) {
       setProducts([]);
       setTotal(0);
-      setAlert(err.message || "Failed to load products. Restart the app and try again.");
+      notify.error(err.message || "Failed to load products. Restart the app and try again.", {
+        title: "Load failed",
+      });
     } finally {
       if (!silent) setInitialLoading(false);
     }
@@ -174,9 +175,9 @@ export default function Products() {
     });
     if (!ok) return;
 
-    setAlert("");
     try {
       await productService.delete(id);
+      notify.success(`"${name}" was deleted.`, { title: "Product deleted" });
       setSelectedIds((prev) => {
         const next = new Set(prev);
         next.delete(id);
@@ -184,7 +185,7 @@ export default function Products() {
       });
       await loadProducts(true);
     } catch (err) {
-      setAlert(err.message || "Delete failed");
+      notify.error(err.message || "Delete failed", { title: "Delete failed" });
     }
   }
 
@@ -203,13 +204,15 @@ export default function Products() {
     if (!ok) return;
 
     setBulkPublishing(true);
-    setAlert("");
     try {
       await productService.setPublishedMany([...selectedIds], published);
       setSection(published ? "published" : "unpublished");
       await loadProducts(true);
+      notify.success(`${selectedIds.size} product(s) ${published ? "published" : "unpublished"}.`, {
+        title: published ? "Published" : "Unpublished",
+      });
     } catch (err) {
-      setAlert(err.message || `Bulk ${action} failed`);
+      notify.error(err.message || `Bulk ${action} failed`, { title: "Bulk update failed" });
     } finally {
       setBulkPublishing(false);
     }
@@ -227,17 +230,21 @@ export default function Products() {
     if (!ok) return;
 
     setBulkDeleting(true);
-    setAlert("");
     try {
       const { deleted, failed } = await productService.deleteMany([...selectedIds]);
       if (failed.length > 0 && deleted.length === 0) {
-        setAlert(`Delete failed: ${failed.map((f) => f.message).join("; ")}`);
+        notify.error(failed.map((f) => f.message).join("; "), { title: "Delete failed" });
       } else if (failed.length > 0) {
-        setAlert(`Deleted ${deleted.length}. Failed ${failed.length}: ${failed.map((f) => f.message).join("; ")}`);
+        notify.warning(
+          `Deleted ${deleted.length}. Failed ${failed.length}: ${failed.map((f) => f.message).join("; ")}`,
+          { title: "Partial delete" }
+        );
+      } else {
+        notify.success(`${deleted.length} product(s) deleted.`, { title: "Products deleted" });
       }
       await loadProducts(true);
     } catch (err) {
-      setAlert(err.message || "Bulk delete failed");
+      notify.error(err.message || "Bulk delete failed", { title: "Delete failed" });
     } finally {
       setBulkDeleting(false);
     }
@@ -353,8 +360,10 @@ export default function Products() {
         if (editing) {
           if (payload.image === undefined) delete payload.image;
           await productService.update(editing.id, payload);
+          notify.success(`"${payload.name}" was updated.`, { title: "Product updated" });
         } else {
           await productService.create(payload);
+          notify.success(`"${payload.name}" was created.`, { title: "Product created" });
         }
 
         setModalOpen(false);
@@ -492,8 +501,6 @@ export default function Products() {
           </>
         }
       />
-
-      {alert && <Alert>{alert}</Alert>}
 
       <div className="product-tabs">
         <button

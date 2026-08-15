@@ -23,6 +23,11 @@ import { getZatcaDefaultSettings } from "../zatca/core/config";
 import { ZATCA_PHASES, ZATCA_SETTING_KEYS as ZK } from "../zatca/core/constants";
 import { apiClient } from "../api/ApiClient";
 import { isDrupalConfigured } from "../api/apiConfig";
+import {
+  buildRemoteSettingsPayload,
+  mirrorStoreFields,
+} from "../utils/settingsSync";
+import { notify } from "../utils/notify";
 import "./Settings.css";
 
 const ZATCA_DEFAULTS = getZatcaDefaultSettings();
@@ -124,17 +129,22 @@ export default function Settings() {
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [tab, setTab] = useState("store");
   const [form, setForm] = useState(() => buildFormFromSettings(settings));
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   const [backupBusy, setBackupBusy] = useState(false);
   const [sectionCounts, setSectionCounts] = useState({});
   const [feedbackModal, setFeedbackModal] = useState(null);
   const [backendTest, setBackendTest] = useState(null);
   const restoreInputRef = useRef(null);
+  const formDirtyRef = useRef(false);
 
   function updateField(key, value) {
+    formDirtyRef.current = true;
     setForm((prev) => ({ ...prev, [key]: value }));
   }
+
+  useEffect(() => {
+    if (formDirtyRef.current) return;
+    setForm(buildFormFromSettings(settings));
+  }, [settings]);
 
   const [clockTick, setClockTick] = useState(0);
   useEffect(() => {
@@ -172,17 +182,29 @@ export default function Settings() {
   }
 
   async function persistForm(mergedForm) {
-    const payload = formToSettings(mergedForm ?? form);
-    const updated = await settingsService.updateMany(payload);
+    const payload = mirrorStoreFields(formToSettings(mergedForm ?? form));
+    let updated = await settingsService.updateMany(payload);
+
+    if (isDrupalConfigured(updated) && useAuthStore.getState().drupalConnected) {
+      try {
+        const remote = await apiClient.updateSettingsRemote(buildRemoteSettingsPayload(updated));
+        updated = await settingsService.updateMany({ ...updated, ...remote });
+      } catch (err) {
+        throw new Error(
+          `Settings saved on this device but could not sync to the server: ${err.message}`
+        );
+      }
+    }
+
     setSettings(updated);
     setForm(buildFormFromSettings(updated));
+    formDirtyRef.current = false;
     zatcaService.restartBackgroundSync();
     return updated;
   }
 
   async function handleBackendTest() {
     setBackendTest(null);
-    setError("");
     try {
       const testSettings = {
         ...settings,
@@ -193,7 +215,7 @@ export default function Settings() {
       setBackendTest(`Connected: ${health.service} v${health.version}`);
     } catch (err) {
       setBackendTest(null);
-      setError(err.message || "Connection failed");
+      notify.error(err.message || "Connection failed", { title: "Backend test failed" });
     }
   }
 
@@ -205,8 +227,7 @@ export default function Settings() {
         (form.terminal_code || "").trim() !== (settings.terminal_code || "").trim();
 
       const updated = await persistForm(form);
-      setMessage("Settings saved successfully");
-      setError("");
+      notify.success("Your store configuration was saved.", { title: "Settings saved" });
 
       if (backendChanged && isDrupalConfigured(updated)) {
         logout();
@@ -219,7 +240,7 @@ export default function Settings() {
         });
       }
     } catch (err) {
-      setError(err.message);
+      notify.error(err.message, { title: "Could not save settings" });
     }
   }
 
@@ -246,10 +267,9 @@ export default function Settings() {
     if (!ok) return;
 
     setBackupBusy(true);
-    setError("");
-    setMessage("");
     try {
       const result = await backupService.createBackupDownload();
+      notify.success("Your backup file was downloaded.", { title: "Backup ready" });
       setFeedbackModal({
         title: "Backup Downloaded",
         icon: "download",
@@ -306,8 +326,6 @@ export default function Settings() {
     if (!ok) return;
 
     setBackupBusy(true);
-    setError("");
-    setMessage("");
     try {
       const text = await file.text();
       const data = backupService.parseBackupFile(text);
@@ -316,6 +334,7 @@ export default function Settings() {
       setSettings(updated);
       setForm(buildFormFromSettings(updated));
       zatcaService.restartBackgroundSync();
+      notify.success(`Data from ${file.name} was restored.`, { title: "Backup restored" });
       setFeedbackModal({
         title: "Backup Restored",
         icon: "restore",
@@ -363,12 +382,10 @@ export default function Settings() {
     if (!ok) return;
 
     setBackupBusy(true);
-    setError("");
-    setMessage("");
     try {
       await backupService.clearSection(section.id);
       await refreshSectionCounts();
-      setMessage(`${section.label} data cleared successfully.`);
+      notify.success(`${section.label} data was cleared.`, { title: "Section cleared" });
     } catch (err) {
       setFeedbackModal({
         title: "Clear Failed",
@@ -423,8 +440,6 @@ export default function Settings() {
     if (!finalOk) return;
 
     setBackupBusy(true);
-    setError("");
-    setMessage("");
     try {
       await backupService.clearAllData();
       logout();
@@ -451,9 +466,6 @@ export default function Settings() {
         title="Settings"
         subtitle="Store configuration, receipts, dashboards, and backups."
       />
-
-      {message && <Alert type="success">{message}</Alert>}
-      {error && <Alert>{error}</Alert>}
 
       <div className="settings-tabs">
         {TABS.map((t) => (

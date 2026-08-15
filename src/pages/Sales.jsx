@@ -29,7 +29,8 @@ import SaleCompleteModal from "../components/sales/SaleCompleteModal";
 import SaleReturnModal from "../components/sales/SaleReturnModal";
 import PosProductEditModal from "../components/sales/PosProductEditModal";
 import ProductBilingualName from "../components/products/ProductBilingualName";
-import { Alert, LoadingSpinner } from "../components/common/Loading";
+import { LoadingSpinner } from "../components/common/Loading";
+import { notify } from "../utils/notify";
 import { formatCurrency, calcVat, calcGrandTotal, formatQuantity } from "../utils/format";
 import { printReceipt } from "../utils/receipt";
 import { PAYMENT_METHODS, SALE_STATUS, POS_TOP_SELLERS_LIMIT } from "../utils/constants";
@@ -74,8 +75,6 @@ export default function Sales() {
   const [cashReceived, setCashReceived] = useState("");
   const [heldSales, setHeldSales] = useState([]);
   const [lastSale, setLastSale] = useState(null);
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
 
   const [completeStep, setCompleteStep] = useState(null);
   const [pendingPaymentMethod, setPendingPaymentMethod] = useState(PAYMENT_METHODS.CASH);
@@ -84,6 +83,7 @@ export default function Sales() {
   const [editProductId, setEditProductId] = useState(null);
 
   const searchRef = useRef(null);
+  const lastScanAtRef = useRef(0);
   const checkoutRef = useRef({});
 
   useEffect(() => {
@@ -98,7 +98,9 @@ export default function Sales() {
         setCustomers(customerResult.items);
         setHeldSales(held);
       } catch (err) {
-        setError(err.message || "Failed to load POS. Restart the app and try again.");
+        notify.error(err.message || "Failed to load POS. Restart the app and try again.", {
+          title: "POS unavailable",
+        });
       } finally {
         setCatalogLoading(false);
       }
@@ -162,6 +164,8 @@ export default function Sales() {
 
   async function handleBarcodeSearch(e) {
     if (e.key !== "Enter" || !search.trim()) return;
+    e.preventDefault();
+    e.stopPropagation();
     const code = search.trim();
     const exact =
       topProducts.find((p) => p.barcode === code) ||
@@ -169,11 +173,13 @@ export default function Sales() {
     if (exact) {
       addToCart(exact);
       setSearch("");
+      lastScanAtRef.current = Date.now();
       return;
     }
     const product = await productService.getByBarcode(code);
     if (product) addToCart(product);
     setSearch("");
+    lastScanAtRef.current = Date.now();
   }
 
   function focusSearch() {
@@ -181,8 +187,6 @@ export default function Sales() {
   }
 
   function addToCart(product) {
-    setError("");
-    setMessage("");
     setCart((prev) => {
       const existing = prev.find((i) => i.product_id === product.id);
       if (existing) {
@@ -234,7 +238,6 @@ export default function Sales() {
     setCart([]);
     setDiscount(0);
     setCashReceived("");
-    setError("");
   }
 
   const subtotal = cart.reduce((s, i) => s + i.total, 0);
@@ -301,16 +304,14 @@ export default function Sales() {
   function handleProductSaved(updated) {
     patchCatalogProduct(updated);
     applyProductUpdateToCart(updated);
-    setMessage(`Updated "${updated.name}" — cart price refreshed`);
-    setError("");
+    notify.success(`"${updated.name}" price refreshed in cart.`, { title: "Product updated" });
   }
 
   function validateBeforeComplete() {
     if (cart.length === 0) {
-      setError("Cart is empty");
+      notify.warning("Add at least one item before completing the sale.", { title: "Cart is empty" });
       return false;
     }
-    setError("");
     return true;
   }
 
@@ -393,7 +394,7 @@ export default function Sales() {
         setCompleteStep("print");
       });
     } catch (err) {
-      setError(err.message);
+      notify.error(err.message, { title: "Sale failed" });
       closeCompleteFlow();
     }
   }
@@ -407,9 +408,11 @@ export default function Sales() {
         settings,
         currency,
       });
-      setMessage(`Receipt printed — ${completedSale.sale_number}`);
+      notify.success(`Receipt sent to printer for ${completedSale.sale_number}.`, {
+        title: "Receipt printed",
+      });
     } catch (err) {
-      setError(err.message || "Print failed");
+      notify.error(err.message || "Print failed", { title: "Print failed" });
     }
     closeCompleteFlow();
     focusSearch();
@@ -417,7 +420,7 @@ export default function Sales() {
 
   function handleSkipPrint() {
     if (completedSale) {
-      setMessage(`Sale ${completedSale.sale_number} completed successfully`);
+      notify.success(`Sale ${completedSale.sale_number} is complete.`, { title: "Sale completed" });
     }
     closeCompleteFlow();
     focusSearch();
@@ -427,7 +430,6 @@ export default function Sales() {
     cart,
     completeStep,
     submitting,
-    search,
     returnOpen,
     advanceCashCheckout,
     handleConfirmComplete,
@@ -443,7 +445,6 @@ export default function Sales() {
         cart: items,
         completeStep: step,
         submitting: busy,
-        search: query,
         returnOpen: returnModalOpen,
         advanceCashCheckout: advance,
         handleConfirmComplete: confirmComplete,
@@ -452,10 +453,13 @@ export default function Sales() {
 
       if (returnModalOpen) return;
 
+      // Ignore Enter shortly after a barcode scan (scanners often send CR+LF).
+      if (Date.now() - lastScanAtRef.current < 400) return;
+
       const target = e.target;
       if (target.tagName === "TEXTAREA" || target.tagName === "SELECT") return;
       if (target.classList?.contains("pos-discount-input")) return;
-      if (target.classList?.contains("pos-search-input") && query.trim()) return;
+      if (target.classList?.contains("pos-search-input")) return;
 
       if (step === "confirm") {
         e.preventDefault();
@@ -481,7 +485,7 @@ export default function Sales() {
 
   async function completeHeldSale(paymentMethod) {
     if (cart.length === 0) {
-      setError("Cart is empty");
+      notify.warning("Add at least one item before holding a sale.", { title: "Cart is empty" });
       return;
     }
     try {
@@ -494,21 +498,20 @@ export default function Sales() {
           paymentMethod,
           status: SALE_STATUS.HELD,
         });
-        setMessage(`Sale held — ${sale.sale_number}`);
+        notify.success(`Sale ${sale.sale_number} is on hold.`, { title: "Sale held" });
         setHeldSales(await saleService.getHeldSales());
         setCart([]);
         setDiscount(0);
         setCashReceived("");
-        setError("");
       });
     } catch (err) {
-      setError(err.message);
+      notify.error(err.message, { title: "Could not hold sale" });
     }
   }
 
   async function handlePrintLast() {
     if (!lastSale) {
-      setError("Complete a sale first to print receipt");
+      notify.warning("Complete a sale first to print a receipt.", { title: "No recent sale" });
       return;
     }
     try {
@@ -518,9 +521,11 @@ export default function Sales() {
         settings,
         currency,
       });
-      setMessage(`Receipt printed — ${lastSale.sale_number}`);
+      notify.success(`Receipt sent to printer for ${lastSale.sale_number}.`, {
+        title: "Receipt printed",
+      });
     } catch (err) {
-      setError(err.message || "Print failed");
+      notify.error(err.message || "Print failed", { title: "Print failed" });
     }
   }
 
@@ -581,9 +586,6 @@ export default function Sales() {
           </Button>
         </div>
       </header>
-
-      {message && <Alert type="success">{message}</Alert>}
-      {error && <Alert>{error}</Alert>}
 
       {heldSales.length > 0 && (
         <div className="pos-held-strip">
@@ -957,8 +959,9 @@ export default function Sales() {
         isOpen={returnOpen}
         onClose={() => setReturnOpen(false)}
         onSuccess={(result) => {
-          setMessage(
-            `Return ${result.returnNumber} — ${formatCurrency(result.totalRefund, currency)} refunded`
+          notify.success(
+            `Return ${result.returnNumber} — ${formatCurrency(result.totalRefund, currency)} refunded`,
+            { title: "Return completed" }
           );
           refreshTopProducts();
         }}

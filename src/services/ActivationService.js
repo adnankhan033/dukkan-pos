@@ -219,13 +219,10 @@ class ActivationService {
     return settingsService.getAll();
   }
 
-  /** Remove old Drupal market connection so local store setup always starts at step 1. */
+  /** Remove old Drupal market activation metadata (not user-configured Backend URL). */
   async clearLegacyDrupalSetup(settings = null) {
     const all = settings || (await settingsService.getAll());
-    const hasLegacyDrupal = Boolean(
-      all[API_SETTING_KEYS.BASE_URL]?.trim() ||
-      all[ACTIVATION_SETTING_KEYS.MARKET_NAME]?.trim()
-    );
+    const hasLegacyDrupal = Boolean(all[ACTIVATION_SETTING_KEYS.MARKET_NAME]?.trim());
     if (!hasLegacyDrupal) {
       return all;
     }

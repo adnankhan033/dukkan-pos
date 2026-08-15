@@ -5,6 +5,7 @@ import { isDesktopApp } from "./utils/environment";
 import AppRoutes from "./routes/AppRoutes";
 import BrowserNotice from "./components/common/BrowserNotice";
 import { LoadingSpinner, Alert } from "./components/common/Loading";
+import { ToastProvider } from "./contexts/ToastContext";
 
 function DesktopApp() {
   const { dbReady, dbError } = useDatabaseInit();
@@ -32,7 +33,9 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <DesktopApp />
+      <ToastProvider>
+        <DesktopApp />
+      </ToastProvider>
     </BrowserRouter>
   );
 }

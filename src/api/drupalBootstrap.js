@@ -2,6 +2,7 @@ import { apiClient } from "./ApiClient";
 import { settingsService } from "../services/SettingsService";
 import { useAuthStore, useSettingsStore } from "../contexts/store";
 import { normalizeUser } from "./drupalMode";
+import { mergeRemoteSettings } from "../utils/settingsSync";
 import {
   bootstrapCatalogRevision,
   invalidateProductCaches,
@@ -28,8 +29,10 @@ export async function bootstrapDrupalSession({ invalidateCaches = true } = {}) {
     apiClient.getMe(),
     apiClient.getSettingsRemote(),
   ]);
-  const merged = await settingsService.updateMany(remoteSettings);
-  useSettingsStore.getState().setSettings(merged);
+  const localSettings = await settingsService.getAll();
+  const merged = mergeRemoteSettings(localSettings, remoteSettings);
+  const saved = await settingsService.updateMany(merged);
+  useSettingsStore.getState().setSettings(saved);
 
   const auth = useAuthStore.getState();
   if (me?.user) {
@@ -44,7 +47,7 @@ export async function bootstrapDrupalSession({ invalidateCaches = true } = {}) {
   await bootstrapCatalogRevision();
 
   markDrupalSessionBootstrapped();
-  return { settings: merged, user: me?.user, terminal: me?.terminal };
+  return { settings: saved, user: me?.user, terminal: me?.terminal };
 }
 
 /** Re-verify JWT on app load; throws if session expired. */
