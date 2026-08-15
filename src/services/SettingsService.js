@@ -22,6 +22,16 @@ class SettingsService {
     );
   }
 
+  async remove(key) {
+    await execute("DELETE FROM settings WHERE key = $1", [key]);
+  }
+
+  async removeMany(keys) {
+    for (const key of keys) {
+      await this.remove(key);
+    }
+  }
+
   async updateMany(settings) {
     const entries = Object.entries(settings || {});
     if (entries.length === 0) {

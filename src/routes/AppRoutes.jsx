@@ -4,7 +4,7 @@ import AuthLayout from "../layouts/AuthLayout";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleRoute from "./RoleRoute";
 import Login from "../pages/Login";
-import Activate from "../pages/Activate";
+import Setup from "../pages/Setup";
 import ActivationRoute from "./ActivationRoute";
 import DefaultRedirect from "./DefaultRedirect";
 import Dashboard from "../pages/Dashboard";
@@ -37,7 +37,8 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route element={<AuthLayout />}>
-        <Route path="/activate" element={<Activate />} />
+        <Route path="/setup" element={<Setup />} />
+        <Route path="/activate" element={<Navigate to="/setup" replace />} />
         <Route
           path="/login"
           element={

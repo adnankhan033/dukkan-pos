@@ -3,6 +3,7 @@ import { settingsService } from "./SettingsService";
 import {
   BACKUP_SETTING_KEYS,
   decodeBackupSecret,
+  encodeBackupSecret,
   normalizeGmailAppPassword,
 } from "../utils/backupSettings.js";
 import { API_SETTING_KEYS, API_PATH_PREFIX, normalizeApiBaseUrl } from "../api/apiConfig";
@@ -12,6 +13,7 @@ import {
   ACTIVATION_STATUS,
   isSystemActivated,
   normalizeActivationKey,
+  REGISTRATION_STATUS,
   resolveActivationSmtpFromEnv,
 } from "../utils/activationConfig";
 
@@ -121,43 +123,177 @@ class ActivationService {
 
     return null;
   }
-  async ensureSystemActivation(existingSettings = null) {
-    return existingSettings || (await settingsService.getAll());
+
+  async saveActivationEmailSettings({ gmail, appPassword }) {
+    const address = String(gmail || "").trim();
+    const password = normalizeGmailAppPassword(appPassword);
+    if (!address) {
+      throw new Error("Sender Gmail address is required.");
+    }
+    if (!password) {
+      throw new Error("Gmail App Password is required (16 characters from Google Account → App passwords).");
+    }
+    if (password.length !== 16) {
+      throw new Error("Gmail App Password must be 16 characters (spaces removed).");
+    }
+    await settingsService.set(ACTIVATION_SETTING_KEYS.GMAIL, address);
+    await settingsService.set(
+      ACTIVATION_SETTING_KEYS.GMAIL_APP_PASSWORD,
+      encodeBackupSecret(password)
+    );
+    return settingsService.getAll();
   }
 
-  async submitRegistration({ name, phone, storeName, address }) {
-    const customerName = String(name || "").trim();
-    const customerPhone = String(phone || "").trim();
+  async ensureSystemActivation(existingSettings = null) {
+    let settings = existingSettings || (await settingsService.getAll());
+    settings = await this.clearLegacyDrupalSetup(settings);
+
+    if (
+      settings[ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS] === REGISTRATION_STATUS.ACTIVATED &&
+      settings[ACTIVATION_SETTING_KEYS.STATUS] !== ACTIVATION_STATUS.ACTIVATED
+    ) {
+      await settingsService.set(ACTIVATION_SETTING_KEYS.STATUS, ACTIVATION_STATUS.ACTIVATED);
+      settings = await settingsService.getAll();
+    }
+
+    const hasKey = Boolean(settings[ACTIVATION_SETTING_KEYS.KEY]?.trim());
+    const hasDevice = Boolean(settings[ACTIVATION_SETTING_KEYS.DEVICE_ID]?.trim());
+
+    if (hasKey && hasDevice) {
+      return settings;
+    }
+
+    if (!isTauri()) {
+      return settings;
+    }
+
+    try {
+      const info = await invoke("generate_system_activation");
+      if (info?.device_id) {
+        await settingsService.set(ACTIVATION_SETTING_KEYS.DEVICE_ID, info.device_id);
+      }
+      if (info?.activation_key) {
+        await settingsService.set(ACTIVATION_SETTING_KEYS.KEY, info.activation_key);
+      }
+      if (info?.hostname) {
+        await settingsService.set("system_hostname", info.hostname);
+      }
+      if (!settings[ACTIVATION_SETTING_KEYS.CREATED_AT]) {
+        await settingsService.set(
+          ACTIVATION_SETTING_KEYS.CREATED_AT,
+          new Date().toISOString()
+        );
+      }
+      if (!settings[ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS]) {
+        await settingsService.set(
+          ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS,
+          REGISTRATION_STATUS.PENDING
+        );
+      }
+      return settingsService.getAll();
+    } catch (err) {
+      console.warn("Could not generate system activation:", err);
+      return settings;
+    }
+  }
+
+  async regenerateActivationCredentials() {
+    if (!isTauri()) {
+      throw new Error("Activation key generation is only available in the desktop app.");
+    }
+
+    const info = await invoke("generate_system_activation");
+    if (info?.device_id) {
+      await settingsService.set(ACTIVATION_SETTING_KEYS.DEVICE_ID, info.device_id);
+    }
+    if (info?.activation_key) {
+      await settingsService.set(ACTIVATION_SETTING_KEYS.KEY, info.activation_key);
+    }
+    if (info?.hostname) {
+      await settingsService.set("system_hostname", info.hostname);
+    }
+    await settingsService.set(
+      ACTIVATION_SETTING_KEYS.CREATED_AT,
+      new Date().toISOString()
+    );
+    return settingsService.getAll();
+  }
+
+  /** Remove old Drupal market connection so local store setup always starts at step 1. */
+  async clearLegacyDrupalSetup(settings = null) {
+    const all = settings || (await settingsService.getAll());
+    const hasLegacyDrupal = Boolean(
+      all[API_SETTING_KEYS.BASE_URL]?.trim() ||
+      all[ACTIVATION_SETTING_KEYS.MARKET_NAME]?.trim()
+    );
+    if (!hasLegacyDrupal) {
+      return all;
+    }
+    await settingsService.removeMany([
+      API_SETTING_KEYS.BASE_URL,
+      ACTIVATION_SETTING_KEYS.MARKET_NAME,
+      ACTIVATION_SETTING_KEYS.STATUS,
+      ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS,
+      ACTIVATION_SETTING_KEYS.EMAIL_SENT,
+      ACTIVATION_SETTING_KEYS.EMAIL_ERROR,
+      ACTIVATION_SETTING_KEYS.ACTIVATED_AT,
+      ACTIVATION_SETTING_KEYS.WELCOME_SHOWN,
+    ]);
+    return this.ensureSystemActivation(await settingsService.getAll());
+  }
+
+  async submitRegistration({ storeName, phone, address, gmail, appPassword }) {
     const customerStore = String(storeName || "").trim();
+    const customerPhone = String(phone || "").trim();
     const customerAddress = String(address || "").trim();
 
-    if (!customerName) throw new Error("Name is required.");
-    if (!customerPhone) throw new Error("Phone number is required.");
     if (!customerStore) throw new Error("Store name is required.");
+    if (!customerPhone) throw new Error("Phone number is required.");
     if (!customerAddress) throw new Error("Address is required.");
 
-    await settingsService.set(ACTIVATION_SETTING_KEYS.CUSTOMER_NAME, customerName);
-    await settingsService.set(ACTIVATION_SETTING_KEYS.CUSTOMER_PHONE, customerPhone);
-    await settingsService.set(ACTIVATION_SETTING_KEYS.CUSTOMER_STORE, customerStore);
-    await settingsService.set(ACTIVATION_SETTING_KEYS.CUSTOMER_ADDRESS, customerAddress);
+    const smtpReady = await this.resolveSmtpCredentials();
+    if (!smtpReady && gmail && appPassword) {
+      await this.saveActivationEmailSettings({ gmail, appPassword });
+    } else if (!smtpReady) {
+      throw new Error(
+        "Email is not configured. Enter your Gmail and App Password below, then submit again."
+      );
+    }
 
-    const settings = await settingsService.getAll();
+    let settings = await this.regenerateActivationCredentials();
+
+    await settingsService.set(ACTIVATION_SETTING_KEYS.CUSTOMER_STORE, customerStore);
+    await settingsService.set(ACTIVATION_SETTING_KEYS.CUSTOMER_PHONE, customerPhone);
+    await settingsService.set(ACTIVATION_SETTING_KEYS.CUSTOMER_ADDRESS, customerAddress);
+    await settingsService.set("store_name", customerStore);
+    await settingsService.set("store_address", customerAddress);
+    await settingsService.set("store_phone", customerPhone);
+    await settingsService.set(
+      ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS,
+      REGISTRATION_STATUS.PENDING
+    );
+
+    settings = await settingsService.getAll();
     const deviceId = settings[ACTIVATION_SETTING_KEYS.DEVICE_ID];
     const activationKey = settings[ACTIVATION_SETTING_KEYS.KEY];
 
     if (!deviceId || !activationKey) {
-      throw new Error("System activation is not ready. Restart the app and try again.");
+      throw new Error("Could not generate activation key. Restart the app and try again.");
     }
 
     const result = await this.sendActivationEmail({
       deviceId,
       activationKey,
       hostname: settings.system_hostname,
-      customerName,
-      customerPhone,
       storeName: customerStore,
       storeAddress: customerAddress,
+      customerPhone: customerPhone,
     });
+
+    await settingsService.set(
+      ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS,
+      result.success ? REGISTRATION_STATUS.EMAIL_SENT : REGISTRATION_STATUS.PENDING
+    );
 
     const updated = await settingsService.getAll();
     return { settings: updated, emailSent: result.success, emailError: result.error };
@@ -172,6 +308,8 @@ class ActivationService {
     customerPhone = "",
     storeName = "",
     storeAddress = "",
+    vatNumber = "",
+    crNumber = "",
   }) {
     if (!isTauri()) {
       throw new Error("Activation email is only available in the desktop app.");
@@ -181,13 +319,6 @@ class ActivationService {
       typeof hostname === "string" && hostname.trim() ? hostname.trim() : "DukkanPOS";
 
     const smtp = await this.resolveSmtpCredentials();
-    if (!smtp) {
-      const message =
-        "Activation email is not configured. Create .env.local with VITE_ACTIVATION_GMAIL and VITE_ACTIVATION_GMAIL_APP_PASSWORD (Google App Password), then restart the app.";
-      await settingsService.set(ACTIVATION_SETTING_KEYS.EMAIL_SENT, "0");
-      await settingsService.set(ACTIVATION_SETTING_KEYS.EMAIL_ERROR, message);
-      return { success: false, error: message };
-    }
 
     try {
       await invoke("send_activation_email", {
@@ -195,12 +326,14 @@ class ActivationService {
         deviceId,
         activationKey,
         hostname: hostLabel,
-        gmail: smtp.gmail,
-        appPassword: smtp.appPassword,
+        gmail: smtp?.gmail,
+        appPassword: smtp?.appPassword,
         customerName: customerName || undefined,
         customerPhone: customerPhone || undefined,
         storeName: storeName || undefined,
         storeAddress: storeAddress || undefined,
+        vatNumber: vatNumber || undefined,
+        crNumber: crNumber || undefined,
       });
       await settingsService.set(ACTIVATION_SETTING_KEYS.EMAIL_SENT, "1");
       await settingsService.set(ACTIVATION_SETTING_KEYS.EMAIL_ERROR, "");
@@ -213,7 +346,7 @@ class ActivationService {
     }
   }
 
-  async activate(enteredKey) {
+  async activateLocalKey(enteredKey) {
     const normalized = normalizeActivationKey(enteredKey);
     if (!normalized) {
       throw new Error("Activation key is required.");
@@ -229,25 +362,72 @@ class ActivationService {
       throw new Error("Invalid activation key. Check the key sent to your email.");
     }
 
+    await settingsService.set(
+      ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS,
+      REGISTRATION_STATUS.ACTIVATED
+    );
     await settingsService.set(ACTIVATION_SETTING_KEYS.STATUS, ACTIVATION_STATUS.ACTIVATED);
+    await settingsService.set(ACTIVATION_SETTING_KEYS.ACTIVATED_AT, new Date().toISOString());
 
     const storeName = (await settingsService.get(ACTIVATION_SETTING_KEYS.CUSTOMER_STORE)).trim();
     const storeAddress = (await settingsService.get(ACTIVATION_SETTING_KEYS.CUSTOMER_ADDRESS)).trim();
+    const storePhone = (await settingsService.get(ACTIVATION_SETTING_KEYS.CUSTOMER_PHONE)).trim();
     if (storeName) await settingsService.set("store_name", storeName);
     if (storeAddress) await settingsService.set("store_address", storeAddress);
+    if (storePhone) await settingsService.set("store_phone", storePhone);
 
-    return settingsService.getAll();
+    const { userService } = await import("./UserService.js");
+    await userService.ensureDefaultAdminPassword();
+
+    return {
+      settings: await settingsService.getAll(),
+    };
+  }
+
+  /** @deprecated Use activateLocalKey for installation; activateWithDrupal for market connection. */
+  async activate(enteredKey) {
+    const result = await this.activateLocalKey(enteredKey);
+    await settingsService.set(ACTIVATION_SETTING_KEYS.STATUS, ACTIVATION_STATUS.ACTIVATED);
+    return result.settings;
   }
 
   async getActivationState() {
     const settings = await settingsService.getAll();
     return {
       activated: isSystemActivated(settings),
+      registered: settings[ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS] === REGISTRATION_STATUS.ACTIVATED,
+      registrationStatus: settings[ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS] || REGISTRATION_STATUS.PENDING,
       deviceId: settings[ACTIVATION_SETTING_KEYS.DEVICE_ID] || "",
       emailSent: settings[ACTIVATION_SETTING_KEYS.EMAIL_SENT] === "1",
       emailError: settings[ACTIVATION_SETTING_KEYS.EMAIL_ERROR] || "",
       recipient: ACTIVATION_RECIPIENT_EMAIL,
     };
+  }
+
+  /** Clear setup progress and Drupal connection so onboarding starts at step 1. */
+  async resetInstallationSetup() {
+    const keys = [
+      ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS,
+      ACTIVATION_SETTING_KEYS.STATUS,
+      ACTIVATION_SETTING_KEYS.KEY,
+      ACTIVATION_SETTING_KEYS.DEVICE_ID,
+      ACTIVATION_SETTING_KEYS.EMAIL_SENT,
+      ACTIVATION_SETTING_KEYS.EMAIL_ERROR,
+      ACTIVATION_SETTING_KEYS.CREATED_AT,
+      ACTIVATION_SETTING_KEYS.CUSTOMER_NAME,
+      ACTIVATION_SETTING_KEYS.CUSTOMER_PHONE,
+      ACTIVATION_SETTING_KEYS.CUSTOMER_STORE,
+      ACTIVATION_SETTING_KEYS.CUSTOMER_ADDRESS,
+      ACTIVATION_SETTING_KEYS.CUSTOMER_VAT,
+      ACTIVATION_SETTING_KEYS.CUSTOMER_CR,
+      ACTIVATION_SETTING_KEYS.MARKET_NAME,
+      ACTIVATION_SETTING_KEYS.ACTIVATED_AT,
+      ACTIVATION_SETTING_KEYS.WELCOME_SHOWN,
+      API_SETTING_KEYS.BASE_URL,
+    ];
+
+    await settingsService.removeMany(keys);
+    return this.ensureSystemActivation(await settingsService.getAll());
   }
 }
 

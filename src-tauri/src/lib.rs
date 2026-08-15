@@ -463,10 +463,32 @@ fn gmail_auth_error_message(raw: &str) -> Option<String> {
 
 const DEFAULT_ACTIVATION_RECIPIENT: &str = "dev.adnankhan@gmail.com";
 
+fn load_dotenv_files() {
+    for path in [".env.local", "../.env.local", ".env", "../.env"] {
+        let _ = dotenvy::from_filename(path);
+    }
+}
+
+fn env_activation_var(primary: &str, fallback: &str) -> Option<String> {
+    std::env::var(primary)
+        .or_else(|_| std::env::var(fallback))
+        .ok()
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+}
+
 fn activation_smtp_credentials() -> Option<(String, String)> {
-    let gmail = option_env!("DUKKAN_ACTIVATION_GMAIL")?;
-    let password = option_env!("DUKKAN_ACTIVATION_GMAIL_APP_PASSWORD")?;
-    Some((gmail.to_string(), password.to_string()))
+    let gmail = env_activation_var("VITE_ACTIVATION_GMAIL", "DUKKAN_ACTIVATION_GMAIL").or_else(|| {
+        option_env!("DUKKAN_ACTIVATION_GMAIL").map(|value| value.to_string())
+    })?;
+    let password = env_activation_var(
+        "VITE_ACTIVATION_GMAIL_APP_PASSWORD",
+        "DUKKAN_ACTIVATION_GMAIL_APP_PASSWORD",
+    )
+    .or_else(|| {
+        option_env!("DUKKAN_ACTIVATION_GMAIL_APP_PASSWORD").map(|value| value.to_string())
+    })?;
+    Some((gmail, password))
 }
 
 fn send_plain_text_email(
@@ -651,6 +673,8 @@ fn send_activation_email(
     customer_phone: Option<String>,
     store_name: Option<String>,
     store_address: Option<String>,
+    vat_number: Option<String>,
+    cr_number: Option<String>,
 ) -> Result<(), String> {
     let to = recipient.trim();
     let to = if to.is_empty() {
@@ -668,7 +692,7 @@ fn send_activation_email(
     ) {
         (Some(from), Some(password)) => (from.to_string(), password.to_string()),
         _ => activation_smtp_credentials().ok_or(
-            "Activation email is not configured. Add VITE_ACTIVATION_GMAIL and VITE_ACTIVATION_GMAIL_APP_PASSWORD to .env.local (dev) or set DUKKAN_ACTIVATION_GMAIL and DUKKAN_ACTIVATION_GMAIL_APP_PASSWORD when building."
+            "Email is not configured. Enter your Gmail and App Password on the setup form."
                 .to_string(),
         )?,
     };
@@ -683,6 +707,8 @@ fn send_activation_email(
     let phone = customer_phone.unwrap_or_default().trim().to_string();
     let store = store_name.unwrap_or_default().trim().to_string();
     let address = store_address.unwrap_or_default().trim().to_string();
+    let vat = vat_number.unwrap_or_default().trim().to_string();
+    let cr = cr_number.unwrap_or_default().trim().to_string();
 
     let subject = if store.is_empty() {
         format!("DukkanPOS Activation Key — {host_label}")
@@ -690,18 +716,15 @@ fn send_activation_email(
         format!("DukkanPOS Activation — {store}")
     };
 
-    let mut body = String::from("New DukkanPOS registration request\n\n");
+    let mut body = String::from("New DukkanPOS store registration\n\n");
 
-    if !name.is_empty() || !phone.is_empty() || !store.is_empty() || !address.is_empty() {
-        body.push_str("Customer details:\n");
-        if !name.is_empty() {
-            body.push_str(&format!("  Name: {name}\n"));
+    if !store.is_empty() || !phone.is_empty() || !address.is_empty() {
+        body.push_str("Store information:\n");
+        if !store.is_empty() {
+            body.push_str(&format!("  Store name: {store}\n"));
         }
         if !phone.is_empty() {
             body.push_str(&format!("  Phone: {phone}\n"));
-        }
-        if !store.is_empty() {
-            body.push_str(&format!("  Store name: {store}\n"));
         }
         if !address.is_empty() {
             body.push_str(&format!("  Address: {address}\n"));
@@ -709,12 +732,25 @@ fn send_activation_email(
         body.push('\n');
     }
 
+    if !name.is_empty() || !vat.is_empty() || !cr.is_empty() {
+        body.push_str("Additional details:\n");
+        if !name.is_empty() {
+            body.push_str(&format!("  Contact: {name}\n"));
+        }
+        if !vat.is_empty() {
+            body.push_str(&format!("  VAT number: {vat}\n"));
+        }
+        if !cr.is_empty() {
+            body.push_str(&format!("  CR number: {cr}\n"));
+        }
+        body.push('\n');
+    }
+
     body.push_str(&format!(
-        "System:\n\
+        "Activation key (share with customer after approval):\n\
+         {activation_key}\n\n\
          Device: {host_label}\n\
-         Device ID: {device_id}\n\
-         Activation key: {activation_key}\n\n\
-         Share this activation key with the customer after approval.\n\n\
+         Device ID: {device_id}\n\n\
          — DukkanPOS"
     ));
 
@@ -822,6 +858,8 @@ fn save_backup_file(filename: String, content: String) -> Result<String, String>
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    load_dotenv_files();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_sql::Builder::default().build())

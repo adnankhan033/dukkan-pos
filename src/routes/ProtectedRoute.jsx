@@ -1,6 +1,7 @@
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuthStore, useSettingsStore } from "../contexts/store";
 import { isDrupalConfigured } from "../api/apiConfig";
+import { isInstallationRegistered } from "../utils/activationConfig";
 
 export default function ProtectedRoute({ children }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -9,6 +10,9 @@ export default function ProtectedRoute({ children }) {
   const location = useLocation();
 
   if (!isAuthenticated) {
+    if (isInstallationRegistered(settings)) {
+      return <Navigate to="/setup" replace />;
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

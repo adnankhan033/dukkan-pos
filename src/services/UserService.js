@@ -5,12 +5,19 @@ import { apiClient } from "../api/ApiClient";
 import { isDrupalMode, normalizeUser } from "../api/drupalMode";
 import { isDrupalConfigured, withResolvedApiUrl } from "../api/apiConfig";
 import { settingsService } from "./SettingsService";
+import {
+  DEFAULT_ADMIN_PASSWORD,
+  DEFAULT_ADMIN_USERNAME,
+} from "../utils/activationConfig";
 
 class UserService {
   async authenticate(username, password) {
-    const settings = withResolvedApiUrl(await settingsService.getAll());
+    const settings = await settingsService.getAll();
     if (isDrupalConfigured(settings)) {
-      const session = await apiClient.login(username, password, settings);
+      const session = await apiClient.login(username, password, {
+        ...settings,
+        api_base_url: resolveApiBaseUrl(settings),
+      });
       if (!session?.user) {
         return null;
       }
@@ -245,6 +252,14 @@ class UserService {
       [ROLES.ADMIN]
     );
     return Number(row?.count ?? 0);
+  }
+
+  async ensureDefaultAdminPassword() {
+    const hash = bcrypt.hashSync(DEFAULT_ADMIN_PASSWORD, 10);
+    await execute(
+      "UPDATE users SET password_hash = $1, updated_at = datetime('now') WHERE username = $2",
+      [hash, DEFAULT_ADMIN_USERNAME]
+    );
   }
 }
 

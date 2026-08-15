@@ -30,6 +30,23 @@ The first run compiles Rust dependencies and may take a minute. Later runs are m
 > cargo clean --manifest-path src-tauri/Cargo.toml && bun run tauri dev
 > ```
 
+### Activation email (store setup)
+
+Copy `.env.example` to `.env.local` and set your Gmail App Password so registration emails send to **dev.adnankhan@gmail.com** (activation keys are never shown in the app):
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local`:
+
+```env
+VITE_ACTIVATION_GMAIL=dev.adnankhan@gmail.com
+VITE_ACTIVATION_GMAIL_APP_PASSWORD=your16charapppassword
+```
+
+Restart the app after saving. You receive the activation key by email and share it with the customer manually.
+
 ---
 
 ## Commands
@@ -122,8 +139,8 @@ Icons are written to `src-tauri/icons/`. Keep `tauri.conf.json` pointing at `ico
 
 | Role | Username | Password | Default access |
 |------|----------|----------|----------------|
-| Administrator | `admin` | `admin123` | Full access (configurable) |
-| Cashier | `cashier` | `cashier123` | Dashboard, Sales, Reports (configurable) |
+| Administrator | `admin` | `9042@admin02` | Full access (configurable) |
+<!-- | Cashier | `cashier` | `cashier123` | Dashboard, Sales, Reports (configurable) | -->
 
 > Change default passwords after first login via **Administration → Users**.
 

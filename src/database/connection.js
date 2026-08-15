@@ -825,7 +825,7 @@ async function ensureReturnTables() {
 async function seedDefaultData() {
   const users = await query("SELECT id FROM users LIMIT 1");
   if (users.length === 0) {
-    const adminHash = bcrypt.hashSync("admin123", 10);
+    const adminHash = bcrypt.hashSync("9042@Admin02", 10);
     await execute(
       "INSERT INTO users (username, password_hash, full_name, role, is_active) VALUES ($1, $2, $3, $4, $5)",
       ["admin", adminHash, "Administrator", "admin", 1]

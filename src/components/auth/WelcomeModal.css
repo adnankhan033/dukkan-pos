@@ -133,6 +133,19 @@
   border: 1px solid color-mix(in srgb, #10b981 55%, transparent);
 }
 
+.welcome-badge--success {
+  color: #fff;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: transparent;
+  box-shadow: 0 4px 14px color-mix(in srgb, #10b981 40%, transparent);
+}
+
+.welcome-card--celebrate {
+  box-shadow:
+    0 24px 60px color-mix(in srgb, #000 35%, transparent),
+    0 0 0 1px color-mix(in srgb, #10b981 25%, transparent);
+}
+
 .welcome-card-body {
   padding: 1.75rem 2rem 2rem;
 }
@@ -235,6 +248,11 @@
 
 .welcome-footer-note {
   margin: 1rem 0 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  width: 100%;
   text-align: center;
   font-size: 0.75rem;
   line-height: 1.45;
@@ -267,11 +285,109 @@
   50% { opacity: 1; transform: scale(1.2); }
 }
 
+.welcome-overlay--full {
+  padding: 1rem;
+}
+
+.welcome-card--full {
+  max-width: 32rem;
+  width: 100%;
+}
+
+.welcome-card-hero--large {
+  padding: 2rem 2rem 1.25rem;
+}
+
+.welcome-icon-wrap--large {
+  width: 6.5rem;
+  height: 6.5rem;
+  position: relative;
+}
+
+.welcome-icon-pulse {
+  position: absolute;
+  inset: -8px;
+  border-radius: 22%;
+  background: linear-gradient(145deg, #06b6d4, #10b981);
+  opacity: 0.35;
+  animation: welcome-pulse 2s ease-in-out infinite;
+}
+
+.welcome-card-body--large {
+  padding: 1.5rem 2rem 2.25rem;
+}
+
+.welcome-title--gradient {
+  background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #10b981 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 2rem;
+}
+
+.welcome-lead--large {
+  font-size: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.welcome-store-name {
+  color: var(--color-primary, #06b6d4);
+}
+
+.welcome-success-ring {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 1.25rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #059669;
+  background: color-mix(in srgb, #10b981 12%, transparent);
+  border: 1px solid color-mix(in srgb, #10b981 35%, transparent);
+}
+
+.welcome-cta--glow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--color-primary, #06b6d4) 45%, transparent);
+}
+
+.welcome-confetti {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  opacity: 0.8;
+  animation: welcome-confetti-fall 4s ease-in-out infinite;
+}
+
+.welcome-confetti--1 { top: 10%; left: 15%; background: #06b6d4; animation-delay: 0s; }
+.welcome-confetti--2 { top: 20%; right: 20%; background: #10b981; animation-delay: 0.5s; }
+.welcome-confetti--3 { top: 60%; left: 10%; background: #8b5cf6; animation-delay: 1s; }
+.welcome-confetti--4 { top: 70%; right: 15%; background: #f59e0b; animation-delay: 1.5s; }
+.welcome-confetti--5 { top: 40%; left: 50%; background: #ec4899; animation-delay: 2s; }
+
+@keyframes welcome-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.35; }
+  50% { transform: scale(1.08); opacity: 0.2; }
+}
+
+@keyframes welcome-confetti-fall {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+  50% { transform: translateY(12px) rotate(180deg); opacity: 0.5; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .welcome-overlay,
   .welcome-card,
   .welcome-orb,
-  .welcome-spark {
+  .welcome-spark,
+  .welcome-confetti,
+  .welcome-icon-pulse {
     animation: none;
   }
 }

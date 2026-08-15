@@ -20,7 +20,7 @@ export function useDatabaseInit() {
 
         const { activationService } = await import("../services/ActivationService.js");
         settings = await activationService.ensureSystemActivation(settings);
-        settings = await ensureApiUrlInSettings(settings, settingsService);
+        settings = await ensureApiUrlInSettings(settings);
 
         if (mounted) {
           setSettings(settings);

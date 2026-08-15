@@ -4,6 +4,7 @@ import { activationService } from "../services/ActivationService";
 import { useSettingsStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import {
+  isInstallationRegistered,
   isSystemActivated,
   normalizeActivationKey,
 } from "../utils/activationConfig";
@@ -39,6 +40,10 @@ export default function Activate() {
   const { submitting, guard } = useSubmitGuard();
   const navigate = useNavigate();
 
+  if (!isInstallationRegistered(settings)) {
+    return <Navigate to="/setup" replace />;
+  }
+
   if (isSystemActivated(settings)) {
     return <Navigate to="/login" replace />;
   }
@@ -70,7 +75,7 @@ export default function Activate() {
   return (
     <AuthShell
       wide
-      step={1}
+      step={2}
       formTitle="Connect Your Market"
       formSubtitle="Enter the server URL and activation key from your market admin panel. After connecting, sign in with your POS user."
       footer="Need help? Ask your market admin for the key from Drupal → Dukkan POS → Market setup."

@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "reset:setup": "node scripts/reset-setup.mjs",
     "postinstall": "node scripts/patch-zatca-xml-js.mjs",
     "build:mac-dmg": "tauri build --bundles dmg && node scripts/copy-release.mjs dmg",
     "build:win-exe": "node scripts/build-win-exe.mjs",

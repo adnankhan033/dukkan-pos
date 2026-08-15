@@ -31,27 +31,15 @@ export function resolveApiBaseUrl(settings) {
 }
 
 export function isDrupalConfigured(settings) {
-  return Boolean(resolveApiBaseUrl(settings));
+  return Boolean(normalizeApiBaseUrl(settings?.[API_SETTING_KEYS.BASE_URL]));
 }
 
-/** Merge resolved API URL into settings object for API calls. */
+/** Merge persisted API URL into settings object for API calls (no env fallback). */
 export function withResolvedApiUrl(settings = {}) {
-  const api_base_url = resolveApiBaseUrl(settings);
-  if (!api_base_url || api_base_url === normalizeApiBaseUrl(settings.api_base_url)) {
-    return settings;
-  }
-  return { ...settings, api_base_url };
+  return settings;
 }
 
-/** Persist env/default URL into SQLite when missing (dev convenience). */
-export async function ensureApiUrlInSettings(settings, settingsService) {
-  const resolved = resolveApiBaseUrl(settings);
-  if (!resolved) return settings;
-
-  if (normalizeApiBaseUrl(settings?.api_base_url) === resolved) {
-    return settings;
-  }
-
-  await settingsService.set(API_SETTING_KEYS.BASE_URL, resolved);
-  return settingsService.getAll();
+/** Do not auto-connect Drupal from env — URL is set only in Settings when needed. */
+export async function ensureApiUrlInSettings(settings) {
+  return settings;
 }
