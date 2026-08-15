@@ -23,6 +23,7 @@ function formToPreviewSettings(form) {
     currency: form.currency,
     receipt_footer: form.receipt_footer,
     receipt_footer_ar: form.receipt_footer_ar,
+    receipt_branding: form.receipt_branding,
     receipt_show_qr: form.receipt_show_qr ? "1" : "0",
     receipt_show_bilingual: form.receipt_show_bilingual ? "1" : "0",
     receipt_show_tax_info: form.receipt_show_tax_info ? "1" : "0",

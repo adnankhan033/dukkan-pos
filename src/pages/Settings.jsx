@@ -62,6 +62,7 @@ function buildFormFromSettings(settings) {
     currency: settings.currency || "SAR",
     receipt_footer: settings.receipt_footer || "",
     receipt_footer_ar: settings.receipt_footer_ar || "",
+    receipt_branding: settings.receipt_branding || "DukkanPOS",
     receipt_show_qr: settingBool(settings.receipt_show_qr),
     receipt_show_bilingual: settingBool(settings.receipt_show_bilingual),
     receipt_show_tax_info: settingBool(settings.receipt_show_tax_info),
@@ -124,6 +125,7 @@ function formToSettings(form) {
     currency: form.currency,
     receipt_footer: form.receipt_footer,
     receipt_footer_ar: form.receipt_footer_ar,
+    receipt_branding: form.receipt_branding,
     receipt_show_qr: form.receipt_show_qr ? "1" : "0",
     receipt_show_bilingual: form.receipt_show_bilingual ? "1" : "0",
     receipt_show_tax_info: form.receipt_show_tax_info ? "1" : "0",
@@ -711,6 +713,14 @@ export default function Settings() {
               </div>
               <div style={{ marginTop: "1rem" }}>
                 <Textarea label="Footer (Arabic)" value={form.receipt_footer_ar} onChange={(e) => updateField("receipt_footer_ar", e.target.value)} dir="rtl" />
+              </div>
+              <div style={{ marginTop: "1rem" }}>
+                <Input
+                  label="Powered by (receipt branding)"
+                  value={form.receipt_branding}
+                  onChange={(e) => updateField("receipt_branding", e.target.value)}
+                  placeholder="DukkanPOS"
+                />
               </div>
               <p className="settings-section-desc" style={{ marginTop: "1rem" }}>
                 Store name, address, CR, and VAT are taken from the <strong>Store</strong> tab.

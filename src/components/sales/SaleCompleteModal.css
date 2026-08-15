@@ -22,6 +22,10 @@
   box-shadow: var(--shadow-lg);
 }
 
+.sale-complete-modal--with-preview {
+  max-width: 440px;
+}
+
 .sale-complete-header {
   padding: 1rem 1.25rem;
   border-bottom: 1px solid var(--color-border);
@@ -139,6 +143,34 @@
 .sale-complete-success p {
   font-size: 0.875rem;
   color: var(--color-text-muted);
+}
+
+.sale-complete-success--compact {
+  padding: 0 0 0.75rem;
+}
+
+.sale-complete-success--compact .sale-complete-success-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0.5rem;
+}
+
+.sale-complete-success--compact h4 {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.sale-complete-body--print {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.sale-complete-print-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  text-align: center;
+  margin: 0;
 }
 
 .sale-complete-footer {

@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import Badge from "../common/Badge";
+import ReceiptPreviewFrame from "../receipt/ReceiptPreviewFrame";
 import ZatcaOrderStatusBadge from "../zatca/ZatcaOrderStatusBadge";
 import ZatcaInvoiceXmlActions from "../zatca/ZatcaInvoiceXmlActions";
 import ZatcaSyncedQrDisplay from "../zatca/ZatcaSyncedQrDisplay";
@@ -28,6 +29,7 @@ export default function OrderDetailModal({
   showZatca = false,
   currency,
   vatPercent,
+  settings,
   onClose,
   onPrint,
   onReturn,
@@ -101,6 +103,20 @@ export default function OrderDetailModal({
               </div>
             </section>
           </div>
+
+          {sale.status !== SALE_STATUS.HELD && (
+            <section className="order-detail-section order-detail-receipt-preview">
+              <h4>Receipt Preview</h4>
+              <ReceiptPreviewFrame
+                sale={sale}
+                items={lineItems}
+                settings={settings}
+                currency={currency}
+                label=""
+                compact
+              />
+            </section>
+          )}
 
           {showZatca && (
             <section className="order-detail-section" style={{ marginTop: "1rem" }}>

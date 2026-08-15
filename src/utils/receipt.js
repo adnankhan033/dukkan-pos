@@ -33,6 +33,37 @@ function formatPaymentMethod(method, bilingual) {
   return `${labels.en} / ${labels.ar}`;
 }
 
+/** Thermal receipt amount — matches Saudi POS style (﷼ before value). */
+function formatReceiptAmount(amount, currency = "SAR") {
+  const value = (Number(amount) || 0).toFixed(2);
+  if (currency === "SAR") {
+    return `<span class="money"><span class="riyal" aria-hidden="true">&#65020;</span>${value}</span>`;
+  }
+  return `<span class="money">${escapeHtml(value)} ${escapeHtml(currency)}</span>`;
+}
+
+function buildMetaRow(enLabel, arLabel, value, showBilingual) {
+  return `
+    <div class="meta-row">
+      <div class="meta-labels">
+        <div>${escapeHtml(enLabel)}</div>
+        ${showBilingual ? `<div class="ar">${escapeHtml(arLabel)}</div>` : ""}
+      </div>
+      <div class="meta-val">${value}</div>
+    </div>`;
+}
+
+function buildBilingualTotalRow(enLabel, arLabel, amountHtml, showBilingual, extraClass = "") {
+  return `
+    <div class="total-row ${extraClass}">
+      <div class="total-labels">
+        <span>${escapeHtml(enLabel)}</span>
+        ${showBilingual ? `<span class="ar">${escapeHtml(arLabel)}</span>` : ""}
+      </div>
+      <div class="total-val">${amountHtml}</div>
+    </div>`;
+}
+
 /** Receipt-friendly timestamp: 2026-08-14, 07:04:02 PM */
 function formatReceiptDateTime(dateStr, settings) {
   if (!dateStr) return "-";
@@ -97,13 +128,13 @@ function formatItemName(item, showBilingual, compact = false) {
 function buildZatcaItemRows(items, sale, currency, vatPercent, showBilingual, compact = false) {
   return (items || [])
     .map((item) => {
-      const { unitExcl, totalIncl } = calcLineAmounts(item, sale, vatPercent);
+      const { taxableExcl, totalIncl } = calcLineAmounts(item, sale, vatPercent);
       return `
       <tr>
         ${formatItemName(item, showBilingual, compact)}
-        <td class="num">${formatCurrency(unitExcl, currency)}</td>
-        <td class="num">${item.quantity}</td>
-        <td class="num">${formatCurrency(totalIncl, currency)}</td>
+        <td class="num">${formatReceiptAmount(taxableExcl, currency)}</td>
+        <td class="num qty">${item.quantity}</td>
+        <td class="num">${formatReceiptAmount(totalIncl, currency)}</td>
       </tr>`;
     })
     .join("");
@@ -123,7 +154,7 @@ function buildClassicItemRows(items, currency, showBilingual) {
     .join("");
 }
 
-function buildSaudiTotalsBlock(sale, currency, vatPercent, showChange = true) {
+function buildSaudiTotalsBlock(sale, currency, vatPercent, showBilingual, showChange = true) {
   const taxable = calcTaxableTotal(sale);
   const vat = Number(sale.vat) || 0;
   const total = Number(sale.total) || 0;
@@ -131,24 +162,60 @@ function buildSaudiTotalsBlock(sale, currency, vatPercent, showChange = true) {
 
   const discountRow =
     discount > 0
-      ? `<div class="row"><span>Discount / الخصم</span><span>${formatCurrency(discount, currency)}</span></div>`
+      ? buildBilingualTotalRow(
+          "Discount",
+          "الخصم",
+          formatReceiptAmount(discount, currency),
+          showBilingual
+        )
       : "";
 
   const changeBlock =
     showChange && sale.amount_received != null
-      ? `<div class="row"><span>Received / المستلم</span><span>${formatCurrency(sale.amount_received, currency)}</span></div>
+      ? `${buildBilingualTotalRow(
+          "Received",
+          "المستلم",
+          formatReceiptAmount(sale.amount_received, currency),
+          showBilingual
+        )}
          ${
            sale.balance_due > 0
-             ? `<div class="row"><span>Balance Due / المتبقي</span><span>${formatCurrency(sale.balance_due, currency)}</span></div>`
-             : `<div class="row"><span>Change / الباقي</span><span>${formatCurrency(sale.change_due || 0, currency)}</span></div>`
+             ? buildBilingualTotalRow(
+                 "Balance Due",
+                 "المتبقي",
+                 formatReceiptAmount(sale.balance_due, currency),
+                 showBilingual
+               )
+             : buildBilingualTotalRow(
+                 "Change",
+                 "الباقي",
+                 formatReceiptAmount(sale.change_due || 0, currency),
+                 showBilingual
+               )
          }`
       : "";
 
   return `
     ${discountRow}
-    <div class="row"><span>Total Taxable (Excl. VAT) / المبلغ الخاضع</span><span>${formatCurrency(taxable, currency)}</span></div>
-    <div class="row"><span>VAT Added (${vatPercent}%) / ض.ق.م</span><span>${formatCurrency(vat, currency)}</span></div>
-    <div class="row grand"><span>Total (Incl. VAT) / الإجمالي</span><span>${formatCurrency(total, currency)}</span></div>
+    ${buildBilingualTotalRow(
+      "Total Taxable Amount",
+      "الإجمالي الخاضع للضريبة",
+      formatReceiptAmount(taxable, currency),
+      showBilingual
+    )}
+    ${buildBilingualTotalRow(
+      "VAT Added",
+      "تمت إضافة ضريبة القيمة المضافة",
+      formatReceiptAmount(vat, currency),
+      showBilingual
+    )}
+    ${buildBilingualTotalRow(
+      "Total Amount",
+      "المبلغ الإجمالي",
+      formatReceiptAmount(total, currency),
+      showBilingual,
+      "total-row--grand"
+    )}
     ${changeBlock}`;
 }
 
@@ -259,83 +326,92 @@ async function buildBaqalaReceipt(ctx) {
     showTaxInfo,
     paperWidth,
     headerNote,
+    branding,
     qrHtml,
   } = ctx;
 
   const rows = buildZatcaItemRows(items, sale, currency, vatPercent, showBilingual);
   const customerName = sale.customer_name?.trim() || "NA";
-  const paymentLabel = formatPaymentMethod(sale.payment_method, showBilingual);
+  const paymentLabel = formatPaymentMethod(sale.payment_method, false);
   const receiptDate = formatReceiptDateTime(sale.created_at || new Date().toISOString(), settings);
+  const invoiceNumber = sale.sale_number ? `#${sale.sale_number}` : "";
 
   const css = `
-    body { font-family: "Segoe UI", Tahoma, Arial, sans-serif; font-size: 11px; margin: 0; padding: 8px; color: #111; background: #fff; }
-    .receipt { max-width: 100%; }
-    .head { text-align: center; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px dashed #333; }
-    .store-en { font-size: 14px; font-weight: 700; margin: 0; line-height: 1.2; }
-    .store-ar { font-size: 15px; font-weight: 700; margin: 3px 0 0; direction: rtl; line-height: 1.3; }
-    .head-meta { font-size: 10px; color: #222; margin-top: 4px; line-height: 1.5; }
-    .head-meta div { margin: 1px 0; }
-    .divider { border: none; border-top: 1px dashed #333; margin: 8px 0; }
-    .invoice-title { text-align: center; margin: 6px 0; }
+    * { box-sizing: border-box; }
+    body { font-family: Arial, "Segoe UI", Tahoma, sans-serif; font-size: 10px; margin: 0; padding: 6px 4px; color: #000; background: #fff; line-height: 1.35; }
+    .receipt { width: 100%; }
+    .head { text-align: center; padding-bottom: 8px; margin-bottom: 6px; border-bottom: 1px dashed #000; }
+    .store-en { font-size: 13px; font-weight: 700; margin: 0 0 2px; }
+    .store-ar { font-size: 14px; font-weight: 700; margin: 0 0 4px; direction: rtl; }
+    .head-line { font-size: 10px; margin: 2px 0; }
+    .divider { border: none; border-top: 1px dashed #000; margin: 8px 0; }
+    .meta-grid { font-size: 10px; margin: 6px 0; }
+    .meta-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin: 5px 0; }
+    .meta-labels { flex: 1; line-height: 1.25; }
+    .meta-labels .ar { direction: rtl; font-size: 9px; color: #222; margin-top: 1px; }
+    .meta-val { font-weight: 700; text-align: right; white-space: nowrap; font-size: 10px; }
+    .invoice-title { text-align: center; margin: 4px 0; line-height: 1.3; }
     .invoice-title .en { font-size: 11px; font-weight: 700; }
-    .invoice-title .ar { font-size: 12px; font-weight: 700; direction: rtl; margin-top: 2px; }
-    .meta { font-size: 10px; margin: 6px 0; }
-    .meta div { display: flex; justify-content: space-between; gap: 6px; margin: 3px 0; }
-    .meta .label { color: #333; }
-    .meta .value { font-weight: 600; text-align: right; }
-    .note { font-size: 9px; text-align: center; color: #444; margin: 4px 0; }
-    table { width: 100%; border-collapse: collapse; margin: 6px 0; font-size: 9px; }
-    th { border-bottom: 1px solid #111; padding: 4px 2px; text-align: left; font-size: 8px; font-weight: 600; vertical-align: bottom; }
-    th .ar { display: block; direction: rtl; font-size: 8px; font-weight: 600; color: #333; }
-    th.num, td.num { text-align: right; white-space: nowrap; }
-    td { padding: 4px 2px; border-bottom: 1px dotted #bbb; vertical-align: top; }
-    td.desc { max-width: 40%; word-break: break-word; }
-    .item-ar { font-size: 8px; color: #444; margin-top: 1px; }
-    .totals { border-top: 1px solid #111; padding-top: 6px; margin-top: 4px; }
-    .row { display: flex; justify-content: space-between; gap: 4px; margin: 3px 0; font-size: 10px; }
-    .row span:first-child { flex: 1; }
-    .row span:last-child { white-space: nowrap; font-weight: 500; }
-    .grand { font-weight: 700; font-size: 12px; border-top: 1px dashed #111; padding-top: 6px; margin-top: 6px; }
-    .payment { font-size: 10px; margin: 8px 0 4px; display: flex; justify-content: space-between; }
-    .qr-section { text-align: center; margin: 10px 0 4px; }
-    .qr-status { font-size: 7px; color: #666; margin: 4px 0 0; }
-    .footer { text-align: center; margin-top: 8px; font-size: 10px; }
-    .footer-ar { direction: rtl; margin-top: 3px; }
-    .brand { text-align: center; font-size: 8px; color: #888; margin-top: 6px; }
+    .invoice-title .ar { font-size: 11px; font-weight: 700; direction: rtl; margin-top: 2px; }
+    .note { font-size: 9px; text-align: center; color: #333; margin: 4px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 6px 0 4px; table-layout: fixed; }
+    th { font-size: 8px; font-weight: 700; padding: 3px 2px 4px; border-bottom: 1px solid #000; vertical-align: bottom; line-height: 1.15; }
+    th.desc { width: 42%; text-align: left; }
+    th.num { width: 19%; text-align: right; }
+    th .ar { display: block; direction: rtl; font-size: 8px; font-weight: 600; margin-top: 1px; }
+    td { padding: 4px 2px; font-size: 9px; vertical-align: top; border-bottom: 1px dotted #ccc; }
+    td.desc { word-break: break-word; padding-right: 4px; }
+    td.num { text-align: right; white-space: nowrap; }
+    td.qty { text-align: center; }
+    .item-ar { font-size: 8px; color: #333; margin-top: 2px; direction: rtl; }
+    .money { white-space: nowrap; }
+    .riyal { font-family: Arial, sans-serif; margin-right: 1px; font-size: 9px; }
+    .totals { margin-top: 4px; padding-top: 4px; border-top: 1px solid #000; }
+    .total-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; margin: 4px 0; font-size: 9px; }
+    .total-labels { flex: 1; line-height: 1.25; }
+    .total-labels .ar { display: block; direction: rtl; font-size: 8px; margin-top: 1px; }
+    .total-val { font-weight: 600; text-align: right; white-space: nowrap; }
+    .total-row--grand .total-labels,
+    .total-row--grand .total-val { font-weight: 700; font-size: 10px; }
+    .payment-row { display: flex; justify-content: space-between; align-items: center; margin: 8px 0 6px; font-size: 10px; font-weight: 700; padding-top: 4px; border-top: 1px dashed #000; }
+    .qr-section { text-align: center; margin: 8px 0 4px; }
+    .qr-section img { width: 150px; height: 150px; }
+    .footer { text-align: center; margin-top: 10px; font-size: 11px; font-weight: 600; }
+    .footer-ar { direction: rtl; margin-top: 3px; font-size: 10px; font-weight: 500; }
+    .brand { text-align: center; font-size: 9px; color: #444; margin-top: 6px; }
   `;
 
   const vatLine =
     showTaxInfo && vatRegistration
-      ? `<div>VAT No. / الرقم الضريبي: <strong>${escapeHtml(vatRegistration)}</strong></div>`
+      ? `<div class="head-line">VAT No.${escapeHtml(vatRegistration)}</div>`
       : "";
-  const phoneLine = storePhone
-    ? `<div>PH No. / الهاتف: ${escapeHtml(storePhone)}</div>`
-    : "";
-  const addressLine = address ? `<div>${escapeHtml(address)}</div>` : "";
+  const phoneLine = storePhone ? `<div class="head-line">PH No. ${escapeHtml(storePhone)}</div>` : "";
+  const addressLine = address ? `<div class="head-line">${escapeHtml(address)}</div>` : "";
+
+  const metaBlock = `
+    <div class="meta-grid">
+      ${buildMetaRow("Invoice No.", "فاتورة", escapeHtml(invoiceNumber), showBilingual)}
+      ${buildMetaRow("Date & time", "التاريخ والوقت", escapeHtml(receiptDate), showBilingual)}
+      ${buildMetaRow("Customer", "العميل", escapeHtml(customerName), showBilingual)}
+    </div>`;
 
   const body = `
     <div class="receipt">
       <div class="head">
         <p class="store-en">${escapeHtml(storeName)}</p>
         ${storeNameAr && showBilingual ? `<p class="store-ar">${escapeHtml(storeNameAr)}</p>` : ""}
-        <div class="head-meta">
-          ${vatLine}
-          ${phoneLine}
-          ${addressLine}
-        </div>
+        ${vatLine}
+        ${phoneLine}
+        ${addressLine}
       </div>
 
-      <div class="meta">
-        <div><span class="label">Invoice No. / فاتورة</span><span class="value">#${escapeHtml(sale.sale_number || "")}</span></div>
-        <div><span class="label">Date &amp; Time / التاريخ</span><span class="value">${receiptDate}</span></div>
-        <div><span class="label">Customer / العميل</span><span class="value">${escapeHtml(customerName)}</span></div>
-      </div>
+      ${metaBlock}
 
       <hr class="divider" />
 
       <div class="invoice-title">
         <div class="en">Simplified Tax Invoice</div>
-        <div class="ar">فاتورة ضريبية مبسطة</div>
+        ${showBilingual ? `<div class="ar">فاتورة ضريبية مبسطة</div>` : ""}
       </div>
 
       <hr class="divider" />
@@ -345,27 +421,27 @@ async function buildBaqalaReceipt(ctx) {
       <table>
         <thead>
           <tr>
-            <th>Description<span class="ar">الوصف</span></th>
-            <th class="num">Unit Price<span class="ar">سعر الوحدة</span></th>
-            <th class="num">Qty<span class="ar">الكمية</span></th>
-            <th class="num">Total<span class="ar">إجمالي</span></th>
+            <th class="desc">Description${showBilingual ? `<span class="ar">الوصف</span>` : ""}</th>
+            <th class="num">Unit Price${showBilingual ? `<span class="ar">سعر الوحدة</span>` : ""}</th>
+            <th class="num">Qty${showBilingual ? `<span class="ar">الكمية</span>` : ""}</th>
+            <th class="num">Total${showBilingual ? `<span class="ar">إجمالي</span>` : ""}</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
 
-      <div class="totals">${buildSaudiTotalsBlock(sale, currency, vatPercent)}</div>
+      <div class="totals">${buildSaudiTotalsBlock(sale, currency, vatPercent, showBilingual)}</div>
 
-      <div class="payment">
-        <span>Payment / الدفع</span>
-        <strong>${escapeHtml(paymentLabel)}: ${formatCurrency(sale.total, currency)}</strong>
+      <div class="payment-row">
+        <span>${escapeHtml(paymentLabel)}</span>
+        <span>${formatReceiptAmount(sale.total, currency)}</span>
       </div>
 
       ${qrHtml}
 
       <p class="footer">${escapeHtml(footer)}</p>
       ${footerAr && showBilingual ? `<p class="footer footer-ar">${escapeHtml(footerAr)}</p>` : ""}
-      <p class="brand">Powered by DukkanPOS</p>
+      ${branding ? `<p class="brand">Powered by ${escapeHtml(branding)}</p>` : ""}
     </div>`;
 
   return wrapDocument({
@@ -522,8 +598,9 @@ export async function buildReceiptHtml({ sale, items, settings, currency }) {
   const storeNameAr = settings.store_name_ar || "";
   const address = settings.store_address || "";
   const storePhone = settings.store_phone || "";
-  const footer = settings.receipt_footer || "Thank you!";
+  const footer = settings.receipt_footer || "Thank You";
   const footerAr = settings.receipt_footer_ar || "";
+  const branding = settings.receipt_branding || "DukkanPOS";
   const vatPercent = Number(settings.vat_percent) || 0;
   const crNumber = settings.cr_number || "";
   const vatRegistration = settings.vat_registration || "";
@@ -554,6 +631,7 @@ export async function buildReceiptHtml({ sale, items, settings, currency }) {
     showTaxInfo,
     paperWidth,
     headerNote,
+    branding,
     qrHtml,
   };
 
