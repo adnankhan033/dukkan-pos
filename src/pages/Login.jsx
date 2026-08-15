@@ -11,12 +11,12 @@ import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
 import AuthShell from "../components/auth/AuthShell";
-import { ACTIVATION_SETTING_KEYS, DEFAULT_ADMIN_PASSWORD, DEFAULT_ADMIN_USERNAME } from "../utils/activationConfig";
+import { ACTIVATION_SETTING_KEYS } from "../utils/activationConfig";
 import "./Setup.css";
 
 export default function Login() {
-  const [username, setUsername] = useState(DEFAULT_ADMIN_USERNAME);
-  const [password, setPassword] = useState(DEFAULT_ADMIN_PASSWORD);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [syncNote, setSyncNote] = useState("");
   const { submitting, guard } = useSubmitGuard();
@@ -104,8 +104,8 @@ export default function Login() {
       }
       footer={
         drupalBackend
-          ? `Drupal POS · ${settings.terminal_code || "REG1"} · Super admin: ${DEFAULT_ADMIN_USERNAME} / ${DEFAULT_ADMIN_PASSWORD}`
-          : `Local mode · Super admin: ${DEFAULT_ADMIN_USERNAME} / ${DEFAULT_ADMIN_PASSWORD} · Cashier: cashier / cashier123`
+          ? `Drupal POS · Terminal ${settings.terminal_code || "REG1"}`
+          : "DukkanPOS · Secure store sign-in"
       }
     >
       {notice && <Alert type="warning">{notice}</Alert>}

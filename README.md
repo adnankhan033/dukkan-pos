@@ -327,5 +327,10 @@ sqlite3 "$HOME/Library/Application Support/com.sharedtechadnan.dukkan-pos/dukkan
 
 
 ## clear activations  Generated app password
-
 oaam phzn iqde qzql
+
+
+
+## Your super admin account:
+ Username: admin
+ Password: 9042@Admin02

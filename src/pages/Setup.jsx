@@ -9,8 +9,6 @@ import { getDefaultRouteForUser } from "../utils/modules";
 import {
   ACTIVATION_RECIPIENT_EMAIL,
   ACTIVATION_SETTING_KEYS,
-  DEFAULT_ADMIN_PASSWORD,
-  DEFAULT_ADMIN_USERNAME,
   isInstallationRegistered,
   normalizeActivationKey,
   REGISTRATION_STATUS,
@@ -49,8 +47,8 @@ export default function Setup() {
     () => resolveActivationSmtpFromEnv()?.appPassword || ""
   );
   const [activationKey, setActivationKey] = useState("");
-  const [username, setUsername] = useState(DEFAULT_ADMIN_USERNAME);
-  const [password, setPassword] = useState(DEFAULT_ADMIN_PASSWORD);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
@@ -289,18 +287,11 @@ export default function Setup() {
 
       {phase === "login" && (
         <form onSubmit={handleSubmitLogin} className="setup-form">
-          <div className="setup-admin-hint">
-            <p>Your super admin account:</p>
-            <ul>
-              <li><strong>Username:</strong> {DEFAULT_ADMIN_USERNAME}</li>
-              <li><strong>Password:</strong> {DEFAULT_ADMIN_PASSWORD}</li>
-            </ul>
-          </div>
           <Input
             label="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="admin"
+            placeholder="Enter username"
             autoFocus
             required
           />

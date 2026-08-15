@@ -16,7 +16,8 @@ import { Input, Textarea, Select } from "../components/common/Input";
 import { Alert } from "../components/common/Loading";
 import ReceiptPreview from "../components/settings/ReceiptPreview";
 import ZatcaSettingsPanel from "../components/settings/ZatcaSettingsPanel";
-import PermissionsPanel from "../components/settings/PermissionsPanel";
+import VendorBrandingPanel from "../components/settings/VendorBrandingPanel";
+import { VENDOR_SETTING_KEY_LIST } from "../config/softwareVendor";
 import { DEFAULT_RECEIPT_TEMPLATE } from "../utils/receiptTemplates";
 import { DEFAULT_BUSINESS_TIMEZONE, BUSINESS_TIMEZONES } from "../utils/timezones";
 import { getBusinessDateTimeLabelFromForm } from "../utils/businessDate";
@@ -41,6 +42,7 @@ const TABS = [
   { id: "receipt", label: "Receipt" },
   { id: "zatca", label: "ZATCA" },
   { id: "dashboard", label: "Dashboard" },
+  { id: "vendor", label: "Vendor", adminOnly: true },
   { id: "backup", label: "Backup" },
 ];
 
@@ -85,6 +87,10 @@ function buildFormFromSettings(settings) {
     form[key] = settingBool(settings[key]);
   }
 
+  for (const key of VENDOR_SETTING_KEY_LIST) {
+    form[key] = settings[key] ?? "";
+  }
+
   return form;
 }
 
@@ -126,6 +132,12 @@ function formToSettings(form) {
   for (const key of getAllPermissionSettingKeys()) {
     if (form[key] !== undefined) {
       payload[key] = form[key] ? "1" : "0";
+    }
+  }
+
+  for (const key of VENDOR_SETTING_KEY_LIST) {
+    if (form[key] !== undefined) {
+      payload[key] = String(form[key] ?? "");
     }
   }
 
@@ -248,9 +260,16 @@ export default function Settings() {
       const savedLabel =
         tab === "permissions"
           ? "Role and menu permissions were saved."
-          : "Your store configuration was saved.";
+          : tab === "vendor"
+            ? "Software vendor branding was saved."
+            : "Your store configuration was saved.";
       notify.success(savedLabel, {
-        title: tab === "permissions" ? "Permissions saved" : "Settings saved",
+        title:
+          tab === "permissions"
+            ? "Permissions saved"
+            : tab === "vendor"
+              ? "Vendor branding saved"
+              : "Settings saved",
       });
 
       if (backendChanged && isDrupalConfigured(updated)) {
@@ -819,6 +838,19 @@ export default function Settings() {
                 Show recent sales list
               </label>
             </div>
+          </Card>
+        )}
+
+        {tab === "vendor" && isAdmin && (
+          <Card className="settings-card">
+            <h3 className="settings-section-title">Software Vendor Branding</h3>
+            <VendorBrandingPanel
+              form={form}
+              onChange={(next) => {
+                formDirtyRef.current = true;
+                setForm(next);
+              }}
+            />
           </Card>
         )}
 

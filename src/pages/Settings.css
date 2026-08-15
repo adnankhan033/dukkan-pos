@@ -908,3 +908,38 @@
   font-size: 0.9375rem;
   font-weight: 600;
 }
+
+.vendor-settings-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+  cursor: pointer;
+}
+
+.vendor-settings-toggle input {
+  margin-top: 0.2rem;
+  accent-color: var(--color-primary);
+}
+
+.vendor-settings-toggle-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.vendor-settings-toggle-body strong {
+  font-size: 0.875rem;
+}
+
+.vendor-settings-toggle-body small {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.vendor-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem 1rem;
+  margin: 1rem 0;
+}
