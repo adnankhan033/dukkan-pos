@@ -8,6 +8,10 @@
 .dashboard-insights-card,
 .dashboard-top-products-card {
   margin-bottom: 0;
+  background: color-mix(in srgb, var(--color-card) 88%, transparent) !important;
+  backdrop-filter: blur(14px);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 10%, var(--color-border)) !important;
+  box-shadow: 0 4px 24px color-mix(in srgb, var(--color-primary) 6%, transparent);
 }
 
 .dashboard-insights-head {
@@ -64,6 +68,12 @@
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   background: var(--color-surface);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.dashboard-insight:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 25%, var(--color-border));
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--color-primary) 8%, transparent);
 }
 
 .dashboard-insight-icon {
@@ -165,6 +175,29 @@
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--color-primary);
+}
+
+.dashboard-top-product-item.rank-1 .dashboard-top-product-rank {
+  background: linear-gradient(135deg, #fcd34d, #f59e0b);
+  color: #78350f;
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4);
+}
+
+.dashboard-top-product-item.rank-2 .dashboard-top-product-rank {
+  background: linear-gradient(135deg, #e2e8f0, #94a3b8);
+  color: #334155;
+}
+
+.dashboard-top-product-item.rank-3 .dashboard-top-product-rank {
+  background: linear-gradient(135deg, #fdba74, #ea580c);
+  color: #7c2d12;
+}
+
+.dashboard-top-product-item.rank-1 {
+  background: linear-gradient(90deg, color-mix(in srgb, #f59e0b 6%, transparent), transparent);
+  border-radius: var(--radius-md);
+  padding-inline: 0.5rem;
+  margin-inline: -0.5rem;
 }
 
 .dashboard-top-product-info {

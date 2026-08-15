@@ -49,7 +49,7 @@ export default function ZatcaSyncWidget() {
   }
 
   return (
-    <Card className="zatca-sync-widget">
+    <Card className="zatca-sync-widget dashboard-glass">
       <div className="card-header">
         <h3 className="card-title">Today&apos;s ZATCA Sync</h3>
         <CloudUpload size={18} />
