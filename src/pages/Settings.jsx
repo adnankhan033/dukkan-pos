@@ -55,6 +55,7 @@ function buildFormFromSettings(settings) {
     store_name: settings.store_name || "",
     store_name_ar: settings.store_name_ar || "",
     store_address: settings.store_address || "",
+    store_phone: settings.store_phone || "",
     cr_number: settings.cr_number || "",
     vat_registration: settings.vat_registration || "",
     vat_percent: settings.vat_percent || "15",
@@ -116,6 +117,7 @@ function formToSettings(form) {
     store_name: form.store_name,
     store_name_ar: form.store_name_ar,
     store_address: form.store_address,
+    store_phone: form.store_phone,
     cr_number: form.cr_number,
     vat_registration: form.vat_registration,
     vat_percent: form.vat_percent,
@@ -588,6 +590,14 @@ export default function Settings() {
               </div>
               <div style={{ marginTop: "1rem" }}>
                 <Textarea label="Store Address" value={form.store_address} onChange={(e) => updateField("store_address", e.target.value)} />
+              </div>
+              <div style={{ marginTop: "1rem" }}>
+                <Input
+                  label="Store Phone"
+                  value={form.store_phone}
+                  onChange={(e) => updateField("store_phone", e.target.value)}
+                  placeholder="e.g. +966-530096993"
+                />
               </div>
               <div className="form-row" style={{ marginTop: "1rem" }}>
                 <Input label="VAT %" type="number" step="0.01" value={form.vat_percent} onChange={(e) => updateField("vat_percent", e.target.value)} />

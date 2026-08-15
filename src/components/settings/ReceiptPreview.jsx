@@ -16,6 +16,7 @@ function formToPreviewSettings(form) {
     store_name: form.store_name,
     store_name_ar: form.store_name_ar,
     store_address: form.store_address,
+    store_phone: form.store_phone,
     cr_number: form.cr_number,
     vat_registration: form.vat_registration,
     vat_percent: form.vat_percent,

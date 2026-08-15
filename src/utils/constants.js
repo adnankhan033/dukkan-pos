@@ -7,6 +7,7 @@ export const DEFAULT_SETTINGS = {
   store_name: "DukkanPOS",
   store_name_ar: "",
   store_address: "",
+  store_phone: "",
   cr_number: "",
   vat_registration: "",
   vat_percent: "15",
