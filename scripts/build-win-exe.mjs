@@ -86,6 +86,7 @@ function ensureCrossCompileReady() {
 
 async function main() {
   if (isWindows) {
+    run("node", ["scripts/build-zatca-signer.mjs", "--win"]);
     run("bun", ["run", "tauri", "build", "--bundles", "nsis"]);
     const dest = await copyRelease("nsis");
     console.log(`Release ready: ${dest}`);
@@ -93,6 +94,8 @@ async function main() {
   }
 
   ensureCrossCompileReady();
+
+  run("node", ["scripts/build-zatca-signer.mjs", "--win"]);
 
   run("bun", [
     "run",

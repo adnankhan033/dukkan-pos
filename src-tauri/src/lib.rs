@@ -11,6 +11,10 @@ use lettre::message::{Attachment, Message, MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::Transport;
 use serde::{Deserialize, Serialize};
+use tauri::Manager;
+
+mod zatca_csr;
+use zatca_csr::{generate_zatca_csr_native, ZatcaCsrFields};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ZatcaHttpResponse {
@@ -150,7 +154,15 @@ fn resolve_openssl_bin() -> Result<String, String> {
 }
 
 #[tauri::command]
-fn generate_zatca_csr(private_key_pem: String, csr_config: String) -> Result<String, String> {
+fn generate_zatca_csr(
+    private_key_pem: String,
+    csr_config: String,
+    csr_fields: Option<ZatcaCsrFields>,
+) -> Result<String, String> {
+    if let Some(fields) = csr_fields {
+        return generate_zatca_csr_native(private_key_pem.trim(), &fields);
+    }
+
     let openssl_bin = resolve_openssl_bin()?;
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -462,32 +474,133 @@ fn validate_zatca_certificate(
     })
 }
 
+fn runner_version_ok(bin: &str) -> bool {
+    Command::new(bin)
+        .arg("--version")
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
+fn node_runner_candidates() -> Vec<String> {
+    let mut candidates = Vec::new();
+
+    if let Ok(custom) = std::env::var("NODE_BIN") {
+        let trimmed = custom.trim();
+        if !trimmed.is_empty() {
+            candidates.push(trimmed.to_string());
+        }
+    }
+
+    candidates.push("node".to_string());
+
+    #[cfg(target_os = "macos")]
+    {
+        candidates.extend([
+            "/opt/homebrew/bin/node",
+            "/usr/local/bin/node",
+            "/usr/bin/node",
+        ]
+        .map(String::from));
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        candidates.push("node.exe".to_string());
+        if let Ok(pf) = std::env::var("ProgramFiles") {
+            candidates.push(format!(r"{pf}\nodejs\node.exe"));
+        }
+        if let Ok(local) = std::env::var("LOCALAPPDATA") {
+            candidates.push(format!(r"{local}\Programs\node\node.exe"));
+        }
+    }
+
+    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+    {
+        candidates.extend(["/usr/bin/node", "/usr/local/bin/node"].map(String::from));
+    }
+
+    let mut seen = std::collections::HashSet::new();
+    candidates
+        .into_iter()
+        .filter(|bin| seen.insert(bin.clone()))
+        .filter(|bin| runner_version_ok(bin))
+        .collect()
+}
+
+fn resolve_signer_dir(app: &tauri::AppHandle) -> Option<std::path::PathBuf> {
+    if let Ok(resource_dir) = app.path().resource_dir() {
+        let bundled = resource_dir.join("zatca-signer");
+        if bundled.is_dir() {
+            return Some(bundled);
+        }
+    }
+
+    let manifest_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let dev_bundled = manifest_dir.join("resources/zatca-signer");
+    dev_bundled.is_dir().then_some(dev_bundled)
+}
+
+fn resolve_bundled_signer(app: &tauri::AppHandle) -> Option<(std::path::PathBuf, std::path::PathBuf, std::path::PathBuf)> {
+    let signer_dir = resolve_signer_dir(app)?;
+    let node_bin = if cfg!(target_os = "windows") {
+        signer_dir.join("node.exe")
+    } else {
+        signer_dir.join("node")
+    };
+    let script = signer_dir.join("sign-zatca-invoice.mjs");
+    if node_bin.is_file() && script.is_file() {
+        Some((node_bin, script, signer_dir))
+    } else {
+        None
+    }
+}
+
+fn run_node_signer(
+    node_bin: &str,
+    script: &std::path::Path,
+    workdir: &std::path::Path,
+    input_path: &std::path::Path,
+) -> Result<std::process::Output, String> {
+    Command::new(node_bin)
+        .arg(script)
+        .arg(input_path)
+        .current_dir(workdir)
+        .output()
+        .map_err(|e| format!("Could not run ZATCA invoice signer ({e})"))
+}
+
 fn run_sign_script(
+    app: &tauri::AppHandle,
     project_root: &std::path::Path,
     script: &std::path::Path,
     input_path: &std::path::Path,
 ) -> Result<std::process::Output, String> {
-    // Node.js must run before Bun: Bun's OpenSSL bindings reject secp256k1 EC PRIVATE KEY PEM
-    // from our key generator, while Node signs correctly (zatca-xml-js requirement).
-    for runner in ["node", "bun"] {
-        match Command::new(runner)
-            .arg(script)
-            .arg(input_path)
-            .current_dir(project_root)
-            .output()
-        {
-            Ok(output) => return Ok(output),
-            Err(_) => continue,
+    if let Some((node_bin, bundled_script, workdir)) = resolve_bundled_signer(app) {
+        return run_node_signer(
+            node_bin.to_str().ok_or("Invalid bundled Node path")?,
+            &bundled_script,
+            &workdir,
+            input_path,
+        );
+    }
+
+    if script.is_file() {
+        for node_bin in node_runner_candidates() {
+            if let Ok(output) = run_node_signer(&node_bin, script, project_root, input_path) {
+                return Ok(output);
+            }
         }
     }
+
     Err(
-        "Node.js is required for ZATCA invoice signing. Install Node.js (nodejs.org) or ensure it is on PATH."
+        "ZATCA invoice signing runtime was not found. Rebuild the app with `npm run build:mac-dmg` or install Node.js (nodejs.org)."
             .to_string(),
     )
 }
 
 #[tauri::command]
-fn sign_zatca_invoice(input_json: String) -> Result<String, String> {
+fn sign_zatca_invoice(app: tauri::AppHandle, input_json: String) -> Result<String, String> {
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_err(|e| e.to_string())?
@@ -525,7 +638,7 @@ fn sign_zatca_invoice(input_json: String) -> Result<String, String> {
         ));
     }
 
-    let output = run_sign_script(project_root, &script, &input_path)?;
+    let output = run_sign_script(&app, project_root, &script, &input_path)?;
 
     let _ = fs::remove_file(&input_path);
 

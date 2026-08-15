@@ -130,6 +130,16 @@ export async function generateZatcaCsr(settings = {}) {
   const pem = await invoke("generate_zatca_csr", {
     privateKeyPem: privateKey,
     csrConfig,
+    csrFields: {
+      environment: params.environment,
+      commonName: params.commonName,
+      taxpayerName: params.taxpayerName,
+      branchName: params.branchName,
+      branchLocation: params.branchLocation,
+      branchIndustry: params.branchIndustry,
+      vatNumber: params.vatNumber,
+      egsSerial: `1-${params.solutionName}|2-${params.egsModel}|3-${params.egsSerialNumber}`,
+    },
   }).catch((err) => {
     const msg =
       typeof err === "string" ? err : err?.message || String(err ?? "CSR generation failed");

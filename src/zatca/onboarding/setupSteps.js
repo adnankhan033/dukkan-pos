@@ -102,12 +102,10 @@ export function getUnifiedSetupSteps(phase) {
         description: "Private key and certificate signing request — generated automatically",
         help: [
           "We create a device ID, secp256k1 private key, and CSR on this computer.",
-          "This matches the Fatoora platform onboarding flow — no manual OpenSSL steps.",
-          detectPlatform() === "windows"
-            ? "If this step fails, install OpenSSL once on Windows (link below) and restart the app."
-            : "If this step fails, install OpenSSL once on your Mac (link below) and restart the app.",
+          "This matches the Fatoora platform onboarding flow — generated automatically inside DukkanPOS.",
+          "No OpenSSL or other tools need to be installed on your PC.",
         ],
-        links: [getOpensslInstallLink()],
+        links: [],
         auto: true,
       },
       {
@@ -183,12 +181,9 @@ export function formatSetupError(error, stepId) {
 
   if (stepId === "keys" && !raw.trim()) {
     return {
-      message:
-        detectPlatform() === "windows"
-          ? "Could not generate CSR. OpenSSL may not be installed on this PC."
-          : "Could not generate CSR. OpenSSL may not be installed on this Mac.",
-      links: [getOpensslInstallLink()],
-      hint: getOpensslInstallCommandHint(),
+      message: "Could not generate CSR. Check company details and device ID, then try again.",
+      links: [],
+      hint: "Make sure VAT (15 digits), store name, and device serial are filled in on the previous step.",
     };
   }
 

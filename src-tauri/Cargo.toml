@@ -28,3 +28,8 @@ base64 = "0.22"
 lettre = { version = "0.11", default-features = false, features = ["smtp-transport", "builder", "rustls-tls"] }
 dirs = "6"
 dotenvy = "0.15"
+k256 = { version = "0.14", features = ["ecdsa", "pem", "pkcs8"] }
+sec1 = { version = "0.8", features = ["pem"] }
+x509-cert = { version = "0.3.0", features = ["builder", "pem"] }
+ecdsa = { version = "0.17", features = ["digest", "pkcs8", "sha2"] }
+const-oid = "0.10"

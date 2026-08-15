@@ -25,3 +25,6 @@ dist-ssr
 
 # Rust build output (installers live in releases/)
 src-tauri/target/
+.cache/
+.zatca-signer-staging/
+src-tauri/resources/zatca-signer/
