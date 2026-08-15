@@ -18,36 +18,135 @@ pub struct ZatcaHttpResponse {
     pub body: String,
 }
 
+fn openssl_version_ok(bin: &str) -> bool {
+    Command::new(bin)
+        .arg("version")
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
+fn find_openssl_in_path() -> Option<String> {
+    #[cfg(target_os = "windows")]
+    {
+        let output = Command::new("where").arg("openssl").output().ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        for line in stdout.lines() {
+            let candidate = line.trim();
+            if !candidate.is_empty() && openssl_version_ok(candidate) {
+                return Some(candidate.to_string());
+            }
+        }
+        return None;
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        let output = Command::new("which").arg("openssl").output().ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let candidate = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if candidate.is_empty() || !openssl_version_ok(&candidate) {
+            return None;
+        }
+        Some(candidate)
+    }
+}
+
+fn openssl_not_found_message() -> String {
+    #[cfg(target_os = "windows")]
+    {
+        return "OpenSSL not found on this PC. Install Win64 OpenSSL v3.x from slproweb.com (Light edition is enough), enable \"Add to PATH\" during setup, then restart DukkanPOS.".to_string();
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        return "OpenSSL not found on this Mac. Install it with: brew install openssl — then restart the app.".to_string();
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+    {
+        return "OpenSSL not found. Install the openssl package for your Linux distribution, then restart the app.".to_string();
+    }
+}
+
 fn resolve_openssl_bin() -> Result<String, String> {
     if let Ok(custom) = std::env::var("OPENSSL_BIN") {
         let trimmed = custom.trim();
         if !trimmed.is_empty() {
-            return Ok(trimmed.to_string());
+            if openssl_version_ok(trimmed) {
+                return Ok(trimmed.to_string());
+            }
+            return Err(format!(
+                "OPENSSL_BIN is set to \"{trimmed}\" but OpenSSL could not be run. Check the path and try again."
+            ));
         }
     }
 
-    const CANDIDATES: &[&str] = &[
-        "openssl",
-        "/opt/homebrew/bin/openssl",
-        "/usr/local/bin/openssl",
-        "/usr/bin/openssl",
-    ];
+    let mut candidates: Vec<String> = Vec::new();
 
-    for bin in CANDIDATES {
-        let ok = Command::new(bin)
-            .arg("version")
-            .output()
-            .map(|output| output.status.success())
-            .unwrap_or(false);
-        if ok {
-            return Ok(bin.to_string());
+    if let Some(found) = find_openssl_in_path() {
+        candidates.push(found);
+    }
+
+    candidates.push("openssl".to_string());
+
+    #[cfg(target_os = "windows")]
+    {
+        candidates.push("openssl.exe".to_string());
+        if let Ok(pf) = std::env::var("ProgramFiles") {
+            candidates.push(format!(r"{pf}\OpenSSL-Win64\bin\openssl.exe"));
+            candidates.push(format!(r"{pf}\Git\usr\bin\openssl.exe"));
+        }
+        if let Ok(pf86) = std::env::var("ProgramFiles(x86)") {
+            candidates.push(format!(r"{pf86}\Git\usr\bin\openssl.exe"));
+            candidates.push(format!(r"{pf86}\OpenSSL-Win32\bin\openssl.exe"));
+        }
+        if let Ok(local) = std::env::var("LOCALAPPDATA") {
+            candidates.push(format!(
+                r"{local}\Programs\OpenSSL-Win64\bin\openssl.exe"
+            ));
+        }
+        candidates.push(r"C:\OpenSSL-Win64\bin\openssl.exe".to_string());
+        candidates.push(r"C:\OpenSSL-Win32\bin\openssl.exe".to_string());
+        if let Ok(userprofile) = std::env::var("USERPROFILE") {
+            candidates.push(format!(
+                r"{userprofile}\scoop\apps\openssl\current\bin\openssl.exe"
+            ));
+        }
+        candidates.push(r"C:\ProgramData\chocolatey\bin\openssl.exe".to_string());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        candidates.extend([
+            "/opt/homebrew/bin/openssl",
+            "/usr/local/bin/openssl",
+            "/usr/bin/openssl",
+        ]
+        .map(String::from));
+    }
+
+    #[cfg(all(not(target_os = "windows"), not(target_os = "macos")))]
+    {
+        candidates.extend(["/usr/bin/openssl", "/usr/local/bin/openssl"].map(String::from));
+    }
+
+    let mut seen = std::collections::HashSet::new();
+    for bin in candidates {
+        if !seen.insert(bin.clone()) {
+            continue;
+        }
+        if openssl_version_ok(&bin) {
+            return Ok(bin);
         }
     }
 
-    Err(
-        "OpenSSL not found on this Mac. Install it with: brew install openssl — then restart the app."
-            .to_string(),
-    )
+    Err(openssl_not_found_message())
 }
 
 #[tauri::command]
@@ -155,8 +254,8 @@ fn wrap_base64_pem(base64_body: &str, label: &str) -> String {
     )
 }
 
-fn openssl_x509_readable(path: &std::path::Path) -> bool {
-    Command::new("openssl")
+fn openssl_x509_readable(openssl_bin: &str, path: &std::path::Path) -> bool {
+    Command::new(openssl_bin)
         .args(["x509", "-noout", "-in"])
         .arg(path)
         .output()
@@ -165,13 +264,17 @@ fn openssl_x509_readable(path: &std::path::Path) -> bool {
 }
 
 /// Normalize ZATCA certificate input to a readable X.509 PEM file.
-fn prepare_x509_cert_pem(input: &str, cert_path: &std::path::Path) -> Result<(), String> {
+fn prepare_x509_cert_pem(
+    openssl_bin: &str,
+    input: &str,
+    cert_path: &std::path::Path,
+) -> Result<(), String> {
     let trimmed = input.trim();
 
     // 1) Already valid PEM X.509
     if trimmed.contains("BEGIN CERTIFICATE") {
         fs::write(cert_path, trimmed).map_err(|e| e.to_string())?;
-        if openssl_x509_readable(cert_path) {
+        if openssl_x509_readable(openssl_bin, cert_path) {
             return Ok(());
         }
         // PEM headers present but body may be wrongly stored outer token — re-normalize below
@@ -204,13 +307,13 @@ fn prepare_x509_cert_pem(input: &str, cert_path: &std::path::Path) -> Result<(),
                 if inner.starts_with("MII") {
                     let pem = wrap_base64_pem(&inner, "CERTIFICATE");
                     fs::write(cert_path, &pem).map_err(|e| e.to_string())?;
-                    if openssl_x509_readable(cert_path) {
+                    if openssl_x509_readable(openssl_bin, cert_path) {
                         return Ok(());
                     }
                 }
                 if decoded_text.contains("BEGIN CERTIFICATE") {
                     fs::write(cert_path, decoded_text.trim()).map_err(|e| e.to_string())?;
-                    if openssl_x509_readable(cert_path) {
+                    if openssl_x509_readable(openssl_bin, cert_path) {
                         return Ok(());
                     }
                 }
@@ -219,7 +322,7 @@ fn prepare_x509_cert_pem(input: &str, cert_path: &std::path::Path) -> Result<(),
             // Raw DER bytes
             let der_path = cert_path.with_extension("der");
             if fs::write(&der_path, &decoded).is_ok() {
-                let output = Command::new("openssl")
+                let output = Command::new(openssl_bin)
                     .args([
                         "x509",
                         "-inform",
@@ -232,7 +335,7 @@ fn prepare_x509_cert_pem(input: &str, cert_path: &std::path::Path) -> Result<(),
                     .output();
                 let _ = fs::remove_file(&der_path);
                 if let Ok(out) = output {
-                    if out.status.success() && openssl_x509_readable(cert_path) {
+                    if out.status.success() && openssl_x509_readable(openssl_bin, cert_path) {
                         return Ok(());
                     }
                 }
@@ -243,7 +346,7 @@ fn prepare_x509_cert_pem(input: &str, cert_path: &std::path::Path) -> Result<(),
         if base64_body.starts_with("MII") {
             let pem = wrap_base64_pem(&base64_body, "CERTIFICATE");
             fs::write(cert_path, &pem).map_err(|e| e.to_string())?;
-            if openssl_x509_readable(cert_path) {
+            if openssl_x509_readable(openssl_bin, cert_path) {
                 return Ok(());
             }
         }
@@ -251,7 +354,7 @@ fn prepare_x509_cert_pem(input: &str, cert_path: &std::path::Path) -> Result<(),
         // Legacy: wrap outer token directly (old bug — unlikely to work)
         let pem = wrap_base64_pem(&base64_body, "CERTIFICATE");
         fs::write(cert_path, &pem).map_err(|e| e.to_string())?;
-        if openssl_x509_readable(cert_path) {
+        if openssl_x509_readable(openssl_bin, cert_path) {
             return Ok(());
         }
     }
@@ -262,14 +365,18 @@ fn prepare_x509_cert_pem(input: &str, cert_path: &std::path::Path) -> Result<(),
     )
 }
 
-fn compare_public_keys(cert_path: &std::path::Path, key_path: &std::path::Path) -> bool {
-    let cert_pub = Command::new("openssl")
+fn compare_public_keys(
+    openssl_bin: &str,
+    cert_path: &std::path::Path,
+    key_path: &std::path::Path,
+) -> bool {
+    let cert_pub = Command::new(openssl_bin)
         .args(["x509", "-in"])
         .arg(cert_path)
         .args(["-pubkey", "-noout"])
         .output();
 
-    let key_pub = Command::new("openssl")
+    let key_pub = Command::new(openssl_bin)
         .args(["pkey", "-in"])
         .arg(key_path)
         .args(["-pubout"])
@@ -288,6 +395,7 @@ fn validate_zatca_certificate(
     certificate_pem: String,
     private_key_pem: String,
 ) -> Result<ZatcaCertValidation, String> {
+    let openssl_bin = resolve_openssl_bin()?;
     let nanos = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_err(|e| e.to_string())?
@@ -296,10 +404,10 @@ fn validate_zatca_certificate(
     let cert_path = temp_dir.join(format!("dukkan-pos-cert-{nanos}.pem"));
     let key_path = temp_dir.join(format!("dukkan-pos-key-{nanos}.pem"));
 
-    prepare_x509_cert_pem(&certificate_pem, &cert_path)?;
+    prepare_x509_cert_pem(&openssl_bin, &certificate_pem, &cert_path)?;
     fs::write(&key_path, private_key_pem.trim()).map_err(|e| e.to_string())?;
 
-    let dates_output = Command::new("openssl")
+    let dates_output = Command::new(&openssl_bin)
         .args([
             "x509",
             "-noout",
@@ -316,7 +424,7 @@ fn validate_zatca_certificate(
         return Err(String::from_utf8_lossy(&dates_output.stderr).trim().to_string());
     }
 
-    let not_expired = Command::new("openssl")
+    let not_expired = Command::new(&openssl_bin)
         .args([
             "x509",
             "-checkend",
@@ -341,7 +449,7 @@ fn validate_zatca_certificate(
         }
     }
 
-    let key_matches = compare_public_keys(&cert_path, &key_path);
+    let key_matches = compare_public_keys(&openssl_bin, &cert_path, &key_path);
 
     let _ = fs::remove_file(&cert_path);
     let _ = fs::remove_file(&key_path);

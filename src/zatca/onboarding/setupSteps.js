@@ -1,5 +1,15 @@
 import { ZATCA_PHASES } from "../core/constants";
 
+function detectPlatform() {
+  if (typeof navigator === "undefined") return "unknown";
+  const ua = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  if (/Win/i.test(ua) || /Win/i.test(platform)) return "windows";
+  if (/Mac/i.test(ua) || /Mac/i.test(platform)) return "macos";
+  if (/Linux/i.test(ua) || /Linux/i.test(platform)) return "linux";
+  return "unknown";
+}
+
 export const ZATCA_LINKS = {
   fatooraPortal: {
     label: "Fatoora Developer Portal",
@@ -16,12 +26,37 @@ export const ZATCA_LINKS = {
     url: "https://zatca.gov.sa/en/E-Invoicing/SystemsDevelopers/Pages/default.aspx",
     hint: "Official documentation for e-invoicing integration",
   },
-  opensslInstall: {
+  opensslInstallMac: {
     label: "Install OpenSSL (Mac)",
     url: "https://formulae.brew.sh/formula/openssl@3",
     hint: "Required once on your Mac to generate CSR keys",
   },
+  opensslInstallWindows: {
+    label: "Install OpenSSL (Windows)",
+    url: "https://slproweb.com/products/Win32OpenSSL.html",
+    hint: "Download Win64 OpenSSL v3.x Light, enable Add to PATH during setup, then restart DukkanPOS",
+  },
 };
+
+export function getOpensslInstallLink() {
+  return detectPlatform() === "windows"
+    ? ZATCA_LINKS.opensslInstallWindows
+    : ZATCA_LINKS.opensslInstallMac;
+}
+
+function getOpensslInstallHint() {
+  if (detectPlatform() === "windows") {
+    return "Install Win64 OpenSSL v3.x (Light edition is enough), enable Add to PATH during setup, then restart DukkanPOS.";
+  }
+  return "Install OpenSSL on your Mac, then restart DukkanPOS and try again.";
+}
+
+function getOpensslInstallCommandHint() {
+  if (detectPlatform() === "windows") {
+    return "Download Win64 OpenSSL v3.x from slproweb.com, enable Add to PATH, then restart the app.";
+  }
+  return "Run: brew install openssl — then restart the app.";
+}
 
 export function getUnifiedSetupSteps(phase) {
   if (phase === ZATCA_PHASES.PHASE1) {
@@ -68,9 +103,11 @@ export function getUnifiedSetupSteps(phase) {
         help: [
           "We create a device ID, secp256k1 private key, and CSR on this computer.",
           "This matches the Fatoora platform onboarding flow — no manual OpenSSL steps.",
-          "If this step fails, install OpenSSL once on your Mac (link below) and restart the app.",
+          detectPlatform() === "windows"
+            ? "If this step fails, install OpenSSL once on Windows (link below) and restart the app."
+            : "If this step fails, install OpenSSL once on your Mac (link below) and restart the app.",
         ],
-        links: [ZATCA_LINKS.opensslInstall],
+        links: [getOpensslInstallLink()],
         auto: true,
       },
       {
@@ -110,8 +147,8 @@ export function formatSetupError(error, stepId) {
   if (/openssl|OpenSSL/i.test(raw)) {
     return {
       message: raw,
-      links: [ZATCA_LINKS.opensslInstall],
-      hint: "Install OpenSSL on your Mac, then restart DukkanPOS and try again.",
+      links: [getOpensslInstallLink()],
+      hint: getOpensslInstallHint(),
     };
   }
 
@@ -146,9 +183,12 @@ export function formatSetupError(error, stepId) {
 
   if (stepId === "keys" && !raw.trim()) {
     return {
-      message: "Could not generate CSR. OpenSSL may not be installed on this Mac.",
-      links: [ZATCA_LINKS.opensslInstall],
-      hint: "Run: brew install openssl — then restart the app.",
+      message:
+        detectPlatform() === "windows"
+          ? "Could not generate CSR. OpenSSL may not be installed on this PC."
+          : "Could not generate CSR. OpenSSL may not be installed on this Mac.",
+      links: [getOpensslInstallLink()],
+      hint: getOpensslInstallCommandHint(),
     };
   }
 
