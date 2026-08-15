@@ -326,6 +326,6 @@ sqlite3 "$HOME/Library/Application Support/com.sharedtechadnan.dukkan-pos/dukkan
 
 
 
-Generated app password
-Your app password for your device
+## clear activations  Generated app password
+
 oaam phzn iqde qzql
