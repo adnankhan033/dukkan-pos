@@ -651,6 +651,7 @@ export default function Orders() {
         showZatca={showZatcaColumn}
         currency={currency}
         vatPercent={vatPercent}
+        settings={settings}
         onClose={() => {
           setDetailOpen(false);
           setSelectedSale(null);

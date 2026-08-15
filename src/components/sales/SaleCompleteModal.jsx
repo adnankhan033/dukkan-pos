@@ -1,7 +1,8 @@
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Printer } from "lucide-react";
 import { Link } from "react-router-dom";
 import Button from "../common/Button";
 import ProductBilingualName from "../products/ProductBilingualName";
+import ReceiptPreviewFrame from "../receipt/ReceiptPreviewFrame";
 import { formatCurrency } from "../../utils/format";
 import "./SaleCompleteModal.css";
 
@@ -19,6 +20,7 @@ export default function SaleCompleteModal({
   currency,
   vatPercent,
   completedSale,
+  settings,
   processing = false,
   zatcaQueued = false,
   onConfirmComplete,
@@ -32,7 +34,10 @@ export default function SaleCompleteModal({
 
   return (
     <div className="sale-complete-overlay" onClick={step === "confirm" ? onCancel : undefined}>
-      <div className="sale-complete-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className={`sale-complete-modal ${step === "print" ? "sale-complete-modal--with-preview" : ""}`}
+        onClick={(e) => e.stopPropagation()}
+      >
         {step === "confirm" && (
           <>
             <div className="sale-complete-header">
@@ -106,31 +111,41 @@ export default function SaleCompleteModal({
 
         {step === "print" && completedSale && (
           <>
-            <div className="sale-complete-body">
-              <div className="sale-complete-success">
+            <div className="sale-complete-body sale-complete-body--print">
+              <div className="sale-complete-success sale-complete-success--compact">
                 <div className="sale-complete-success-icon">
-                  <CheckCircle2 size={32} />
+                  <CheckCircle2 size={28} />
                 </div>
                 <h4>Sale completed!</h4>
                 <p>
                   <strong>{completedSale.sale_number}</strong> — {formatCurrency(completedSale.total, currency)}
                 </p>
-                <p style={{ marginTop: "0.5rem" }}>Would you like to print the receipt?</p>
-                {zatcaQueued && (
-                  <p className="sale-complete-zatca-note">
-                    Invoice queued for ZATCA.{" "}
-                    <Link to="/zatca-sync">View today&apos;s sync status →</Link>
-                  </p>
-                )}
               </div>
+
+              <ReceiptPreviewFrame
+                sale={completedSale}
+                items={completedSale.items}
+                settings={settings}
+                currency={currency}
+                label="Receipt preview"
+              />
+
+              <p className="sale-complete-print-hint">Review the receipt above, then print or skip.</p>
+
+              {zatcaQueued && (
+                <p className="sale-complete-zatca-note">
+                  Invoice queued for ZATCA.{" "}
+                  <Link to="/zatca-sync">View today&apos;s sync status →</Link>
+                </p>
+              )}
             </div>
             <div className="sale-complete-footer split">
               <Button variant="secondary" onClick={onSkipPrint}>
-                No, Thanks
+                Skip
               </Button>
               <div className="footer-actions">
                 <Button onClick={onPrint}>
-                  Yes, Print Receipt
+                  <Printer size={16} /> Print Receipt
                 </Button>
               </div>
             </div>

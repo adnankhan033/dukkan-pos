@@ -4,7 +4,7 @@ export const RECEIPT_TEMPLATES = [
     id: "baqala",
     label: "Saudi Baqala",
     labelAr: "بقالة — فاتورة سعودية",
-    description: "Bilingual simplified tax invoice with ZATCA layout — recommended for grocery stores.",
+    description: "ZATCA simplified tax invoice — bilingual layout for grocery & retail.",
     recommended: true,
   },
   {
@@ -27,40 +27,34 @@ export function getReceiptTemplate(id) {
   return RECEIPT_TEMPLATES.find((t) => t.id === id) || RECEIPT_TEMPLATES[0];
 }
 
-/** Sample sale used in Settings preview and test print. */
+/** Sample sale used in Settings preview and test print — matches ZATCA simplified invoice totals. */
 export const SAMPLE_RECEIPT_SALE = {
   sale_number: "INV-1",
   created_at: new Date().toISOString(),
-  subtotal: 43.48,
+  customer_name: "NA",
+  subtotal: 8.26,
   discount: 0,
-  vat: 6.52,
-  total: 50,
+  vat: 1.24,
+  total: 9.5,
   payment_method: "cash",
-  amount_received: 50,
-  change_due: 0,
+  amount_received: 10,
+  change_due: 0.5,
   balance_due: 0,
 };
 
 export const SAMPLE_RECEIPT_ITEMS = [
   {
-    name: "Fresh Milk 1L",
-    name_ar: "حليب طازج ١ لتر",
+    name: "Ulker Tea Biscuits 147g",
+    name_ar: "بسكويت شاي Ulker 147 جم",
     quantity: 2,
-    unit_price: 6.5,
-    total: 13,
+    unit_price: 2.175,
+    total: 4.35,
   },
   {
-    name: "Labneh",
-    name_ar: "لبنة",
-    quantity: 1,
-    unit_price: 8,
-    total: 8,
-  },
-  {
-    name: "Saudi Dates 500g",
-    name_ar: "تمر سعودي ٥٠٠ جم",
-    quantity: 1,
-    unit_price: 22.48,
-    total: 22.48,
+    name: "teashop Digestive Biscuits 100g",
+    name_ar: "بسكويت Digestive 100 جم",
+    quantity: 3,
+    unit_price: 1.303,
+    total: 3.91,
   },
 ];

@@ -45,12 +45,14 @@ function buildFormFromSettings(settings) {
     store_name: settings.store_name || "",
     store_name_ar: settings.store_name_ar || "",
     store_address: settings.store_address || "",
+    store_phone: settings.store_phone || "",
     cr_number: settings.cr_number || "",
     vat_registration: settings.vat_registration || "",
     vat_percent: settings.vat_percent || "15",
     currency: settings.currency || "SAR",
     receipt_footer: settings.receipt_footer || "",
     receipt_footer_ar: settings.receipt_footer_ar || "",
+    receipt_branding: settings.receipt_branding || "DukkanPOS",
     receipt_show_qr: settingBool(settings.receipt_show_qr),
     receipt_show_bilingual: settingBool(settings.receipt_show_bilingual),
     receipt_show_tax_info: settingBool(settings.receipt_show_tax_info),
@@ -79,12 +81,14 @@ function formToSettings(form) {
     store_name: form.store_name,
     store_name_ar: form.store_name_ar,
     store_address: form.store_address,
+    store_phone: form.store_phone,
     cr_number: form.cr_number,
     vat_registration: form.vat_registration,
     vat_percent: form.vat_percent,
     currency: form.currency,
     receipt_footer: form.receipt_footer,
     receipt_footer_ar: form.receipt_footer_ar,
+    receipt_branding: form.receipt_branding,
     receipt_show_qr: form.receipt_show_qr ? "1" : "0",
     receipt_show_bilingual: form.receipt_show_bilingual ? "1" : "0",
     receipt_show_tax_info: form.receipt_show_tax_info ? "1" : "0",
@@ -555,6 +559,14 @@ export default function Settings() {
               <div style={{ marginTop: "1rem" }}>
                 <Textarea label="Store Address" value={form.store_address} onChange={(e) => updateField("store_address", e.target.value)} />
               </div>
+              <div style={{ marginTop: "1rem" }}>
+                <Input
+                  label="Store Phone"
+                  value={form.store_phone}
+                  onChange={(e) => updateField("store_phone", e.target.value)}
+                  placeholder="e.g. +966-530096993"
+                />
+              </div>
               <div className="form-row" style={{ marginTop: "1rem" }}>
                 <Input label="VAT %" type="number" step="0.01" value={form.vat_percent} onChange={(e) => updateField("vat_percent", e.target.value)} />
                 <Input label="Currency" value={form.currency} onChange={(e) => updateField("currency", e.target.value)} />
@@ -707,6 +719,14 @@ export default function Settings() {
               </div>
               <div style={{ marginTop: "1rem" }}>
                 <Textarea label="Footer (Arabic)" value={form.receipt_footer_ar} onChange={(e) => updateField("receipt_footer_ar", e.target.value)} dir="rtl" />
+              </div>
+              <div style={{ marginTop: "1rem" }}>
+                <Input
+                  label="Powered by (receipt branding)"
+                  value={form.receipt_branding}
+                  onChange={(e) => updateField("receipt_branding", e.target.value)}
+                  placeholder="DukkanPOS"
+                />
               </div>
               <p className="settings-section-desc" style={{ marginTop: "1rem" }}>
                 Store name, address, CR, and VAT are taken from the <strong>Store</strong> tab.

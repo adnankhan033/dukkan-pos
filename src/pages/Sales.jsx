@@ -944,6 +944,7 @@ export default function Sales() {
         currency={currency}
         vatPercent={vatPercent}
         completedSale={completedSale}
+        settings={settings}
         processing={submitting}
         zatcaQueued={zatcaPhase2 && Boolean(completedSale)}
         onConfirmComplete={handleConfirmComplete}
