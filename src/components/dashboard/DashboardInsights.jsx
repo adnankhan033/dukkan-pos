@@ -76,7 +76,10 @@ export default function DashboardInsights({ insights = [], topProducts = [], cur
 
           <ol className="dashboard-top-products-list">
             {topProducts.map((product, index) => (
-              <li key={product.id} className="dashboard-top-product-item">
+              <li
+                key={product.id}
+                className={`dashboard-top-product-item ${index < 3 ? `rank-${index + 1}` : ""}`}
+              >
                 <span className="dashboard-top-product-rank">#{index + 1}</span>
                 <div className="dashboard-top-product-info">
                   <strong>{product.name}</strong>

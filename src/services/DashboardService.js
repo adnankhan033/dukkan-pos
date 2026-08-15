@@ -11,6 +11,7 @@ import {
   getTodayGrossSales,
   getTodayReturnsTotal,
   getTodayNetSales,
+  getNetRevenueInRange,
 } from "./FinanceService";
 import { dashboardInsightsService } from "./DashboardInsightsService";
 import {
@@ -18,9 +19,43 @@ import {
   setDashboardCache,
   trackDashboardRefresh,
 } from "./DashboardCache";
+import { useSettingsStore } from "../contexts/store";
+import { getBusinessDateISO } from "../utils/businessDate";
+
+function shiftBusinessDateISO(iso, daysBack) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const date = new Date(y, m - 1, d - daysBack);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+async function getWeeklySalesTrend(settings) {
+  const anchor = getBusinessDateISO(settings);
+  const days = [];
+  for (let i = 6; i >= 0; i -= 1) {
+    const date = shiftBusinessDateISO(anchor, i);
+    const [y, m, d] = date.split("-").map(Number);
+    const label = new Date(y, m - 1, d).toLocaleDateString("en-GB", { weekday: "short" });
+    const total = await getNetRevenueInRange(date, date);
+    days.push({ date, label, total });
+  }
+  return days;
+}
+
+function computeTodayTrend(todaySales, weeklyTrend) {
+  const previous = weeklyTrend.slice(0, -1);
+  if (!previous.length) return null;
+  const avg =
+    previous.reduce((sum, day) => sum + day.total, 0) / previous.length;
+  if (avg <= 0) return todaySales > 0 ? 100 : null;
+  return Math.round(((todaySales - avg) / avg) * 100);
+}
 
 class DashboardService {
   async fetchStats() {
+    const settings = useSettingsStore.getState().settings;
     const [
       todayGrossSales,
       todayReturns,
@@ -39,6 +74,7 @@ class DashboardService {
       heldSales,
       smartInsights,
       employeeSummary,
+      weeklyTrend,
     ] = await Promise.all([
       getTodayGrossSales(),
       getTodayReturnsTotal(),
@@ -67,9 +103,11 @@ class DashboardService {
         totalAdvancePaid: 0,
         totalPayments: 0,
       })),
+      getWeeklySalesTrend(settings),
     ]);
 
     const monthlyProfit = monthlyRevenue - monthlyCost - monthlyExpenses;
+    const todayTrendPct = computeTodayTrend(todayNetSales, weeklyTrend);
 
     return {
       todaySales: todayNetSales,
@@ -89,6 +127,8 @@ class DashboardService {
       smartInsights: smartInsights.insights,
       topProducts: smartInsights.topProducts,
       employees: employeeSummary,
+      weeklyTrend,
+      todayTrendPct,
     };
   }
 
