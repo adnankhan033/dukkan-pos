@@ -323,3 +323,9 @@ sqlite3 "$HOME/Library/Application Support/com.sharedtechadnan.dukkan-pos/dukkan
   'activation_customer_address',
   'system_hostname'
 );"
+
+
+
+Generated app password
+Your app password for your device
+oaam phzn iqde qzql
