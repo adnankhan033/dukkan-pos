@@ -2,7 +2,7 @@ import { formatDateTime } from "../format";
 
 export function buildCompanyProfile(settings = {}) {
   return {
-    name: settings.store_name?.trim() || "DukkanPOS",
+    name: settings.store_name?.trim() || "Dukkan POS",
     nameAr: settings.store_name_ar?.trim() || "",
     address: settings.store_address?.trim() || "",
     crNumber: settings.cr_number?.trim() || "",

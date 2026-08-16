@@ -33,7 +33,7 @@ export function buildCsrParams(settings = {}) {
   const branchName = pick(config.device.egsUnitName, taxpayerName, "Main Branch");
   const branchLocation = pick(config.company.address, settings.store_address, "Riyadh");
   const branchIndustry = "Retail";
-  const egsModel = pick(config.device.model, "DukkanPOS", "1.0.0");
+  const egsModel = pick(config.device.model, "Dukkan POS", "1.0.0");
   const egsSerialNumber = pick(
     config.device.serial,
     config.device.id,

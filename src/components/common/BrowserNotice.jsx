@@ -6,7 +6,7 @@ export default function BrowserNotice() {
   return (
     <div className="browser-notice">
       <div className="browser-notice-card">
-        <h1>DukkanPOS</h1>
+        <h1>Dukkan POS</h1>
         <p className="browser-notice-lead">
           This is a <strong>desktop application</strong>. It cannot use the local database when opened in a web browser.
         </p>
@@ -19,7 +19,7 @@ export default function BrowserNotice() {
           <ol>
             <li>Open a terminal in the project folder</li>
             <li>Run: <code>bun run tauri dev</code></li>
-            <li>Use the <strong>DukkanPOS</strong> desktop window that opens</li>
+            <li>Use the <strong>Dukkan POS</strong> desktop window that opens</li>
           </ol>
         </div>
         <p className="browser-notice-hint">

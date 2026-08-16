@@ -309,7 +309,7 @@ export function buildOrdersReportCoverHtml({
         ${row("Filters", filterText)}
         ${row("Currency", currency)}
         ${row("Invoices", truncated ? `${invoiceCount} / ${totalMatched}` : String(invoiceCount))}
-        ${row("Document", "Sales Invoices · DukkanPOS")}
+        ${row("Document", "Sales Invoices · Dukkan POS")}
       </div>
     </div>
 

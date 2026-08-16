@@ -701,13 +701,13 @@ async function buildCompactReceipt(ctx) {
 }
 
 export async function buildReceiptHtml({ sale, items, settings, currency }) {
-  const storeName = settings.store_name || "DukkanPOS";
+  const storeName = settings.store_name || "Dukkan POS";
   const storeNameAr = settings.store_name_ar || "";
   const address = settings.store_address || "";
   const storePhone = settings.store_phone || "";
   const footer = settings.receipt_footer || "Thank You";
   const footerAr = settings.receipt_footer_ar || "";
-  const branding = settings.receipt_branding || "DukkanPOS";
+  const branding = settings.receipt_branding || "Dukkan POS";
   const vatPercent = Number(settings.vat_percent) || 0;
   const crNumber = settings.cr_number || "";
   const vatRegistration = settings.vat_registration || "";

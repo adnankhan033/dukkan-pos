@@ -65,7 +65,7 @@ export default function Login() {
     <AuthShell
       formTitle="Sign In"
       formSubtitle="Enter your credentials to access your store"
-      footer="DukkanPOS · Secure store sign-in"
+      footer="Dukkan POS · Secure store sign-in"
     >
       {notice && <Alert type="warning">{notice}</Alert>}
       {error && <Alert>{error}</Alert>}

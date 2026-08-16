@@ -66,7 +66,7 @@ export function ensureDeviceDefaults(settings = {}) {
   }
 
   if (!config.device.model?.trim()) {
-    updates[K.EGS_MODEL] = "DukkanPOS";
+    updates[K.EGS_MODEL] = "Dukkan POS";
   }
   if (!config.device.version?.trim()) {
     updates[K.EGS_VERSION] = "1.0.0";

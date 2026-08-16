@@ -64,7 +64,7 @@ fn find_openssl_in_path() -> Option<String> {
 fn openssl_not_found_message() -> String {
     #[cfg(target_os = "windows")]
     {
-        return "OpenSSL not found on this PC. Install Win64 OpenSSL v3.x from slproweb.com (Light edition is enough), enable \"Add to PATH\" during setup, then restart DukkanPOS.".to_string();
+        return "OpenSSL not found on this PC. Install Win64 OpenSSL v3.x from slproweb.com (Light edition is enough), enable \"Add to PATH\" during setup, then restart Dukkan POS.".to_string();
     }
 
     #[cfg(target_os = "macos")]
@@ -894,7 +894,7 @@ fn generate_system_activation() -> Result<SystemActivationInfo, String> {
     let hostname = parts
         .first()
         .cloned()
-        .unwrap_or_else(|| "DukkanPOS".to_string());
+        .unwrap_or_else(|| "Dukkan POS".to_string());
     let device_id = hash_machine_identity(&parts);
     let activation_key = generate_activation_key_code();
     Ok(SystemActivationInfo {
@@ -954,12 +954,12 @@ fn send_activation_email(
     let cr = cr_number.unwrap_or_default().trim().to_string();
 
     let subject = if store.is_empty() {
-        format!("DukkanPOS Activation Key — {host_label}")
+        format!("Dukkan POS Activation Key — {host_label}")
     } else {
-        format!("DukkanPOS Activation — {store}")
+        format!("Dukkan POS Activation — {store}")
     };
 
-    let mut body = String::from("New DukkanPOS store registration\n\n");
+    let mut body = String::from("New Dukkan POS store registration\n\n");
 
     if !store.is_empty() || !phone.is_empty() || !address.is_empty() {
         body.push_str("Store information:\n");
@@ -994,7 +994,7 @@ fn send_activation_email(
          {activation_key}\n\n\
          Device: {host_label}\n\
          Device ID: {device_id}\n\n\
-         — DukkanPOS"
+         — Dukkan POS"
     ));
 
     send_plain_text_email(&gmail, &app_password, to, &subject, &body)

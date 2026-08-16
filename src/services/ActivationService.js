@@ -201,7 +201,7 @@ class ActivationService {
     deviceId,
     activationKey,
     recipient = ACTIVATION_RECIPIENT_EMAIL,
-    hostname = "DukkanPOS",
+    hostname = "Dukkan POS",
     customerName = "",
     customerPhone = "",
     storeName = "",
@@ -214,7 +214,7 @@ class ActivationService {
     }
 
     const hostLabel =
-      typeof hostname === "string" && hostname.trim() ? hostname.trim() : "DukkanPOS";
+      typeof hostname === "string" && hostname.trim() ? hostname.trim() : "Dukkan POS";
 
     const smtp = await this.resolveSmtpCredentials();
 

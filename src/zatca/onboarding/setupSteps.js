@@ -34,7 +34,7 @@ export const ZATCA_LINKS = {
   opensslInstallWindows: {
     label: "Install OpenSSL (Windows)",
     url: "https://slproweb.com/products/Win32OpenSSL.html",
-    hint: "Download Win64 OpenSSL v3.x Light, enable Add to PATH during setup, then restart DukkanPOS",
+    hint: "Download Win64 OpenSSL v3.x Light, enable Add to PATH during setup, then restart Dukkan POS",
   },
 };
 
@@ -46,9 +46,9 @@ export function getOpensslInstallLink() {
 
 function getOpensslInstallHint() {
   if (detectPlatform() === "windows") {
-    return "Install Win64 OpenSSL v3.x (Light edition is enough), enable Add to PATH during setup, then restart DukkanPOS.";
+    return "Install Win64 OpenSSL v3.x (Light edition is enough), enable Add to PATH during setup, then restart Dukkan POS.";
   }
-  return "Install OpenSSL on your Mac, then restart DukkanPOS and try again.";
+  return "Install OpenSSL on your Mac, then restart Dukkan POS and try again.";
 }
 
 function getOpensslInstallCommandHint() {
@@ -102,7 +102,7 @@ export function getUnifiedSetupSteps(phase) {
         description: "Private key and certificate signing request — generated automatically",
         help: [
           "We create a device ID, secp256k1 private key, and CSR on this computer.",
-          "This matches the Fatoora platform onboarding flow — generated automatically inside DukkanPOS.",
+          "This matches the Fatoora platform onboarding flow — generated automatically inside Dukkan POS.",
           "No OpenSSL or other tools need to be installed on your PC.",
         ],
         links: [],
@@ -174,7 +174,7 @@ export function formatSetupError(error, stepId) {
       message: raw,
       links: [ZATCA_LINKS.zatcaGuide],
       hint:
-        "Clearance API is for Standard (B2B) tax invoices. DukkanPOS retail sales use Simplified invoices via the Reporting API. " +
+        "Clearance API is for Standard (B2B) tax invoices. Dukkan POS retail sales use Simplified invoices via the Reporting API. " +
         "The Clearance test now generates a standard invoice with sandbox buyer VAT 301121971500003.",
     };
   }

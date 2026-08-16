@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import Sidebar from "../components/layout/Sidebar";
 import ZatcaSyncIndicator from "../components/zatca/ZatcaSyncIndicator";
 import SubscriptionBlocked from "../components/subscriptions/SubscriptionBlocked";
@@ -10,8 +9,6 @@ import { useSubscription } from "../hooks/useSubscription";
 import { LoadingSpinner } from "../components/common/Loading";
 import { settingsService } from "../services/SettingsService";
 import { ACTIVATION_SETTING_KEYS } from "../utils/activationConfig";
-import { isDesktopApp } from "../utils/environment";
-import { isPrintSessionActive } from "../utils/printGuard";
 import "./MainLayout.css";
 
 export default function MainLayout() {
@@ -37,27 +34,6 @@ export default function MainLayout() {
 
     setWelcomeOpen(true);
   }, [location.pathname, location.state?.showWelcome, navigate, settings]);
-
-  useEffect(() => {
-    if (!isDesktopApp()) return undefined;
-
-    let unlisten;
-    (async () => {
-      try {
-        unlisten = await getCurrentWebviewWindow().onCloseRequested((event) => {
-          if (isPrintSessionActive()) {
-            event.preventDefault();
-          }
-        });
-      } catch {
-        // Ignore — browser dev mode or older runtime.
-      }
-    })();
-
-    return () => {
-      unlisten?.();
-    };
-  }, []);
 
   async function handleWelcomeContinue() {
     setWelcomeOpen(false);

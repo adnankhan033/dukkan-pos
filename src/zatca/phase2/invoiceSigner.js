@@ -158,7 +158,7 @@ function buildEgsInfo(config, { production = false } = {}) {
   const info = {
     uuid: resolveEgsUuid(config),
     custom_id: config.device?.id || config.device?.serial || "EGS-001",
-    model: config.device?.model || "DukkanPOS",
+    model: config.device?.model || "Dukkan POS",
     CRN_number: normalizeCrnNumber(config.company?.crNumber, config.environment),
     VAT_name: config.company?.name || "Store",
     VAT_number: resolveInvoiceVatNumber(config, { production }),
@@ -234,7 +234,7 @@ export async function signZatcaInvoice(
   { production = false, invoiceKind = "simplified" } = {}
 ) {
   if (!isTauri()) {
-    throw new Error("Invoice signing requires the DukkanPOS desktop app.");
+    throw new Error("Invoice signing requires the Dukkan POS desktop app.");
   }
 
   const privateKey = config.credentials?.privateKey?.trim();

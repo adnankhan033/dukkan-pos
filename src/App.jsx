@@ -3,6 +3,7 @@ import { useDatabaseInit } from "./hooks/useDatabaseInit";
 import { useTheme } from "./hooks/useTheme";
 import { isDesktopApp } from "./utils/environment";
 import AppRoutes from "./routes/AppRoutes";
+import AppCloseGuard from "./components/layout/AppCloseGuard";
 import BrowserNotice from "./components/common/BrowserNotice";
 import { LoadingSpinner, Alert } from "./components/common/Loading";
 import { ToastProvider } from "./contexts/ToastContext";
@@ -20,10 +21,14 @@ function DesktopApp() {
   }
 
   if (!dbReady) {
-    return <LoadingSpinner message="Initializing DukkanPOS..." />;
+    return <LoadingSpinner message="Initializing Dukkan POS..." />;
   }
 
-  return <AppRoutes />;
+  return (
+    <AppCloseGuard>
+      <AppRoutes />
+    </AppCloseGuard>
+  );
 }
 
 export default function App() {

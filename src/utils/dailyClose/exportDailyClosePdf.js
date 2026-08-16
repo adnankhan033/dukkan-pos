@@ -185,7 +185,7 @@ export function exportDailyClosePdf({ data, company, currency, closeRecord = nul
 
   const footerY = doc.internal.pageSize.getHeight() - 8;
   doc.setFontSize(8);
-  doc.text("Daily Close Report · DukkanPOS", margin, footerY);
+  doc.text("Daily Close Report · Dukkan POS", margin, footerY);
   doc.text(`Confidential · ${company.generatedAt}`, pageWidth - margin, footerY, { align: "right" });
 
   const filename = `daily-close-${data.date}-${timestampSlug()}.pdf`;

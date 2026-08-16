@@ -66,7 +66,7 @@ function buildFormFromSettings(settings) {
     currency: settings.currency || "SAR",
     receipt_footer: settings.receipt_footer || "",
     receipt_footer_ar: settings.receipt_footer_ar || "",
-    receipt_branding: settings.receipt_branding || "DukkanPOS",
+    receipt_branding: settings.receipt_branding || "Dukkan POS",
     receipt_show_qr: settingBool(settings.receipt_show_qr),
     receipt_show_bilingual: settingBool(settings.receipt_show_bilingual),
     receipt_show_tax_info: settingBool(settings.receipt_show_tax_info),
@@ -809,7 +809,7 @@ export default function Settings() {
                   label="Powered by (receipt branding)"
                   value={form.receipt_branding}
                   onChange={(e) => updateField("receipt_branding", e.target.value)}
-                  placeholder="DukkanPOS"
+                  placeholder="Dukkan POS"
                 />
               </div>
               <p className="settings-section-desc" style={{ marginTop: "1rem" }}>

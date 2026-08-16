@@ -98,13 +98,13 @@ export default function Sidebar() {
       <div className="sidebar-brand">
         <div className="sidebar-brand-icon">D</div>
         <div className="sidebar-brand-text">
-          <h2>{settings.store_name || "DukkanPOS"}</h2>
+          <h2>{settings.store_name || "Dukkan POS"}</h2>
           {settings.store_name_ar && (
             <p className="sidebar-brand-ar" dir="rtl">
               {settings.store_name_ar}
             </p>
           )}
-          <span className="sidebar-brand-version">DukkanPOS v1.0</span>
+          <span className="sidebar-brand-version">Dukkan POS v1.0</span>
         </div>
       </div>
 
