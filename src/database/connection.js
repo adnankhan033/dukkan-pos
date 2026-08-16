@@ -189,12 +189,41 @@ async function runMigrations() {
   await ensureReceiptTemplateDefault();
   await ensureBackupLogsSchema();
   await ensureDailyClosesSchema();
+  await ensureVatPricingSchema();
   await ensureSettingsKeys();
   await ensureDashboardPerformanceIndexes();
   await migrateUtcTimestampsToBusinessTimezone();
   await migrateSalesTimestampsToIsoUtc();
   await fixSalesUtcTimestampsForRiyadh();
   await migrateSalesTimestampsToBusinessWallV4();
+}
+
+async function ensureVatPricingSchema() {
+  const cols = await getProductColumns();
+  const hasCol = (name) => cols.some((c) => c.name === name);
+
+  if (!hasCol("tax_category")) {
+    await execute(
+      "ALTER TABLE products ADD COLUMN tax_category TEXT NOT NULL DEFAULT 'standard'"
+    );
+  }
+  if (!hasCol("vat_rate")) {
+    await execute("ALTER TABLE products ADD COLUMN vat_rate REAL");
+  }
+  if (!hasCol("vat_included")) {
+    await execute("ALTER TABLE products ADD COLUMN vat_included INTEGER");
+  }
+
+  const existing = await queryOne(
+    "SELECT value FROM settings WHERE key = 'vat_included' LIMIT 1"
+  );
+  if (!existing) {
+    const productCount = await queryOne("SELECT COUNT(*) AS c FROM products");
+    const legacyCatalog = Number(productCount?.c) > 0;
+    await execute("INSERT INTO settings (key, value) VALUES ('vat_included', $1)", [
+      legacyCatalog ? "0" : "1",
+    ]);
+  }
 }
 
 async function ensureZatcaColumn(table, column, definition) {

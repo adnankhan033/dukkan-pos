@@ -31,7 +31,13 @@ import PosProductEditModal from "../components/sales/PosProductEditModal";
 import ProductBilingualName from "../components/products/ProductBilingualName";
 import { LoadingSpinner } from "../components/common/Loading";
 import { notify } from "../utils/notify";
-import { formatCurrency, calcVat, calcGrandTotal, formatQuantity } from "../utils/format";
+import { formatCurrency, formatQuantity } from "../utils/format";
+import {
+  buildCartLineFromProduct,
+  calcCartTotals,
+  cartItemDisplayLineTotal,
+  cartItemDisplayUnitPrice,
+} from "../utils/vatPricing";
 import { printReceipt } from "../utils/receipt";
 import { PAYMENT_METHODS, SALE_STATUS, POS_TOP_SELLERS_LIMIT } from "../utils/constants";
 import { resolveActivePhase } from "../zatca/core/config";
@@ -190,29 +196,19 @@ export default function Sales() {
     setCart((prev) => {
       const existing = prev.find((i) => i.product_id === product.id);
       if (existing) {
+        const quantity = existing.quantity + 1;
         return prev.map((i) =>
           i.product_id === product.id
             ? {
                 ...i,
-                quantity: i.quantity + 1,
-                total: (i.quantity + 1) * i.unit_price,
+                quantity,
+                total: i.unit_price * quantity,
+                shelf_line_total: i.shelf_unit_price * quantity,
               }
             : i
         );
       }
-      return [
-        ...prev,
-        {
-          product_id: product.id,
-          name: product.name,
-          name_ar: product.name_ar || "",
-          unit_symbol: product.unit_symbol || "pcs",
-          unit_price: product.selling_price,
-          quantity: 1,
-          discount: 0,
-          total: product.selling_price,
-        },
-      ];
+      return [...prev, buildCartLineFromProduct(product, settings, 1)];
     });
     focusSearch();
   }
@@ -224,7 +220,12 @@ export default function Sales() {
           if (i.product_id !== productId) return i;
           const qty = i.quantity + delta;
           if (qty <= 0) return null;
-          return { ...i, quantity: qty, total: qty * i.unit_price };
+          return {
+            ...i,
+            quantity: qty,
+            total: qty * i.unit_price,
+            shelf_line_total: qty * i.shelf_unit_price,
+          };
         })
         .filter(Boolean)
     );
@@ -240,9 +241,13 @@ export default function Sales() {
     setCashReceived("");
   }
 
-  const subtotal = cart.reduce((s, i) => s + i.total, 0);
-  const vat = calcVat(subtotal, Number(discount), vatPercent);
-  const grandTotal = calcGrandTotal(subtotal, Number(discount), vat);
+  const cartTotals = useMemo(
+    () => calcCartTotals(cart, Number(discount)),
+    [cart, discount]
+  );
+  const subtotal = cartTotals.subtotal;
+  const vat = cartTotals.vat;
+  const grandTotal = cartTotals.total;
   const received = Number(cashReceived) || 0;
   const changeDue = Math.max(0, received - grandTotal);
   const balanceDue = Math.max(0, grandTotal - received);
@@ -273,6 +278,9 @@ export default function Sales() {
               name_ar: updated.name_ar,
               barcode: updated.barcode,
               selling_price: updated.selling_price,
+              tax_category: updated.tax_category,
+              vat_rate: updated.vat_rate,
+              vat_included: updated.vat_included,
               unit_symbol: updated.unit_symbol || p.unit_symbol,
               category_name: updated.category_name ?? p.category_name,
               quantity: updated.quantity ?? p.quantity,
@@ -286,18 +294,11 @@ export default function Sales() {
 
   function applyProductUpdateToCart(updated) {
     setCart((prev) =>
-      prev.map((item) =>
-        item.product_id === updated.id
-          ? {
-              ...item,
-              name: updated.name,
-              name_ar: updated.name_ar,
-              unit_price: updated.selling_price,
-              unit_symbol: updated.unit_symbol || item.unit_symbol,
-              total: item.quantity * updated.selling_price,
-            }
-          : item
-      )
+      prev.map((item) => {
+        if (item.product_id !== updated.id) return item;
+        const line = buildCartLineFromProduct(updated, settings, item.quantity);
+        return { ...line, discount: item.discount || 0 };
+      })
     );
   }
 
@@ -773,7 +774,7 @@ export default function Sales() {
                         )}
                       </div>
                       <div className="pos-cart-item-price">
-                        {formatCurrency(item.unit_price, currency)} each
+                        {formatCurrency(cartItemDisplayUnitPrice(item), currency)} each
                       </div>
                     </div>
                     <div className="pos-cart-item-footer">
@@ -798,7 +799,9 @@ export default function Sales() {
                           <Plus size={14} />
                         </button>
                       </div>
-                      <strong className="pos-line-total">{formatCurrency(item.total, currency)}</strong>
+                      <strong className="pos-line-total">
+                        {formatCurrency(cartItemDisplayLineTotal(item), currency)}
+                      </strong>
                       <button
                         type="button"
                         className="pos-remove-btn"
@@ -815,7 +818,7 @@ export default function Sales() {
 
             <div className="pos-cart-summary">
               <div className="pos-summary-row">
-                <span>Subtotal</span>
+                <span>Subtotal (excl. VAT)</span>
                 <span>{formatCurrency(subtotal, currency)}</span>
               </div>
               <div className="pos-summary-row pos-summary-discount">
@@ -829,7 +832,7 @@ export default function Sales() {
                 />
               </div>
               <div className="pos-summary-row">
-                <span>VAT ({vatPercent}%)</span>
+                <span>VAT</span>
                 <span>{formatCurrency(vat, currency)}</span>
               </div>
               <div className="pos-summary-row pos-summary-grand">

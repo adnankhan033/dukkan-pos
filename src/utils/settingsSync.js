@@ -10,6 +10,7 @@ export const LOCAL_STORE_SETTING_KEYS = [
   "cr_number",
   "vat_registration",
   "vat_percent",
+  "vat_included",
   "currency",
   "business_timezone",
   "business_date_override",

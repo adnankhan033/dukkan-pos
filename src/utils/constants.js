@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS = {
   cr_number: "",
   vat_registration: "",
   vat_percent: "15",
+  vat_included: "1",
   currency: "SAR",
   receipt_footer: "Thank You",
   receipt_footer_ar: "شكراً لكم",

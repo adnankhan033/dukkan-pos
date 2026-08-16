@@ -10,7 +10,9 @@ import Button from "../common/Button";
 import { Input } from "../common/Input";
 import SearchableSelect from "../common/SearchableSelect";
 import ProductNameFields from "../products/ProductNameFields";
+import ProductVatFields from "../products/ProductVatFields";
 import ProductBarcodeScanner from "../products/ProductBarcodeScanner";
+import { VAT_PRICE_TYPE, vatIncludedToPriceType } from "../../utils/vatPricing";
 import FormValidationAlert from "../common/FormValidationAlert";
 import { LoadingSpinner } from "../common/Loading";
 import { required, positiveNumber, runFormValidation } from "../../utils/validation";
@@ -28,6 +30,9 @@ const emptyForm = {
   supplier_id: "",
   cost_price: "",
   selling_price: "",
+  tax_category: "standard",
+  vat_rate: "",
+  vat_price_type: VAT_PRICE_TYPE.INHERIT,
   quantity: "",
   min_stock: "",
   published: true,
@@ -45,6 +50,9 @@ function productToForm(row) {
     supplier_id: row.supplier_id ? String(row.supplier_id) : "",
     cost_price: String(row.cost_price ?? ""),
     selling_price: String(row.selling_price ?? ""),
+    tax_category: row.tax_category || "standard",
+    vat_rate: row.vat_rate != null ? String(row.vat_rate) : "",
+    vat_price_type: vatIncludedToPriceType(row.vat_included),
     quantity: String(row.quantity ?? ""),
     min_stock: String(row.min_stock ?? ""),
     published: Boolean(Number(row.published ?? 1)),
@@ -249,6 +257,14 @@ export default function PosProductEditModal({ isOpen, productId, currency = "SAR
           name_ar: payload.name_ar || "",
           barcode: payload.barcode?.trim() || "",
           selling_price: Number(form.selling_price),
+          tax_category: form.tax_category || "standard",
+          vat_rate: form.vat_rate === "" ? null : Number(form.vat_rate),
+          vat_included:
+            form.vat_price_type === VAT_PRICE_TYPE.INCLUSIVE
+              ? 1
+              : form.vat_price_type === VAT_PRICE_TYPE.EXCLUSIVE
+                ? 0
+                : null,
           unit_symbol: unit?.symbol || product.unit_symbol || "pcs",
           category_name: category?.name || product.category_name || "",
           quantity: Number(form.quantity) || 0,
@@ -419,6 +435,8 @@ export default function PosProductEditModal({ isOpen, productId, currency = "SAR
               autoComplete="off"
             />
           </div>
+
+          <ProductVatFields form={form} currency={currency} onChange={updateForm} />
 
           <label className="publish-checkbox-row">
             <input

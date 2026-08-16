@@ -27,7 +27,9 @@ import { formatCurrency, formatQuantity } from "../utils/format";
 import { required, positiveNumber, runFormValidation } from "../utils/validation";
 import { translateToArabic } from "../utils/translate";
 import ProductNameFields from "../components/products/ProductNameFields";
+import ProductVatFields from "../components/products/ProductVatFields";
 import ProductBarcodeScanner from "../components/products/ProductBarcodeScanner";
+import { VAT_PRICE_TYPE, vatIncludedToPriceType } from "../utils/vatPricing";
 import ProductImportExportModal from "../components/products/ProductImportExportModal";
 import FormValidationAlert from "../components/common/FormValidationAlert";
 import "./Products.css";
@@ -44,6 +46,9 @@ const emptyForm = {
   supplier_id: "",
   cost_price: "",
   selling_price: "",
+  tax_category: "standard",
+  vat_rate: "",
+  vat_price_type: VAT_PRICE_TYPE.INHERIT,
   quantity: "",
   min_stock: "",
   published: true,
@@ -149,6 +154,9 @@ export default function Products() {
       supplier_id: product.supplier_id ? String(product.supplier_id) : "",
       cost_price: String(product.cost_price),
       selling_price: String(product.selling_price),
+      tax_category: product.tax_category || "standard",
+      vat_rate: product.vat_rate != null ? String(product.vat_rate) : "",
+      vat_price_type: vatIncludedToPriceType(product.vat_included),
       quantity: String(product.quantity),
       min_stock: String(product.min_stock),
       published: Boolean(Number(product.published ?? 1)),
@@ -698,6 +706,12 @@ export default function Products() {
             <Input label="Quantity " type="number" min={0} value={form.quantity} onChange={(e) => { setForm({ ...form, quantity: e.target.value }); setErrors((p) => ({ ...p, quantity: undefined, form: undefined })); }} error={errors.quantity} />
             <Input label="Min Stock" type="number" min={0} value={form.min_stock} onChange={(e) => { setForm({ ...form, min_stock: e.target.value }); setErrors((p) => ({ ...p, min_stock: undefined, form: undefined })); }} error={errors.min_stock} />
           </div>
+
+          <ProductVatFields
+            form={form}
+            currency={currency}
+            onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
+          />
 
           <label className="publish-checkbox-row">
             <input

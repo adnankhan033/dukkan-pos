@@ -35,7 +35,8 @@ export function buildSimplifiedInvoicePayload({ sale, items, config, production 
       quantity: item.quantity,
       unitPrice: item.unit_price,
       total: item.total,
-      vatRate: config.vatPercent,
+      vatRate: item.vat_rate ?? item.vatRate ?? config.vatPercent,
+      taxCategory: item.tax_category || "standard",
     })),
     totals: {
       subtotal: sale.subtotal,

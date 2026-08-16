@@ -62,6 +62,7 @@ function buildFormFromSettings(settings) {
     cr_number: settings.cr_number || "",
     vat_registration: settings.vat_registration || "",
     vat_percent: settings.vat_percent || "15",
+    vat_included: settingBool(settings.vat_included ?? "1"),
     currency: settings.currency || "SAR",
     receipt_footer: settings.receipt_footer || "",
     receipt_footer_ar: settings.receipt_footer_ar || "",
@@ -110,6 +111,7 @@ function formToSettings(form) {
     cr_number: form.cr_number,
     vat_registration: form.vat_registration,
     vat_percent: form.vat_percent,
+    vat_included: form.vat_included ? "1" : "0",
     currency: form.currency,
     receipt_footer: form.receipt_footer,
     receipt_footer_ar: form.receipt_footer_ar,
@@ -650,6 +652,18 @@ export default function Settings() {
                 <Input label="VAT %" type="number" step="0.01" value={form.vat_percent} onChange={(e) => updateField("vat_percent", e.target.value)} />
                 <Input label="Currency" value={form.currency} onChange={(e) => updateField("currency", e.target.value)} />
               </div>
+              <label className="settings-check" style={{ marginTop: "1rem" }}>
+                <input
+                  type="checkbox"
+                  checked={form.vat_included}
+                  onChange={(e) => updateField("vat_included", e.target.checked)}
+                />
+                Prices include VAT (recommended for Saudi retail)
+              </label>
+              <p className="settings-section-desc" style={{ marginTop: "0.35rem" }}>
+                When enabled, product selling prices are shelf prices customers pay. VAT is extracted
+                using price × rate ÷ (100 + rate), e.g. 11.50 SAR at 15% → 10.00 net + 1.50 VAT.
+              </p>
             </Card>
             <Card className="settings-card">
               <h3 className="settings-section-title">Business Region & Time</h3>

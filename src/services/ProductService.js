@@ -1,10 +1,12 @@
 import { query, queryOne, execute, insert } from "../database/connection";
 import { invalidateDashboardCache } from "./DashboardCache";
 import { useAuthStore } from "../contexts/store";
+import { priceTypeToVatIncluded } from "../utils/vatPricing";
 
 const LIST_COLUMNS = `
   p.id, p.name, p.name_ar, p.sku, p.barcode, p.category_id, p.unit_id, p.supplier_id,
-  p.cost_price, p.selling_price, p.quantity, p.min_stock, p.published, p.created_by,
+  p.cost_price, p.selling_price, p.tax_category, p.vat_rate, p.vat_included,
+  p.quantity, p.min_stock, p.published, p.created_by,
   p.created_at, p.updated_at,
   CASE WHEN p.image IS NOT NULL AND p.image != '' THEN 1 ELSE 0 END AS has_image,
   c.name AS category_name,
@@ -21,6 +23,17 @@ const BASE_JOINS = `
 const SUPPLIER_JOIN = `LEFT JOIN suppliers s ON p.supplier_id = s.id`;
 
 const PRODUCT_JOINS = `${BASE_JOINS} ${SUPPLIER_JOIN}`;
+
+function normalizeProductVatFields(data = {}) {
+  const taxCategory = data.tax_category || "standard";
+  const vatRate =
+    data.vat_rate === "" || data.vat_rate == null ? null : Number(data.vat_rate);
+  const vatIncluded =
+    data.vat_included !== undefined
+      ? data.vat_included
+      : priceTypeToVatIncluded(data.vat_price_type);
+  return { taxCategory, vatRate, vatIncluded };
+}
 
 class ProductService {
   async getAll({
@@ -67,7 +80,8 @@ class ProductService {
 
   async getPosCatalog(limit = 500) {
     return query(
-      `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity, p.category_id,
+      `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity,
+              p.tax_category, p.vat_rate, p.vat_included, p.category_id,
               c.name AS category_name, u.symbol AS unit_symbol
        FROM products p
        ${BASE_JOINS}
@@ -81,7 +95,8 @@ class ProductService {
   /** Top-selling published products for POS quick-pick grid (all-time completed sales). */
   async getTopSellingForPos(limit = 10) {
     const top = await query(
-      `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity, p.category_id,
+      `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity,
+              p.tax_category, p.vat_rate, p.vat_included, p.category_id,
               c.name AS category_name, u.symbol AS unit_symbol,
               COALESCE(SUM(si.quantity), 0) AS units_sold
        FROM products p
@@ -99,7 +114,8 @@ class ProductService {
 
     const existingIds = new Set(top.map((row) => row.id));
     const filler = await query(
-      `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity, p.category_id,
+      `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity,
+              p.tax_category, p.vat_rate, p.vat_included, p.category_id,
               c.name AS category_name, u.symbol AS unit_symbol, 0 AS units_sold
        FROM products p
        ${BASE_JOINS}
@@ -164,9 +180,10 @@ class ProductService {
     const unitId = await this.resolveUnitId(data.unit_id);
     const supplierId = await this.resolveSupplierId(data.supplier_id);
     const createdBy = useAuthStore.getState().user?.id ?? null;
+    const { taxCategory, vatRate, vatIncluded } = normalizeProductVatFields(data);
     const id = await insert(
-      `INSERT INTO products (name, name_ar, sku, barcode, category_id, unit_id, supplier_id, cost_price, selling_price, quantity, min_stock, image, published, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+      `INSERT INTO products (name, name_ar, sku, barcode, category_id, unit_id, supplier_id, cost_price, selling_price, tax_category, vat_rate, vat_included, quantity, min_stock, image, published, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
       [
         data.name,
         data.name_ar || null,
@@ -177,6 +194,9 @@ class ProductService {
         supplierId,
         Number(data.cost_price) || 0,
         Number(data.selling_price) || 0,
+        taxCategory,
+        vatRate,
+        vatIncluded,
         Number(data.quantity) || 0,
         Number(data.min_stock) || 0,
         data.image || null,
@@ -201,13 +221,16 @@ class ProductService {
     const unitId = await this.resolveUnitId(data.unit_id);
     const supplierId = await this.resolveSupplierId(data.supplier_id);
 
+    const { taxCategory, vatRate, vatIncluded } = normalizeProductVatFields(data);
+
     if (data.image !== undefined) {
       await execute(
         `UPDATE products SET
           name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5, unit_id = $6, supplier_id = $7,
-          cost_price = $8, selling_price = $9, quantity = $10, min_stock = $11,
-          published = $12, image = $13, updated_at = datetime('now')
-         WHERE id = $14`,
+          cost_price = $8, selling_price = $9, tax_category = $10, vat_rate = $11, vat_included = $12,
+          quantity = $13, min_stock = $14,
+          published = $15, image = $16, updated_at = datetime('now')
+         WHERE id = $17`,
         [
           data.name,
           data.name_ar || null,
@@ -218,6 +241,9 @@ class ProductService {
           supplierId,
           Number(data.cost_price) || 0,
           Number(data.selling_price) || 0,
+          taxCategory,
+          vatRate,
+          vatIncluded,
           Number(data.quantity) || 0,
           Number(data.min_stock) || 0,
           published,
@@ -229,9 +255,10 @@ class ProductService {
       await execute(
         `UPDATE products SET
           name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5, unit_id = $6, supplier_id = $7,
-          cost_price = $8, selling_price = $9, quantity = $10, min_stock = $11,
-          published = $12, updated_at = datetime('now')
-         WHERE id = $13`,
+          cost_price = $8, selling_price = $9, tax_category = $10, vat_rate = $11, vat_included = $12,
+          quantity = $13, min_stock = $14,
+          published = $15, updated_at = datetime('now')
+         WHERE id = $16`,
         [
           data.name,
           data.name_ar || null,
@@ -242,6 +269,9 @@ class ProductService {
           supplierId,
           Number(data.cost_price) || 0,
           Number(data.selling_price) || 0,
+          taxCategory,
+          vatRate,
+          vatIncluded,
           Number(data.quantity) || 0,
           Number(data.min_stock) || 0,
           published,

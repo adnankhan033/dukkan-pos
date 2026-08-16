@@ -1,0 +1,19 @@
+.product-vat-fields {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--color-border);
+}
+
+.product-vat-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.product-vat-preview {
+  margin: 0.35rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-primary);
+  font-weight: 500;
+}
