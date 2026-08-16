@@ -4,7 +4,8 @@ import { unitService } from "./UnitService";
 import { invalidateDashboardCache } from "./DashboardCache";
 import { PRODUCT_IMPORT_BATCH_SIZE } from "../utils/constants";
 import { IMPORT_MODES } from "../utils/productImport/validate";
-import { templateHeaders, templateSampleRows } from "../utils/productImport/columns";
+import { templateHeaders, templateSampleRows, PRODUCT_IMPORT_COLUMNS } from "../utils/productImport/columns";
+import { vatIncludedToPriceType } from "../utils/vatPricing";
 import { rowsToCsv } from "../utils/productImport/csv";
 import {
   buildExcelWorkbook,
@@ -12,20 +13,7 @@ import {
   workbookToArrayBuffer,
 } from "../utils/productImport/excel";
 
-const EXPORT_HEADERS = [
-  "name",
-  "name_ar",
-  "sku",
-  "barcode",
-  "category",
-  "unit",
-  "supplier",
-  "cost_price",
-  "selling_price",
-  "quantity",
-  "min_stock",
-  "published",
-];
+const EXPORT_HEADERS = PRODUCT_IMPORT_COLUMNS.map((col) => col.label);
 
 class ProductImportService {
   async ensureImportLogsTable() {
@@ -184,8 +172,8 @@ class ProductImportService {
 
   async insertProduct(parsed, categoryId, unitId, supplierId) {
     return insert(
-      `INSERT INTO products (name, name_ar, sku, barcode, category_id, unit_id, supplier_id, cost_price, selling_price, quantity, min_stock, published)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      `INSERT INTO products (name, name_ar, sku, barcode, category_id, unit_id, supplier_id, cost_price, selling_price, tax_category, vat_rate, vat_included, quantity, min_stock, published)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         parsed.name,
         parsed.name_ar,
@@ -196,6 +184,9 @@ class ProductImportService {
         supplierId,
         parsed.cost_price,
         parsed.selling_price,
+        parsed.tax_category || "standard",
+        parsed.vat_rate,
+        parsed.vat_included,
         parsed.quantity,
         parsed.min_stock,
         parsed.published,
@@ -207,9 +198,10 @@ class ProductImportService {
     await execute(
       `UPDATE products SET
         name = $1, name_ar = $2, sku = $3, barcode = $4, category_id = $5, unit_id = $6, supplier_id = $7,
-        cost_price = $8, selling_price = $9, quantity = $10, min_stock = $11,
-        published = $12, updated_at = datetime('now')
-       WHERE id = $13`,
+        cost_price = $8, selling_price = $9, tax_category = $10, vat_rate = $11, vat_included = $12,
+        quantity = $13, min_stock = $14,
+        published = $15, updated_at = datetime('now')
+       WHERE id = $16`,
       [
         parsed.name,
         parsed.name_ar,
@@ -220,6 +212,9 @@ class ProductImportService {
         supplierId,
         parsed.cost_price,
         parsed.selling_price,
+        parsed.tax_category || "standard",
+        parsed.vat_rate,
+        parsed.vat_included,
         parsed.quantity,
         parsed.min_stock,
         parsed.published,
@@ -385,7 +380,8 @@ class ProductImportService {
     return query(
       `SELECT p.name, p.name_ar, p.sku, p.barcode, c.name AS category,
               u.symbol AS unit, s.company AS supplier,
-              p.cost_price, p.selling_price, p.quantity, p.min_stock, p.published
+              p.cost_price, p.selling_price, p.tax_category, p.vat_rate, p.vat_included,
+              p.quantity, p.min_stock, p.published
        FROM products p
        LEFT JOIN categories c ON p.category_id = c.id
        LEFT JOIN units u ON p.unit_id = u.id
@@ -405,6 +401,9 @@ class ProductImportService {
       p.supplier || "",
       Number(p.cost_price ?? 0).toFixed(2),
       Number(p.selling_price ?? 0).toFixed(2),
+      p.tax_category || "standard",
+      p.vat_rate != null && p.vat_rate !== "" ? String(p.vat_rate) : "",
+      vatIncludedToPriceType(p.vat_included),
       String(p.quantity ?? 0),
       String(p.min_stock ?? 0),
       Number(p.published ?? 1) === 1 ? "yes" : "no",

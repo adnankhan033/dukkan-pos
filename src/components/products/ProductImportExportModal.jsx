@@ -358,7 +358,7 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
       const downloaded = downloadText(result.content, result.filename);
       return {
         ...downloaded,
-        detail: "3 example products · 12 columns",
+        detail: `3 example products · ${PRODUCT_IMPORT_COLUMNS.length} columns`,
       };
     });
   }
@@ -444,7 +444,7 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
             <div className="pie-export">
               <p className="pie-help">
                 Export your full catalogue with all product fields — English &amp; Arabic names, SKU, barcode,
-                category, unit, supplier, prices, stock, and published status (UTF-8).
+                category, unit, supplier, prices, VAT settings, stock, and published status (UTF-8).
               </p>
               <div className="pie-export-actions">
                 <Button

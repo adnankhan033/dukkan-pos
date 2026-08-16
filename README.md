@@ -1,6 +1,6 @@
 # DukkanPOS
 
-A desktop Point of Sale (POS) application built for retail stores in Saudi Arabia. DukkanPOS runs offline on your computer, supports bilingual (English / Arabic) receipts, VAT, inventory, suppliers, accounting, role-based access control, advanced reporting, and optional **ZATCA** e-invoicing (Phase 1 and Phase 2).
+A desktop Point of Sale (POS) application built for retail stores and baqalas in Saudi Arabia. DukkanPOS runs offline on your computer, supports bilingual (English / Arabic) receipts, **VAT-inclusive shelf pricing**, inventory, suppliers, accounting, role-based access control, advanced reporting, and optional **ZATCA** e-invoicing (Phase 1 and Phase 2).
 
 **Stack:** Tauri 2 · React 19 · Vite · SQLite (local database)
 
@@ -103,10 +103,6 @@ One-time setup:
 
 ```bash
 bun run setup:win-cross
-# or manually:
-# brew install makensis llvm
-# rustup target add x86_64-pc-windows-msvc
-# cargo install cargo-xwin --locked
 ```
 
 Then build:
@@ -140,7 +136,6 @@ Icons are written to `src-tauri/icons/`. Keep `tauri.conf.json` pointing at `ico
 | Role | Username | Password | Default access |
 |------|----------|----------|----------------|
 | Administrator | `admin` | `9042@admin02` | Full access (configurable) |
-<!-- | Cashier | `cashier` | `cashier123` | Dashboard, Sales, Reports (configurable) | -->
 
 > Change default passwords after first login via **Administration → Users**.
 
@@ -151,9 +146,9 @@ Icons are written to `src-tauri/icons/`. Keep `tauri.conf.json` pointing at `ico
 | Module | Purpose |
 |--------|---------|
 | **Dashboard** | Today's sales, returns, stock alerts, profit, smart insights |
-| **Sales (POS)** | Checkout, barcode scan, cash/card, hold & resume, returns |
+| **Sales (POS)** | Checkout, barcode scan, VAT-inclusive pricing, cash/card, hold & resume, returns |
 | **Orders** | Sales history, reprint, returns, ZATCA sync status, date filters |
-| **Products** | Products, categories, units, import/export Excel |
+| **Products** | Products, categories, units, import/export CSV & Excel |
 | **Inventory** | Stock levels, low/out filters, manual adjustments |
 | **Customers** | Customer directory, export to Excel/PDF |
 | **Suppliers** | Supplier accounts, credit balances, purchases |
@@ -161,8 +156,93 @@ Icons are written to `src-tauri/icons/`. Keep `tauri.conf.json` pointing at `ico
 | **Reports** | Advanced profit analytics with date range filters |
 | **Subscriptions** | Subscription management |
 | **Users** | Admin and cashier accounts |
-| **Settings** | Store info, receipts, ZATCA, modules, backup |
+| **Settings** | Store info, VAT, receipts, ZATCA, modules, backup |
 | **ZATCA** | Queue, daily sync, test center (Phase 2) |
+
+---
+
+## VAT & pricing (Saudi retail)
+
+DukkanPOS supports **VAT-inclusive shelf prices** — the normal approach for Saudi supermarkets and baqalas.
+
+### Store defaults (**Settings → Store**)
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| **VAT %** | 15 | Store-wide VAT rate |
+| **Prices include VAT** | Yes (new installs) | Selling price = customer-facing shelf price |
+
+When VAT-inclusive is enabled, VAT is extracted using:
+
+```
+VAT = price × rate ÷ (100 + rate)
+```
+
+**Example:** Pepsi shelf price **11.50 SAR** at 15% VAT → net **10.00** + VAT **1.50** = customer pays **11.50**.
+
+> **Existing stores** with products already entered keep VAT-exclusive behaviour until you enable **Prices include VAT** and update shelf prices.
+
+### Per-product settings (**Products → Add/Edit**)
+
+| Field | Options | Description |
+|-------|---------|-------------|
+| **Tax category** | Standard · Zero-rated · Exempt | VAT treatment for ZATCA |
+| **Price type** | Store default · Inclusive · Exclusive | Override store pricing mode |
+| **VAT rate override** | Optional % | Blank = use store VAT % |
+
+Cashiers never choose include/exclude at checkout — it follows store and product settings automatically.
+
+---
+
+## Product import & export
+
+**Products → Import / Export** supports CSV and Excel with **15 columns**:
+
+| Column | Required | Example | Notes |
+|--------|----------|---------|-------|
+| `name` | Yes | Pepsi 330ml | English product name |
+| `name_ar` | No | بيبسي ٣٣٠ مل | Arabic name |
+| `sku` | No | PEPSI-330 | Internal code; used for update matching |
+| `barcode` | No | 6281000123453 | Scanner lookup |
+| `category` | No | Beverages | Created automatically if missing |
+| `unit` | No | pcs | Must exist in **Settings → Units** |
+| `supplier` | No | Almarai Trading | Must exist in **Suppliers** |
+| `cost_price` | No | 8.50 | Purchase cost |
+| `selling_price` | Yes | 11.50 | Shelf price (inclusive when price type is inclusive) |
+| `tax_category` | No | standard | `standard` · `zero_rated` · `exempt` |
+| `vat_rate` | No | 15 | Optional override; blank = store rate |
+| `vat_price_type` | No | inclusive | `inherit` · `inclusive` · `exclusive` |
+| `quantity` | No | 120 | Opening stock |
+| `min_stock` | No | 24 | Low-stock alert |
+| `published` | No | yes | `yes` / `no` — visible in POS |
+
+Download **CSV Template** or **Excel Template** from the Import / Export modal — includes 3 example products (Pepsi inclusive, Milk inherit, Coffee zero-rated) and an Instructions sheet.
+
+**Import modes:** new only · update by SKU/barcode · skip duplicates · replace all.
+
+---
+
+## Receipts & invoices
+
+**Settings → Receipt** includes:
+
+- Saudi Baqala, Classic Thermal, and Compact 58mm templates
+- **Invoice sections** — show/hide each part (header, items, totals, QR, footer, etc.)
+- Bilingual labels, ZATCA QR, paper width, header note, footer text
+
+Store name, CR, and VAT registration come from **Settings → Store**.
+
+---
+
+## ZATCA e-invoicing
+
+**Settings → ZATCA** provides unified Phase 1 (QR on receipts) and Phase 2 (e-invoicing sync) setup:
+
+- Company details (name, CR, VAT, address)
+- **Business Information** — structured address fields (building, street, district, city, postal code) stored for future use
+- Device keys, CSR, compliance & production certificates
+
+See [docs/ZATCA_GUIDE.md](docs/ZATCA_GUIDE.md) for full setup steps.
 
 ---
 
@@ -178,31 +258,7 @@ Turn entire modules on or off for everyone.
 
 Choose which modules and individual menu items each role can access.
 
-**Example tree:**
-
-```
-Sales
-  ├── POS
-  ├── Orders
-  └── ZATCA Sync
-
-Products
-  ├── Products
-  ├── Categories
-  └── Units
-
-Administration (admin only)
-  ├── Users
-  ├── Settings
-  ├── ZATCA Queue
-  └── ZATCA Test Center
-```
-
-Permissions are enforced in:
-
-- Sidebar navigation (hidden items don't appear)
-- Route guards (direct URLs are blocked)
-- Post-login redirect (users land on their first allowed page)
+Permissions are enforced in sidebar navigation, route guards, and post-login redirect.
 
 Cashiers never see **User Management** or **Settings**, even if toggles are changed.
 
@@ -236,30 +292,16 @@ Cashiers never see **User Management** or **Settings**, even if toggles are chan
 | Purchases | Supplier purchases |
 | Inventory | Live stock snapshot (not date-filtered) |
 
-Includes a step-by-step **Profit Breakdown** panel (sales → returns → COGS → expenses → net profit).
-
----
-
-## Orders date filtering
-
-**Orders** supports the same style of date filtering as Reports:
-
-- Quick presets: **Today**, **This Week**, **This Month**, **Custom Range**
-- **From** / **To** date pickers with **Apply**
-- Stats cards (order count, sales total, returns, net) update with the selected period
-- Return status filters (All, No Returns, Partial, Full Return) work together with dates
-- Search by order #, customer, or payment method
-
 ---
 
 ## Recommended first-time setup
 
 1. Sign in as **admin**
-2. **Settings → Store** — store name (English/Arabic), address, CR, VAT number, currency, VAT %
-3. **Settings → Receipt** — receipt layout and preview
+2. **Settings → Store** — store name (EN/AR), address, phone, CR, VAT number, currency, VAT %, enable **Prices include VAT**
+3. **Settings → Receipt** — template, invoice sections, preview & test print
 4. **Settings → Modules** — enable/disable modules and menu items per role
 5. Add **Categories** and **Units** under Products
-6. Add **Products** (or import from Excel)
+6. Add **Products** manually or **Import / Export** from Excel (use the template)
 7. Create **Users** for cashiers
 8. Optional: **Settings → ZATCA** — enable Phase 1 or Phase 2
 9. **Settings → Backup** — download your first backup
@@ -284,15 +326,15 @@ dukkan-pos/
 ├── src/                    # React frontend
 │   ├── pages/              # Screen components (Sales, Orders, Reports, …)
 │   ├── components/         # Shared UI and feature components
-│   ├── services/           # SQLite data layer (SaleService, ReportService, …)
-│   ├── hooks/              # usePermissions, useVisibleNavGroups, …
-│   └── utils/              # modules.js, nav.js, format.js, …
+│   ├── services/           # SQLite data layer (SaleService, ProductImportService, …)
+│   ├── utils/              # vatPricing.js, productImport/, format.js, …
+│   └── zatca/              # ZATCA Phase 1 & 2 integration
 ├── src-tauri/              # Tauri / Rust backend
 │   ├── icons/              # App icons (generated from logo.svg)
 │   └── tauri.conf.json     # App name, window, bundle config
 ├── releases/               # Built installers (DMG, EXE)
 ├── scripts/                # Build helpers (copy-release, build-win-exe, …)
-└── data/                   # Sample import CSVs
+└── data/                   # Sample import CSVs / Excel files
 ```
 
 ---
@@ -303,13 +345,11 @@ dukkan-pos/
 
 ---
 
-## License
+## Developer notes
 
-Private project — DukkanPOS v1.0.0
+### Clear activation (reset device registration)
 
-
-## clear activations 
-
+```bash
 sqlite3 "$HOME/Library/Application Support/com.sharedtechadnan.dukkan-pos/dukkan_pos.db" "DELETE FROM settings WHERE key IN (
   'system_activation_key',
   'system_activation_status',
@@ -323,14 +363,10 @@ sqlite3 "$HOME/Library/Application Support/com.sharedtechadnan.dukkan-pos/dukkan
   'activation_customer_address',
   'system_hostname'
 );"
+```
 
+---
 
+## License
 
-## clear activations  Generated app password
-oaam phzn iqde qzql
-
-
-
-## Your super admin account:
- Username: admin
- Password: 9042@Admin02
+Private project — DukkanPOS v1.0.0
