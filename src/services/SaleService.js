@@ -418,7 +418,11 @@ class SaleService {
       ),
       query(
         `SELECT s.*, c.name AS customer_name,
-                (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS item_count
+                (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS item_count,
+                (SELECT GROUP_CONCAT(p.name || ' ×' || si.quantity, ', ')
+                 FROM sale_items si
+                 LEFT JOIN products p ON p.id = si.product_id
+                 WHERE si.sale_id = s.id) AS items_summary
          FROM sales s
          LEFT JOIN customers c ON s.customer_id = c.id
          ${where}
@@ -439,6 +443,43 @@ class SaleService {
   async getByPeriod(period = "today") {
     const result = await this.getByPeriodPaginated({ period, page: 1, limit: 100000 });
     return result.items;
+  }
+
+  /** All orders matching Orders page filters — for PDF export. */
+  async getOrdersExportData({
+    period = "today",
+    from = null,
+    to = null,
+    fromTime = null,
+    toTime = null,
+    returnFilter = "all",
+    search = "",
+    limit = 10000,
+  } = {}) {
+    const [result, stats] = await Promise.all([
+      this.getByPeriodPaginated({
+        period,
+        from,
+        to,
+        fromTime,
+        toTime,
+        returnFilter,
+        search,
+        page: 1,
+        limit,
+      }),
+      this.getPeriodStats(period, from, to, fromTime, toTime),
+    ]);
+
+    return {
+      orders: result.items,
+      total: result.total,
+      truncated: result.total > result.items.length,
+      stats: {
+        ...stats,
+        netTotal: Math.max(0, (stats.salesTotal ?? 0) - (stats.returnsTotal ?? 0)),
+      },
+    };
   }
 
   async getPeriodStats(period = "today", from = null, to = null, fromTime = null, toTime = null) {

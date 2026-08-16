@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarRange, ClipboardList, DollarSign, Eye, RefreshCw, RotateCcw, ShoppingBag, Trash2, ShieldAlert } from "lucide-react";
+import { CalendarRange, ClipboardList, DollarSign, Eye, FileDown, RefreshCw, RotateCcw, ShoppingBag, Trash2, ShieldAlert } from "lucide-react";
 import { saleService } from "../services/SaleService";
 import { zatcaService } from "../services/ZatcaService";
 import { ensureReturnSchema } from "../database/connection";
@@ -26,6 +26,9 @@ import { Alert, LoadingSpinner } from "../components/common/Loading";
 import { formatCurrency, formatDate, formatOrderDateTime } from "../utils/format";
 import { getBusinessDateISO, getBusinessPeriodDateRange } from "../utils/businessDate";
 import { printReceipt } from "../utils/receipt";
+import { buildReportCompanyProfile } from "../utils/directoryExport/companyProfile";
+import { exportOrdersPdf } from "../utils/ordersExport/exportOrdersPdf";
+import { downloadArrayBuffer } from "../utils/productImport/download";
 import "./Orders.css";
 
 const PERIOD_TABS = [
@@ -121,6 +124,7 @@ export default function Orders() {
   const [returnSaleId, setReturnSaleId] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const periodLabel = useMemo(
     () => formatOrdersPeriodLabel(period, from, to, fromTime, toTime),
@@ -323,6 +327,53 @@ export default function Orders() {
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(orders.map((order) => Number(order.id))));
+    }
+  }
+
+  async function handleExportPdf() {
+    setExportingPdf(true);
+    setError("");
+    setMessage("");
+    try {
+      const { orders: exportOrders, total, truncated, stats: exportStats } =
+        await saleService.getOrdersExportData({
+          period,
+          from,
+          to,
+          fromTime,
+          toTime,
+          returnFilter,
+          search: debouncedSearch,
+        });
+
+      if (total === 0) {
+        setError("No invoices to export for the selected period and filters.");
+        return;
+      }
+
+      const company = buildReportCompanyProfile(settings);
+      const result = await exportOrdersPdf({
+        orders: exportOrders,
+        company,
+        currency,
+        periodLabel,
+        returnFilter,
+        search: debouncedSearch,
+        stats: exportStats,
+        totalMatched: total,
+        truncated,
+      });
+
+      downloadArrayBuffer(result.buffer, result.filename, result.mimeType);
+
+      const truncNote = result.truncated
+        ? ` (first ${result.exportedCount} of ${result.totalMatched} — narrow the date range for full export)`
+        : "";
+      setMessage(`PDF downloaded — ${result.filename}${truncNote}`);
+    } catch (err) {
+      setError(err.message || "PDF export failed.");
+    } finally {
+      setExportingPdf(false);
     }
   }
 
@@ -570,6 +621,10 @@ export default function Orders() {
           >
             <RefreshCw size={16} className={loading ? "orders-spin" : ""} />
             Apply
+          </Button>
+          <Button variant="secondary" onClick={handleExportPdf} disabled={exportingPdf || loading}>
+            <FileDown size={16} />
+            {exportingPdf ? "Exporting…" : "Export PDF"}
           </Button>
         </div>
         <p className="orders-filter-timezone-note">
