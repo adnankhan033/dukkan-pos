@@ -3,8 +3,10 @@ import { categoryService } from "./CategoryService";
 import { unitService } from "./UnitService";
 import { supplierService } from "./SupplierService";
 import { invalidateDashboardCache } from "./DashboardCache";
+import { settingsService } from "./SettingsService";
 import { PRODUCT_IMPORT_BATCH_SIZE } from "../utils/constants";
 import { IMPORT_MODES } from "../utils/productImport/validate";
+import { applyImportVatDefaults } from "../utils/productImport/vatDefaults";
 import { templateHeaders, templateSampleRows, PRODUCT_IMPORT_COLUMNS } from "../utils/productImport/columns";
 import { findBestSupplierMatch, supplierLookupKey } from "../utils/productImport/supplierMatch";
 import { vatIncludedToPriceType } from "../utils/vatPricing";
@@ -302,6 +304,7 @@ class ProductImportService {
 
     let { skuIndex, barcodeIndex } = await this.getExistingIndex();
     const { unitIndex, supplierIndex, supplierList } = await this.getReferenceIndexes();
+    const storeSettings = await settingsService.getAll();
     const categoryCache = new Map();
     const supplierCache = new Map();
     const supplierStats = {
@@ -330,7 +333,7 @@ class ProductImportService {
           }
 
           try {
-            const parsed = row.parsed;
+            const parsed = applyImportVatDefaults(row.parsed, storeSettings);
             const existingId = await this.findProductId(parsed, skuIndex, barcodeIndex);
             const categoryId = await this.resolveCategoryId(parsed.category_name, categoryCache);
             const unitId = this.resolveUnitId(parsed.unit_name, unitIndex);

@@ -1,4 +1,6 @@
 /** Canonical product import/export column definitions (UTF-8). */
+import { IMPORT_VAT_DEFAULTS } from "./vatDefaults.js";
+
 export const PRODUCT_IMPORT_COLUMNS = [
   {
     key: "name",
@@ -218,9 +220,9 @@ export function rowToProduct(rawRow, headerMap) {
     supplier: get("supplier"),
     cost_price: get("cost_price"),
     selling_price: get("selling_price"),
-    tax_category: get("tax_category"),
+    tax_category: get("tax_category") || IMPORT_VAT_DEFAULTS.tax_category,
     vat_rate: get("vat_rate"),
-    vat_price_type: get("vat_price_type"),
+    vat_price_type: get("vat_price_type") || IMPORT_VAT_DEFAULTS.vat_price_type,
     quantity: get("quantity"),
     min_stock: get("min_stock"),
     published: get("published"),
