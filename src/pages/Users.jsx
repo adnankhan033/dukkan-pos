@@ -42,13 +42,19 @@ export default function Users() {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [alert, setAlert] = useState("");
+  const [loadError, setLoadError] = useState("");
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError("");
     try {
       const result = await userService.getAll({ page, limit: ITEMS_PER_PAGE, search });
       setUsers(result.items);
       setTotal(result.total);
+    } catch (err) {
+      setUsers([]);
+      setTotal(0);
+      setLoadError(err.message || "Could not load users");
     } finally {
       setLoading(false);
     }
@@ -76,7 +82,7 @@ export default function Users() {
       notes: user.notes || "",
       password: "",
       role: user.role || ROLES.CASHIER,
-      is_active: user.is_active !== 0,
+      is_active: Number(user.is_active ?? 1) !== 0,
     });
     setErrors({});
     setModalOpen(true);
@@ -153,8 +159,8 @@ export default function Users() {
       key: "is_active",
       label: "Status",
       render: (r) => (
-        <Badge variant={r.is_active === 0 ? "danger" : "success"}>
-          {r.is_active === 0 ? "Disabled" : "Active"}
+        <Badge variant={Number(r.is_active ?? 1) === 0 ? "danger" : "success"}>
+          {Number(r.is_active ?? 1) === 0 ? "Disabled" : "Active"}
         </Badge>
       ),
     },
@@ -187,6 +193,7 @@ export default function Users() {
       />
 
       {alert && <Alert type="success">{alert}</Alert>}
+      {loadError && <Alert>{loadError}</Alert>}
 
       <div style={{ marginBottom: "1rem" }}>
         <SearchBar

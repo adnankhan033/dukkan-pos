@@ -75,21 +75,6 @@
   margin-top: 0.2rem;
 }
 
-.sidebar-drupal-badge {
-  position: absolute;
-  top: 0.85rem;
-  right: 0.75rem;
-  padding: 0.2rem 0.45rem;
-  font-size: 0.5625rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: #fff;
-  background: linear-gradient(135deg, #0d9488, #14b8a6);
-  border-radius: 999px;
-  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.35);
-}
-
 /* ─── Navigation ─── */
 .sidebar-nav {
   flex: 1;

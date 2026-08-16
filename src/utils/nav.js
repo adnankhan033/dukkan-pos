@@ -83,7 +83,6 @@ export const NAV_GROUPS = [
       { id: "settings", path: "/settings", label: "Settings", module: "settings" },
       { id: "zatca-queue", path: "/zatca-queue", label: "ZATCA Queue", module: "settings" },
       { id: "zatca-test", path: "/zatca-test", label: "ZATCA Test Center", module: "settings" },
-      { id: "vendor-branding", path: "/vendor-branding", label: "Vendor Branding", module: "settings" },
     ],
   },
 ];

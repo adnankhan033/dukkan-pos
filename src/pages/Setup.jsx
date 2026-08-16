@@ -9,9 +9,12 @@ import { getDefaultRouteForUser } from "../utils/modules";
 import {
   ACTIVATION_RECIPIENT_EMAIL,
   ACTIVATION_SETTING_KEYS,
+  DEFAULT_ADMIN_PASSWORD,
+  DEFAULT_ADMIN_USERNAME,
   isInstallationRegistered,
   normalizeActivationKey,
   REGISTRATION_STATUS,
+  resolveActivationSenderEmail,
   resolveActivationSmtpFromEnv,
 } from "../utils/activationConfig";
 import { decodeBackupSecret } from "../utils/backupSettings";
@@ -37,12 +40,6 @@ export default function Setup() {
   const [storeName, setStoreName] = useState(settings[ACTIVATION_SETTING_KEYS.CUSTOMER_STORE] || "");
   const [phone, setPhone] = useState(settings[ACTIVATION_SETTING_KEYS.CUSTOMER_PHONE] || "");
   const [address, setAddress] = useState(settings[ACTIVATION_SETTING_KEYS.CUSTOMER_ADDRESS] || "");
-  const [senderGmail, setSenderGmail] = useState(
-    () =>
-      settings[ACTIVATION_SETTING_KEYS.GMAIL]?.trim() ||
-      resolveActivationSmtpFromEnv()?.gmail ||
-      ACTIVATION_RECIPIENT_EMAIL
-  );
   const [senderAppPassword, setSenderAppPassword] = useState(
     () => resolveActivationSmtpFromEnv()?.appPassword || ""
   );
@@ -53,11 +50,9 @@ export default function Setup() {
   const [info, setInfo] = useState("");
 
   useEffect(() => {
-    const savedGmail = settings[ACTIVATION_SETTING_KEYS.GMAIL]?.trim();
     const savedPassword = decodeBackupSecret(
       settings[ACTIVATION_SETTING_KEYS.GMAIL_APP_PASSWORD]
     );
-    if (savedGmail) setSenderGmail(savedGmail);
     if (savedPassword) setSenderAppPassword(savedPassword);
 
     if (isInstallationRegistered(settings)) {
@@ -102,7 +97,7 @@ export default function Setup() {
           storeName,
           phone,
           address,
-          gmail: senderGmail,
+          gmail: resolveActivationSenderEmail(),
           appPassword: senderAppPassword,
         });
         setSettings(result.settings);
@@ -151,7 +146,7 @@ export default function Setup() {
           setError("Invalid username or password");
           return;
         }
-        login(result.user, result.session ?? {});
+        login(result.user);
         navigate(getDefaultRouteForUser(result.user, settings), {
           replace: true,
           state: { showWelcome: true },
@@ -187,7 +182,9 @@ export default function Setup() {
           ? `An activation key will be emailed to ${ACTIVATION_RECIPIENT_EMAIL}.`
           : phase === "key"
             ? "Enter the key you received by email to continue."
-            : "After sign-in you will see your dashboard."
+            : phase === "login"
+              ? `Default admin: ${DEFAULT_ADMIN_USERNAME} / ${DEFAULT_ADMIN_PASSWORD}`
+              : "After sign-in you will see your dashboard."
       }
     >
       {error && <Alert>{error}</Alert>}
@@ -225,19 +222,9 @@ export default function Setup() {
           <div className="setup-email-section">
             <p className="setup-email-title">Email settings (to send activation key)</p>
             <p className="setup-field-hint">
-              Email will be sent to <strong>{ACTIVATION_RECIPIENT_EMAIL}</strong>. Use a Google
-              App Password from your Google Account → Security → App passwords.
+              Email will be sent to <strong>{ACTIVATION_RECIPIENT_EMAIL}</strong>. Enter the Google
+              App Password for that account (Google Account → Security → App passwords).
             </p>
-            <div className="setup-form-gap">
-              <Input
-                label="Sender Gmail"
-                type="email"
-                value={senderGmail}
-                onChange={(e) => setSenderGmail(e.target.value)}
-                placeholder="dev.adnankhan@gmail.com"
-                required
-              />
-            </div>
             <div className="setup-form-gap">
               <Input
                 label="Gmail App Password"
@@ -245,6 +232,7 @@ export default function Setup() {
                 value={senderAppPassword}
                 onChange={(e) => setSenderAppPassword(e.target.value.replace(/\s+/g, ""))}
                 placeholder="16-character app password"
+                autoFocus={false}
                 required
               />
             </div>

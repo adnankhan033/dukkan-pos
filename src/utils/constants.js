@@ -30,8 +30,6 @@ export const DEFAULT_SETTINGS = {
   dashboard_admin_show_purchases: "1",
   dashboard_cashier_show_recent: "1",
   ...VENDOR_DEFAULT_SETTINGS,
-  api_base_url: "",
-  terminal_code: "REG1",
   ...getZatcaDefaultSettings(),
   ...getModuleDefaults(),
   ...getRoleModuleDefaults(),

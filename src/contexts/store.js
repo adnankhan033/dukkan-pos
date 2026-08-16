@@ -1,40 +1,43 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+function normalizeAuthState(state = {}) {
+  const user = state.user?.username ? state.user : null;
+  return {
+    user,
+    isAuthenticated: Boolean(user),
+  };
+}
+
 export const useAuthStore = create(
   persist(
     (set) => ({
       user: null,
-      token: null,
-      terminal: null,
-      drupalConnected: false,
       isAuthenticated: false,
-      login: (user, session) => {
-        const safeSession = session && typeof session === "object" ? session : {};
-        set({
-          user,
-          token: safeSession.token ?? null,
-          terminal: safeSession.terminal ?? null,
-          drupalConnected: Boolean(safeSession.token),
-          isAuthenticated: true,
-        });
+      login: (user) => {
+        if (!user?.username) return;
+        set({ user, isAuthenticated: true });
       },
-      setDrupalProfile: (user, terminal) =>
-        set((state) => ({
-          user,
-          terminal: terminal ?? null,
-          drupalConnected: Boolean(state.token),
-        })),
       logout: () =>
         set({
           user: null,
-          token: null,
-          terminal: null,
-          drupalConnected: false,
           isAuthenticated: false,
         }),
     }),
-    { name: "dukkan-pos-auth" }
+    {
+      name: "dukkan-pos-auth",
+      version: 2,
+      migrate: (persistedState, version) => {
+        if (version < 2) {
+          return { user: null, isAuthenticated: false };
+        }
+        return normalizeAuthState(persistedState);
+      },
+      merge: (persistedState, currentState) => ({
+        ...currentState,
+        ...normalizeAuthState(persistedState),
+      }),
+    }
   )
 );
 

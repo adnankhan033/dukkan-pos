@@ -1,8 +1,5 @@
 import { query, queryOne, execute, insert } from "../database/connection";
 import { invalidateDashboardCache } from "./DashboardCache";
-import { invalidateProductCaches, syncCatalogRevision } from "./CatalogSync";
-import { apiClient } from "../api/ApiClient";
-import { isDrupalMode, normalizeProduct } from "../api/drupalMode";
 import { useAuthStore } from "../contexts/store";
 
 const LIST_COLUMNS = `
@@ -33,22 +30,6 @@ class ProductService {
     page = 1,
     limit = 10,
   } = {}) {
-    if (await isDrupalMode()) {
-      const result = await apiClient.getProducts({
-        search,
-        category_id: categoryId,
-        published,
-        page,
-        limit,
-      });
-      return {
-        items: (result.items || []).map(normalizeProduct),
-        total: result.total ?? 0,
-        page: result.page ?? page,
-        limit: result.limit ?? limit,
-      };
-    }
-
     let where = "WHERE 1=1";
     const params = [];
 
@@ -85,11 +66,6 @@ class ProductService {
   }
 
   async getPosCatalog(limit = 500) {
-    if (await isDrupalMode()) {
-      const result = await apiClient.getProductCatalog(limit);
-      return (result.items || result || []).map(normalizeProduct);
-    }
-
     return query(
       `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity, p.category_id,
               c.name AS category_name, u.symbol AS unit_symbol
@@ -104,11 +80,6 @@ class ProductService {
 
   /** Top-selling published products for POS quick-pick grid (all-time completed sales). */
   async getTopSellingForPos(limit = 10) {
-    if (await isDrupalMode()) {
-      const catalog = await this.getPosCatalog(limit);
-      return catalog.slice(0, limit).map((p) => ({ ...p, units_sold: 0 }));
-    }
-
     const top = await query(
       `SELECT p.id, p.name, p.name_ar, p.sku, p.barcode, p.selling_price, p.cost_price, p.quantity, p.category_id,
               c.name AS category_name, u.symbol AS unit_symbol,
@@ -150,11 +121,6 @@ class ProductService {
   }
 
   async getById(id) {
-    if (await isDrupalMode()) {
-      const row = await apiClient.getProduct(Number(id));
-      return normalizeProduct(row);
-    }
-
     return queryOne(
       `SELECT p.*, c.name as category_name, u.symbol AS unit_symbol, s.company AS supplier_name
        FROM products p
@@ -167,12 +133,6 @@ class ProductService {
   }
 
   async getByBarcode(barcode) {
-    if (await isDrupalMode()) {
-      const result = await apiClient.getProducts({ search: barcode, limit: 5 });
-      const match = (result.items || []).find((p) => p.barcode === barcode);
-      return match ? normalizeProduct(match) : null;
-    }
-
     return queryOne(
       "SELECT * FROM products WHERE barcode = $1 AND COALESCE(published, 1) = 1",
       [barcode]
@@ -180,10 +140,6 @@ class ProductService {
   }
 
   async findByBarcode(barcode) {
-    if (await isDrupalMode()) {
-      return this.getByBarcode(barcode);
-    }
-
     return queryOne(
       `SELECT ${LIST_COLUMNS}
        FROM products p
@@ -204,25 +160,6 @@ class ProductService {
   }
 
   async create(data) {
-    if (await isDrupalMode()) {
-      const product = await apiClient.createProduct({
-        name: data.name,
-        name_ar: data.name_ar || null,
-        sku: data.sku || null,
-        barcode: data.barcode || null,
-        category_id: data.category_id || null,
-        unit_id: data.unit_id || null,
-        cost_price: Number(data.cost_price) || 0,
-        selling_price: Number(data.selling_price) || 0,
-        quantity: Number(data.quantity) || 0,
-        min_stock: Number(data.min_stock) || 0,
-        published: data.published === false || data.published === 0 ? 0 : 1,
-      });
-      invalidateProductCaches();
-      syncCatalogRevision().catch(() => {});
-      return normalizeProduct(product);
-    }
-
     const published = data.published === false || data.published === 0 ? 0 : 1;
     const unitId = await this.resolveUnitId(data.unit_id);
     const supplierId = await this.resolveSupplierId(data.supplier_id);
@@ -259,25 +196,6 @@ class ProductService {
   }
 
   async update(id, data) {
-    if (await isDrupalMode()) {
-      const product = await apiClient.updateProduct(Number(id), {
-        name: data.name,
-        name_ar: data.name_ar || null,
-        sku: data.sku || null,
-        barcode: data.barcode || null,
-        category_id: data.category_id || null,
-        unit_id: data.unit_id || null,
-        cost_price: Number(data.cost_price) || 0,
-        selling_price: Number(data.selling_price) || 0,
-        quantity: Number(data.quantity) || 0,
-        min_stock: Number(data.min_stock) || 0,
-        published: data.published === false || data.published === 0 ? 0 : 1,
-      });
-      invalidateProductCaches();
-      syncCatalogRevision().catch(() => {});
-      return normalizeProduct(product);
-    }
-
     const published = data.published === false || data.published === 0 ? 0 : 1;
     const numId = Number(id);
     const unitId = await this.resolveUnitId(data.unit_id);
@@ -337,13 +255,6 @@ class ProductService {
 
   /** Remove product and all dependent rows (inventory, line items). */
   async delete(id) {
-    if (await isDrupalMode()) {
-      await apiClient.deleteProduct(Number(id));
-      invalidateProductCaches();
-      syncCatalogRevision().catch(() => {});
-      return true;
-    }
-
     const numId = Number(id);
     const product = await queryOne("SELECT id, name FROM products WHERE id = $1", [numId]);
     if (!product) {
@@ -383,15 +294,6 @@ class ProductService {
   async setPublishedMany(ids, published) {
     if (!ids.length) return { updated: 0 };
 
-    if (await isDrupalMode()) {
-      for (const id of ids) {
-        await apiClient.updateProduct(Number(id), { published: published ? 1 : 0 });
-      }
-      invalidateProductCaches();
-      syncCatalogRevision().catch(() => {});
-      return { updated: ids.length };
-    }
-
     const placeholders = ids.map((_, i) => `$${i + 2}`).join(", ");
     await execute(
       `UPDATE products SET published = $1, updated_at = datetime('now') WHERE id IN (${placeholders})`,
@@ -402,21 +304,11 @@ class ProductService {
   }
 
   async count() {
-    if (await isDrupalMode()) {
-      const result = await apiClient.getProducts({ page: 1, limit: 1 });
-      return Number(result.total ?? 0);
-    }
-
     const row = await queryOne("SELECT COUNT(*) as total FROM products");
     return row?.total ?? 0;
   }
 
   async countLowStock() {
-    if (await isDrupalMode()) {
-      const summary = await apiClient.getInventorySummary(1);
-      return Number(summary.low_stock_count ?? 0);
-    }
-
     const row = await queryOne(
       `SELECT COUNT(*) AS total
        FROM products p
@@ -426,12 +318,6 @@ class ProductService {
   }
 
   async getLowStock({ limit } = {}) {
-    if (await isDrupalMode()) {
-      const summary = await apiClient.getInventorySummary(limit ?? 50);
-      const items = (summary.low_stock_items || []).map(normalizeProduct);
-      return limit != null ? items.slice(0, limit) : items;
-    }
-
     let sql = `SELECT p.id, p.name, p.quantity, p.min_stock,
               c.name AS category_name, u.symbol AS unit_symbol
        FROM products p
@@ -447,14 +333,6 @@ class ProductService {
   }
 
   async getLowStockSummary(limit = 8) {
-    if (await isDrupalMode()) {
-      const summary = await apiClient.getInventorySummary(limit);
-      return {
-        count: Number(summary.low_stock_count ?? 0),
-        items: (summary.low_stock_items || []).map(normalizeProduct),
-      };
-    }
-
     const [countRow, items] = await Promise.all([
       queryOne(
         `SELECT COUNT(*) AS total
@@ -471,16 +349,6 @@ class ProductService {
   }
 
   async searchForPos(term) {
-    if (await isDrupalMode()) {
-      const result = await apiClient.getProducts({
-        search: term,
-        published: 1,
-        limit: 20,
-        page: 1,
-      });
-      return (result.items || []).map(normalizeProduct);
-    }
-
     const like = `%${term}%`;
     return query(
       `SELECT p.*, c.name as category_name, u.symbol AS unit_symbol

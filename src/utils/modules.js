@@ -40,7 +40,6 @@ export const ROUTE_MODULE_MAP = {
   "/settings": "settings",
   "/zatca-queue": "settings",
   "/zatca-test": "settings",
-  "/vendor-branding": "settings",
 };
 
 const CASHIER_DEFAULT_MODULES = ["dashboard", "sales", "reports"];

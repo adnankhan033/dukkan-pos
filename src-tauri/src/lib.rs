@@ -935,7 +935,7 @@ fn send_activation_email(
     ) {
         (Some(from), Some(password)) => (from.to_string(), password.to_string()),
         _ => activation_smtp_credentials().ok_or(
-            "Email is not configured. Enter your Gmail and App Password on the setup form."
+            "Email is not configured. Enter your Gmail App Password on the setup form."
                 .to_string(),
         )?,
     };

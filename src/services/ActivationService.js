@@ -6,7 +6,6 @@ import {
   encodeBackupSecret,
   normalizeGmailAppPassword,
 } from "../utils/backupSettings.js";
-import { API_SETTING_KEYS, API_PATH_PREFIX, normalizeApiBaseUrl } from "../api/apiConfig";
 import {
   ACTIVATION_RECIPIENT_EMAIL,
   ACTIVATION_SETTING_KEYS,
@@ -14,85 +13,11 @@ import {
   isSystemActivated,
   normalizeActivationKey,
   REGISTRATION_STATUS,
+  resolveActivationSenderEmail,
   resolveActivationSmtpFromEnv,
 } from "../utils/activationConfig";
 
 class ActivationService {
-  async activateWithDrupal(apiBaseUrl, activationKey) {
-    const base = normalizeApiBaseUrl(apiBaseUrl);
-    const key = normalizeActivationKey(activationKey);
-
-    if (!base) {
-      throw new Error("Server URL is required. Enter your Drupal market site address.");
-    }
-    if (!key) {
-      throw new Error("Activation key is required.");
-    }
-
-    const response = await fetch(`${base}${API_PATH_PREFIX}/activate`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "ngrok-skip-browser-warning": "1",
-      },
-      body: JSON.stringify({ activation_key: key }),
-    });
-
-    let data = null;
-    const text = await response.text();
-    if (text) {
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = { raw: text };
-      }
-    }
-
-    if (!response.ok) {
-      const message =
-        data?.error ||
-        data?.message ||
-        (response.status === 403
-          ? "Invalid activation key. Check the key from Market setup in Drupal admin."
-          : `Could not connect (${response.status}). Check the server URL and try again.`);
-      throw new Error(message);
-    }
-
-    if (!data?.valid) {
-      throw new Error("Activation was rejected by the server.");
-    }
-
-    await settingsService.set(API_SETTING_KEYS.BASE_URL, base);
-    await settingsService.set(ACTIVATION_SETTING_KEYS.STATUS, ACTIVATION_STATUS.ACTIVATED);
-    await settingsService.set(ACTIVATION_SETTING_KEYS.KEY, key);
-    await settingsService.set(
-      ACTIVATION_SETTING_KEYS.MARKET_NAME,
-      data.market_name || data.store?.store_name || ""
-    );
-    await settingsService.set(ACTIVATION_SETTING_KEYS.ACTIVATED_AT, new Date().toISOString());
-
-    if (data.terminal_code) {
-      await settingsService.set(API_SETTING_KEYS.TERMINAL_CODE, String(data.terminal_code));
-    }
-
-    if (data.store && typeof data.store === "object") {
-      for (const [settingKey, value] of Object.entries(data.store)) {
-        if (value !== undefined && value !== null) {
-          await settingsService.set(settingKey, String(value));
-        }
-      }
-    }
-
-    const settings = await settingsService.getAll();
-    return {
-      settings,
-      marketName: data.market_name || data.store?.store_name || "",
-      apiUrl: base,
-    };
-  }
-
-  /** @deprecated Local email activation — use activateWithDrupal for Drupal-backed markets. */
   async resolveSmtpCredentials(settings = null) {
     const fromEnv = resolveActivationSmtpFromEnv();
     if (fromEnv) return fromEnv;
@@ -125,11 +50,8 @@ class ActivationService {
   }
 
   async saveActivationEmailSettings({ gmail, appPassword }) {
-    const address = String(gmail || "").trim();
+    const address = String(gmail || resolveActivationSenderEmail()).trim();
     const password = normalizeGmailAppPassword(appPassword);
-    if (!address) {
-      throw new Error("Sender Gmail address is required.");
-    }
     if (!password) {
       throw new Error("Gmail App Password is required (16 characters from Google Account → App passwords).");
     }
@@ -146,7 +68,6 @@ class ActivationService {
 
   async ensureSystemActivation(existingSettings = null) {
     let settings = existingSettings || (await settingsService.getAll());
-    settings = await this.clearLegacyDrupalSetup(settings);
 
     if (
       settings[ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS] === REGISTRATION_STATUS.ACTIVATED &&
@@ -219,26 +140,6 @@ class ActivationService {
     return settingsService.getAll();
   }
 
-  /** Remove old Drupal market activation metadata (not user-configured Backend URL). */
-  async clearLegacyDrupalSetup(settings = null) {
-    const all = settings || (await settingsService.getAll());
-    const hasLegacyDrupal = Boolean(all[ACTIVATION_SETTING_KEYS.MARKET_NAME]?.trim());
-    if (!hasLegacyDrupal) {
-      return all;
-    }
-    await settingsService.removeMany([
-      API_SETTING_KEYS.BASE_URL,
-      ACTIVATION_SETTING_KEYS.MARKET_NAME,
-      ACTIVATION_SETTING_KEYS.STATUS,
-      ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS,
-      ACTIVATION_SETTING_KEYS.EMAIL_SENT,
-      ACTIVATION_SETTING_KEYS.EMAIL_ERROR,
-      ACTIVATION_SETTING_KEYS.ACTIVATED_AT,
-      ACTIVATION_SETTING_KEYS.WELCOME_SHOWN,
-    ]);
-    return this.ensureSystemActivation(await settingsService.getAll());
-  }
-
   async submitRegistration({ storeName, phone, address, gmail, appPassword }) {
     const customerStore = String(storeName || "").trim();
     const customerPhone = String(phone || "").trim();
@@ -253,7 +154,7 @@ class ActivationService {
       await this.saveActivationEmailSettings({ gmail, appPassword });
     } else if (!smtpReady) {
       throw new Error(
-        "Email is not configured. Enter your Gmail and App Password below, then submit again."
+        "Email is not configured. Enter your Gmail App Password below, then submit again."
       );
     }
 
@@ -381,7 +282,7 @@ class ActivationService {
     };
   }
 
-  /** @deprecated Use activateLocalKey for installation; activateWithDrupal for market connection. */
+  /** @deprecated Use activateLocalKey. */
   async activate(enteredKey) {
     const result = await this.activateLocalKey(enteredKey);
     await settingsService.set(ACTIVATION_SETTING_KEYS.STATUS, ACTIVATION_STATUS.ACTIVATED);
@@ -401,7 +302,7 @@ class ActivationService {
     };
   }
 
-  /** Clear setup progress and Drupal connection so onboarding starts at step 1. */
+  /** Clear setup progress so onboarding starts at step 1. */
   async resetInstallationSetup() {
     const keys = [
       ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS,
@@ -417,10 +318,8 @@ class ActivationService {
       ACTIVATION_SETTING_KEYS.CUSTOMER_ADDRESS,
       ACTIVATION_SETTING_KEYS.CUSTOMER_VAT,
       ACTIVATION_SETTING_KEYS.CUSTOMER_CR,
-      ACTIVATION_SETTING_KEYS.MARKET_NAME,
       ACTIVATION_SETTING_KEYS.ACTIVATED_AT,
       ACTIVATION_SETTING_KEYS.WELCOME_SHOWN,
-      API_SETTING_KEYS.BASE_URL,
     ];
 
     await settingsService.removeMany(keys);

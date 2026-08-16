@@ -23,7 +23,6 @@ import Reports from "../pages/Reports";
 import DailyClose from "../pages/DailyClose";
 import Settings from "../pages/Settings";
 import Users from "../pages/Users";
-import VendorBranding from "../pages/VendorBranding";
 import ZatcaQueue from "../pages/ZatcaQueue";
 import ZatcaDailySync from "../pages/ZatcaDailySync";
 import ZatcaTestCenter from "../pages/ZatcaTestCenter";
@@ -81,7 +80,7 @@ export default function AppRoutes() {
         <Route path="/zatca-queue" element={withRole("settings", <ZatcaQueue />)} />
         <Route path="/zatca-test" element={withRole("settings", <ZatcaTestCenter />)} />
         <Route path="/users" element={withRole("users", <Users />)} />
-        <Route path="/vendor-branding" element={withRole("settings", <VendorBranding />)} />
+        <Route path="/vendor-branding" element={<Navigate to="/settings" replace />} />
       </Route>
 
       <Route path="*" element={<DefaultRedirect />} />

@@ -7,8 +7,6 @@ import { generateNumber, formatInvoiceNumber, parseInvoiceSequence, getPeriodDat
 import { getBusinessDateTimeISO } from "../utils/businessDate";
 import { appendBusinessDateRangeFilter } from "../utils/businessDateFilter";
 import { SALE_STATUS } from "../utils/constants";
-import { apiClient } from "../api/ApiClient";
-import { isDrupalMode, normalizeSale, drupalReturnFilterParam, normalizeProcessReturnResult, normalizeSaleReturn } from "../api/drupalMode";
 import { useAuthStore } from "../contexts/store";
 
 async function processZatcaForSale(sale) {
@@ -35,16 +33,6 @@ class SaleService {
   }
 
   async getAll({ page = 1, limit = 10, status = null } = {}) {
-    if (await isDrupalMode()) {
-      const result = await apiClient.getSales({ page, limit, status });
-      return {
-        items: (result.items || []).map(normalizeSale),
-        total: result.total ?? 0,
-        page: result.page ?? page,
-        limit: result.limit ?? limit,
-      };
-    }
-
     let sql = `
       SELECT s.*, c.name as customer_name
       FROM sales s
@@ -75,11 +63,6 @@ class SaleService {
   }
 
   async getById(id) {
-    if (await isDrupalMode()) {
-      const sale = await apiClient.getSale(Number(id));
-      return normalizeSale(sale);
-    }
-
     const sale = await queryOne(
       `SELECT s.*, c.name as customer_name
        FROM sales s LEFT JOIN customers c ON s.customer_id = c.id
@@ -99,11 +82,6 @@ class SaleService {
   }
 
   async getRecent(limit = 10) {
-    if (await isDrupalMode()) {
-      const result = await apiClient.getSales({ page: 1, limit, status: null });
-      return (result.items || []).map(normalizeSale);
-    }
-
     return query(
       `SELECT s.*, c.name as customer_name
        FROM sales s
@@ -115,10 +93,6 @@ class SaleService {
   }
 
   async getHeldSales() {
-    if (await isDrupalMode()) {
-      return [];
-    }
-
     return query(
       `SELECT s.*, c.name as customer_name
        FROM sales s LEFT JOIN customers c ON s.customer_id = c.id
@@ -127,42 +101,13 @@ class SaleService {
   }
 
   async createSale({ customerId, items, discount, vat, paymentMethod, status = SALE_STATUS.COMPLETED, notes }) {
-    if (await isDrupalMode()) {
-      if (status === SALE_STATUS.HELD) {
-        throw new Error("Held sales are not supported when connected to Drupal. Complete the sale or use offline mode.");
-      }
-
-      const sale = await apiClient.createSale({
-        customer_id: customerId || null,
-        items: items.map((item) => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          discount: item.discount || 0,
-          total: item.total,
-        })),
-        discount: discount || 0,
-        vat: vat || 0,
-        payment_method: paymentMethod,
-        status,
-        notes: notes || null,
-      });
-      const saved = normalizeSale(sale);
-      if (saved && status === SALE_STATUS.COMPLETED) {
-        await processZatcaForSale(saved);
-        invalidateDashboardCache();
-      }
-      return saved;
-    }
-
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const total = Math.max(0, subtotal - discount + vat);
     const saleNumber = await this.getNextInvoiceNumber();
     const settings = await settingsService.getAll();
     const createdAt = getBusinessDateTimeISO(settings);
-    const { user, terminal } = useAuthStore.getState();
+    const { user } = useAuthStore.getState();
     const cashierId = user?.id ?? null;
-    const terminalId = terminal?.id ?? null;
 
     const saleId = await insert(
       `INSERT INTO sales (sale_number, customer_id, cashier_id, terminal_id, subtotal, discount, vat, total, payment_method, status, notes, created_at)
@@ -171,7 +116,7 @@ class SaleService {
         saleNumber,
         customerId || null,
         cashierId,
-        terminalId,
+        null,
         subtotal,
         discount,
         vat,
@@ -215,10 +160,6 @@ class SaleService {
   }
 
   async completeHeldSale(saleId, paymentMethod) {
-    if (await isDrupalMode()) {
-      throw new Error("Held sales are not available when connected to Drupal.");
-    }
-
     const sale = await this.getById(saleId);
     if (!sale || sale.status !== SALE_STATUS.HELD) {
       throw new Error("Sale not found or not held");
@@ -246,20 +187,12 @@ class SaleService {
   }
 
   async deleteHeldSale(saleId) {
-    if (await isDrupalMode()) {
-      throw new Error("Held sales are not available when connected to Drupal.");
-    }
-
     await execute("DELETE FROM sale_items WHERE sale_id = $1", [saleId]);
     await execute("DELETE FROM sales WHERE id = $1 AND status = 'held'", [saleId]);
     return true;
   }
 
   async deleteSale(saleId) {
-    if (await isDrupalMode()) {
-      throw new Error("Deleting orders is not supported when connected to Drupal. Manage orders in the backend admin.");
-    }
-
     const numId = Number(saleId);
     const sale = await this.getById(numId);
     if (!sale) {
@@ -334,12 +267,6 @@ class SaleService {
   }
 
   async getTodayGrossSales() {
-    if (await isDrupalMode()) {
-      const range = getPeriodDateRange("daily");
-      const stats = await apiClient.getSalesStats({ from: range.from, to: range.to });
-      return stats.salesTotal;
-    }
-
     const row = await queryOne(
       `SELECT COALESCE(SUM(total), 0) as total FROM sales
        WHERE status IN ('completed', 'partial_return', 'returned')
@@ -365,12 +292,6 @@ class SaleService {
   }
 
   async getMonthlyGrossSales() {
-    if (await isDrupalMode()) {
-      const range = getPeriodDateRange("monthly");
-      const stats = await apiClient.getSalesStats({ from: range.from, to: range.to });
-      return stats.salesTotal;
-    }
-
     const row = await queryOne(
       `SELECT COALESCE(SUM(total), 0) as total FROM sales
        WHERE status IN ('completed', 'partial_return', 'returned')
@@ -471,25 +392,6 @@ class SaleService {
     returnFilter = "all",
     search = "",
   } = {}) {
-    if (await isDrupalMode()) {
-      const range = this._resolveDateRange(period, from, to, fromTime, toTime);
-      const returnFilterParam = drupalReturnFilterParam(returnFilter);
-      const result = await apiClient.getSales({
-        page,
-        limit,
-        from: range.from,
-        to: range.to,
-        search: search.trim() || undefined,
-        return_filter: returnFilterParam,
-      });
-      return {
-        items: (result.items || []).map(normalizeSale),
-        total: Number(result.total ?? 0),
-        page: result.page ?? page,
-        limit: result.limit ?? limit,
-      };
-    }
-
     const settings = await settingsService.getAll();
     const { where, params } = this._buildOrdersQueryFilters(
       period,
@@ -540,11 +442,6 @@ class SaleService {
   }
 
   async getPeriodStats(period = "today", from = null, to = null, fromTime = null, toTime = null) {
-    if (await isDrupalMode()) {
-      const range = this._resolveDateRange(period, from, to, fromTime, toTime);
-      return apiClient.getSalesStats({ from: range.from, to: range.to });
-    }
-
     const settings = await settingsService.getAll();
     const range = this._resolveDateRange(period, from, to, fromTime, toTime);
     const salesParams = [];
@@ -585,16 +482,6 @@ class SaleService {
   }
 
   async getBySaleNumber(saleNumber) {
-    if (await isDrupalMode()) {
-      try {
-        const sale = await apiClient.getSaleByNumber(saleNumber.trim());
-        return normalizeSale(sale);
-      } catch (err) {
-        if (err.message?.includes("not found")) return null;
-        throw err;
-      }
-    }
-
     const row = await queryOne(
       `SELECT id FROM sales WHERE lower(sale_number) = lower($1)`,
       [saleNumber.trim()]
@@ -604,11 +491,6 @@ class SaleService {
   }
 
   async getReturnsForSale(saleId) {
-    if (await isDrupalMode()) {
-      const items = await apiClient.getSaleReturns(Number(saleId));
-      return items.map(normalizeSaleReturn);
-    }
-
     try {
       return await query(
         `SELECT sr.*,
@@ -627,20 +509,6 @@ class SaleService {
   }
 
   async getReturnableItems(saleId) {
-    if (await isDrupalMode()) {
-      const items = await apiClient.getReturnableItems(Number(saleId));
-      return items.map((item) => ({
-        ...item,
-        id: Number(item.id),
-        product_id: Number(item.product_id),
-        quantity: Number(item.quantity),
-        unit_price: Number(item.unit_price),
-        returned_qty: Number(item.returned_qty ?? 0),
-        returnable_qty: Number(item.returnable_qty ?? 0),
-        name: item.product_name || item.name,
-      }));
-    }
-
     const sale = await this.getById(saleId);
     if (!sale?.items?.length) return null;
 
@@ -685,22 +553,6 @@ class SaleService {
   }
 
   async processReturn({ saleId, items, notes }) {
-    if (await isDrupalMode()) {
-      const result = await apiClient.processSaleReturn(Number(saleId), {
-        items: items.map((item) => ({
-          sale_item_id: item.sale_item_id || null,
-          product_id: item.product_id,
-          name: item.name,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          total: item.total,
-        })),
-        notes: notes || null,
-      });
-      invalidateDashboardCache();
-      return normalizeProcessReturnResult(result);
-    }
-
     const sale = await this.getById(saleId);
     if (!sale) throw new Error("Sale not found");
     if (sale.status === SALE_STATUS.HELD) {

@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Download, RotateCcw, Trash2, ShieldAlert } from "lucide-react";
 import { settingsService } from "../services/SettingsService";
+import { activationService } from "../services/ActivationService";
 import { backupService } from "../services/BackupService";
 import { zatcaService } from "../services/ZatcaService";
 import { useSettingsStore, useAuthStore } from "../contexts/store";
@@ -23,12 +24,11 @@ import { DEFAULT_BUSINESS_TIMEZONE, BUSINESS_TIMEZONES } from "../utils/timezone
 import { getBusinessDateTimeLabelFromForm } from "../utils/businessDate";
 import { getZatcaDefaultSettings } from "../zatca/core/config";
 import { ZATCA_PHASES, ZATCA_SETTING_KEYS as ZK } from "../zatca/core/constants";
-import { apiClient } from "../api/ApiClient";
-import { isDrupalConfigured } from "../api/apiConfig";
+import { mirrorStoreFields } from "../utils/settingsSync";
 import {
-  buildRemoteSettingsPayload,
-  mirrorStoreFields,
-} from "../utils/settingsSync";
+  DEFAULT_ADMIN_PASSWORD,
+  DEFAULT_ADMIN_USERNAME,
+} from "../utils/activationConfig";
 import { notify } from "../utils/notify";
 import { getAllPermissionSettingKeys } from "../utils/actions";
 import "./Settings.css";
@@ -38,7 +38,6 @@ const ZATCA_DEFAULTS = getZatcaDefaultSettings();
 const TABS = [
   { id: "store", label: "Store" },
   { id: "permissions", label: "Permissions", adminOnly: true },
-  { id: "backend", label: "Backend" },
   { id: "receipt", label: "Receipt" },
   { id: "zatca", label: "ZATCA" },
   { id: "dashboard", label: "Dashboard" },
@@ -75,8 +74,6 @@ function buildFormFromSettings(settings) {
     dashboard_admin_show_profit: settingBool(settings.dashboard_admin_show_profit),
     dashboard_admin_show_purchases: settingBool(settings.dashboard_admin_show_purchases),
     dashboard_cashier_show_recent: settingBool(settings.dashboard_cashier_show_recent),
-    api_base_url: settings.api_base_url || "",
-    terminal_code: settings.terminal_code || "REG1",
   };
 
   for (const [key, defaultVal] of Object.entries(ZATCA_DEFAULTS)) {
@@ -119,8 +116,6 @@ function formToSettings(form) {
     dashboard_admin_show_profit: form.dashboard_admin_show_profit ? "1" : "0",
     dashboard_admin_show_purchases: form.dashboard_admin_show_purchases ? "1" : "0",
     dashboard_cashier_show_recent: form.dashboard_cashier_show_recent ? "1" : "0",
-    api_base_url: (form.api_base_url || "").trim(),
-    terminal_code: (form.terminal_code || "REG1").trim().toUpperCase(),
   };
 
   for (const key of Object.keys(ZATCA_DEFAULTS)) {
@@ -148,7 +143,6 @@ export default function Settings() {
   const settings = useSettingsStore((s) => s.settings);
   const setSettings = useSettingsStore((s) => s.setSettings);
   const logout = useAuthStore((s) => s.logout);
-  const drupalConnected = useAuthStore((s) => s.drupalConnected);
   const navigate = useNavigate();
   const { isAdmin } = usePermissions();
   const { confirm, dialog: confirmDialog } = useConfirm();
@@ -157,7 +151,6 @@ export default function Settings() {
   const [backupBusy, setBackupBusy] = useState(false);
   const [sectionCounts, setSectionCounts] = useState({});
   const [feedbackModal, setFeedbackModal] = useState(null);
-  const [backendTest, setBackendTest] = useState(null);
   const restoreInputRef = useRef(null);
   const formDirtyRef = useRef(false);
 
@@ -213,18 +206,7 @@ export default function Settings() {
 
   async function persistForm(mergedForm) {
     const payload = mirrorStoreFields(formToSettings(mergedForm ?? form));
-    let updated = await settingsService.updateMany(payload);
-
-    if (isDrupalConfigured(updated) && useAuthStore.getState().drupalConnected) {
-      try {
-        const remote = await apiClient.updateSettingsRemote(buildRemoteSettingsPayload(updated));
-        updated = await settingsService.updateMany({ ...updated, ...remote });
-      } catch (err) {
-        throw new Error(
-          `Settings saved on this device but could not sync to the server: ${err.message}`
-        );
-      }
-    }
+    const updated = await settingsService.updateMany(payload);
 
     setSettings(updated);
     setForm(buildFormFromSettings(updated));
@@ -233,30 +215,10 @@ export default function Settings() {
     return updated;
   }
 
-  async function handleBackendTest() {
-    setBackendTest(null);
-    try {
-      const testSettings = {
-        ...settings,
-        api_base_url: form.api_base_url,
-        terminal_code: form.terminal_code,
-      };
-      const health = await apiClient.health(testSettings);
-      setBackendTest(`Connected: ${health.service} v${health.version}`);
-    } catch (err) {
-      setBackendTest(null);
-      notify.error(err.message || "Connection failed", { title: "Backend test failed" });
-    }
-  }
-
   async function handleSave(e) {
     e.preventDefault();
     try {
-      const backendChanged =
-        (form.api_base_url || "").trim() !== (settings.api_base_url || "").trim() ||
-        (form.terminal_code || "").trim() !== (settings.terminal_code || "").trim();
-
-      const updated = await persistForm(form);
+      await persistForm(form);
       const savedLabel =
         tab === "permissions"
           ? "Role and menu permissions were saved."
@@ -271,17 +233,6 @@ export default function Settings() {
               ? "Vendor branding saved"
               : "Settings saved",
       });
-
-      if (backendChanged && isDrupalConfigured(updated)) {
-        logout();
-        navigate("/login", {
-          replace: true,
-          state: {
-            message:
-              "Backend settings saved. Sign in with your Drupal POS account to load products and orders from the server.",
-          },
-        });
-      }
     } catch (err) {
       notify.error(err.message, { title: "Could not save settings" });
     }
@@ -440,6 +391,44 @@ export default function Settings() {
     }
   }
 
+  async function handleResetSetupClick() {
+    const ok = await confirm({
+      title: "Reset Store Setup",
+      size: "lg",
+      variant: "danger",
+      confirmLabel: "Reset Setup",
+      cancelLabel: "Cancel",
+      children: (
+        <>
+          <p>Start the store setup wizard again from step 1 (store details and activation).</p>
+          <ul className="confirm-list">
+            <li>Activation key and registration status will be cleared</li>
+            <li>You will be signed out and sent to the setup screen</li>
+          </ul>
+          <div className="confirm-note">
+            Your products, sales, orders, and other store data are kept.
+          </div>
+        </>
+      ),
+    });
+    if (!ok) return;
+
+    setBackupBusy(true);
+    try {
+      const updated = await activationService.resetInstallationSetup();
+      setSettings(updated);
+      logout();
+      navigate("/setup", { replace: true });
+    } catch (err) {
+      setBackupBusy(false);
+      setFeedbackModal({
+        title: "Reset Failed",
+        icon: "error",
+        body: <p>{err.message || "Could not reset store setup."}</p>,
+      });
+    }
+  }
+
   async function handleClearDataClick() {
     const ok = await confirm({
       title: "Clear All Data",
@@ -473,7 +462,7 @@ export default function Settings() {
           <p>Are you absolutely sure you want to reset the database?</p>
           <p>Default accounts will be restored:</p>
           <ul className="confirm-list">
-            <li>Administrator — <strong>admin</strong> / admin123</li>
+            <li>Administrator — <strong>{DEFAULT_ADMIN_USERNAME}</strong> / {DEFAULT_ADMIN_PASSWORD}</li>
             <li>Cashier — <strong>cashier</strong> / cashier123</li>
           </ul>
           <p>You will be signed out and must log in again.</p>
@@ -490,7 +479,9 @@ export default function Settings() {
         replace: true,
         state: {
           message:
-            "Database cleared successfully. Sign in with admin / admin123 or cashier / cashier123.",
+            "Database cleared successfully. Sign in with admin / "
+            + DEFAULT_ADMIN_PASSWORD
+            + " or cashier / cashier123.",
         },
       });
     } catch (err) {
@@ -545,6 +536,26 @@ export default function Settings() {
             {isAdmin && (
               <Card className="settings-card settings-danger-card">
                 <h3 className="settings-section-title settings-danger-title">
+                  <RotateCcw size={18} style={{ verticalAlign: "middle", marginRight: "0.375rem" }} />
+                  Reset Store Setup
+                </h3>
+                <p className="settings-section-desc">
+                  Start configuration from step 1 again — store details, activation email, and
+                  activation key. Use this when you need to re-register the store.
+                </p>
+                <ul className="settings-danger-list">
+                  <li>Clears activation and registration status</li>
+                  <li>Keeps products, sales, orders, and users</li>
+                </ul>
+                <Button type="button" variant="danger" onClick={handleResetSetupClick} disabled={backupBusy}>
+                  {backupBusy ? "Resetting..." : "Reset Setup from Step 1"}
+                </Button>
+              </Card>
+            )}
+
+            {isAdmin && (
+              <Card className="settings-card settings-danger-card">
+                <h3 className="settings-section-title settings-danger-title">
                   <ShieldAlert size={18} style={{ verticalAlign: "middle", marginRight: "0.375rem" }} />
                   Clear Data by Section
                 </h3>
@@ -593,7 +604,7 @@ export default function Settings() {
                 <li>Custom settings (store name, VAT)</li>
               </ul>
               <p className="settings-section-desc">
-                Restored after clear: default admin (<strong>admin</strong> / admin123) and cashier (<strong>cashier</strong> / cashier123).
+                Restored after clear: default admin (<strong>{DEFAULT_ADMIN_USERNAME}</strong> / {DEFAULT_ADMIN_PASSWORD}) and cashier (<strong>cashier</strong> / cashier123).
               </p>
               <Button type="button" variant="danger" onClick={handleClearDataClick} disabled={backupBusy}>
                 {backupBusy ? "Clearing..." : "Clear All Data"}
@@ -694,46 +705,6 @@ export default function Settings() {
               })
             }
           />
-        )}
-
-        {tab === "backend" && (
-          <>
-            <Card className="settings-card">
-              <h3 className="settings-section-title">Drupal Backend (Direct API)</h3>
-              <p className="settings-section-desc">
-                When API URL is set, the desktop app uses Drupal as the only database for
-                users, products, categories, units, inventory, and orders. Create or edit
-                in the desktop app or Drupal admin (<strong>/admin/dukkan-pos</strong>) —
-                both see the same data. After saving, sign in again with your Drupal POS account.
-              </p>
-              {drupalConnected && isDrupalConfigured(form) && (
-                <Alert type="success">Currently connected to Drupal (JWT active).</Alert>
-              )}
-              <Input
-                label="API Base URL"
-                value={form.api_base_url}
-                onChange={(e) => updateField("api_base_url", e.target.value)}
-                placeholder="https://your-site.ngrok-free.app"
-              />
-              <div style={{ marginTop: "1rem" }}>
-                <Input
-                  label="Terminal code"
-                  value={form.terminal_code}
-                  onChange={(e) => updateField("terminal_code", e.target.value.toUpperCase())}
-                  placeholder="REG1"
-                />
-              </div>
-              <div style={{ marginTop: "1rem", display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                <Button type="button" variant="secondary" onClick={handleBackendTest}>
-                  Test connection
-                </Button>
-                {backendTest && <span style={{ color: "var(--success, green)" }}>{backendTest}</span>}
-              </div>
-              <p className="settings-section-desc" style={{ marginTop: "1rem" }}>
-                Drupal admin: <strong>/admin/dukkan-pos</strong> · Default login: admin / admin123
-              </p>
-            </Card>
-          </>
         )}
 
         {tab === "receipt" && (

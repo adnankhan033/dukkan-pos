@@ -49,7 +49,7 @@ export function isInstallationRegistered(settings) {
   );
 }
 
-/** Drupal market connection completed — unlocks sign-in and the app. */
+/** System activation completed — unlocks sign-in and the app. */
 export function isSystemActivated(settings) {
   return settings?.[ACTIVATION_SETTING_KEYS.STATUS] === ACTIVATION_STATUS.ACTIVATED;
 }
@@ -61,11 +61,16 @@ export function normalizeActivationKey(value) {
     .replace(/\s+/g, "");
 }
 
+/** Default Gmail used to send activation emails (also the recipient). */
+export function resolveActivationSenderEmail() {
+  return String(import.meta.env.VITE_ACTIVATION_GMAIL || "").trim() || ACTIVATION_RECIPIENT_EMAIL;
+}
+
 /** Read Gmail app password from Vite env (16 chars, no spaces). */
 export function resolveActivationSmtpFromEnv() {
-  const gmail = String(import.meta.env.VITE_ACTIVATION_GMAIL || "").trim();
+  const gmail = resolveActivationSenderEmail();
   const appPassword = String(import.meta.env.VITE_ACTIVATION_GMAIL_APP_PASSWORD || "")
     .replace(/\s+/g, "");
-  if (!gmail || !appPassword) return null;
+  if (!appPassword) return null;
   return { gmail, appPassword };
 }

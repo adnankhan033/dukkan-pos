@@ -1,7 +1,7 @@
 import { ZATCA_SETTING_KEYS as ZK } from "../zatca/core/constants";
 import { ACTIVATION_SETTING_KEYS } from "./activationConfig";
 
-/** Settings owned by the desktop app — local values win over Drupal pulls. */
+/** Settings owned by the desktop app. */
 export const LOCAL_STORE_SETTING_KEYS = [
   "store_name",
   "store_name_ar",
@@ -62,29 +62,4 @@ export function mirrorStoreFields(settings = {}) {
   }
 
   return mirrored;
-}
-
-/** Merge Drupal settings without discarding local store configuration. */
-export function mergeRemoteSettings(local = {}, remote = {}) {
-  const merged = { ...local, ...remote };
-  for (const key of LOCAL_STORE_SETTING_KEYS) {
-    const localValue = local[key];
-    if (localValue !== undefined && localValue !== null && String(localValue).trim() !== "") {
-      merged[key] = localValue;
-    }
-  }
-  return merged;
-}
-
-/** Payload sent to Drupal when store settings are saved. */
-export function buildRemoteSettingsPayload(settings = {}) {
-  const payload = {};
-  for (const key of LOCAL_STORE_SETTING_KEYS) {
-    if (settings[key] !== undefined) {
-      payload[key] = settings[key];
-    }
-  }
-  payload.api_base_url = settings.api_base_url ?? "";
-  payload.terminal_code = settings.terminal_code ?? "REG1";
-  return payload;
 }

@@ -4,7 +4,6 @@ import { settingsService } from "../services/SettingsService";
 import { zatcaService } from "../services/ZatcaService";
 import { backupSyncService } from "../services/BackupSyncService";
 import { useAppStore, useSettingsStore } from "../contexts/store";
-import { ensureApiUrlInSettings } from "../api/apiConfig";
 
 export function useDatabaseInit() {
   const { dbReady, dbError, setDbReady, setDbError } = useAppStore();
@@ -20,7 +19,6 @@ export function useDatabaseInit() {
 
         const { activationService } = await import("../services/ActivationService.js");
         settings = await activationService.ensureSystemActivation(settings);
-        settings = await ensureApiUrlInSettings(settings);
 
         if (mounted) {
           setSettings(settings);

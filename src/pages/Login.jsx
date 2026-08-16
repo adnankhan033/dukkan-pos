@@ -1,12 +1,10 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { activationService } from "../services/ActivationService";
 import { userService } from "../services/UserService";
 import { useAuthStore, useSettingsStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import { getDefaultRouteForUser } from "../utils/modules";
-import { bootstrapDrupalSession } from "../api/drupalBootstrap";
-import { isDrupalConfigured, resolveApiBaseUrl } from "../api/apiConfig";
 import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
@@ -18,27 +16,13 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [syncNote, setSyncNote] = useState("");
   const { submitting, guard } = useSubmitGuard();
   const login = useAuthStore((s) => s.login);
   const logout = useAuthStore((s) => s.logout);
   const setSettings = useSettingsStore((s) => s.setSettings);
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const token = useAuthStore((s) => s.token);
-  const settings = useSettingsStore((s) => s.settings);
   const navigate = useNavigate();
   const location = useLocation();
   const notice = location.state?.message;
-
-  const drupalBackend = isDrupalConfigured(settings);
-  const backendHost = resolveApiBaseUrl(settings);
-  const marketName = settings[ACTIVATION_SETTING_KEYS.MARKET_NAME]?.trim();
-
-  useEffect(() => {
-    if (drupalBackend && isAuthenticated && !token) {
-      logout();
-    }
-  }, [drupalBackend, isAuthenticated, token, logout]);
 
   async function handleStartOver() {
     setError("");
@@ -55,31 +39,14 @@ export default function Login() {
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
-    setSyncNote("");
     try {
       await guard(async () => {
         const result = await userService.authenticate(username, password);
         if (!result?.user) {
-          setError(
-            drupalBackend
-              ? "Invalid Drupal POS username or password"
-              : "Invalid username or password"
-          );
+          setError("Invalid username or password");
           return;
         }
-        login(result.user, result.session ?? {});
-
-        if (result.session?.token) {
-          try {
-            setSyncNote("Connecting to Drupal and loading store data…");
-            await bootstrapDrupalSession();
-          } catch (err) {
-            console.warn("Could not sync with Drupal:", err);
-            setError(err.message || "Connected but could not load data from Drupal");
-            logout();
-            return;
-          }
-        }
+        login(result.user);
 
         const latestSettings = useSettingsStore.getState().settings;
         const showWelcome =
@@ -96,35 +63,19 @@ export default function Login() {
 
   return (
     <AuthShell
-      formTitle={drupalBackend ? (marketName ? `Sign in to ${marketName}` : "Sign in to your market") : "Sign In"}
-      formSubtitle={
-        drupalBackend
-          ? "Products, orders, and users are loaded live from your Drupal backend"
-          : "Enter your credentials to access your store"
-      }
-      footer={
-        drupalBackend
-          ? `Drupal POS · Terminal ${settings.terminal_code || "REG1"}`
-          : "DukkanPOS · Secure store sign-in"
-      }
+      formTitle="Sign In"
+      formSubtitle="Enter your credentials to access your store"
+      footer="DukkanPOS · Secure store sign-in"
     >
       {notice && <Alert type="warning">{notice}</Alert>}
-      {drupalBackend && (
-        <Alert type="success">
-          Backend: <strong>{backendHost}</strong>
-          <br />
-          Create products here or in Drupal admin — both use the same database.
-        </Alert>
-      )}
       {error && <Alert>{error}</Alert>}
-      {syncNote && !error && <Alert type="success">{syncNote}</Alert>}
 
       <form onSubmit={handleSubmit}>
         <Input
           label="Username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
-          placeholder={drupalBackend ? "Drupal POS username" : "Enter username"}
+          placeholder="Enter username"
           autoFocus
         />
         <div style={{ marginTop: "1rem" }}>
@@ -137,7 +88,7 @@ export default function Login() {
           />
         </div>
         <Button type="submit" className="btn-lg" disabled={submitting} style={{ width: "100%", marginTop: "1.5rem" }}>
-          {submitting ? (drupalBackend ? "Connecting to Drupal…" : "Signing in…") : "Sign In"}
+          {submitting ? "Signing in…" : "Sign In"}
         </Button>
       </form>
 

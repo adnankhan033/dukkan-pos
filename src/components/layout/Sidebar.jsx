@@ -19,7 +19,7 @@ import {
   Sun,
   ChevronDown,
 } from "lucide-react";
-import { useVisibleNavGroups, usePermissions } from "../../hooks/usePermissions";
+import { useVisibleNavGroups } from "../../hooks/usePermissions";
 import { ROLE_LABELS, normalizeRole } from "../../utils/roles";
 import { useAuthStore } from "../../contexts/store";
 import { useTheme } from "../../hooks/useTheme";
@@ -67,14 +67,11 @@ function NavIcon({ icon: Icon }) {
 export default function Sidebar() {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const drupalConnected = useAuthStore((s) => s.drupalConnected);
-  const terminal = useAuthStore((s) => s.terminal);
   const settings = useSettingsStore((s) => s.settings);
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const visibleGroups = useVisibleNavGroups();
-  const { isAdmin } = usePermissions();
   const [expanded, setExpanded] = useState({});
   const [vendorOpen, setVendorOpen] = useState(false);
   const vendor = resolveSoftwareVendor(settings);
@@ -116,11 +113,6 @@ export default function Sidebar() {
           )}
           <span className="sidebar-brand-version">DukkanPOS v1.0</span>
         </div>
-        {drupalConnected && (
-          <span className="sidebar-drupal-badge" title="All data live from Drupal">
-            Live
-          </span>
-        )}
       </div>
 
       <nav className="sidebar-nav" aria-label="Main navigation">
@@ -197,14 +189,6 @@ export default function Sidebar() {
         {vendor.enabled && (
           <SidebarVendorCard vendor={vendor} onClick={() => setVendorOpen(true)} variant="partner" />
         )}
-
-        {isAdmin && (
-          <SidebarVendorCard
-            vendor={vendor}
-            variant="admin"
-            onClick={() => navigate("/vendor-branding")}
-          />
-        )}
       </div>
 
       <SoftwareVendorModal vendor={vendor} isOpen={vendorOpen} onClose={() => setVendorOpen(false)} />
@@ -218,7 +202,6 @@ export default function Sidebar() {
             <span className="sidebar-user-name">{user?.full_name || user?.username}</span>
             <span className="sidebar-user-role">
               {ROLE_LABELS[normalizeRole(user?.role)] || user?.role || "user"}
-              {drupalConnected && terminal?.code && ` · ${terminal.code}`}
             </span>
           </div>
           <div className="sidebar-actions">

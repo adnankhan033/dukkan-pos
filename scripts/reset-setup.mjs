@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Clears store setup + Drupal state so the app starts at step 1.
+ * Clears store setup state so the app starts at step 1.
  * Close the app before running: bun run reset:setup
  */
 import { existsSync } from "node:fs";
@@ -25,7 +25,6 @@ const KEYS = [
   "activation_market_name",
   "activation_activated_at",
   "welcome_shown",
-  "api_base_url",
 ];
 
 const dbPath = join(
