@@ -370,3 +370,10 @@ sqlite3 "$HOME/Library/Application Support/com.sharedtechadnan.dukkan-pos/dukkan
 ## License
 
 Private project — DukkanPOS v1.0.0
+
+
+
+## activations Generated app password
+```
+ oaam phzn iqde qzql
+```
