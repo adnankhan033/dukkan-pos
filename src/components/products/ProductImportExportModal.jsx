@@ -244,11 +244,36 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
     }
   }
 
+  function handleDragEnter(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOver(true);
+  }
+
+  function handleDragOver(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = "copy";
+    setDragOver(true);
+  }
+
+  function handleDragLeave(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!e.currentTarget.contains(e.relatedTarget)) {
+      setDragOver(false);
+    }
+  }
+
   function handleDrop(e) {
     e.preventDefault();
+    e.stopPropagation();
     setDragOver(false);
-    const dropped = e.dataTransfer.files?.[0];
-    if (dropped) handleFileSelected(dropped);
+    const dropped = e.dataTransfer?.files?.[0];
+    if (dropped) {
+      handleFileSelected(dropped);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   }
 
   async function handleStartImport() {
@@ -541,8 +566,9 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
                 <>
                   <div
                     className={`pie-dropzone ${dragOver ? "drag-over" : ""} ${file ? "has-file" : ""}`}
-                    onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                    onDragLeave={() => setDragOver(false)}
+                    onDragEnter={handleDragEnter}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                     onClick={() => fileInputRef.current?.click()}
                     role="button"
@@ -744,6 +770,16 @@ export default function ProductImportExportModal({ isOpen, onClose, onComplete }
                     <div><span>Updated</span><strong>{summary.updated}</strong></div>
                     <div><span>Skipped</span><strong>{summary.skipped}</strong></div>
                     <div><span>Failed</span><strong>{summary.failed}</strong></div>
+                    {(summary.suppliersCreated > 0 || summary.suppliersFuzzyMatched > 0) && (
+                      <>
+                        {summary.suppliersCreated > 0 && (
+                          <div><span>Suppliers created</span><strong>{summary.suppliersCreated}</strong></div>
+                        )}
+                        {summary.suppliersFuzzyMatched > 0 && (
+                          <div><span>Supplier typos matched</span><strong>{summary.suppliersFuzzyMatched}</strong></div>
+                        )}
+                      </>
+                    )}
                   </div>
                   {summary.errors?.length > 0 && (
                     <>

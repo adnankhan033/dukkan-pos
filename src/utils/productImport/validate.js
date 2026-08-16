@@ -173,10 +173,7 @@ export function validateImportRows(
       issues.push(`unit "${d.unit}" not found — create it in Settings → Units first`);
     }
 
-    const supplierKey = normKey(d.supplier);
-    if (supplierKey && supplierIndex && !supplierIndex.has(supplierKey)) {
-      issues.push(`supplier "${d.supplier}" not found — add it in Suppliers first`);
-    }
+    // Supplier: resolved at import time (exact match, fuzzy match, or auto-create).
 
     if (issues.length) {
       errors.push({

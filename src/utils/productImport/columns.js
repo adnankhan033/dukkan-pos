@@ -54,7 +54,7 @@ export const PRODUCT_IMPORT_COLUMNS = [
     title: "Supplier",
     required: false,
     example: "Almarai Trading",
-    hint: "Supplier company name. Must already exist in Suppliers. Leave blank if none.",
+    hint: "Supplier company name. Exact match, similar spelling, or auto-created if new. Leave blank if none.",
   },
   {
     key: "cost_price",
@@ -323,7 +323,7 @@ export function templateInstructionsRows() {
     ["Duplicate matching", "Imports match existing products by SKU or barcode"],
     ["Category", "New category names are created automatically"],
     ["Unit", "Must match an existing unit symbol or name (Settings → Units)"],
-    ["Supplier", "Must match an existing supplier company name"],
+    ["Supplier", "Matched to existing supplier (fuzzy spelling OK) or created automatically"],
     [""],
     ["Fill in the Products sheet starting from row 2, then import via Products → Import / Export."],
   ];

@@ -85,6 +85,7 @@ export default function Sales() {
   const [completeStep, setCompleteStep] = useState(null);
   const [pendingPaymentMethod, setPendingPaymentMethod] = useState(PAYMENT_METHODS.CASH);
   const [completedSale, setCompletedSale] = useState(null);
+  const [printingReceipt, setPrintingReceipt] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
 
@@ -401,7 +402,8 @@ export default function Sales() {
   }
 
   async function handlePrintReceipt() {
-    if (!completedSale) return;
+    if (!completedSale || printingReceipt) return;
+    setPrintingReceipt(true);
     try {
       await printReceipt({
         sale: completedSale,
@@ -409,14 +411,11 @@ export default function Sales() {
         settings,
         currency,
       });
-      notify.success(`Receipt sent to printer for ${completedSale.sale_number}.`, {
-        title: "Receipt printed",
-      });
     } catch (err) {
       notify.error(err.message || "Print failed", { title: "Print failed" });
+    } finally {
+      setPrintingReceipt(false);
     }
-    closeCompleteFlow();
-    focusSearch();
   }
 
   function handleSkipPrint() {
@@ -951,6 +950,7 @@ export default function Sales() {
         completedSale={completedSale}
         settings={settings}
         processing={submitting}
+        printingReceipt={printingReceipt}
         zatcaQueued={zatcaPhase2 && Boolean(completedSale)}
         onConfirmComplete={handleConfirmComplete}
         onCancel={closeCompleteFlow}

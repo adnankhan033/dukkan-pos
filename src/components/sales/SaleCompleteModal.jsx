@@ -22,6 +22,7 @@ export default function SaleCompleteModal({
   completedSale,
   settings,
   processing = false,
+  printingReceipt = false,
   zatcaQueued = false,
   onConfirmComplete,
   onCancel,
@@ -130,7 +131,11 @@ export default function SaleCompleteModal({
                 label="Receipt preview"
               />
 
-              <p className="sale-complete-print-hint">Review the receipt above, then print or skip.</p>
+              <p className="sale-complete-print-hint">
+                {printingReceipt
+                  ? "Print dialog open — cancel or print, then tap Done when finished."
+                  : "Review the receipt above, then print or tap Done."}
+              </p>
 
               {zatcaQueued && (
                 <p className="sale-complete-zatca-note">
@@ -140,12 +145,12 @@ export default function SaleCompleteModal({
               )}
             </div>
             <div className="sale-complete-footer split">
-              <Button variant="secondary" onClick={onSkipPrint}>
-                Skip
+              <Button variant="secondary" onClick={onSkipPrint} disabled={printingReceipt}>
+                Done
               </Button>
               <div className="footer-actions">
-                <Button onClick={onPrint}>
-                  <Printer size={16} /> Print Receipt
+                <Button onClick={onPrint} disabled={printingReceipt}>
+                  <Printer size={16} /> {printingReceipt ? "Printing…" : "Print Receipt"}
                 </Button>
               </div>
             </div>

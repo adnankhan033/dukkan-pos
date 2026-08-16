@@ -18,7 +18,7 @@ import SearchBar from "../components/common/SearchBar";
 import Table from "../components/common/Table";
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
-import { Input, Select } from "../components/common/Input";
+import { Input } from "../components/common/Input";
 import SearchableSelect from "../components/common/SearchableSelect";
 import Badge from "../components/common/Badge";
 import { LoadingSpinner } from "../components/common/Loading";
@@ -30,9 +30,14 @@ import ProductNameFields from "../components/products/ProductNameFields";
 import ProductVatFields from "../components/products/ProductVatFields";
 import ProductBarcodeScanner from "../components/products/ProductBarcodeScanner";
 import { VAT_PRICE_TYPE, vatIncludedToPriceType } from "../utils/vatPricing";
+import { findBestCategoryMatch, findBestUnitMatch, findBestSupplierMatch, deriveUnitFields } from "../utils/productForm/resolveReferenceOption";
 import ProductImportExportModal from "../components/products/ProductImportExportModal";
 import FormValidationAlert from "../components/common/FormValidationAlert";
 import "./Products.css";
+
+function sortByName(items, key = "name") {
+  return [...items].sort((a, b) => String(a[key] ?? "").localeCompare(String(b[key] ?? "")));
+}
 
 const FORM_ID = "product-form";
 
@@ -87,12 +92,21 @@ export default function Products() {
 
   const isPublishedSection = section === "published";
 
+  const loadCategories = useCallback(async () => {
+    try {
+      const cats = await categoryService.getAll();
+      setCategories(cats);
+    } catch {
+      // Keep existing list if refresh fails.
+    }
+  }, []);
+
   const loadProducts = useCallback(async (silent = false) => {
     if (!silent) setInitialLoading(true);
     try {
       const result = await productService.getAll({
         search: debouncedSearch,
-        categoryId: categoryFilter || null,
+        categoryId: categoryFilter ? Number(categoryFilter) : null,
         published: isPublishedSection,
         page,
         limit: PRODUCTS_PAGE_SIZE,
@@ -113,15 +127,14 @@ export default function Products() {
 
   useEffect(() => {
     Promise.all([
-      categoryService.getAll(),
+      loadCategories(),
       unitService.getAll(),
       supplierService.getAll({ limit: 200, page: 1 }),
-    ]).then(([cats, unitList, supplierList]) => {
-      setCategories(cats);
+    ]).then(([, unitList, supplierList]) => {
       setUnits(unitList);
       setSuppliers(supplierList.items);
     });
-  }, []);
+  }, [loadCategories]);
 
   useEffect(() => {
     loadProducts();
@@ -129,9 +142,10 @@ export default function Products() {
 
   useEffect(() => {
     return onCatalogChanged(() => {
+      loadCategories();
       loadProducts(true);
     });
-  }, [loadProducts]);
+  }, [loadCategories, loadProducts]);
 
   function openCreate() {
     setEditing(null);
@@ -333,10 +347,42 @@ export default function Products() {
   }
 
   async function createCategoryOption(name) {
-    const created = await categoryService.create({ name });
-    setCategories((prev) =>
-      [...prev, created].sort((a, b) => a.name.localeCompare(b.name))
+    const trimmed = String(name ?? "").trim();
+    if (!trimmed) throw new Error("Category name is required");
+
+    const match = findBestCategoryMatch(trimmed, categories);
+    if (match) return String(match.id);
+
+    const created = await categoryService.create({ name: trimmed });
+    setCategories((prev) => sortByName([...prev, created]));
+    return String(created.id);
+  }
+
+  async function createUnitOption(name) {
+    const trimmed = String(name ?? "").trim();
+    if (!trimmed) throw new Error("Unit name is required");
+
+    const match = findBestUnitMatch(trimmed, units);
+    if (match) return String(match.id);
+
+    const fields = deriveUnitFields(trimmed);
+    const created = await unitService.create(fields);
+    setUnits((prev) => sortByName([...prev, created]));
+    return String(created.id);
+  }
+
+  async function createSupplierOption(name) {
+    const trimmed = String(name ?? "").trim();
+    if (!trimmed) throw new Error("Supplier name is required");
+
+    const match = findBestSupplierMatch(
+      trimmed,
+      suppliers.map((s) => ({ id: s.id, company: s.company }))
     );
+    if (match) return String(match.id);
+
+    const created = await supplierService.create({ company: trimmed });
+    setSuppliers((prev) => sortByName([...prev, created], "company"));
     return String(created.id);
   }
 
@@ -527,22 +573,25 @@ export default function Products() {
         </button>
       </div>
 
-      <div className="page-header-actions" style={{ marginBottom: "1rem" }}>
+      <div className="page-header-actions products-filters">
         <SearchBar
           value={search}
           onChange={(v) => { setSearch(v); setPage(1); }}
           placeholder="Search products..."
         />
-        <Select
+        <SearchableSelect
+          className="products-category-filter"
           value={categoryFilter}
-          onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
-          style={{ maxWidth: "200px" }}
-        >
-          <option value="">All Categories</option>
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </Select>
+          onChange={(categoryId) => { setCategoryFilter(categoryId); setPage(1); }}
+          options={categories.map((c) => ({
+            value: String(c.id),
+            label: c.name,
+            hint: `${Number(c.product_count ?? 0)} products`,
+          }))}
+          placeholder="All Categories"
+          noneLabel="All Categories"
+          clearable
+        />
       </div>
 
       {products.length > 0 && (
@@ -689,7 +738,9 @@ export default function Products() {
                 label: u.name,
                 hint: u.symbol,
               }))}
-              placeholder="Search unit…"
+              placeholder="Search or create unit…"
+              creatable
+              onCreateOption={createUnitOption}
             />
             <SearchableSelect
               label="Supplier"
@@ -699,7 +750,9 @@ export default function Products() {
                 value: String(s.id),
                 label: s.company,
               }))}
-              placeholder="Search supplier…"
+              placeholder="Search or create supplier…"
+              creatable
+              onCreateOption={createSupplierOption}
             />
             <Input label="Cost Price" type="number" step="0.01" min={0} value={form.cost_price} onChange={(e) => { setForm({ ...form, cost_price: e.target.value }); setErrors((p) => ({ ...p, cost_price: undefined, form: undefined })); }} error={errors.cost_price} />
             <Input label="Selling Price *" type="number" step="0.01" min={0} value={form.selling_price} onChange={(e) => { setForm({ ...form, selling_price: e.target.value }); setErrors((p) => ({ ...p, selling_price: undefined, form: undefined })); }} error={errors.selling_price} />
@@ -739,7 +792,10 @@ export default function Products() {
       <ProductImportExportModal
         isOpen={importExportOpen}
         onClose={() => setImportExportOpen(false)}
-        onComplete={() => loadProducts(true)}
+        onComplete={() => {
+          loadCategories();
+          loadProducts(true);
+        }}
       />
 
       {confirmDialog}

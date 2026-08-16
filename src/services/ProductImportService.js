@@ -1,10 +1,12 @@
 import { query, queryOne, execute, insert, getDatabase } from "../database/connection";
 import { categoryService } from "./CategoryService";
 import { unitService } from "./UnitService";
+import { supplierService } from "./SupplierService";
 import { invalidateDashboardCache } from "./DashboardCache";
 import { PRODUCT_IMPORT_BATCH_SIZE } from "../utils/constants";
 import { IMPORT_MODES } from "../utils/productImport/validate";
 import { templateHeaders, templateSampleRows, PRODUCT_IMPORT_COLUMNS } from "../utils/productImport/columns";
+import { findBestSupplierMatch, supplierLookupKey } from "../utils/productImport/supplierMatch";
 import { vatIncludedToPriceType } from "../utils/vatPricing";
 import { rowsToCsv } from "../utils/productImport/csv";
 import {
@@ -89,13 +91,15 @@ class ProductImportService {
     }
 
     const supplierIndex = new Map();
+    const supplierList = [];
     for (const supplier of suppliers) {
       if (supplier.company?.trim()) {
+        supplierList.push({ id: supplier.id, company: supplier.company.trim() });
         supplierIndex.set(supplier.company.trim().toLowerCase(), supplier.id);
       }
     }
 
-    return { unitIndex, supplierIndex };
+    return { unitIndex, supplierIndex, supplierList };
   }
 
   async getValidationIndexes() {
@@ -140,10 +144,36 @@ class ProductImportService {
     return unitIndex.get(key) ?? null;
   }
 
-  resolveSupplierId(company, supplierIndex) {
-    const key = company?.trim().toLowerCase();
-    if (!key) return null;
-    return supplierIndex.get(key) ?? null;
+  async resolveOrCreateSupplierId(company, { supplierIndex, supplierList, cache, stats }) {
+    const trimmed = company?.trim();
+    if (!trimmed) return null;
+
+    const key = supplierLookupKey(trimmed);
+    if (cache.has(key)) return cache.get(key);
+
+    const existingId = supplierIndex.get(key);
+    if (existingId) {
+      cache.set(key, existingId);
+      return existingId;
+    }
+
+    const match = findBestSupplierMatch(trimmed, supplierList);
+    if (match) {
+      cache.set(key, match.id);
+      supplierIndex.set(key, match.id);
+      supplierIndex.set(supplierLookupKey(match.company), match.id);
+      if (match.type === "fuzzy") {
+        stats.suppliersFuzzyMatched += 1;
+      }
+      return match.id;
+    }
+
+    const created = await supplierService.create({ company: trimmed });
+    supplierList.push({ id: created.id, company: created.company });
+    supplierIndex.set(key, created.id);
+    cache.set(key, created.id);
+    stats.suppliersCreated += 1;
+    return created.id;
   }
 
   async deleteAllProducts() {
@@ -238,6 +268,8 @@ class ProductImportService {
       updated: 0,
       skipped: 0,
       failed: 0,
+      suppliersCreated: 0,
+      suppliersFuzzyMatched: 0,
       errors: [],
       cancelled: false,
     };
@@ -269,8 +301,13 @@ class ProductImportService {
     }
 
     let { skuIndex, barcodeIndex } = await this.getExistingIndex();
-    const { unitIndex, supplierIndex } = await this.getReferenceIndexes();
+    const { unitIndex, supplierIndex, supplierList } = await this.getReferenceIndexes();
     const categoryCache = new Map();
+    const supplierCache = new Map();
+    const supplierStats = {
+      suppliersCreated: 0,
+      suppliersFuzzyMatched: 0,
+    };
 
     const validRows = validatedRows.filter((r) => r.valid);
     const importTotal = validRows.length;
@@ -297,7 +334,12 @@ class ProductImportService {
             const existingId = await this.findProductId(parsed, skuIndex, barcodeIndex);
             const categoryId = await this.resolveCategoryId(parsed.category_name, categoryCache);
             const unitId = this.resolveUnitId(parsed.unit_name, unitIndex);
-            const supplierId = this.resolveSupplierId(parsed.supplier_name, supplierIndex);
+            const supplierId = await this.resolveOrCreateSupplierId(parsed.supplier_name, {
+              supplierIndex,
+              supplierList,
+              cache: supplierCache,
+              stats: supplierStats,
+            });
 
             if (existingId) {
               if (mode === IMPORT_MODES.NEW_ONLY || mode === IMPORT_MODES.SKIP_DUPLICATES) {
@@ -356,6 +398,9 @@ class ProductImportService {
       });
     }
 
+    summary.suppliersCreated = supplierStats.suppliersCreated;
+    summary.suppliersFuzzyMatched = supplierStats.suppliersFuzzyMatched;
+
     await this.logOperation({
       operation: "import",
       fileName,
@@ -368,6 +413,8 @@ class ProductImportService {
       details: {
         cancelled: summary.cancelled,
         errorCount: summary.errors.length,
+        suppliersCreated: summary.suppliersCreated,
+        suppliersFuzzyMatched: summary.suppliersFuzzyMatched,
       },
     });
 

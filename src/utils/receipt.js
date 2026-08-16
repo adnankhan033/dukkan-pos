@@ -8,6 +8,7 @@ import {
   resolveBusinessTimezone,
   parseStoredTimestampToInstant,
 } from "./timezones";
+import { beginPrintSession, endPrintSession } from "./printGuard.js";
 
 function escapeHtml(str) {
   return String(str)
@@ -774,27 +775,43 @@ export function printHtml(html) {
       "position:fixed;right:0;bottom:0;width:1px;height:1px;border:none;opacity:0;pointer-events:none;";
 
     let finished = false;
+    let printStarted = false;
+    let fallbackTimer = null;
+
     const cleanup = () => {
       if (finished) return;
       finished = true;
+      endPrintSession();
+      if (fallbackTimer) clearTimeout(fallbackTimer);
       if (frame.parentNode) frame.parentNode.removeChild(frame);
       resolve();
     };
 
+    const attachAfterPrint = (win) => {
+      if (!win) return;
+      win.addEventListener("afterprint", cleanup, { once: true });
+    };
+
     const triggerPrint = () => {
+      if (printStarted || finished) return;
+      printStarted = true;
       try {
         const win = frame.contentWindow;
         if (!win) {
           cleanup();
           return;
         }
+        attachAfterPrint(win);
         win.focus();
         win.print();
       } catch (err) {
         console.error("Print failed:", err);
+        cleanup();
       }
-      setTimeout(cleanup, 1500);
     };
+
+    beginPrintSession();
+    fallbackTimer = setTimeout(cleanup, 120000);
 
     frame.onload = () => setTimeout(triggerPrint, 100);
     document.body.appendChild(frame);
