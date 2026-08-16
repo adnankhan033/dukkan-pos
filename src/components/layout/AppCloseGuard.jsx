@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 import ConfirmDialog from "../common/ConfirmDialog";
 import { isDesktopApp } from "../../utils/environment";
@@ -9,17 +10,14 @@ import { isPrintSessionActive } from "../../utils/printGuard";
  */
 export default function AppCloseGuard({ children }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const closingRef = useRef(false);
+  const unlistenRef = useRef(null);
 
   useEffect(() => {
     if (!isDesktopApp()) return undefined;
 
-    let unlisten;
     (async () => {
       try {
-        unlisten = await getCurrentWebviewWindow().onCloseRequested((event) => {
-          if (closingRef.current) return;
-
+        unlistenRef.current = await getCurrentWebviewWindow().onCloseRequested((event) => {
           if (isPrintSessionActive()) {
             event.preventDefault();
             return;
@@ -34,19 +32,24 @@ export default function AppCloseGuard({ children }) {
     })();
 
     return () => {
-      unlisten?.();
+      unlistenRef.current?.();
+      unlistenRef.current = null;
     };
   }, []);
 
   async function handleConfirmClose() {
-    closingRef.current = true;
     setConfirmOpen(false);
+    unlistenRef.current?.();
+    unlistenRef.current = null;
 
     try {
-      const window = getCurrentWebviewWindow();
-      await window.close();
+      await invoke("quit_app");
     } catch {
-      closingRef.current = false;
+      try {
+        await getCurrentWebviewWindow().destroy();
+      } catch {
+        setConfirmOpen(true);
+      }
     }
   }
 

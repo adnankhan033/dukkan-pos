@@ -1099,6 +1099,11 @@ fn save_backup_file(filename: String, content: String) -> Result<String, String>
     Ok(path.to_string_lossy().into_owned())
 }
 
+#[tauri::command]
+fn quit_app(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     load_dotenv_files();
@@ -1115,7 +1120,8 @@ pub fn run() {
             send_activation_email,
             send_backup_email,
             get_backup_folder,
-            save_backup_file
+            save_backup_file,
+            quit_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
