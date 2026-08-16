@@ -20,6 +20,10 @@ import ZatcaSettingsPanel from "../components/settings/ZatcaSettingsPanel";
 import VendorBrandingPanel from "../components/settings/VendorBrandingPanel";
 import { VENDOR_SETTING_KEY_LIST } from "../config/softwareVendor";
 import { DEFAULT_RECEIPT_TEMPLATE } from "../utils/receiptTemplates";
+import {
+  RECEIPT_SECTION_DEFAULTS,
+  RECEIPT_SECTION_TOGGLES,
+} from "../utils/receiptSections";
 import { DEFAULT_BUSINESS_TIMEZONE, BUSINESS_TIMEZONES } from "../utils/timezones";
 import { getBusinessDateTimeLabelFromForm } from "../utils/businessDate";
 import { getZatcaDefaultSettings } from "../zatca/core/config";
@@ -65,6 +69,12 @@ function buildFormFromSettings(settings) {
     receipt_show_qr: settingBool(settings.receipt_show_qr),
     receipt_show_bilingual: settingBool(settings.receipt_show_bilingual),
     receipt_show_tax_info: settingBool(settings.receipt_show_tax_info),
+    ...Object.fromEntries(
+      Object.entries(RECEIPT_SECTION_DEFAULTS).map(([key, defaultVal]) => [
+        key,
+        settingBool(settings[key] ?? defaultVal),
+      ])
+    ),
     receipt_paper_width: settings.receipt_paper_width || "80",
     receipt_header_note: settings.receipt_header_note || "",
     receipt_template: settings.receipt_template || DEFAULT_RECEIPT_TEMPLATE,
@@ -107,6 +117,9 @@ function formToSettings(form) {
     receipt_show_qr: form.receipt_show_qr ? "1" : "0",
     receipt_show_bilingual: form.receipt_show_bilingual ? "1" : "0",
     receipt_show_tax_info: form.receipt_show_tax_info ? "1" : "0",
+    ...Object.fromEntries(
+      Object.keys(RECEIPT_SECTION_DEFAULTS).map((key) => [key, form[key] ? "1" : "0"])
+    ),
     receipt_paper_width: form.receipt_paper_width,
     receipt_header_note: form.receipt_header_note,
     receipt_template: form.receipt_template || DEFAULT_RECEIPT_TEMPLATE,
@@ -725,18 +738,36 @@ export default function Settings() {
                 <option value="compact">Compact 58mm</option>
               </Select>
 
-              <div className="settings-check-list" style={{ marginTop: "1rem" }}>
-                <label className="settings-check">
-                  <input type="checkbox" checked={form.receipt_show_qr} onChange={(e) => updateField("receipt_show_qr", e.target.checked)} />
-                  Show ZATCA QR code
-                </label>
-                <label className="settings-check">
-                  <input type="checkbox" checked={form.receipt_show_bilingual} onChange={(e) => updateField("receipt_show_bilingual", e.target.checked)} />
-                  Show bilingual names (EN + AR)
-                </label>
-                <label className="settings-check">
-                  <input type="checkbox" checked={form.receipt_show_tax_info} onChange={(e) => updateField("receipt_show_tax_info", e.target.checked)} />
-                  Show CR & VAT numbers on receipt
+              <div className="settings-check-list" style={{ marginTop: "1.25rem" }}>
+                <h4 className="settings-subsection-title">Invoice sections</h4>
+                <p className="settings-section-desc" style={{ marginBottom: "0.75rem" }}>
+                  Choose which parts appear on printed receipts and invoices.
+                </p>
+                {RECEIPT_SECTION_TOGGLES.map((toggle) => (
+                  <label key={toggle.key} className="settings-check settings-check--stacked">
+                    <span className="settings-check-row">
+                      <input
+                        type="checkbox"
+                        checked={Boolean(form[toggle.key])}
+                        onChange={(e) => updateField(toggle.key, e.target.checked)}
+                      />
+                      {toggle.label}
+                    </span>
+                    {toggle.hint && <small className="settings-check-hint">{toggle.hint}</small>}
+                  </label>
+                ))}
+                <label className="settings-check settings-check--stacked" style={{ marginTop: "0.75rem" }}>
+                  <span className="settings-check-row">
+                    <input
+                      type="checkbox"
+                      checked={form.receipt_show_bilingual}
+                      onChange={(e) => updateField("receipt_show_bilingual", e.target.checked)}
+                    />
+                    Bilingual labels (EN + AR)
+                  </span>
+                  <small className="settings-check-hint">
+                    Adds Arabic labels and names alongside English across visible sections
+                  </small>
                 </label>
               </div>
               <div className="form-row" style={{ marginTop: "1rem" }}>

@@ -2,6 +2,7 @@ import { getModuleDefaults, getRoleModuleDefaults, getMenuItemDefaults, getRoleM
 import { getRoleActionDefaults } from "./actions";
 import { getZatcaDefaultSettings } from "../zatca/core/config";
 import { VENDOR_DEFAULT_SETTINGS } from "../config/softwareVendor";
+import { RECEIPT_SECTION_DEFAULTS } from "./receiptSections";
 
 export const DB_NAME = "sqlite:dukkan_pos.db";
 
@@ -20,6 +21,7 @@ export const DEFAULT_SETTINGS = {
   receipt_show_qr: "1",
   receipt_show_bilingual: "1",
   receipt_show_tax_info: "1",
+  ...RECEIPT_SECTION_DEFAULTS,
   receipt_paper_width: "80",
   receipt_header_note: "",
   receipt_template: "baqala",

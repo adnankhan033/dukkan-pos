@@ -2,6 +2,7 @@ import { formatCurrency, formatOrderDateTime } from "./format";
 import { zatcaService } from "../services/ZatcaService";
 import { ZATCA_PHASES, ZATCA_QUEUE_STATUS } from "../zatca/core/constants";
 import { DEFAULT_RECEIPT_TEMPLATE, getReceiptTemplate } from "./receiptTemplates";
+import { resolveReceiptSectionVisibility } from "./receiptSections";
 import { zatcaTlvBase64ToDataUrl, resolveZatcaQrTlv } from "./zatcaQr";
 import {
   resolveBusinessTimezone,
@@ -328,6 +329,7 @@ async function buildBaqalaReceipt(ctx) {
     headerNote,
     branding,
     qrHtml,
+    sections,
   } = ctx;
 
   const rows = buildZatcaItemRows(items, sale, currency, vatPercent, showBilingual);
@@ -382,42 +384,49 @@ async function buildBaqalaReceipt(ctx) {
   `;
 
   const vatLine =
-    showTaxInfo && vatRegistration
+    sections.storeHeader && showTaxInfo && vatRegistration
       ? `<div class="head-line">VAT No.${escapeHtml(vatRegistration)}</div>`
       : "";
-  const phoneLine = storePhone ? `<div class="head-line">PH No. ${escapeHtml(storePhone)}</div>` : "";
-  const addressLine = address ? `<div class="head-line">${escapeHtml(address)}</div>` : "";
+  const phoneLine =
+    sections.storeHeader && storePhone
+      ? `<div class="head-line">PH No. ${escapeHtml(storePhone)}</div>`
+      : "";
+  const addressLine =
+    sections.storeHeader && address ? `<div class="head-line">${escapeHtml(address)}</div>` : "";
 
-  const metaBlock = `
+  const metaBlock = sections.invoiceMeta
+    ? `
     <div class="meta-grid">
       ${buildMetaRow("Invoice No.", "فاتورة", escapeHtml(invoiceNumber), showBilingual)}
       ${buildMetaRow("Date & time", "التاريخ والوقت", escapeHtml(receiptDate), showBilingual)}
       ${buildMetaRow("Customer", "العميل", escapeHtml(customerName), showBilingual)}
-    </div>`;
+    </div>`
+    : "";
 
-  const body = `
-    <div class="receipt">
+  const storeHeaderBlock = sections.storeHeader
+    ? `
       <div class="head">
         <p class="store-en">${escapeHtml(storeName)}</p>
         ${storeNameAr && showBilingual ? `<p class="store-ar">${escapeHtml(storeNameAr)}</p>` : ""}
         ${vatLine}
         ${phoneLine}
         ${addressLine}
-      </div>
+      </div>`
+    : "";
 
-      ${metaBlock}
-
-      <hr class="divider" />
-
+  const invoiceTitleBlock = sections.invoiceTitle
+    ? `
       <div class="invoice-title">
         <div class="en">Simplified Tax Invoice</div>
         ${showBilingual ? `<div class="ar">فاتورة ضريبية مبسطة</div>` : ""}
-      </div>
+      </div>`
+    : "";
 
-      <hr class="divider" />
+  const headerNoteBlock =
+    sections.headerNote && headerNote ? `<p class="note">${escapeHtml(headerNote)}</p>` : "";
 
-      ${headerNote ? `<p class="note">${escapeHtml(headerNote)}</p>` : ""}
-
+  const itemsBlock = sections.items
+    ? `
       <table>
         <thead>
           <tr>
@@ -428,20 +437,53 @@ async function buildBaqalaReceipt(ctx) {
           </tr>
         </thead>
         <tbody>${rows}</tbody>
-      </table>
+      </table>`
+    : "";
 
-      <div class="totals">${buildSaudiTotalsBlock(sale, currency, vatPercent, showBilingual)}</div>
+  const totalsBlock = sections.totals
+    ? `<div class="totals">${buildSaudiTotalsBlock(sale, currency, vatPercent, showBilingual)}</div>`
+    : "";
 
+  const paymentBlock = sections.payment
+    ? `
       <div class="payment-row">
         <span>${escapeHtml(paymentLabel)}</span>
         <span>${formatReceiptAmount(sale.total, currency)}</span>
-      </div>
+      </div>`
+    : "";
 
-      ${qrHtml}
-
+  const footerBlock = sections.footer
+    ? `
       <p class="footer">${escapeHtml(footer)}</p>
-      ${footerAr && showBilingual ? `<p class="footer footer-ar">${escapeHtml(footerAr)}</p>` : ""}
-      ${branding ? `<p class="brand">Powered by ${escapeHtml(branding)}</p>` : ""}
+      ${footerAr && showBilingual ? `<p class="footer footer-ar">${escapeHtml(footerAr)}</p>` : ""}`
+    : "";
+
+  const brandingBlock =
+    sections.branding && branding
+      ? `<p class="brand">Powered by ${escapeHtml(branding)}</p>`
+      : "";
+
+  const dividerAfterHeader =
+    storeHeaderBlock && (metaBlock || invoiceTitleBlock) ? `<hr class="divider" />` : "";
+  const dividerBeforeTitle = metaBlock && invoiceTitleBlock ? `<hr class="divider" />` : "";
+  const dividerBeforeItems =
+    invoiceTitleBlock && (headerNoteBlock || itemsBlock) ? `<hr class="divider" />` : "";
+
+  const body = `
+    <div class="receipt">
+      ${storeHeaderBlock}
+      ${dividerAfterHeader}
+      ${metaBlock}
+      ${dividerBeforeTitle}
+      ${invoiceTitleBlock}
+      ${dividerBeforeItems}
+      ${headerNoteBlock}
+      ${itemsBlock}
+      ${totalsBlock}
+      ${paymentBlock}
+      ${qrHtml}
+      ${footerBlock}
+      ${brandingBlock}
     </div>`;
 
   return wrapDocument({
@@ -471,13 +513,16 @@ async function buildClassicReceipt(ctx) {
     paperWidth,
     headerNote,
     qrHtml,
+    sections,
   } = ctx;
 
   const rows = buildClassicItemRows(items, currency, showBilingual);
 
   const taxInfo = [];
-  if (showTaxInfo && crNumber) taxInfo.push(`CR: ${escapeHtml(crNumber)}`);
-  if (showTaxInfo && vatRegistration) taxInfo.push(`VAT: ${escapeHtml(vatRegistration)}`);
+  if (sections.storeHeader && showTaxInfo && crNumber) taxInfo.push(`CR: ${escapeHtml(crNumber)}`);
+  if (sections.storeHeader && showTaxInfo && vatRegistration) {
+    taxInfo.push(`VAT: ${escapeHtml(vatRegistration)}`);
+  }
 
   const css = `
     body { font-family: monospace, sans-serif; font-size: 12px; margin: 0; padding: 12px; color: #000; background: #fff; }
@@ -499,20 +544,38 @@ async function buildClassicReceipt(ctx) {
     .qr-status { font-size: 9px; color: #555; margin: 4px 0 0; }
   `;
 
-  const body = `
+  const storeHeaderBlock = sections.storeHeader
+    ? `
     <h1>${escapeHtml(storeName)}</h1>
     ${storeNameAr && showBilingual ? `<p class="store-name-ar">${escapeHtml(storeNameAr)}</p>` : ""}
     ${address ? `<p>${escapeHtml(address)}</p>` : ""}
-    ${headerNote ? `<p style="font-size:10px">${escapeHtml(headerNote)}</p>` : ""}
-    ${taxInfo.length ? `<p class="tax-info">${taxInfo.join(" &nbsp;|&nbsp; ")}</p>` : ""}
+    ${taxInfo.length ? `<p class="tax-info">${taxInfo.join(" &nbsp;|&nbsp; ")}</p>` : ""}`
+    : "";
+
+  const invoiceTitleBlock = sections.invoiceTitle
+    ? `
     <div class="invoice-type">
       <div>Simplified Tax Invoice</div>
       <div class="invoice-type-ar">فاتورة ضريبية مبسطة</div>
-    </div>
+    </div>`
+    : "";
+
+  const invoiceMetaBlock = sections.invoiceMeta
+    ? `
     <p>${formatReceiptDateTime(sale.created_at || new Date().toISOString(), settings)}</p>
     <p><strong>${escapeHtml(sale.sale_number || "")}</strong></p>
-    <p>Customer: ${escapeHtml(sale.customer_name || "Walk-in")}</p>
-    <p>Payment: ${escapeHtml(formatPaymentMethod(sale.payment_method, showBilingual))}</p>
+    <p>Customer: ${escapeHtml(sale.customer_name || "Walk-in")}</p>`
+    : "";
+
+  const paymentMetaBlock = sections.payment
+    ? `<p>Payment: ${escapeHtml(formatPaymentMethod(sale.payment_method, showBilingual))}</p>`
+    : "";
+
+  const headerNoteBlock =
+    sections.headerNote && headerNote ? `<p style="font-size:10px">${escapeHtml(headerNote)}</p>` : "";
+
+  const itemsBlock = sections.items
+    ? `
     <table>
       <thead>
         <tr>
@@ -523,11 +586,29 @@ async function buildClassicReceipt(ctx) {
         </tr>
       </thead>
       <tbody>${rows}</tbody>
-    </table>
-    <div class="totals">${buildClassicTotalsBlock(sale, currency, vatPercent)}</div>
-    ${qrHtml}
+    </table>`
+    : "";
+
+  const totalsBlock = sections.totals
+    ? `<div class="totals">${buildClassicTotalsBlock(sale, currency, vatPercent)}</div>`
+    : "";
+
+  const footerBlock = sections.footer
+    ? `
     <p class="footer">${escapeHtml(footer)}</p>
-    ${footerAr && showBilingual ? `<p class="footer footer-ar">${escapeHtml(footerAr)}</p>` : ""}`;
+    ${footerAr && showBilingual ? `<p class="footer footer-ar">${escapeHtml(footerAr)}</p>` : ""}`
+    : "";
+
+  const body = `
+    ${storeHeaderBlock}
+    ${headerNoteBlock}
+    ${invoiceTitleBlock}
+    ${invoiceMetaBlock}
+    ${paymentMetaBlock}
+    ${itemsBlock}
+    ${totalsBlock}
+    ${qrHtml}
+    ${footerBlock}`;
 
   return wrapDocument({
     title: `Receipt ${sale.sale_number || ""}`,
@@ -549,6 +630,7 @@ async function buildCompactReceipt(ctx) {
     showBilingual,
     paperWidth,
     qrHtml,
+    sections,
   } = ctx;
 
   const rows = (items || [])
@@ -575,15 +657,39 @@ async function buildCompactReceipt(ctx) {
     .qr-section img { width: 90px; height: 90px; }
   `;
 
-  const body = `
+  const storeHeaderBlock = sections.storeHeader
+    ? `
     <div class="center"><strong>${escapeHtml(storeName)}</strong></div>
-    ${storeNameAr && showBilingual ? `<div class="center store-ar">${escapeHtml(storeNameAr)}</div>` : ""}
-    <div class="center" style="font-size:9px;margin:4px 0">فاتورة ضريبية مبسطة</div>
-    <div class="center">${escapeHtml(sale.sale_number || "")} · ${formatOrderDateTime(sale.created_at || new Date().toISOString())}</div>
-    <table><tbody>${rows}</tbody></table>
-    <div class="total"><span>Total (VAT ${vatPercent}%)</span><span>${formatCurrency(sale.total, currency)}</span></div>
+    ${storeNameAr && showBilingual ? `<div class="center store-ar">${escapeHtml(storeNameAr)}</div>` : ""}`
+    : "";
+
+  const invoiceTitleBlock = sections.invoiceTitle
+    ? `<div class="center" style="font-size:9px;margin:4px 0">فاتورة ضريبية مبسطة</div>`
+    : "";
+
+  const invoiceMetaBlock =
+    sections.invoiceMeta
+      ? `<div class="center">${escapeHtml(sale.sale_number || "")} · ${formatOrderDateTime(sale.created_at || new Date().toISOString())}</div>`
+      : "";
+
+  const itemsBlock = sections.items ? `<table><tbody>${rows}</tbody></table>` : "";
+
+  const totalsBlock = sections.totals
+    ? `<div class="total"><span>Total (VAT ${vatPercent}%)</span><span>${formatCurrency(sale.total, currency)}</span></div>`
+    : "";
+
+  const footerBlock = sections.footer
+    ? `<div class="center" style="margin-top:6px;font-size:9px">${escapeHtml(footer)}</div>`
+    : "";
+
+  const body = `
+    ${storeHeaderBlock}
+    ${invoiceTitleBlock}
+    ${invoiceMetaBlock}
+    ${itemsBlock}
+    ${totalsBlock}
     ${qrHtml}
-    <div class="center" style="margin-top:6px;font-size:9px">${escapeHtml(footer)}</div>`;
+    ${footerBlock}`;
 
   return wrapDocument({
     title: `Receipt ${sale.sale_number || ""}`,
@@ -604,14 +710,12 @@ export async function buildReceiptHtml({ sale, items, settings, currency }) {
   const vatPercent = Number(settings.vat_percent) || 0;
   const crNumber = settings.cr_number || "";
   const vatRegistration = settings.vat_registration || "";
-  const showBilingual = settingOn(settings.receipt_show_bilingual);
-  const showTaxInfo = settingOn(settings.receipt_show_tax_info);
-  const showQr = settingOn(settings.receipt_show_qr);
+  const sections = resolveReceiptSectionVisibility(settings);
   const paperWidth = settings.receipt_paper_width || "80";
   const headerNote = settings.receipt_header_note || "";
   const templateId = resolveTemplateId(settings);
 
-  const qrHtml = await buildQrHtml(sale, settings, showQr);
+  const qrHtml = await buildQrHtml(sale, settings, sections.showQr);
 
   const ctx = {
     sale,
@@ -627,12 +731,13 @@ export async function buildReceiptHtml({ sale, items, settings, currency }) {
     vatPercent,
     crNumber,
     vatRegistration,
-    showBilingual,
-    showTaxInfo,
+    showBilingual: sections.showBilingual,
+    showTaxInfo: sections.showTaxInfo,
     paperWidth,
     headerNote,
     branding,
     qrHtml,
+    sections,
   };
 
   switch (templateId) {

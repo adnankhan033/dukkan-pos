@@ -483,6 +483,56 @@ export default function ZatcaUnifiedSetup({ form, updateField, baseSettings, sav
               />
             </div>
 
+            <h4 className="zatca-easy-section-title" style={{ marginTop: "1.5rem" }}>
+              Business Information
+            </h4>
+            <p className="settings-section-desc">
+              Structured address fields for ZATCA records. Optional — does not affect current
+              invoice or QR generation.
+            </p>
+            <div className="form-row" style={{ marginTop: "1rem" }}>
+              <Input
+                label="Building Number"
+                value={form[K.BUILDING_NUMBER] || ""}
+                onChange={(e) => updateField(K.BUILDING_NUMBER, e.target.value)}
+              />
+              <Input
+                label="Additional Number"
+                value={form[K.ADDITIONAL_NUMBER] || ""}
+                onChange={(e) => updateField(K.ADDITIONAL_NUMBER, e.target.value)}
+              />
+            </div>
+            <div className="form-row" style={{ marginTop: "1rem" }}>
+              <Input
+                label="Street Name (English)"
+                value={form[K.STREET_NAME_EN] || ""}
+                onChange={(e) => updateField(K.STREET_NAME_EN, e.target.value)}
+              />
+              <Input
+                label="Street Name (Arabic)"
+                value={form[K.STREET_NAME_AR] || ""}
+                onChange={(e) => updateField(K.STREET_NAME_AR, e.target.value)}
+                dir="rtl"
+              />
+            </div>
+            <div className="form-row" style={{ marginTop: "1rem" }}>
+              <Input
+                label="District"
+                value={form[K.DISTRICT] || ""}
+                onChange={(e) => updateField(K.DISTRICT, e.target.value)}
+              />
+              <Input
+                label="City"
+                value={form[K.CITY] || ""}
+                onChange={(e) => updateField(K.CITY, e.target.value)}
+              />
+              <Input
+                label="Postal Code"
+                value={form[K.POSTAL_CODE] || ""}
+                onChange={(e) => updateField(K.POSTAL_CODE, e.target.value)}
+              />
+            </div>
+
             <div className="zatca-easy-progress">
               {stepDefs.map((step, index) => {
                 const progStep = progress.steps.find((s) => s.id === step.id);

@@ -10,8 +10,16 @@ import {
   SAMPLE_RECEIPT_SALE,
   getReceiptTemplate,
 } from "../../utils/receiptTemplates";
+import { RECEIPT_SECTION_DEFAULTS } from "../../utils/receiptSections";
 
 function formToPreviewSettings(form) {
+  const sectionSettings = Object.fromEntries(
+    Object.entries(RECEIPT_SECTION_DEFAULTS).map(([key, defaultVal]) => [
+      key,
+      form[key] ?? defaultVal ? "1" : "0",
+    ])
+  );
+
   return {
     store_name: form.store_name,
     store_name_ar: form.store_name_ar,
@@ -27,6 +35,7 @@ function formToPreviewSettings(form) {
     receipt_show_qr: form.receipt_show_qr ? "1" : "0",
     receipt_show_bilingual: form.receipt_show_bilingual ? "1" : "0",
     receipt_show_tax_info: form.receipt_show_tax_info ? "1" : "0",
+    ...sectionSettings,
     receipt_paper_width: form.receipt_paper_width,
     receipt_header_note: form.receipt_header_note,
     receipt_template: form.receipt_template,

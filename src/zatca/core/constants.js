@@ -41,6 +41,14 @@ export const ZATCA_SETTING_KEYS = {
   VAT_NUMBER: "zatca_vat_number",
   COMPANY_ADDRESS: "zatca_company_address",
 
+  BUILDING_NUMBER: "zatca_building_number",
+  STREET_NAME_EN: "zatca_street_name_en",
+  STREET_NAME_AR: "zatca_street_name_ar",
+  DISTRICT: "zatca_district",
+  CITY: "zatca_city",
+  POSTAL_CODE: "zatca_postal_code",
+  ADDITIONAL_NUMBER: "zatca_additional_number",
+
   CERTIFICATE: "zatca_certificate",
   PRIVATE_KEY: "zatca_private_key",
   CERTIFICATE_REQUEST: "zatca_certificate_request",
