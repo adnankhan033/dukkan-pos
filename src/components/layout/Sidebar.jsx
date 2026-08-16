@@ -77,18 +77,11 @@ export default function Sidebar() {
   const vendor = resolveSoftwareVendor(settings);
 
   useEffect(() => {
-    setExpanded((prev) => {
-      const next = { ...prev };
-      for (const group of visibleGroups) {
-        if (group.id === "sales") {
-          next.sales = true;
-        }
-        if (group.items && groupHasActiveChild(group, pathname)) {
-          next[group.id] = true;
-        }
-      }
-      return next;
-    });
+    const activeGroupId = visibleGroups.find(
+      (group) => group.items && groupHasActiveChild(group, pathname)
+    )?.id;
+
+    setExpanded(activeGroupId ? { [activeGroupId]: true } : {});
   }, [pathname, visibleGroups]);
 
   function handleLogout() {
@@ -97,7 +90,7 @@ export default function Sidebar() {
   }
 
   function toggleGroup(id) {
-    setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
+    setExpanded((prev) => (prev[id] ? {} : { [id]: true }));
   }
 
   return (
