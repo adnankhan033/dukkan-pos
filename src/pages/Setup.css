@@ -71,25 +71,6 @@
   color: var(--color-text);
 }
 
-.setup-email-section {
-  margin-top: 1.25rem;
-  padding: 1rem 1.1rem;
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--color-primary, #06b6d4) 6%, transparent);
-  border: 1px solid color-mix(in srgb, var(--color-primary, #06b6d4) 18%, transparent);
-}
-
-.setup-email-title {
-  margin: 0 0 0.35rem;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--color-text);
-}
-
-.setup-email-section .setup-field-hint {
-  margin-bottom: 0.75rem;
-}
-
 .setup-form-gap {
   margin-top: 1rem;
 }
@@ -124,10 +105,43 @@
   color: var(--color-text-muted, #64748b);
 }
 
+.setup-key-field {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-input-bg);
+  overflow: hidden;
+}
+
+.setup-key-prefix {
+  display: flex;
+  align-items: center;
+  padding: 0 0.1rem 0 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted, #64748b);
+  user-select: none;
+}
+
+.setup-key-field .form-input {
+  border: none;
+  box-shadow: none;
+  padding-left: 0.15rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  letter-spacing: 0.14em;
+}
+
+.setup-key-field:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
 .setup-key-input input {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
 }
 
 .setup-submit {

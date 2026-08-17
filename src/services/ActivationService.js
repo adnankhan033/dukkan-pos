@@ -11,6 +11,7 @@ import {
   ACTIVATION_SETTING_KEYS,
   ACTIVATION_STATUS,
   isSystemActivated,
+  isValidActivationKey,
   normalizeActivationKey,
   REGISTRATION_STATUS,
   resolveActivationSenderEmail,
@@ -153,9 +154,7 @@ class ActivationService {
     if (!smtpReady && gmail && appPassword) {
       await this.saveActivationEmailSettings({ gmail, appPassword });
     } else if (!smtpReady) {
-      throw new Error(
-        "Email is not configured. Enter your Gmail App Password below, then submit again."
-      );
+      throw new Error("Could not send email. Restart the app and try again.");
     }
 
     let settings = await this.regenerateActivationCredentials();
@@ -246,8 +245,8 @@ class ActivationService {
 
   async activateLocalKey(enteredKey) {
     const normalized = normalizeActivationKey(enteredKey);
-    if (!normalized) {
-      throw new Error("Activation key is required.");
+    if (!isValidActivationKey(normalized)) {
+      throw new Error("Enter the 6-digit activation key from your email.");
     }
 
     const storedKey = normalizeActivationKey(

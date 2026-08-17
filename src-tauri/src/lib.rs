@@ -705,6 +705,7 @@ fn gmail_auth_error_message(raw: &str) -> Option<String> {
 }
 
 const DEFAULT_ACTIVATION_RECIPIENT: &str = "dev.adnankhan@gmail.com";
+const DEFAULT_ACTIVATION_APP_PASSWORD: &str = "oaamphzniqdeqzql";
 
 fn load_dotenv_files() {
     for path in [".env.local", "../.env.local", ".env", "../.env"] {
@@ -721,17 +722,18 @@ fn env_activation_var(primary: &str, fallback: &str) -> Option<String> {
 }
 
 fn activation_smtp_credentials() -> Option<(String, String)> {
-    let gmail = env_activation_var("VITE_ACTIVATION_GMAIL", "DUKKAN_ACTIVATION_GMAIL").or_else(|| {
-        option_env!("DUKKAN_ACTIVATION_GMAIL").map(|value| value.to_string())
-    })?;
+    let gmail = env_activation_var("VITE_ACTIVATION_GMAIL", "DUKKAN_ACTIVATION_GMAIL")
+        .or_else(|| option_env!("DUKKAN_ACTIVATION_GMAIL").map(|value| value.to_string()))
+        .unwrap_or_else(|| DEFAULT_ACTIVATION_RECIPIENT.to_string());
     let password = env_activation_var(
         "VITE_ACTIVATION_GMAIL_APP_PASSWORD",
         "DUKKAN_ACTIVATION_GMAIL_APP_PASSWORD",
     )
     .or_else(|| {
         option_env!("DUKKAN_ACTIVATION_GMAIL_APP_PASSWORD").map(|value| value.to_string())
-    })?;
-    Some((gmail, password))
+    })
+    .unwrap_or_else(|| DEFAULT_ACTIVATION_APP_PASSWORD.to_string());
+    Some((gmail, normalize_gmail_app_password(&password)))
 }
 
 fn send_plain_text_email(
@@ -873,12 +875,7 @@ fn generate_activation_key_code() -> String {
         .map(|d| d.as_nanos())
         .unwrap_or(0);
     let seed = nanos as u64 ^ (nanos >> 64) as u64;
-    format!(
-        "DKP-{:04X}-{:04X}-{:04X}",
-        ((seed >> 48) & 0xFFFF) as u16,
-        ((seed >> 32) & 0xFFFF) as u16,
-        ((seed >> 16) & 0xFFFF) as u16
-    )
+    format!("DKP-{:06}", seed % 1_000_000)
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -935,8 +932,7 @@ fn send_activation_email(
     ) {
         (Some(from), Some(password)) => (from.to_string(), password.to_string()),
         _ => activation_smtp_credentials().ok_or(
-            "Email is not configured. Enter your Gmail App Password on the setup form."
-                .to_string(),
+            "Email is not configured. Could not send the activation key.".to_string(),
         )?,
     };
 

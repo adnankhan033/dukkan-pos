@@ -7,8 +7,10 @@ import { useAuthStore, useSettingsStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import { getDefaultRouteForUser } from "../utils/modules";
 import {
+  ACTIVATION_KEY_PREFIX,
   ACTIVATION_RECIPIENT_EMAIL,
   ACTIVATION_SETTING_KEYS,
+  activationKeyDigits,
   DEFAULT_ADMIN_PASSWORD,
   DEFAULT_ADMIN_USERNAME,
   isInstallationRegistered,
@@ -17,7 +19,6 @@ import {
   resolveActivationSenderEmail,
   resolveActivationSmtpFromEnv,
 } from "../utils/activationConfig";
-import { decodeBackupSecret } from "../utils/backupSettings";
 import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
@@ -40,9 +41,6 @@ export default function Setup() {
   const [storeName, setStoreName] = useState(settings[ACTIVATION_SETTING_KEYS.CUSTOMER_STORE] || "");
   const [phone, setPhone] = useState(settings[ACTIVATION_SETTING_KEYS.CUSTOMER_PHONE] || "");
   const [address, setAddress] = useState(settings[ACTIVATION_SETTING_KEYS.CUSTOMER_ADDRESS] || "");
-  const [senderAppPassword, setSenderAppPassword] = useState(
-    () => resolveActivationSmtpFromEnv()?.appPassword || ""
-  );
   const [activationKey, setActivationKey] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -50,11 +48,6 @@ export default function Setup() {
   const [info, setInfo] = useState("");
 
   useEffect(() => {
-    const savedPassword = decodeBackupSecret(
-      settings[ACTIVATION_SETTING_KEYS.GMAIL_APP_PASSWORD]
-    );
-    if (savedPassword) setSenderAppPassword(savedPassword);
-
     if (isInstallationRegistered(settings)) {
       setPhase("login");
       return;
@@ -93,12 +86,13 @@ export default function Setup() {
     setInfo("");
     try {
       await guard(async () => {
+        const smtp = resolveActivationSmtpFromEnv();
         const result = await activationService.submitRegistration({
           storeName,
           phone,
           address,
-          gmail: resolveActivationSenderEmail(),
-          appPassword: senderAppPassword,
+          gmail: smtp?.gmail || resolveActivationSenderEmail(),
+          appPassword: smtp?.appPassword,
         });
         setSettings(result.settings);
         if (result.emailSent) {
@@ -107,10 +101,7 @@ export default function Setup() {
           );
           setPhase("key");
         } else {
-          setError(
-            result.emailError ||
-              "Could not send email. Check your Gmail App Password and try again."
-          );
+          setError(result.emailError || "Could not send the activation email. Please try again.");
         }
       });
     } catch (err) {
@@ -124,7 +115,9 @@ export default function Setup() {
     setInfo("");
     try {
       await guard(async () => {
-        const result = await activationService.activateLocalKey(activationKey);
+        const result = await activationService.activateLocalKey(
+          normalizeActivationKey(activationKey)
+        );
         setSettings(result.settings);
         await settingsService.set(ACTIVATION_SETTING_KEYS.WELCOME_SHOWN, "0");
         setInfo("Activation successful! Sign in with your admin account below.");
@@ -172,14 +165,14 @@ export default function Setup() {
       }
       formSubtitle={
         phase === "details"
-          ? "Enter store details and your Gmail App Password to send the activation email."
+          ? "Enter store details. An activation key will be emailed after you submit."
           : phase === "key"
-            ? `Enter the activation key sent to ${ACTIVATION_RECIPIENT_EMAIL}.`
+            ? `Enter the 6-digit activation key sent to ${ACTIVATION_RECIPIENT_EMAIL}.`
             : "Use your super admin account to access your store."
       }
       footer={
         phase === "details"
-          ? `An activation key will be emailed to ${ACTIVATION_RECIPIENT_EMAIL}.`
+          ? null
           : phase === "key"
             ? "Enter the key you received by email to continue."
             : phase === "login"
@@ -219,25 +212,6 @@ export default function Setup() {
             />
           </div>
 
-          <div className="setup-email-section">
-            <p className="setup-email-title">Email settings (to send activation key)</p>
-            <p className="setup-field-hint">
-              Email will be sent to <strong>{ACTIVATION_RECIPIENT_EMAIL}</strong>. Enter the Google
-              App Password for that account (Google Account → Security → App passwords).
-            </p>
-            <div className="setup-form-gap">
-              <Input
-                label="Gmail App Password"
-                type="password"
-                value={senderAppPassword}
-                onChange={(e) => setSenderAppPassword(e.target.value.replace(/\s+/g, ""))}
-                placeholder="16-character app password"
-                autoFocus={false}
-                required
-              />
-            </div>
-          </div>
-
           <Button type="submit" className="btn-lg setup-submit" disabled={submitting}>
             {submitting ? "Sending email…" : "Submit & Send Activation Email"}
           </Button>
@@ -249,16 +223,28 @@ export default function Setup() {
 
       {phase === "key" && (
         <form onSubmit={handleSubmitKey} className="setup-form">
-          <Input
-            label="Activation Key"
-            value={activationKey}
-            onChange={(e) => setActivationKey(normalizeActivationKey(e.target.value))}
-            placeholder="DKP-XXXX-XXXX-XXXX"
-            autoFocus
-            className="setup-key-input"
-          />
+          <div className="form-group setup-key-input">
+            <label className="form-label" htmlFor="setup-activation-key">
+              Activation Key
+            </label>
+            <div className="setup-key-field">
+              <span className="setup-key-prefix">{ACTIVATION_KEY_PREFIX}</span>
+              <input
+                id="setup-activation-key"
+                className="form-input"
+                value={activationKeyDigits(activationKey)}
+                onChange={(e) => setActivationKey(activationKeyDigits(e.target.value))}
+                placeholder="000000"
+                maxLength={6}
+                inputMode="numeric"
+                autoComplete="off"
+                autoFocus
+                required
+              />
+            </div>
+          </div>
           <p className="setup-field-hint">
-            Paste the key from your email at {ACTIVATION_RECIPIENT_EMAIL}.
+            Enter the 6-digit key from your email at {ACTIVATION_RECIPIENT_EMAIL}.
           </p>
           <Button type="submit" className="btn-lg setup-submit" disabled={submitting}>
             {submitting ? "Verifying…" : "Continue to Sign In"}

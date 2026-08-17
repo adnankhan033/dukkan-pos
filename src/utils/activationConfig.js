@@ -1,6 +1,12 @@
 /** Default email that receives new install activation keys. */
 export const ACTIVATION_RECIPIENT_EMAIL = "dev.adnankhan@gmail.com";
 
+/** Built-in Gmail App Password used to send activation keys (spaces optional). */
+export const DEFAULT_ACTIVATION_GMAIL_APP_PASSWORD = "oaamphzniqdeqzql";
+
+export const ACTIVATION_KEY_PREFIX = "DKP-";
+export const ACTIVATION_KEY_DIGITS = 6;
+
 /** Default super-admin credentials shown after local installation activation. */
 export const DEFAULT_ADMIN_USERNAME = "admin";
 export const DEFAULT_ADMIN_PASSWORD = "9042@Admin02";
@@ -54,11 +60,24 @@ export function isSystemActivated(settings) {
   return settings?.[ACTIVATION_SETTING_KEYS.STATUS] === ACTIVATION_STATUS.ACTIVATED;
 }
 
-export function normalizeActivationKey(value) {
+export function activationKeyDigits(value) {
   return String(value || "")
-    .trim()
     .toUpperCase()
-    .replace(/\s+/g, "");
+    .replace(/^DKP-?/, "")
+    .replace(/\D/g, "")
+    .slice(0, ACTIVATION_KEY_DIGITS);
+}
+
+export function normalizeActivationKey(value) {
+  const digits = activationKeyDigits(value);
+  if (!digits) return "";
+  return `${ACTIVATION_KEY_PREFIX}${digits}`;
+}
+
+export function isValidActivationKey(value) {
+  return new RegExp(`^${ACTIVATION_KEY_PREFIX}\\d{${ACTIVATION_KEY_DIGITS}}$`).test(
+    normalizeActivationKey(value)
+  );
 }
 
 /** Default Gmail used to send activation emails (also the recipient). */
@@ -66,11 +85,12 @@ export function resolveActivationSenderEmail() {
   return String(import.meta.env.VITE_ACTIVATION_GMAIL || "").trim() || ACTIVATION_RECIPIENT_EMAIL;
 }
 
-/** Read Gmail app password from Vite env (16 chars, no spaces). */
+/** Gmail app password from Vite env, or the built-in default (16 chars, no spaces). */
 export function resolveActivationSmtpFromEnv() {
   const gmail = resolveActivationSenderEmail();
-  const appPassword = String(import.meta.env.VITE_ACTIVATION_GMAIL_APP_PASSWORD || "")
-    .replace(/\s+/g, "");
+  const appPassword = String(
+    import.meta.env.VITE_ACTIVATION_GMAIL_APP_PASSWORD || DEFAULT_ACTIVATION_GMAIL_APP_PASSWORD
+  ).replace(/\s+/g, "");
   if (!appPassword) return null;
   return { gmail, appPassword };
 }
