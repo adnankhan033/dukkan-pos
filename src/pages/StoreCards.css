@@ -90,23 +90,23 @@
 .store-cards-featured-preview {
   display: grid;
   place-items: center;
-  min-height: 460px;
-  padding: 2rem 1rem;
-  border-radius: 28px;
+  min-height: 480px;
+  padding: 2.2rem 1rem;
+  border-radius: 32px;
   background:
-    radial-gradient(circle at 50% 0%, #fff, transparent 42%),
-    #e8edf5;
+    radial-gradient(circle at 50% 12%, #ffffff 0%, transparent 46%),
+    linear-gradient(180deg, #f6f3ee 0%, #ece7df 100%);
 }
 
 .store-cards-capture {
   display: inline-block;
-  border-radius: 32px;
-  filter: drop-shadow(0 28px 40px rgba(15, 23, 42, 0.22));
+  border-radius: 34px;
+  filter: drop-shadow(0 30px 36px rgba(92, 70, 45, 0.18));
 }
 
 .store-cards-export-host .poster-lg {
-  width: 680px;
-  height: 425px;
+  width: 700px;
+  height: 438px;
   aspect-ratio: auto;
 }
 
@@ -198,8 +198,8 @@
 }
 
 .store-cards-export-host .poster-lg {
-  width: 680px;
-  height: 425px;
+  width: 700px;
+  height: 438px;
   aspect-ratio: auto;
 }
 

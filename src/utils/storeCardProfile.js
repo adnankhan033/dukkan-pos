@@ -12,12 +12,12 @@ export const STORE_CARD_SETTING_KEYS = {
 };
 
 export const STORE_CARD_THEMES = [
-  { id: "emerald", name: "Mint", caption: "Soft green shade" },
-  { id: "midnight", name: "Lilac", caption: "Light navy + butter stripe" },
-  { id: "oasis", name: "Sky", caption: "Pale blue shade" },
-  { id: "dune", name: "Peach", caption: "Warm apricot shade" },
-  { id: "royal", name: "Blush", caption: "Light rose shade" },
-  { id: "pearl", name: "Lemon", caption: "Cream and butter" },
+  { id: "emerald", name: "Mint", caption: "Soft green stationery" },
+  { id: "midnight", name: "Lilac", caption: "Lavender with a butter ribbon" },
+  { id: "oasis", name: "Sky", caption: "Airy blue rings" },
+  { id: "dune", name: "Peach", caption: "Warm apricot arches" },
+  { id: "royal", name: "Blush", caption: "Rose petals, light and pretty" },
+  { id: "pearl", name: "Lemon", caption: "Cream and sunshine" },
 ];
 
 const EMPTY_PROFILE = {
