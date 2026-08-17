@@ -14,6 +14,7 @@ import {
   Shield,
   CreditCard,
   CloudUpload,
+  IdCard,
   LogOut,
   Moon,
   Sun,
@@ -50,6 +51,7 @@ const ICONS = {
   Shield,
   CreditCard,
   CloudUpload,
+  IdCard,
 };
 
 function isPathActive(pathname, path) {

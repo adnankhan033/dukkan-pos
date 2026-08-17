@@ -25,6 +25,7 @@
     "@xmldom/xmldom": "^0.9.10",
     "bcryptjs": "^3.0.3",
     "fast-xml-parser": "^5.10.1",
+    "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^1.27.0",

@@ -73,4 +73,11 @@ export const NAV_GROUPS = [
       { id: "zatca-test", path: "/zatca-test", label: "ZATCA Test Center", module: "settings" },
     ],
   },
+  {
+    id: "store-cards",
+    label: "Store Card",
+    icon: "IdCard",
+    path: "/store-cards",
+    module: "settings",
+  },
 ];

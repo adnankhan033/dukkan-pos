@@ -28,6 +28,7 @@ import ZatcaDailySync from "../pages/ZatcaDailySync";
 import ZatcaTestCenter from "../pages/ZatcaTestCenter";
 import Subscriptions from "../pages/Subscriptions";
 import CloudBackup from "../pages/CloudBackup";
+import StoreCards from "../pages/StoreCards";
 
 function withRole(module, element) {
   return <RoleRoute module={module}>{element}</RoleRoute>;
@@ -75,6 +76,7 @@ export default function AppRoutes() {
         <Route path="/daily-close" element={withRole("reports", <DailyClose />)} />
         <Route path="/subscriptions" element={withRole("users", <Subscriptions />)} />
         <Route path="/settings" element={withRole("settings", <Settings />)} />
+        <Route path="/store-cards" element={withRole("settings", <StoreCards />)} />
         <Route path="/cloud-backup" element={withRole("settings", <CloudBackup />)} />
         <Route path="/zatca-sync" element={withRole("sales", <ZatcaDailySync />)} />
         <Route path="/zatca-queue" element={withRole("settings", <ZatcaQueue />)} />

@@ -1,0 +1,225 @@
+.store-cards-page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding-bottom: 2rem;
+}
+
+.store-cards-layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.store-cards-form-card {
+  position: sticky;
+  top: 1rem;
+}
+
+.store-cards-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.store-cards-form-intro strong {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.store-cards-form-intro p {
+  margin: 0.2rem 0 0.35rem;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.store-cards-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.store-cards-stage {
+  display: grid;
+  gap: 1.15rem;
+  min-width: 0;
+}
+
+.store-cards-featured {
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 80% 60% at 100% 0%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent),
+    var(--color-card);
+}
+
+.store-cards-featured-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-bottom: 1.1rem;
+}
+
+.store-cards-kicker {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.store-cards-featured-head h2 {
+  margin: 0.15rem 0 0;
+  font-size: 1.35rem;
+  letter-spacing: -0.03em;
+}
+
+.store-cards-featured-head p {
+  margin: 0.2rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.store-cards-share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.store-cards-featured-preview {
+  display: grid;
+  place-items: center;
+  padding: 1.25rem 0.5rem 0.5rem;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.06), transparent 40%),
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--color-border) 55%, transparent) 0 10px,
+      transparent 10px 20px
+    );
+}
+
+.store-cards-capture {
+  display: inline-block;
+  border-radius: 24px;
+}
+
+.store-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.store-cards-option {
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-card);
+  color: inherit;
+  text-align: left;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.store-cards-option:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
+
+.store-cards-option.selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.store-cards-option-preview {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.store-cards-option-preview .store-card {
+  width: 100%;
+  max-width: none;
+}
+
+.store-cards-option-meta {
+  display: grid;
+  gap: 0.1rem;
+  padding: 0 0.15rem 0.1rem;
+}
+
+.store-cards-option-meta strong {
+  font-size: 0.875rem;
+}
+
+.store-cards-option-meta small {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.store-cards-option-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.store-cards-option-download:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.store-cards-export-host {
+  position: fixed;
+  left: -12000px;
+  top: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.store-cards-export-host .store-card-lg {
+  width: 560px;
+  height: 336px;
+  aspect-ratio: auto;
+}
+
+@media (max-width: 1180px) {
+  .store-cards-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .store-cards-form-card {
+    position: static;
+  }
+
+  .store-cards-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .store-cards-form-row,
+  .store-cards-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .store-cards-featured-preview {
+    overflow-x: auto;
+  }
+}

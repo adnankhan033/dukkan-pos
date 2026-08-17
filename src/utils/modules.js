@@ -38,6 +38,7 @@ export const ROUTE_MODULE_MAP = {
   "/subscriptions": "users",
   "/users": "users",
   "/settings": "settings",
+  "/store-cards": "settings",
   "/zatca-queue": "settings",
   "/zatca-test": "settings",
 };

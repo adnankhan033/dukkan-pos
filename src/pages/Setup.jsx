@@ -11,8 +11,6 @@ import {
   ACTIVATION_RECIPIENT_EMAIL,
   ACTIVATION_SETTING_KEYS,
   activationKeyDigits,
-  DEFAULT_ADMIN_PASSWORD,
-  DEFAULT_ADMIN_USERNAME,
   isInstallationRegistered,
   normalizeActivationKey,
   REGISTRATION_STATUS,
@@ -171,13 +169,7 @@ export default function Setup() {
             : "Use your super admin account to access your store."
       }
       footer={
-        phase === "details"
-          ? null
-          : phase === "key"
-            ? "Enter the key you received by email to continue."
-            : phase === "login"
-              ? `Default admin: ${DEFAULT_ADMIN_USERNAME} / ${DEFAULT_ADMIN_PASSWORD}`
-              : "After sign-in you will see your dashboard."
+        phase === "key" ? "Enter the key you received by email to continue." : null
       }
     >
       {error && <Alert>{error}</Alert>}
