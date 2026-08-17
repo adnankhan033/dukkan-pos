@@ -90,20 +90,24 @@
 .store-cards-featured-preview {
   display: grid;
   place-items: center;
-  padding: 1.25rem 0.5rem 0.5rem;
-  border-radius: 18px;
+  min-height: 460px;
+  padding: 2rem 1rem;
+  border-radius: 28px;
   background:
-    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.06), transparent 40%),
-    repeating-linear-gradient(
-      45deg,
-      color-mix(in srgb, var(--color-border) 55%, transparent) 0 10px,
-      transparent 10px 20px
-    );
+    radial-gradient(circle at 50% 0%, #fff, transparent 42%),
+    #e8edf5;
 }
 
 .store-cards-capture {
   display: inline-block;
-  border-radius: 24px;
+  border-radius: 32px;
+  filter: drop-shadow(0 28px 40px rgba(15, 23, 42, 0.22));
+}
+
+.store-cards-export-host .poster-lg {
+  width: 680px;
+  height: 425px;
+  aspect-ratio: auto;
 }
 
 .store-cards-grid {
@@ -146,7 +150,7 @@
   cursor: pointer;
 }
 
-.store-cards-option-preview .store-card {
+.store-cards-option-preview .poster-card {
   width: 100%;
   max-width: none;
 }
@@ -193,9 +197,9 @@
   pointer-events: none;
 }
 
-.store-cards-export-host .store-card-lg {
-  width: 560px;
-  height: 336px;
+.store-cards-export-host .poster-lg {
+  width: 680px;
+  height: 425px;
   aspect-ratio: auto;
 }
 
@@ -221,5 +225,6 @@
 
   .store-cards-featured-preview {
     overflow-x: auto;
+    min-height: 0;
   }
 }

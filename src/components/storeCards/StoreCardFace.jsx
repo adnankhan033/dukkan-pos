@@ -1,93 +1,97 @@
-import { Clock, MapPin, Phone } from "lucide-react";
+import { MapPin, Phone } from "lucide-react";
 import { storeCardInitials } from "../../utils/storeCardProfile";
 import "./StoreCardFace.css";
 
-function CardOrnaments() {
+function Decor({ theme }) {
+  if (theme === "emerald") {
+    return (
+      <svg className="poster-deco" viewBox="0 0 480 210" preserveAspectRatio="xMaxYMin slice">
+        <circle cx="410" cy="30" r="78" fill="rgba(255,255,255,0.12)" />
+        <circle cx="455" cy="95" r="52" fill="rgba(255,214,102,0.35)" />
+        <circle cx="360" cy="120" r="28" fill="rgba(255,255,255,0.16)" />
+      </svg>
+    );
+  }
+  if (theme === "midnight") {
+    return (
+      <svg className="poster-deco" viewBox="0 0 480 210" preserveAspectRatio="none">
+        <rect x="300" y="-20" width="28" height="260" transform="rotate(18 314 110)" fill="rgba(250,204,21,0.85)" />
+        <rect x="350" y="-20" width="10" height="260" transform="rotate(18 355 110)" fill="rgba(255,255,255,0.18)" />
+      </svg>
+    );
+  }
+  if (theme === "oasis") {
+    return (
+      <svg className="poster-deco" viewBox="0 0 480 210" preserveAspectRatio="none">
+        <path d="M0 150 Q120 90 240 150 T480 150 V210 H0 Z" fill="rgba(255,255,255,0.16)" />
+        <path d="M0 170 Q140 120 260 170 T480 170 V210 H0 Z" fill="rgba(255,255,255,0.12)" />
+      </svg>
+    );
+  }
+  if (theme === "dune") {
+    return (
+      <svg className="poster-deco" viewBox="0 0 480 210" preserveAspectRatio="xMaxYMin meet">
+        <path d="M330 210 A70 70 0 0 1 470 210" fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="10" />
+        <path d="M350 210 A50 50 0 0 1 450 210" fill="none" stroke="rgba(255,237,213,0.55)" strokeWidth="10" />
+        <path d="M370 210 A30 30 0 0 1 430 210" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="10" />
+      </svg>
+    );
+  }
+  if (theme === "royal") {
+    return (
+      <svg className="poster-deco" viewBox="0 0 480 210">
+        <circle cx="400" cy="40" r="10" fill="rgba(255,255,255,0.7)" />
+        <circle cx="430" cy="78" r="16" fill="rgba(253,224,71,0.7)" />
+        <circle cx="368" cy="86" r="8" fill="rgba(255,255,255,0.4)" />
+        <circle cx="448" cy="130" r="22" fill="rgba(255,255,255,0.12)" />
+      </svg>
+    );
+  }
   return (
-    <div className="store-card-ornaments" aria-hidden="true">
-      <span className="store-card-orb store-card-orb-a" />
-      <span className="store-card-orb store-card-orb-b" />
-      <span className="store-card-geo" />
-      <span className="store-card-foil" />
-      <span className="store-card-shine" />
-      <span className="store-card-chip" />
-      <span className="store-card-ribbon" />
-      <span className="store-card-edge" />
-    </div>
-  );
-}
-
-function MetaRow({ icon: Icon, label, value, strong = false }) {
-  if (!value) return null;
-  return (
-    <p className={`store-card-row ${strong ? "hero" : ""}`}>
-      <Icon size={12} strokeWidth={2.4} />
-      <span className="store-card-row-label">{label}</span>
-      <span className="store-card-row-value">{value}</span>
-    </p>
+    <svg className="poster-deco" viewBox="0 0 480 210">
+      <rect x="340" y="24" width="110" height="110" rx="18" fill="none" stroke="#111" strokeWidth="6" />
+      <rect x="368" y="52" width="110" height="110" rx="18" fill="#facc15" />
+    </svg>
   );
 }
 
 export default function StoreCardFace({ profile, theme, qrDataUrl, size = "md" }) {
   const initials = storeCardInitials(profile.name);
-  const website = profile.website ? profile.website.replace(/^https?:\/\//i, "") : "";
+  const phone = profile.phone || profile.whatsapp || "";
+  const place = [profile.address, profile.hours].filter(Boolean).join(" · ");
 
   return (
-    <article className={`store-card store-card-${theme} store-card-${size}`}>
-      <CardOrnaments />
-
-      <div className="store-card-brand-col" aria-hidden="true">
-        <span className="store-card-mono">{initials}</span>
-        <span className="store-card-mono-sub">VIP</span>
+    <article className={`poster-card poster-${theme} poster-${size}`}>
+      <div className="poster-hero">
+        <Decor theme={theme} />
+        <span className="poster-initials">{initials}</span>
+        <h3 className="poster-name">{profile.name || "Your store"}</h3>
+        {profile.nameAr ? (
+          <p className="poster-ar" dir="rtl">
+            {profile.nameAr}
+          </p>
+        ) : null}
+        {profile.tagline ? <p className="poster-tag">{profile.tagline}</p> : null}
       </div>
 
-      <div className="store-card-inner">
-        <header className="store-card-head">
-          <span className="store-card-mark">
-            <span className="store-card-mark-ring" />
-            <span className="store-card-mark-text">{initials}</span>
-          </span>
-          <div className="store-card-head-text">
-            <span className="store-card-kicker">Your neighborhood store</span>
-            <h3 className="store-card-name">{profile.name || "Your store"}</h3>
-            {profile.nameAr ? (
-              <p className="store-card-name-ar" dir="rtl">
-                {profile.nameAr}
-              </p>
-            ) : null}
-          </div>
-        </header>
-
-        {profile.tagline ? <p className="store-card-tagline">{profile.tagline}</p> : null}
-
-        <p className="store-card-phone-hero">{profile.phone || profile.whatsapp || ""}</p>
-
-        <div className="store-card-body">
-          <div className="store-card-meta">
-            <MetaRow icon={Phone} label="Call" value={profile.phone} strong />
-            {profile.whatsapp && profile.whatsapp !== profile.phone ? (
-              <MetaRow icon={Phone} label="WhatsApp" value={profile.whatsapp} />
-            ) : null}
-            <MetaRow icon={Clock} label="Hours" value={profile.hours} />
-            <MetaRow icon={MapPin} label="Visit" value={profile.address} />
-          </div>
-
-          <div className="store-card-qr-wrap">
-            {qrDataUrl ? (
-              <img src={qrDataUrl} alt="" className="store-card-qr" />
-            ) : (
-              <div className="store-card-qr store-card-qr-empty" />
-            )}
-            <small>Scan · WhatsApp</small>
-          </div>
+      <div className="poster-dock">
+        <div className="poster-dock-text">
+          {phone ? (
+            <p className="poster-phone">
+              <Phone size={15} strokeWidth={2.6} />
+              {phone}
+            </p>
+          ) : null}
+          {place ? (
+            <p className="poster-place">
+              <MapPin size={13} strokeWidth={2.4} />
+              {place}
+            </p>
+          ) : null}
         </div>
-
-        {(website || profile.email) && (
-          <footer className="store-card-foot">
-            {website ? <span>{website}</span> : null}
-            {profile.email ? <span>{profile.email}</span> : null}
-          </footer>
-        )}
+        <div className="poster-qr">
+          {qrDataUrl ? <img src={qrDataUrl} alt="" /> : <span />}
+        </div>
       </div>
     </article>
   );

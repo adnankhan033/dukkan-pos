@@ -12,12 +12,12 @@ export const STORE_CARD_SETTING_KEYS = {
 };
 
 export const STORE_CARD_THEMES = [
-  { id: "emerald", name: "Gold Souk", caption: "Luxury green & gold — easy to remember" },
-  { id: "midnight", name: "Night Majlis", caption: "Black card with gold chip" },
-  { id: "oasis", name: "Oasis Neon", caption: "Big phone number, instant scan" },
-  { id: "dune", name: "Najd Sunset", caption: "Warm Arabic-first look" },
-  { id: "royal", name: "Royal Diwan", caption: "Centered poster, bold name" },
-  { id: "pearl", name: "White Marble", caption: "Clean, modern, high contrast" },
+  { id: "emerald", name: "Palms", caption: "Fresh green market card" },
+  { id: "midnight", name: "Night Market", caption: "Navy + yellow stripe" },
+  { id: "oasis", name: "Blue Ice", caption: "Bright sky, easy to spot" },
+  { id: "dune", name: "Saffron", caption: "Warm souk orange" },
+  { id: "royal", name: "Orchid", caption: "Bold pink, hard to forget" },
+  { id: "pearl", name: "Lemon", caption: "Cream hero, black dock" },
 ];
 
 const EMPTY_PROFILE = {
