@@ -395,6 +395,33 @@
   }
 }
 
+@media (max-height: 820px) {
+  .auth-shell {
+    min-height: auto;
+    max-height: none;
+  }
+
+  .auth-hero {
+    padding: 1.5rem 1.5rem;
+  }
+
+  .auth-hero-icon-stage {
+    width: clamp(7.5rem, 28vh, 12rem);
+    height: clamp(7.5rem, 28vh, 12rem);
+    margin-bottom: 1rem;
+  }
+
+  .auth-hero-features {
+    display: none;
+  }
+
+  .auth-panel {
+    padding: 1.25rem 1.5rem;
+    align-items: flex-start;
+    overflow-y: auto;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .auth-hero-icon-ring,
   .auth-hero-icon-glow,

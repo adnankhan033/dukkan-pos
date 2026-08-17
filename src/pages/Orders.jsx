@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarRange, ClipboardList, DollarSign, Eye, FileDown, RefreshCw, RotateCcw, ShoppingBag, Trash2, ShieldAlert } from "lucide-react";
 import { saleService } from "../services/SaleService";
+import { onSalesChanged } from "../services/SalesSync";
+import { paymentMethodService } from "../services/PaymentMethodService";
+import { onPaymentMethodsChanged } from "../services/PaymentMethodsSync";
 import { zatcaService } from "../services/ZatcaService";
 import { ensureReturnSchema } from "../database/connection";
 import { useSettingsStore } from "../contexts/store";
 import { usePermissions } from "../hooks/usePermissions";
 import { useConfirm } from "../hooks/useConfirm";
 import { useDebounce } from "../hooks/usePagination";
-import { ORDER_PERIODS, ORDER_RETURN_FILTERS, ORDERS_PAGE_SIZE, SALE_STATUS } from "../utils/constants";
+import { ORDER_PERIODS, ORDER_RETURN_FILTERS, ORDERS_PAGE_SIZE, SALE_STATUS, SALE_PAYMENT_STATUS_LABELS } from "../utils/constants";
 import { resolveActivePhase } from "../zatca/core/config";
 import { ZATCA_PHASES } from "../zatca/core/constants";
 import PageHeader from "../components/common/PageHeader";
@@ -21,10 +24,11 @@ import ZatcaOrderStatusBadge from "../components/zatca/ZatcaOrderStatusBadge";
 import ZatcaXmlDownloadLink from "../components/zatca/ZatcaXmlDownloadLink";
 import OrderDetailModal from "../components/orders/OrderDetailModal";
 import SaleReturnModal from "../components/sales/SaleReturnModal";
-import { Input } from "../components/common/Input";
+import { Input, Select } from "../components/common/Input";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
 import { formatCurrency, formatDate, formatOrderDateTime } from "../utils/format";
 import { getBusinessDateISO, getBusinessPeriodDateRange } from "../utils/businessDate";
+import { resolvePaymentMethodLabel } from "../utils/paymentMethods";
 import { printReceipt } from "../utils/receipt";
 import { buildReportCompanyProfile } from "../utils/directoryExport/companyProfile";
 import { exportOrdersPdf } from "../utils/ordersExport/exportOrdersPdf";
@@ -39,7 +43,7 @@ const PERIOD_TABS = [
 ];
 
 function periodToRangeKey(period) {
-  if (period === ORDER_PERIODS.WEEK) return "weekly";
+  if (period === ORDER_PERIODS.WEEK) return "rolling_week";
   if (period === ORDER_PERIODS.MONTH) return "monthly";
   return "daily";
 }
@@ -48,7 +52,7 @@ function formatOrdersPeriodLabel(period, from, to, fromTime = "00:00", toTime = 
   const ft = String(fromTime).slice(0, 5);
   const tt = String(toTime).slice(0, 5);
   if (period === ORDER_PERIODS.TODAY) return `Today · ${formatDate(from)} (${ft}–${tt})`;
-  if (period === ORDER_PERIODS.WEEK) return `This Week · ${formatDate(from)} – ${formatDate(to)}`;
+  if (period === ORDER_PERIODS.WEEK) return `Last 7 Days · ${formatDate(from)} – ${formatDate(to)}`;
   if (period === ORDER_PERIODS.MONTH) return `This Month · ${formatDate(from)} – ${formatDate(to)}`;
   return `${formatDate(from)} ${ft} – ${formatDate(to)} ${tt}`;
 }
@@ -67,12 +71,18 @@ function compareDateTimeRange(fromDate, fromTime, toDate, toTime) {
 }
 
 const RETURN_FILTER_TABS = [
-  { id: ORDER_RETURN_FILTERS.ALL, label: "All Orders" },
+  { id: ORDER_RETURN_FILTERS.ALL, label: "All Invoices" },
   { id: ORDER_RETURN_FILTERS.NO_RETURN, label: "No Returns" },
   { id: ORDER_RETURN_FILTERS.WITH_RETURN, label: "With Returns" },
   { id: ORDER_RETURN_FILTERS.PARTIAL, label: "Partial Return" },
   { id: ORDER_RETURN_FILTERS.RETURNED, label: "Full Return" },
 ];
+
+function paymentStatusBadge(status) {
+  if (status === "pending") return <Badge variant="warning">Unpaid</Badge>;
+  if (status === "partial") return <Badge variant="info">Partial</Badge>;
+  return <Badge variant="success">Paid</Badge>;
+}
 
 function orderStatusBadge(status) {
   if (status === SALE_STATUS.RETURNED) return <Badge variant="neutral">Returned</Badge>;
@@ -90,7 +100,16 @@ export default function Orders() {
   const zatcaPhase = resolveActivePhase(settings);
   const showZatcaColumn = zatcaPhase === ZATCA_PHASES.PHASE2;
 
-  const businessToday = useMemo(() => getBusinessDateISO(settings), [settings]);
+  const [clockTick, setClockTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setClockTick((t) => t + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  const businessToday = useMemo(() => {
+    void clockTick;
+    return getBusinessDateISO(settings);
+  }, [settings, clockTick]);
 
   const [period, setPeriod] = useState(ORDER_PERIODS.TODAY);
   const [from, setFrom] = useState(() => getBusinessDateISO({}));
@@ -102,6 +121,9 @@ export default function Orders() {
   const [draftFromTime, setDraftFromTime] = useState("00:00");
   const [draftToTime, setDraftToTime] = useState("23:59");
   const [returnFilter, setReturnFilter] = useState(ORDER_RETURN_FILTERS.ALL);
+  const [paymentFilter, setPaymentFilter] = useState("all");
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
+  const [paymentMethods, setPaymentMethods] = useState([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -131,6 +153,24 @@ export default function Orders() {
     [period, from, to, fromTime, toTime]
   );
 
+  const loadPaymentMethods = useCallback(async () => {
+    try {
+      setPaymentMethods(await paymentMethodService.getAll({ includeInactive: true }));
+    } catch {
+      setPaymentMethods([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadPaymentMethods();
+  }, [loadPaymentMethods]);
+
+  useEffect(() => {
+    return onPaymentMethodsChanged(() => {
+      loadPaymentMethods();
+    });
+  }, [loadPaymentMethods]);
+
   useEffect(() => {
     if (period === ORDER_PERIODS.CUSTOM) return;
     const range = getBusinessPeriodDateRange(periodToRangeKey(period), settings);
@@ -153,8 +193,10 @@ export default function Orders() {
           limit: ORDERS_PAGE_SIZE,
           returnFilter,
           search: debouncedSearch,
+          paymentMethod: paymentFilter,
+          paymentStatus: paymentStatusFilter,
         }),
-        saleService.getPeriodStats(period, from, to, fromTime, toTime),
+        saleService.getPeriodStats(period, from, to, fromTime, toTime, paymentFilter),
       ]);
       setOrders(result.items);
       setTotal(result.total);
@@ -176,10 +218,16 @@ export default function Orders() {
     } finally {
       setLoading(false);
     }
-  }, [period, from, to, fromTime, toTime, page, returnFilter, debouncedSearch, showZatcaColumn]);
+  }, [period, from, to, fromTime, toTime, page, returnFilter, paymentFilter, paymentStatusFilter, debouncedSearch, showZatcaColumn]);
 
   useEffect(() => {
     loadOrders();
+  }, [loadOrders]);
+
+  useEffect(() => {
+    return onSalesChanged(() => {
+      loadOrders();
+    });
   }, [loadOrders]);
 
   function changePeriod(next) {
@@ -218,6 +266,16 @@ export default function Orders() {
     setTo(draftTo);
     setFromTime(draftFromTime);
     setToTime(draftToTime);
+    setPage(1);
+  }
+
+  function changePaymentFilter(value) {
+    setPaymentFilter(value);
+    setPage(1);
+  }
+
+  function changePaymentStatusFilter(value) {
+    setPaymentStatusFilter(value);
     setPage(1);
   }
 
@@ -344,6 +402,7 @@ export default function Orders() {
           toTime,
           returnFilter,
           search: debouncedSearch,
+          paymentMethod: paymentFilter,
         });
 
       if (total === 0) {
@@ -463,8 +522,27 @@ export default function Orders() {
       key: "payment_method",
       label: "Payment",
       render: (r) => (
-        <span style={{ textTransform: "capitalize" }}>{r.payment_method || "cash"}</span>
+        <span>{resolvePaymentMethodLabel(r.payment_method, paymentMethods)}</span>
       ),
+    },
+    {
+      key: "payment_status",
+      label: "Collection",
+      render: (r) => paymentStatusBadge(r.payment_status || "paid"),
+    },
+    {
+      key: "balance_due",
+      label: "Balance",
+      render: (r) => {
+        const due = Math.max(0, Number(r.total || 0) - Number(r.amount_paid || 0));
+        return due > 0 ? (
+          <span style={{ color: "var(--color-danger)", fontWeight: 700 }}>
+            {formatCurrency(due, currency)}
+          </span>
+        ) : (
+          "—"
+        );
+      },
     },
     {
       key: "status",
@@ -530,8 +608,8 @@ export default function Orders() {
   return (
     <div className="orders-page">
       <PageHeader
-        title="Orders"
-        subtitle="Filter orders by date and return status. Click any row for details, print, or process returns."
+        title="All Invoices"
+        subtitle="View and filter all invoices by date, payment method, and return status."
         actions={
           <Button
             variant="secondary"
@@ -635,7 +713,7 @@ export default function Orders() {
       {stats && (
         <div className="orders-stats">
           <StatCard
-            label={`Orders ${statsPeriodLabel}`}
+            label={`Invoices ${statsPeriodLabel}`}
             value={String(stats.orderCount)}
             icon={ClipboardList}
             variant="primary"
@@ -666,10 +744,36 @@ export default function Orders() {
           <SearchBar
             value={search}
             onChange={changeSearch}
-            placeholder="Search order #, customer, payment..."
+            placeholder="Search invoice #, customer, payment..."
           />
+          <Select
+            label="Payment method"
+            className="orders-payment-filter"
+            value={paymentFilter}
+            onChange={(e) => changePaymentFilter(e.target.value)}
+          >
+            <option value="all">All payment methods</option>
+            {paymentMethods.map((method) => (
+              <option key={method.code} value={method.code}>
+                {method.label}
+                {!method.is_active ? " (disabled)" : ""}
+              </option>
+            ))}
+          </Select>
+          <Select
+            label="Collection"
+            className="orders-payment-filter"
+            value={paymentStatusFilter}
+            onChange={(e) => changePaymentStatusFilter(e.target.value)}
+          >
+            <option value="all">All collection statuses</option>
+            <option value="paid">{SALE_PAYMENT_STATUS_LABELS.paid}</option>
+            <option value="unpaid">Unpaid / Partial</option>
+            <option value="pending">{SALE_PAYMENT_STATUS_LABELS.pending}</option>
+            <option value="partial">{SALE_PAYMENT_STATUS_LABELS.partial}</option>
+          </Select>
           <span className="orders-list-count">
-            {total.toLocaleString()} order{total !== 1 ? "s" : ""}
+            {total.toLocaleString()} invoice{total !== 1 ? "s" : ""}
           </span>
         </div>
 
@@ -725,7 +829,7 @@ export default function Orders() {
         )}
 
         {loading ? (
-          <LoadingSpinner message="Loading orders..." />
+          <LoadingSpinner message="Loading invoices..." />
         ) : (
           <>
             <Table
@@ -765,6 +869,13 @@ export default function Orders() {
         }}
         onPrint={handlePrint}
         onReturn={openReturnFromDetail}
+        onPaymentRecorded={async () => {
+          await loadOrders();
+          if (selectedSale?.id) {
+            const refreshed = await saleService.getById(selectedSale.id);
+            setSelectedSale(refreshed);
+          }
+        }}
       />
 
       <SaleReturnModal

@@ -154,6 +154,54 @@ export function priceTypeToVatIncluded(priceType) {
   return null;
 }
 
+/** Simple product VAT mode — one field instead of tax category + rate + price type. */
+export const VAT_MODE = {
+  DEFAULT: "default",
+  ZERO_RATED: "zero_rated",
+  EXEMPT: "exempt",
+};
+
+export function productToVatMode(product = {}) {
+  const cat = product.tax_category || TAX_CATEGORIES.STANDARD;
+  if (cat === TAX_CATEGORIES.ZERO_RATED) return VAT_MODE.ZERO_RATED;
+  if (cat === TAX_CATEGORIES.EXEMPT) return VAT_MODE.EXEMPT;
+  return VAT_MODE.DEFAULT;
+}
+
+export function vatModeToDbFields(vatMode) {
+  switch (vatMode) {
+    case VAT_MODE.ZERO_RATED:
+      return { tax_category: TAX_CATEGORIES.ZERO_RATED, vat_rate: null, vat_included: null };
+    case VAT_MODE.EXEMPT:
+      return { tax_category: TAX_CATEGORIES.EXEMPT, vat_rate: null, vat_included: null };
+    default:
+      return { tax_category: TAX_CATEGORIES.STANDARD, vat_rate: null, vat_included: null };
+  }
+}
+
+/** Parse import/form VAT values: default · zero_rated · exempt */
+export function parseVatModeInput(value) {
+  if (value === "" || value == null) return VAT_MODE.DEFAULT;
+  const norm = String(value).trim().toLowerCase().replace(/[\s-]+/g, "_");
+  if (["default", "store", "standard", "inherit", "normal", "yes", "15"].includes(norm)) {
+    return VAT_MODE.DEFAULT;
+  }
+  if (["zero", "zero_rated", "0", "zero_rate"].includes(norm)) {
+    return VAT_MODE.ZERO_RATED;
+  }
+  if (["exempt", "exempted", "no_vat", "none"].includes(norm)) {
+    return VAT_MODE.EXEMPT;
+  }
+  return null;
+}
+
+export function storeDefaultVatLabel(storeSettings = {}) {
+  const rate = storeSettings.vat_percent || "15";
+  return resolveStoreVatIncluded(storeSettings)
+    ? `Store default (${rate}% VAT included in price)`
+    : `Store default (${rate}% VAT added at checkout)`;
+}
+
 /** Preview net + VAT for product form helper text. */
 export function previewVatBreakdown(shelfPrice, storeSettings, productOverrides = {}) {
   const vat = resolveProductVatSettings(productOverrides, storeSettings);

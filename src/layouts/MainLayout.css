@@ -3,12 +3,31 @@
   height: 100vh;
   overflow: hidden;
   background: var(--color-bg);
+  --layout-sidebar-width: var(--sidebar-width);
+  transition: --layout-sidebar-width 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-layout.sidebar-mode-mini {
+  --layout-sidebar-width: var(--sidebar-width-mini);
+}
+
+.main-layout.sidebar-mode-hidden {
+  --layout-sidebar-width: 0px;
 }
 
 .main-content {
   flex: 1;
+  min-width: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   padding: 1.5rem 2rem;
+  container-type: inline-size;
+  container-name: page;
+  transition: padding 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.main-layout.sidebar-mode-hidden .main-content {
+  padding-left: 2.25rem;
 }
 
 .auth-layout {
@@ -18,6 +37,28 @@
   justify-content: center;
   background: var(--color-bg);
   padding: 1.5rem;
+}
+
+@media (max-width: 1366px) {
+  .main-content {
+    padding: 1rem 1.15rem;
+  }
+
+  .auth-layout {
+    padding: 1rem;
+  }
+}
+
+@media (max-height: 800px) {
+  .main-content {
+    padding-top: 0.85rem;
+    padding-bottom: 0.85rem;
+  }
+
+  .auth-layout {
+    align-items: flex-start;
+    padding: 0.75rem 1rem;
+  }
 }
 
 .auth-card {

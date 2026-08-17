@@ -1,3 +1,29 @@
+.order-detail-payment-box {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 16%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-card));
+}
+
+.order-detail-payment-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.order-detail-payment-form .input-group {
+  flex: 1;
+  margin: 0;
+}
+
+.order-detail-payment-hint {
+  margin: 0.65rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
 .order-detail-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -132,7 +158,7 @@
   font-size: 0.875rem;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .order-detail-grid {
     grid-template-columns: 1fr;
   }

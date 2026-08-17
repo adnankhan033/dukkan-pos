@@ -1,17 +1,27 @@
+import { useState } from "react";
 import { Printer, RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import Badge from "../common/Badge";
+import { Input } from "../common/Input";
 import ReceiptPreviewFrame from "../receipt/ReceiptPreviewFrame";
 import ZatcaOrderStatusBadge from "../zatca/ZatcaOrderStatusBadge";
 import ZatcaInvoiceXmlActions from "../zatca/ZatcaInvoiceXmlActions";
 import ZatcaSyncedQrDisplay from "../zatca/ZatcaSyncedQrDisplay";
 import ProductBilingualName from "../products/ProductBilingualName";
-import { LoadingSpinner } from "../common/Loading";
+import { LoadingSpinner, Alert } from "../common/Loading";
+import { customerService } from "../../services/CustomerService";
 import { formatCurrency, formatOrderDateTime, formatDateTime } from "../../utils/format";
 import { SALE_STATUS } from "../../utils/constants";
+import { resolvePaymentMethodLabel } from "../../utils/paymentMethods";
 import "./OrderDetailModal.css";
+
+function paymentStatusBadge(status) {
+  if (status === "pending") return <Badge variant="warning">Unpaid</Badge>;
+  if (status === "partial") return <Badge variant="info">Partial</Badge>;
+  return <Badge variant="success">Paid</Badge>;
+}
 
 function statusBadge(status) {
   if (status === SALE_STATUS.RETURNED) return <Badge variant="neutral">Returned</Badge>;
@@ -33,10 +43,40 @@ export default function OrderDetailModal({
   onClose,
   onPrint,
   onReturn,
+  onPaymentRecorded,
 }) {
+  const [payAmount, setPayAmount] = useState("");
+  const [payError, setPayError] = useState("");
+  const [paying, setPaying] = useState(false);
+
   if (!isOpen) return null;
 
   const lineItems = sale?.items || [];
+  const balanceDue = Math.max(0, Number(sale?.total || 0) - Number(sale?.amount_paid || 0));
+  const canRecordPayment =
+    sale?.customer_id &&
+    balanceDue > 0 &&
+    sale.status !== SALE_STATUS.HELD;
+
+  async function handleRecordPayment() {
+    if (!sale?.customer_id) return;
+    setPayError("");
+    setPaying(true);
+    try {
+      await customerService.recordPayment({
+        customerId: sale.customer_id,
+        amount: payAmount || balanceDue,
+        saleId: sale.id,
+        paymentMethod: "cash",
+      });
+      setPayAmount("");
+      await onPaymentRecorded?.();
+    } catch (err) {
+      setPayError(err.message);
+    } finally {
+      setPaying(false);
+    }
+  }
 
   return (
     <Modal
@@ -83,7 +123,21 @@ export default function OrderDetailModal({
                 <dt>Customer</dt>
                 <dd>{sale.customer_name || "Walk-in Customer"}</dd>
                 <dt>Payment</dt>
-                <dd style={{ textTransform: "capitalize" }}>{sale.payment_method || "cash"}</dd>
+                <dd style={{ textTransform: "capitalize" }}>
+                  {resolvePaymentMethodLabel(sale.payment_method)}
+                </dd>
+                <dt>Collection</dt>
+                <dd>{paymentStatusBadge(sale.payment_status || "paid")}</dd>
+                <dt>Amount paid</dt>
+                <dd>{formatCurrency(sale.amount_paid || 0, currency)}</dd>
+                {balanceDue > 0 && (
+                  <>
+                    <dt>Balance due</dt>
+                    <dd style={{ color: "var(--color-danger)", fontWeight: 700 }}>
+                      {formatCurrency(balanceDue, currency)}
+                    </dd>
+                  </>
+                )}
                 {sale.notes && (
                   <>
                     <dt>Notes</dt>
@@ -103,6 +157,30 @@ export default function OrderDetailModal({
               </div>
             </section>
           </div>
+
+          {canRecordPayment && (
+            <section className="order-detail-section order-detail-payment-box">
+              <h4>Record customer payment</h4>
+              {payError && <Alert type="error">{payError}</Alert>}
+              <div className="order-detail-payment-form">
+                <Input
+                  label="Amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={payAmount}
+                  onChange={(e) => setPayAmount(e.target.value)}
+                  placeholder={String(balanceDue)}
+                />
+                <Button onClick={handleRecordPayment} disabled={paying}>
+                  {paying ? "Saving..." : `Record ${formatCurrency(payAmount || balanceDue, currency)}`}
+                </Button>
+              </div>
+              <p className="order-detail-payment-hint">
+                Payment will be linked to this invoice and added to {sale.customer_name}&apos;s account.
+              </p>
+            </section>
+          )}
 
           {sale.status !== SALE_STATUS.HELD && (
             <section className="order-detail-section order-detail-receipt-preview">

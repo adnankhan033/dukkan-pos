@@ -232,7 +232,7 @@
   color: var(--color-text);
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1280px) {
   .dashboard-insights-wrap {
     grid-template-columns: 1fr;
   }

@@ -98,8 +98,13 @@
   color: var(--color-text, #18181b);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .subscription-filters {
     grid-template-columns: 1fr;
+  }
+
+  .subscription-filters select {
+    min-width: 0;
+    width: 100%;
   }
 }

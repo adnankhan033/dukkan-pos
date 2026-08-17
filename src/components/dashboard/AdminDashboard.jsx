@@ -36,8 +36,25 @@ export default function AdminDashboard({ stats }) {
   const showProfit = settings.dashboard_admin_show_profit !== "0";
   const showPurchases = settings.dashboard_admin_show_purchases !== "0";
   const navigate = useNavigate();
+  const receivables = stats.customerReceivables ?? {
+    total_pending: 0,
+    customers_with_balance: 0,
+  };
+  const receivablesHint =
+    receivables.customers_with_balance > 0
+      ? `${receivables.customers_with_balance} customer${receivables.customers_with_balance === 1 ? "" : "s"} owing`
+      : "All settled";
 
   const sideMetrics = [
+    {
+      label: "Customer dues",
+      value: receivables.total_pending,
+      currency,
+      icon: Wallet,
+      tone: receivables.total_pending > 0 ? "warn" : "success",
+      path: "/customers",
+      hint: receivablesHint,
+    },
     {
       label: "Today's returns",
       value: stats.todayReturns,
@@ -87,6 +104,11 @@ export default function AdminDashboard({ stats }) {
             label: "Low stock",
             value: stats.lowStockCount,
             tone: stats.lowStockCount > 0 ? "warn" : "success",
+          },
+          {
+            label: "Customer dues",
+            value: formatCurrency(receivables.total_pending, currency),
+            tone: receivables.total_pending > 0 ? "warn" : "success",
           },
         ]}
         actions={
@@ -154,6 +176,16 @@ export default function AdminDashboard({ stats }) {
             delay={160}
           />
         )}
+        <StatCard
+          label="Customer Dues"
+          value={formatCurrency(receivables.total_pending, currency)}
+          numericValue={receivables.total_pending}
+          currency={currency}
+          icon={Wallet}
+          variant={receivables.total_pending > 0 ? "warning" : "success"}
+          featured
+          delay={240}
+        />
       </section>
 
       <div className="dashboard-bento">
@@ -183,6 +215,14 @@ export default function AdminDashboard({ stats }) {
             icon={Users}
             variant="info"
             animate={false}
+          />
+          <StatCard
+            label="Customer Dues"
+            value={formatCurrency(receivables.total_pending, currency)}
+            numericValue={receivables.total_pending}
+            currency={currency}
+            icon={Wallet}
+            variant={receivables.total_pending > 0 ? "warning" : "success"}
           />
           <StatCard
             label="Today's Returns"

@@ -114,8 +114,22 @@ export function getBusinessDateTimeLabelFromForm(form) {
   });
 }
 
-/** Period ranges (daily/weekly/monthly) using the store business calendar. */
+/** Last 7 calendar days including today (store business date). */
+export function getBusinessRollingWeekRange(settings) {
+  const to = getBusinessDateISO(settings);
+  const [year, month, day] = to.split("-").map(Number);
+  const endRef = new Date(year, month - 1, day, 12, 0, 0, 0);
+  const startRef = new Date(endRef);
+  startRef.setDate(endRef.getDate() - 6);
+  return { from: localDateISO(startRef), to };
+}
+
+/** Period ranges (daily / rolling week / monthly) using the store business calendar. */
 export function getBusinessPeriodDateRange(periodKey, settings) {
+  if (periodKey === "rolling_week") {
+    return getBusinessRollingWeekRange(settings);
+  }
+
   const businessDate = getBusinessDateISO(settings);
   const [year, month, day] = businessDate.split("-").map(Number);
   const ref = new Date(year, month - 1, day, 12, 0, 0, 0);

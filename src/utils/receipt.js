@@ -9,6 +9,7 @@ import {
   parseStoredTimestampToInstant,
 } from "./timezones";
 import { beginPrintSession, endPrintSession } from "./printGuard.js";
+import { resolvePaymentMethodLabel, resolvePaymentMethodLabelBilingual } from "./paymentMethods";
 
 function escapeHtml(str) {
   return String(str)
@@ -22,17 +23,9 @@ function settingOn(value) {
   return value !== "0" && value !== "false";
 }
 
-const PAYMENT_LABELS = {
-  cash: { en: "Cash", ar: "كاش" },
-  card: { en: "Card", ar: "بطاقة" },
-  transfer: { en: "Transfer", ar: "تحويل" },
-};
-
-function formatPaymentMethod(method, bilingual) {
-  const key = String(method || "cash").toLowerCase();
-  const labels = PAYMENT_LABELS[key] || { en: key.toUpperCase(), ar: key };
-  if (!bilingual) return labels.en;
-  return `${labels.en} / ${labels.ar}`;
+function formatPaymentMethod(method, bilingual, methods = []) {
+  if (bilingual) return resolvePaymentMethodLabelBilingual(method, methods);
+  return resolvePaymentMethodLabel(method, methods);
 }
 
 /** Thermal receipt amount — matches Saudi POS style (﷼ before value). */

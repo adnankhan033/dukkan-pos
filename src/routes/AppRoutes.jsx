@@ -73,7 +73,7 @@ export default function AppRoutes() {
         <Route path="/expenses" element={<Navigate to="/accounting" replace />} />
         <Route path="/reports" element={withRole("reports", <Reports />)} />
         <Route path="/daily-close" element={withRole("reports", <DailyClose />)} />
-        <Route path="/subscriptions" element={withRole("dashboard", <Subscriptions />)} />
+        <Route path="/subscriptions" element={withRole("users", <Subscriptions />)} />
         <Route path="/settings" element={withRole("settings", <Settings />)} />
         <Route path="/cloud-backup" element={withRole("settings", <CloudBackup />)} />
         <Route path="/zatca-sync" element={withRole("sales", <ZatcaDailySync />)} />

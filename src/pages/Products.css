@@ -23,6 +23,7 @@
   display: flex;
   gap: 0.5rem;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
 }
 
 .product-tab {
@@ -51,13 +52,22 @@
 .products-filters {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 0.75rem;
   margin-bottom: 1rem;
+  width: 100%;
+}
+
+.products-filters .search-bar {
+  flex: 1 1 14rem;
+  max-width: 28rem;
+  min-width: 12rem;
 }
 
 .products-category-filter {
+  flex: 1 1 12rem;
   width: min(100%, 280px);
+  min-width: 12rem;
 }
 
 .products-category-filter .searchable-select-dropdown {

@@ -16,6 +16,7 @@
 .page-header p {
   color: var(--color-text-muted);
   font-size: 0.875rem;
+  max-width: 52ch;
 }
 
 .page-header-actions {
@@ -23,4 +24,15 @@
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+@media (max-width: 1366px) {
+  .page-header {
+    margin-bottom: 1rem;
+    gap: 0.75rem;
+  }
+
+  .page-header h1 {
+    font-size: 1.3rem;
+  }
 }

@@ -2,6 +2,13 @@
   position: relative;
   max-width: 320px;
   width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 1366px) {
+  .search-bar {
+    max-width: 100%;
+  }
 }
 
 .search-bar input {

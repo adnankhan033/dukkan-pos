@@ -9,6 +9,8 @@ import "./SaleCompleteModal.css";
 export default function SaleCompleteModal({
   step,
   paymentMethod,
+  paymentMethodLabel,
+  collectsCash = false,
   cart,
   subtotal,
   discount,
@@ -17,6 +19,8 @@ export default function SaleCompleteModal({
   cashReceived,
   changeDue,
   balanceDue = 0,
+  isPayLater = false,
+  customerName = null,
   currency,
   vatPercent,
   completedSale,
@@ -31,7 +35,10 @@ export default function SaleCompleteModal({
 }) {
   if (!step) return null;
 
-  const isCash = paymentMethod === "cash";
+  const methodLabel =
+    paymentMethodLabel ||
+    String(paymentMethod || "cash").replace(/_/g, " ");
+  const showCashFields = collectsCash || paymentMethod === "cash";
 
   return (
     <div className="sale-complete-overlay" onClick={step === "confirm" ? onCancel : undefined}>
@@ -42,10 +49,20 @@ export default function SaleCompleteModal({
         {step === "confirm" && (
           <>
             <div className="sale-complete-header">
-              <h3>Complete this sale?</h3>
-              <p>Review the order before confirming payment.</p>
+              <h3>{isPayLater ? "Complete pay later order?" : "Complete this sale?"}</h3>
+              <p>
+                {isPayLater
+                  ? "The invoice will be saved on the customer's account. Payment can be recorded later."
+                  : "Review the order before confirming payment."}
+              </p>
             </div>
             <div className="sale-complete-body">
+              {isPayLater && (
+                <div className="sale-complete-credit-note">
+                  <strong>Customer:</strong> {customerName || "Selected customer"}
+                  <span>Balance due after sale: {formatCurrency(grandTotal, currency)}</span>
+                </div>
+              )}
               <div className="sale-complete-items">
                 {cart.map((item) => (
                   <div key={item.product_id} className="sale-complete-item">
@@ -70,7 +87,7 @@ export default function SaleCompleteModal({
                   <span>VAT ({vatPercent}%)</span>
                   <span>{formatCurrency(vat, currency)}</span>
                 </div>
-                {isCash && (
+                {showCashFields && (
                   <>
                     <div className="sale-complete-row">
                       <span>Cash received</span>
@@ -91,7 +108,7 @@ export default function SaleCompleteModal({
                 )}
                 <div className="sale-complete-row">
                   <span>Payment</span>
-                  <span style={{ textTransform: "capitalize" }}>{paymentMethod}</span>
+                  <span>{methodLabel}</span>
                 </div>
                 <div className="sale-complete-row grand">
                   <span>Total</span>
@@ -104,7 +121,11 @@ export default function SaleCompleteModal({
                 No, Cancel
               </Button>
               <Button onClick={onConfirmComplete} disabled={processing}>
-                {processing ? "Processing..." : "Yes, Complete Sale"}
+                {processing
+                  ? "Processing..."
+                  : isPayLater
+                    ? "Yes, Save On Account"
+                    : "Yes, Complete Sale"}
               </Button>
             </div>
           </>

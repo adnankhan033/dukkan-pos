@@ -3,10 +3,17 @@ import { inventoryService } from "./InventoryService";
 import { settingsService } from "./SettingsService";
 import { zatcaService } from "./ZatcaService";
 import { invalidateDashboardCache } from "./DashboardCache";
+import { dispatchSalesChanged } from "./SalesSync";
+
+function notifySalesChanged() {
+  invalidateDashboardCache();
+  dispatchSalesChanged();
+}
 import { generateNumber, formatInvoiceNumber, parseInvoiceSequence, getPeriodDateRange } from "../utils/format";
 import { getBusinessDateTimeISO } from "../utils/businessDate";
 import { appendBusinessDateRangeFilter } from "../utils/businessDateFilter";
-import { SALE_STATUS } from "../utils/constants";
+import { SALE_STATUS, SALE_PAYMENT_STATUS, PAYMENT_METHODS } from "../utils/constants";
+import { isPayLaterMethod } from "../utils/paymentMethods";
 import { useAuthStore } from "../contexts/store";
 
 async function processZatcaForSale(sale) {
@@ -100,7 +107,17 @@ class SaleService {
     );
   }
 
-  async createSale({ customerId, items, discount, vat, paymentMethod, status = SALE_STATUS.COMPLETED, notes }) {
+  async createSale({
+    customerId,
+    items,
+    discount,
+    vat,
+    paymentMethod,
+    status = SALE_STATUS.COMPLETED,
+    notes,
+    amountPaid = null,
+    dueDate = null,
+  }) {
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const total = Math.max(0, subtotal - discount + vat);
     const saleNumber = await this.getNextInvoiceNumber();
@@ -109,9 +126,29 @@ class SaleService {
     const { user } = useAuthStore.getState();
     const cashierId = user?.id ?? null;
 
+    const payLater = isPayLaterMethod(paymentMethod);
+    if (payLater && !customerId) {
+      throw new Error("Select a customer for pay later orders");
+    }
+
+    let resolvedAmountPaid = amountPaid;
+    if (resolvedAmountPaid == null) {
+      resolvedAmountPaid = payLater ? 0 : total;
+    }
+    resolvedAmountPaid = Math.max(0, Math.min(Number(resolvedAmountPaid) || 0, total));
+
+    let paymentStatus = SALE_PAYMENT_STATUS.PAID;
+    if (total > 0) {
+      if (resolvedAmountPaid <= 0) paymentStatus = SALE_PAYMENT_STATUS.PENDING;
+      else if (resolvedAmountPaid < total) paymentStatus = SALE_PAYMENT_STATUS.PARTIAL;
+    }
+
     const saleId = await insert(
-      `INSERT INTO sales (sale_number, customer_id, cashier_id, terminal_id, subtotal, discount, vat, total, payment_method, status, notes, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      `INSERT INTO sales (
+         sale_number, customer_id, cashier_id, terminal_id, subtotal, discount, vat, total,
+         payment_method, payment_status, amount_paid, due_date, status, notes, created_at
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
       [
         saleNumber,
         customerId || null,
@@ -122,6 +159,9 @@ class SaleService {
         vat,
         total,
         paymentMethod,
+        paymentStatus,
+        resolvedAmountPaid,
+        dueDate || null,
         status,
         notes || null,
         createdAt,
@@ -140,10 +180,10 @@ class SaleService {
       }
     }
 
-    if (status === SALE_STATUS.COMPLETED) {
+    if (status === SALE_STATUS.COMPLETED && resolvedAmountPaid > 0) {
       await execute(
         `INSERT INTO payments (sale_id, amount, payment_method) VALUES ($1, $2, $3)`,
-        [saleId, total, paymentMethod]
+        [saleId, resolvedAmountPaid, paymentMethod]
       );
     }
 
@@ -151,7 +191,7 @@ class SaleService {
     if (saved) {
       if (status === SALE_STATUS.COMPLETED) {
         await processZatcaForSale(saved);
-        invalidateDashboardCache();
+        notifySalesChanged();
       }
       return saved;
     }
@@ -159,10 +199,27 @@ class SaleService {
     throw new Error("Sale saved but could not be loaded. Please refresh and check sales history.");
   }
 
-  async completeHeldSale(saleId, paymentMethod) {
+  async completeHeldSale(saleId, paymentMethod, { amountPaid = null, dueDate = null } = {}) {
     const sale = await this.getById(saleId);
     if (!sale || sale.status !== SALE_STATUS.HELD) {
       throw new Error("Sale not found or not held");
+    }
+
+    const payLater = isPayLaterMethod(paymentMethod);
+    if (payLater && !sale.customer_id) {
+      throw new Error("Select a customer for pay later orders");
+    }
+
+    let resolvedAmountPaid = amountPaid;
+    if (resolvedAmountPaid == null) {
+      resolvedAmountPaid = payLater ? 0 : sale.total;
+    }
+    resolvedAmountPaid = Math.max(0, Math.min(Number(resolvedAmountPaid) || 0, sale.total));
+
+    let paymentStatus = SALE_PAYMENT_STATUS.PAID;
+    if (sale.total > 0) {
+      if (resolvedAmountPaid <= 0) paymentStatus = SALE_PAYMENT_STATUS.PENDING;
+      else if (resolvedAmountPaid < sale.total) paymentStatus = SALE_PAYMENT_STATUS.PARTIAL;
     }
 
     for (const item of sale.items ?? []) {
@@ -170,20 +227,79 @@ class SaleService {
     }
 
     await execute(
-      `UPDATE sales SET status = $1, payment_method = $2, updated_at = datetime('now') WHERE id = $3`,
-      [SALE_STATUS.COMPLETED, paymentMethod, saleId]
+      `UPDATE sales
+       SET status = $1, payment_method = $2, payment_status = $3, amount_paid = $4, due_date = $5, updated_at = datetime('now')
+       WHERE id = $6`,
+      [SALE_STATUS.COMPLETED, paymentMethod, paymentStatus, resolvedAmountPaid, dueDate || null, saleId]
     );
-    await execute(
-      `INSERT INTO payments (sale_id, amount, payment_method) VALUES ($1, $2, $3)`,
-      [saleId, sale.total, paymentMethod]
-    );
+
+    if (resolvedAmountPaid > 0) {
+      await execute(
+        `INSERT INTO payments (sale_id, amount, payment_method) VALUES ($1, $2, $3)`,
+        [saleId, resolvedAmountPaid, paymentMethod]
+      );
+    }
 
     const completed = await this.getById(saleId);
     if (completed) {
       await processZatcaForSale(completed);
-      invalidateDashboardCache();
+      notifySalesChanged();
     }
     return completed;
+  }
+
+  async getPendingByCustomer(customerId) {
+    return query(
+      `SELECT s.*, (s.total - COALESCE(s.amount_paid, 0)) AS balance_due
+       FROM sales s
+       WHERE s.customer_id = $1
+         AND s.status IN ('completed', 'partial_return')
+         AND s.payment_status IN ($2, $3)
+         AND (s.total - COALESCE(s.amount_paid, 0)) > 0
+       ORDER BY s.created_at ASC`,
+      [customerId, SALE_PAYMENT_STATUS.PENDING, SALE_PAYMENT_STATUS.PARTIAL]
+    );
+  }
+
+  async applyPaymentToSale(saleId, amount, paymentMethod = PAYMENT_METHODS.CASH, notes = null) {
+    const sale = await queryOne("SELECT * FROM sales WHERE id = $1", [saleId]);
+    if (!sale) throw new Error("Order not found");
+
+    const balanceDue = sale.total - (sale.amount_paid || 0);
+    if (balanceDue <= 0) return 0;
+
+    const applied = Math.min(Number(amount), balanceDue);
+    const newPaid = (sale.amount_paid || 0) + applied;
+    let status = SALE_PAYMENT_STATUS.PARTIAL;
+    if (newPaid >= sale.total) status = SALE_PAYMENT_STATUS.PAID;
+
+    await execute(
+      `UPDATE sales SET amount_paid = $1, payment_status = $2, updated_at = datetime('now') WHERE id = $3`,
+      [newPaid, status, saleId]
+    );
+
+    await execute(
+      `INSERT INTO payments (sale_id, amount, payment_method) VALUES ($1, $2, $3)`,
+      [saleId, applied, paymentMethod]
+    );
+
+    if (sale.customer_id) {
+      await insert(
+        `INSERT INTO customer_payments (customer_id, sale_id, amount, payment_method, payment_date, notes)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          sale.customer_id,
+          saleId,
+          applied,
+          paymentMethod,
+          new Date().toISOString().slice(0, 10),
+          notes || null,
+        ]
+      );
+    }
+
+    notifySalesChanged();
+    return applied;
   }
 
   async deleteHeldSale(saleId) {
@@ -232,6 +348,7 @@ class SaleService {
     }
     await execute("DELETE FROM sale_returns WHERE sale_id = $1", [numId]);
     await execute("DELETE FROM zatca_invoices WHERE sale_id = $1", [numId]);
+    await execute("DELETE FROM customer_payments WHERE sale_id = $1", [numId]);
     await execute("DELETE FROM payments WHERE sale_id = $1", [numId]);
     await execute("DELETE FROM sale_items WHERE sale_id = $1", [numId]);
     await execute("DELETE FROM sales WHERE id = $1", [numId]);
@@ -240,6 +357,8 @@ class SaleService {
     if (stillExists) {
       throw new Error(`Failed to delete order ${sale.sale_number}`);
     }
+
+    notifySalesChanged();
 
     return true;
   }
@@ -355,7 +474,9 @@ class SaleService {
     to = null,
     settings = {},
     fromTime = null,
-    toTime = null
+    toTime = null,
+    paymentMethod = "all",
+    paymentStatus = "all"
   ) {
     let where = `WHERE s.status IN ('completed', 'partial_return', 'returned', 'held')`;
     const params = [];
@@ -370,6 +491,22 @@ class SaleService {
       where += " AND s.status = 'partial_return'";
     } else if (returnFilter === "returned") {
       where += " AND s.status = 'returned'";
+    }
+
+    const paymentKey = String(paymentMethod || "all").trim().toLowerCase();
+    if (paymentKey && paymentKey !== "all") {
+      params.push(paymentKey);
+      where += ` AND lower(COALESCE(s.payment_method, 'cash')) = $${params.length}`;
+    }
+
+    const statusKey = String(paymentStatus || "all").trim().toLowerCase();
+    if (statusKey && statusKey !== "all") {
+      if (statusKey === "unpaid") {
+        where += ` AND s.payment_status IN ('pending', 'partial')`;
+      } else {
+        params.push(statusKey);
+        where += ` AND lower(COALESCE(s.payment_status, 'paid')) = $${params.length}`;
+      }
     }
 
     const term = search.trim();
@@ -391,6 +528,8 @@ class SaleService {
     limit = 100,
     returnFilter = "all",
     search = "",
+    paymentMethod = "all",
+    paymentStatus = "all",
   } = {}) {
     const settings = await settingsService.getAll();
     const { where, params } = this._buildOrdersQueryFilters(
@@ -401,7 +540,9 @@ class SaleService {
       to,
       settings,
       fromTime,
-      toTime
+      toTime,
+      paymentMethod,
+      paymentStatus
     );
     const safePage = Math.max(1, Number(page) || 1);
     const safeLimit = Math.max(1, Number(limit) || 100);
@@ -454,6 +595,7 @@ class SaleService {
     toTime = null,
     returnFilter = "all",
     search = "",
+    paymentMethod = "all",
     limit = 10000,
   } = {}) {
     const [result, stats] = await Promise.all([
@@ -465,10 +607,11 @@ class SaleService {
         toTime,
         returnFilter,
         search,
+        paymentMethod,
         page: 1,
         limit,
       }),
-      this.getPeriodStats(period, from, to, fromTime, toTime),
+      this.getPeriodStats(period, from, to, fromTime, toTime, paymentMethod),
     ]);
 
     return {
@@ -482,11 +625,24 @@ class SaleService {
     };
   }
 
-  async getPeriodStats(period = "today", from = null, to = null, fromTime = null, toTime = null) {
+  async getPeriodStats(
+    period = "today",
+    from = null,
+    to = null,
+    fromTime = null,
+    toTime = null,
+    paymentMethod = "all"
+  ) {
     const settings = await settingsService.getAll();
     const range = this._resolveDateRange(period, from, to, fromTime, toTime);
     const salesParams = [];
     const periodFilter = this._appendDateRangeFilter("s.created_at", range, salesParams, settings);
+    let paymentFilter = "";
+    const paymentKey = String(paymentMethod || "all").trim().toLowerCase();
+    if (paymentKey && paymentKey !== "all") {
+      salesParams.push(paymentKey);
+      paymentFilter = ` AND lower(COALESCE(s.payment_method, 'cash')) = $${salesParams.length}`;
+    }
     const salesRow = await queryOne(
       `SELECT
          COUNT(CASE WHEN s.status != 'held' THEN 1 END) AS order_count,
@@ -494,7 +650,7 @@ class SaleService {
          COALESCE(SUM(CASE WHEN s.status != 'held' THEN s.total ELSE 0 END), 0) AS sales_total
        FROM sales s
        WHERE s.status IN ('completed', 'partial_return', 'returned', 'held')
-       ${periodFilter}`,
+       ${periodFilter}${paymentFilter}`,
       salesParams
     );
 
@@ -502,8 +658,16 @@ class SaleService {
     try {
       const returnsParams = [];
       const returnsFilter = this._appendDateRangeFilter("sr.created_at", range, returnsParams, settings);
+      let returnsPaymentFilter = "";
+      if (paymentKey && paymentKey !== "all") {
+        returnsParams.push(paymentKey);
+        returnsPaymentFilter = ` AND lower(COALESCE(s.payment_method, 'cash')) = $${returnsParams.length}`;
+      }
       const returnsRow = await queryOne(
-        `SELECT COALESCE(SUM(total_refund), 0) AS total FROM sale_returns sr WHERE 1=1 ${returnsFilter}`,
+        `SELECT COALESCE(SUM(sr.total_refund), 0) AS total
+         FROM sale_returns sr
+         JOIN sales s ON s.id = sr.sale_id
+         WHERE 1=1 ${returnsFilter}${returnsPaymentFilter}`,
         returnsParams
       );
       returnsTotal = Number(returnsRow?.total ?? 0);
@@ -639,7 +803,7 @@ class SaleService {
       [newStatus, saleId]
     );
 
-    invalidateDashboardCache();
+    notifySalesChanged();
 
     return {
       returnId,

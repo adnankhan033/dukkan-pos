@@ -1,0 +1,36 @@
+/** Built-in POS payment methods seeded on first run. */
+export const DEFAULT_PAYMENT_METHODS = [
+  {
+    code: "cash",
+    label: "Cash",
+    label_ar: "كاش",
+    icon: "banknote",
+    collect_cash: 1,
+    is_default: 1,
+    is_system: 1,
+    is_active: 1,
+    sort_order: 0,
+  },
+  {
+    code: "card",
+    label: "Card",
+    label_ar: "بطاقة",
+    icon: "credit-card",
+    collect_cash: 0,
+    is_default: 0,
+    is_system: 1,
+    is_active: 1,
+    sort_order: 1,
+  },
+  {
+    code: "pay_later",
+    label: "Pay Later",
+    label_ar: "آجل",
+    icon: "clock",
+    collect_cash: 0,
+    is_default: 0,
+    is_system: 1,
+    is_active: 1,
+    sort_order: 2,
+  },
+];

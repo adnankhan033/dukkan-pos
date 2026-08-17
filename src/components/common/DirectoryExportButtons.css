@@ -1,7 +1,40 @@
 .directory-export-wrap {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: 0.75rem;
+}
+
+.directory-export-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 14%, var(--color-border));
+  background: color-mix(in srgb, var(--color-primary) 5%, var(--color-card));
+}
+
+.directory-export-panel-head strong {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-text);
+}
+
+.directory-export-panel-head p {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.directory-export-scope-select {
+  margin: 0;
+}
+
+.directory-export-scope-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.45;
 }
 
 .directory-export-actions {

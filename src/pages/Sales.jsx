@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Minus,
   Plus,
@@ -15,19 +15,25 @@ import {
   X,
   Sparkles,
   Pencil,
+  Wallet,
+  Smartphone,
+  Clock,
 } from "lucide-react";
 import { productService } from "../services/ProductService";
 import { onCatalogChanged } from "../services/CatalogSync";
+import { paymentMethodService } from "../services/PaymentMethodService";
+import { onPaymentMethodsChanged } from "../services/PaymentMethodsSync";
 import { customerService } from "../services/CustomerService";
 import { saleService } from "../services/SaleService";
 import { useSettingsStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import { usePermissions } from "../hooks/usePermissions";
 import Button from "../components/common/Button";
-import { Select } from "../components/common/Input";
+import SearchableSelect from "../components/common/SearchableSelect";
 import SaleCompleteModal from "../components/sales/SaleCompleteModal";
 import SaleReturnModal from "../components/sales/SaleReturnModal";
 import PosProductEditModal from "../components/sales/PosProductEditModal";
+import PosCustomerModal from "../components/sales/PosCustomerModal";
 import ProductBilingualName from "../components/products/ProductBilingualName";
 import { LoadingSpinner } from "../components/common/Loading";
 import { notify } from "../utils/notify";
@@ -39,6 +45,12 @@ import {
   cartItemDisplayUnitPrice,
 } from "../utils/vatPricing";
 import { printReceipt } from "../utils/receipt";
+import {
+  paymentMethodCollectsCash,
+  paymentMethodRequiresCustomer,
+  resolvePaymentMethodLabel,
+  isPayLaterMethod,
+} from "../utils/paymentMethods";
 import { PAYMENT_METHODS, SALE_STATUS, POS_TOP_SELLERS_LIMIT } from "../utils/constants";
 import { resolveActivePhase } from "../zatca/core/config";
 import { ZATCA_PHASES } from "../zatca/core/constants";
@@ -59,6 +71,14 @@ function productInitial(name = "") {
   return trimmed ? trimmed.charAt(0).toUpperCase() : "?";
 }
 
+function PosPaymentMethodIcon({ icon, size = 18 }) {
+  if (icon === "credit-card") return <CreditCard size={size} />;
+  if (icon === "smartphone") return <Smartphone size={size} />;
+  if (icon === "clock") return <Clock size={size} />;
+  if (icon === "wallet") return <Wallet size={size} />;
+  return <Banknote size={size} />;
+}
+
 export default function Sales() {
   const settings = useSettingsStore((s) => s.settings);
   const currency = settings.currency || "SAR";
@@ -67,6 +87,7 @@ export default function Sales() {
   const { submitting, guard } = useSubmitGuard();
   const { canPerformAction } = usePermissions();
   const canEditProducts = canPerformAction("products_edit");
+  const canManageCustomers = canPerformAction("customers_manage");
 
   const [topProducts, setTopProducts] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
@@ -77,6 +98,7 @@ export default function Sales() {
   const [cart, setCart] = useState([]);
   const [customerId, setCustomerId] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [paymentMethods, setPaymentMethods] = useState([]);
   const [paymentTab, setPaymentTab] = useState(PAYMENT_METHODS.CASH);
   const [cashReceived, setCashReceived] = useState("");
   const [heldSales, setHeldSales] = useState([]);
@@ -88,22 +110,128 @@ export default function Sales() {
   const [printingReceipt, setPrintingReceipt] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
+  const [customerModalOpen, setCustomerModalOpen] = useState(false);
+  const [customerModalInitialName, setCustomerModalInitialName] = useState("");
+  const customerCreateResolverRef = useRef(null);
 
   const searchRef = useRef(null);
   const lastScanAtRef = useRef(0);
   const checkoutRef = useRef({});
 
+  const loadPaymentMethods = useCallback(async () => {
+    try {
+      const methods = await paymentMethodService.getActiveForPos();
+      setPaymentMethods(methods);
+      setPaymentTab((current) => {
+        if (methods.some((method) => method.code === current)) return current;
+        const defaultMethod = methods.find((method) => method.is_default) || methods[0];
+        return defaultMethod?.code || PAYMENT_METHODS.CASH;
+      });
+    } catch {
+      setPaymentMethods([]);
+    }
+  }, []);
+
+  const selectedPaymentMethod = useMemo(
+    () =>
+      paymentMethods.find((method) => method.code === paymentTab) ||
+      paymentMethods.find((method) => method.is_default) ||
+      paymentMethods[0] ||
+      null,
+    [paymentMethods, paymentTab]
+  );
+  const collectsCash = paymentMethodCollectsCash(selectedPaymentMethod);
+  const paymentMethodLabel = selectedPaymentMethod?.label || resolvePaymentMethodLabel(paymentTab);
+
+  const customerOptions = useMemo(
+    () =>
+      customers.map((customer) => ({
+        value: String(customer.id),
+        label: customer.name,
+        hint: customer.phone || customer.email || undefined,
+      })),
+    [customers]
+  );
+
+  const loadCustomers = useCallback(async () => {
+    try {
+      const items = await customerService.getAllForExport();
+      setCustomers(items);
+    } catch {
+      setCustomers([]);
+    }
+  }, []);
+
+  function upsertCustomer(customer) {
+    if (!customer?.id) return;
+    setCustomers((prev) => {
+      const next = prev.filter((row) => row.id !== customer.id);
+      next.push(customer);
+      next.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+      return next;
+    });
+  }
+
+  function openCustomerModal(initialName = "") {
+    return new Promise((resolve) => {
+      customerCreateResolverRef.current = resolve;
+      setCustomerModalInitialName(initialName);
+      setCustomerModalOpen(true);
+    });
+  }
+
+  function closeCustomerModal(result = null) {
+    setCustomerModalOpen(false);
+    setCustomerModalInitialName("");
+    const resolve = customerCreateResolverRef.current;
+    customerCreateResolverRef.current = null;
+    resolve?.(result);
+  }
+
+  function handleCustomerSaved(customer) {
+    upsertCustomer(customer);
+    setCustomerId(String(customer.id));
+    notify.success(`Customer "${customer.name}" added and selected.`, { title: "Customer saved" });
+    closeCustomerModal(String(customer.id));
+  }
+
+  async function handleCreateCustomerOption(name) {
+    const trimmed = String(name ?? "").trim();
+    if (!trimmed) return null;
+
+    const existing = customers.find(
+      (customer) => customer.name?.trim().toLowerCase() === trimmed.toLowerCase()
+    );
+    if (existing) return String(existing.id);
+
+    if (!canManageCustomers) {
+      notify.warning("You do not have permission to add customers.", { title: "Permission required" });
+      return null;
+    }
+
+    return openCustomerModal(trimmed);
+  }
+
+  function handleAddCustomerClick() {
+    if (!canManageCustomers) {
+      notify.warning("You do not have permission to add customers.", { title: "Permission required" });
+      return;
+    }
+    openCustomerModal("").then((id) => {
+      if (id) setCustomerId(id);
+    });
+  }
+
   useEffect(() => {
     async function init() {
       try {
-        const [products, customerResult, held] = await Promise.all([
+        const [products, held] = await Promise.all([
           productService.getTopSellingForPos(POS_TOP_SELLERS_LIMIT),
-          customerService.getAll({ limit: 100, page: 1 }),
           saleService.getHeldSales(),
         ]);
         setTopProducts(products);
-        setCustomers(customerResult.items);
         setHeldSales(held);
+        await loadCustomers();
       } catch (err) {
         notify.error(err.message || "Failed to load POS. Restart the app and try again.", {
           title: "POS unavailable",
@@ -113,7 +241,14 @@ export default function Sales() {
       }
     }
     init();
-  }, []);
+    loadPaymentMethods();
+  }, [loadPaymentMethods, loadCustomers]);
+
+  useEffect(() => {
+    return onPaymentMethodsChanged(() => {
+      loadPaymentMethods();
+    });
+  }, [loadPaymentMethods]);
 
   useEffect(() => {
     return onCatalogChanged(async () => {
@@ -309,16 +444,23 @@ export default function Sales() {
     notify.success(`"${updated.name}" price refreshed in cart.`, { title: "Product updated" });
   }
 
-  function validateBeforeComplete() {
+  function validateBeforeComplete(paymentMethod = paymentTab) {
     if (cart.length === 0) {
       notify.warning("Add at least one item before completing the sale.", { title: "Cart is empty" });
       return false;
     }
+
+    const method = paymentMethods.find((entry) => entry.code === paymentMethod);
+    if (paymentMethodRequiresCustomer(method) && !customerId) {
+      notify.warning("Select a customer before completing a pay later order.", { title: "Customer required" });
+      return false;
+    }
+
     return true;
   }
 
   function openCompleteConfirm(paymentMethod) {
-    if (!validateBeforeComplete()) return;
+    if (!validateBeforeComplete(paymentMethod)) return;
     setPendingPaymentMethod(paymentMethod);
     setCompleteStep("confirm");
   }
@@ -326,7 +468,7 @@ export default function Sales() {
   function advanceCashCheckout() {
     if (!validateBeforeComplete()) return;
 
-    if (paymentTab === PAYMENT_METHODS.CASH) {
+    if (collectsCash) {
       const currentReceived = Number(cashReceived) || 0;
       if (currentReceived < grandTotal) {
         setCashReceived(String(grandTotal));
@@ -353,6 +495,7 @@ export default function Sales() {
     const cartSnapshot = [...cart];
     try {
       await guard(async () => {
+        const payLater = isPayLaterMethod(pendingPaymentMethod);
         const sale = await saleService.createSale({
           customerId: customerId ? Number(customerId) : null,
           items: cartSnapshot,
@@ -360,6 +503,7 @@ export default function Sales() {
           vat,
           paymentMethod: pendingPaymentMethod,
           status: SALE_STATUS.COMPLETED,
+          amountPaid: payLater ? 0 : grandTotal,
         });
 
         if (!sale) {
@@ -379,11 +523,18 @@ export default function Sales() {
               total: item.total,
             }));
 
+        const pendingMethod = paymentMethods.find((method) => method.code === pendingPaymentMethod);
+        const pendingCollectsCash = paymentMethodCollectsCash(pendingMethod);
+
         const receiptSale = {
           ...sale,
-          amount_received: pendingPaymentMethod === PAYMENT_METHODS.CASH ? received : null,
-          change_due: pendingPaymentMethod === PAYMENT_METHODS.CASH ? changeDue : null,
-          balance_due: pendingPaymentMethod === PAYMENT_METHODS.CASH ? balanceDue : null,
+          amount_received: pendingCollectsCash ? received : null,
+          change_due: pendingCollectsCash ? changeDue : null,
+          balance_due: payLater
+            ? Math.max(0, sale.total - (sale.amount_paid || 0))
+            : pendingCollectsCash
+              ? balanceDue
+              : null,
           items: lineItems,
         };
 
@@ -732,19 +883,31 @@ export default function Sales() {
 
             <div className="pos-customer-row">
               <User size={16} className="pos-customer-icon" />
-              <Select
-                label=""
-                value={customerId}
-                onChange={(e) => setCustomerId(e.target.value)}
+              <SearchableSelect
                 className="pos-customer-select"
-              >
-                <option value="">Walk-in customer</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </Select>
+                value={customerId}
+                onChange={setCustomerId}
+                options={customerOptions}
+                placeholder="Search customer…"
+                noneLabel="Walk-in customer"
+                clearable
+                menuPortal
+                creatable={canManageCustomers}
+                onCreateOption={handleCreateCustomerOption}
+                createLabel={(term) => `Add "${term}"…`}
+              />
+              {canManageCustomers && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  className="pos-customer-add-btn"
+                  onClick={handleAddCustomerClick}
+                  title="Add new customer"
+                >
+                  <Plus size={16} />
+                </Button>
+              )}
             </div>
 
             <div className="pos-cart-items">
@@ -842,25 +1005,8 @@ export default function Sales() {
           </div>
 
           <div className="pos-payment-panel">
-            <div className="pos-payment-tabs">
-              <button
-                type="button"
-                className={`pos-payment-tab ${paymentTab === PAYMENT_METHODS.CASH ? "active" : ""}`}
-                onClick={() => setPaymentTab(PAYMENT_METHODS.CASH)}
-              >
-                <Banknote size={18} /> Cash
-              </button>
-              <button
-                type="button"
-                className={`pos-payment-tab ${paymentTab === PAYMENT_METHODS.CARD ? "active" : ""}`}
-                onClick={() => setPaymentTab(PAYMENT_METHODS.CARD)}
-              >
-                <CreditCard size={18} /> Card
-              </button>
-            </div>
-
             <div className="pos-payment-body">
-              {paymentTab === PAYMENT_METHODS.CASH ? (
+              {collectsCash ? (
                 <>
                   <label className="pos-field-label">Cash received</label>
                   <input
@@ -900,35 +1046,52 @@ export default function Sales() {
                 </>
               ) : (
                 <div className="pos-card-info">
-                  <CreditCard size={28} strokeWidth={1.25} />
-                  <p>Card payment</p>
+                  <PosPaymentMethodIcon icon={selectedPaymentMethod?.icon} size={28} />
+                  <p>{paymentMethodLabel}</p>
                   <strong>{formatCurrency(grandTotal, currency)}</strong>
                 </div>
               )}
+            </div>
 
-              <div className="pos-payment-actions">
-                <Button
-                  variant="secondary"
-                  disabled={submitting}
-                  onClick={() => completeHeldSale(paymentTab)}
+            <div
+              className="pos-payment-tabs"
+              style={{ gridTemplateColumns: `repeat(${Math.max(paymentMethods.length, 2)}, minmax(0, 1fr))` }}
+            >
+              {(paymentMethods.length ? paymentMethods : [
+                { code: PAYMENT_METHODS.CASH, label: "Cash", icon: "banknote" },
+                { code: PAYMENT_METHODS.CARD, label: "Card", icon: "credit-card" },
+              ]).map((method) => (
+                <button
+                  key={method.code}
+                  type="button"
+                  className={`pos-payment-tab ${paymentTab === method.code ? "active" : ""}`}
+                  onClick={() => setPaymentTab(method.code)}
                 >
-                  <Pause size={16} /> Hold
-                </Button>
-                <Button variant="secondary" disabled={submitting} onClick={handlePrintLast}>
-                  <Printer size={16} /> Reprint
-                </Button>
-                <Button
-                  className="pos-complete-btn"
-                  disabled={submitting || cart.length === 0}
-                  onClick={() => openCompleteConfirm(paymentTab)}
-                >
-                  {submitting
-                    ? "Processing…"
-                    : paymentTab === PAYMENT_METHODS.CASH
-                      ? "Complete cash sale"
-                      : "Complete card sale"}
-                </Button>
-              </div>
+                  <PosPaymentMethodIcon icon={method.icon} /> {method.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="pos-payment-actions">
+              <Button
+                variant="secondary"
+                disabled={submitting}
+                onClick={() => completeHeldSale(paymentTab)}
+              >
+                <Pause size={16} /> Hold
+              </Button>
+              <Button variant="secondary" disabled={submitting} onClick={handlePrintLast}>
+                <Printer size={16} /> Reprint
+              </Button>
+              <Button
+                className="pos-complete-btn"
+                disabled={submitting || cart.length === 0}
+                onClick={() => openCompleteConfirm(paymentTab)}
+              >
+                {submitting
+                  ? "Processing…"
+                  : `Complete ${paymentMethodLabel.toLowerCase()} sale`}
+              </Button>
             </div>
           </div>
         </aside>
@@ -937,6 +1100,10 @@ export default function Sales() {
       <SaleCompleteModal
         step={completeStep}
         paymentMethod={pendingPaymentMethod}
+        paymentMethodLabel={resolvePaymentMethodLabel(pendingPaymentMethod, paymentMethods)}
+        collectsCash={paymentMethodCollectsCash(
+          paymentMethods.find((method) => method.code === pendingPaymentMethod)
+        )}
         cart={cart}
         subtotal={subtotal}
         discount={Number(discount)}
@@ -945,6 +1112,12 @@ export default function Sales() {
         cashReceived={received}
         changeDue={changeDue}
         balanceDue={balanceDue}
+        isPayLater={isPayLaterMethod(pendingPaymentMethod)}
+        customerName={
+          customerId
+            ? customers.find((entry) => String(entry.id) === String(customerId))?.name
+            : null
+        }
         currency={currency}
         vatPercent={vatPercent}
         completedSale={completedSale}
@@ -977,6 +1150,13 @@ export default function Sales() {
         currency={currency}
         onClose={closeProductEdit}
         onSaved={handleProductSaved}
+      />
+
+      <PosCustomerModal
+        isOpen={customerModalOpen}
+        initialName={customerModalInitialName}
+        onClose={() => closeCustomerModal(null)}
+        onSaved={handleCustomerSaved}
       />
     </div>
   );

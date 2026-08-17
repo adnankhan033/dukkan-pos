@@ -1,3 +1,18 @@
+.sidebar-vendor-wrap.compact {
+  padding: 0.35rem 0.45rem 0.15rem;
+}
+
+.sidebar-vendor-card.compact {
+  width: 100%;
+  min-height: 52px;
+  justify-content: center;
+  padding: 0.55rem;
+}
+
+.sidebar-vendor-card.compact .sidebar-vendor-avatar {
+  margin: 0;
+}
+
 .sidebar-vendor-wrap {
   padding: 0 0.5rem;
   flex-shrink: 0;

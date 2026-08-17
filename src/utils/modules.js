@@ -35,7 +35,7 @@ export const ROUTE_MODULE_MAP = {
   "/reports": "reports",
   "/daily-close": "reports",
   "/cloud-backup": "settings",
-  "/subscriptions": "dashboard",
+  "/subscriptions": "users",
   "/users": "users",
   "/settings": "settings",
   "/zatca-queue": "settings",

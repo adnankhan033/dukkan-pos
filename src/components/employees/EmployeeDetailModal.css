@@ -223,7 +223,7 @@
   margin-top: 0.25rem;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .employee-payment-edit-form {
     grid-template-columns: 1fr;
   }
@@ -272,7 +272,7 @@
   background: linear-gradient(180deg, #fff7ed 0%, #fff 100%);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .employee-payroll-form-grid,
   .employee-advance-hero {
     grid-template-columns: 1fr;

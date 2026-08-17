@@ -6,6 +6,8 @@
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: welcome-fade-in 0.45s ease-out;
 }
 
@@ -70,8 +72,11 @@
   position: relative;
   width: 100%;
   max-width: 28rem;
+  max-height: calc(100dvh - 2rem);
   border-radius: calc(var(--radius-lg) + 6px);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  flex-shrink: 0;
   background: var(--color-card);
   border: 1px solid color-mix(in srgb, #06b6d4 25%, var(--color-border));
   box-shadow:
@@ -399,5 +404,104 @@
 
   .welcome-title {
     font-size: 1.5rem;
+  }
+}
+
+/* 13-inch / laptop height — default Tauri window is 1280×800 */
+@media (max-height: 900px) {
+  .welcome-overlay,
+  .welcome-overlay--full {
+    padding: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .welcome-card,
+  .welcome-card--full {
+    max-height: calc(100dvh - 1.5rem);
+    margin: auto 0;
+  }
+
+  .welcome-card-hero,
+  .welcome-card-hero--large {
+    padding: 1.1rem 1.25rem 0.85rem;
+  }
+
+  .welcome-icon-wrap,
+  .welcome-icon-wrap--large {
+    width: 4.25rem;
+    height: 4.25rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .welcome-card-body,
+  .welcome-card-body--large {
+    padding: 1rem 1.25rem 1.2rem;
+  }
+
+  .welcome-title,
+  .welcome-title--gradient {
+    font-size: 1.45rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .welcome-lead,
+  .welcome-lead--large {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 0.85rem;
+  }
+
+  .welcome-success-ring {
+    margin-bottom: 0.75rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8125rem;
+  }
+
+  .welcome-features {
+    gap: 0.45rem;
+    margin-bottom: 0.9rem;
+  }
+
+  .welcome-features li {
+    padding: 0.5rem 0.65rem;
+    gap: 0.65rem;
+  }
+
+  .welcome-feature-icon {
+    width: 1.85rem;
+    height: 1.85rem;
+  }
+
+  .welcome-footer-note {
+    margin-top: 0.75rem;
+  }
+}
+
+@media (max-height: 760px) {
+  .welcome-lead br {
+    display: none;
+  }
+
+  .welcome-features li span {
+    display: none;
+  }
+
+  .welcome-features li {
+    align-items: center;
+  }
+
+  .welcome-footer-note {
+    display: none;
+  }
+
+  .welcome-icon-pulse,
+  .welcome-confetti {
+    display: none;
+  }
+}
+
+@media (max-width: 1280px) {
+  .welcome-card--full {
+    max-width: min(32rem, 100%);
   }
 }

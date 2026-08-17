@@ -1,0 +1,242 @@
+.customers-page {
+  min-height: 100%;
+}
+
+.customer-account-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.customers-list-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.customers-list-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 1rem 1.15rem;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.customers-list-toolbar strong {
+  display: block;
+  font-size: 0.9375rem;
+}
+
+.customers-list-toolbar p {
+  margin: 0.15rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+}
+
+.customers-balance-due {
+  font-weight: 700;
+  color: var(--color-danger);
+}
+
+.customers-balance-clear {
+  color: var(--color-text-muted);
+}
+
+.customers-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.customers-empty p {
+  margin: 0.35rem 0 0;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.customers-empty span {
+  font-size: 0.8125rem;
+  max-width: 28rem;
+}
+
+.customer-export-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  align-items: end;
+}
+
+.customer-export-customer-select {
+  min-width: 0;
+}
+
+.customer-export-filter-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.65rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.customer-export-required-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.65rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.customer-export-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-primary) 6%, var(--color-card));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 14%, var(--color-border));
+  font-size: 0.8125rem;
+}
+
+.customer-export-preview strong {
+  color: var(--color-text);
+}
+
+.customer-export-preview span {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.customer-export-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  margin: 0.65rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  font-size: 0.8125rem;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.customer-export-checkbox input {
+  margin-top: 0.15rem;
+  accent-color: var(--color-primary);
+}
+
+.customer-export-wrap {
+  margin: 0;
+}
+
+.customer-account-pay-card {
+  margin-bottom: 1rem;
+}
+
+.customer-account-pay-card h4,
+.customer-account-ledger h4 {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+}
+
+.customer-account-pay-form .form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.customer-account-pay-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.customer-account-ledger-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.customer-account-ledger-header h4 {
+  margin: 0;
+}
+
+.customer-account-records {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.customer-account-record {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 60%, transparent);
+}
+
+.customer-account-record strong {
+  display: block;
+  font-size: 0.8125rem;
+}
+
+.customer-account-record small {
+  color: var(--color-text-muted);
+  font-size: 0.6875rem;
+}
+
+.customer-account-record-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  font-size: 0.8125rem;
+}
+
+.customer-account-due {
+  color: var(--color-danger);
+  font-weight: 700;
+}
+
+.customer-account-method {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  text-transform: capitalize;
+}
+
+.customer-account-empty {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .customer-account-stats,
+  .customer-account-pay-form .form-row,
+  .customer-export-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-account-record {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

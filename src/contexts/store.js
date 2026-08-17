@@ -64,3 +64,29 @@ export const useAppStore = create((set) => ({
   setDbReady: (ready) => set({ dbReady: ready }),
   setDbError: (error) => set({ dbError: error }),
 }));
+
+/** expanded = full labels, mini = icon rail, hidden = off-screen */
+export const useSidebarStore = create(
+  persist(
+    (set, get) => ({
+      mode: "expanded",
+      setMode: (mode) => set({ mode }),
+      expand: () => set({ mode: "expanded" }),
+      collapseToMini: () => set({ mode: "mini" }),
+      hide: () => set({ mode: "hidden" }),
+      toggle: () => {
+        const mode = get().mode;
+        if (mode === "expanded") set({ mode: "mini" });
+        else if (mode === "mini") set({ mode: "expanded" });
+        else set({ mode: "expanded" });
+      },
+      cycleMode: () => {
+        const mode = get().mode;
+        if (mode === "expanded") set({ mode: "mini" });
+        else if (mode === "mini") set({ mode: "hidden" });
+        else set({ mode: "expanded" });
+      },
+    }),
+    { name: "dukkan-pos-sidebar", version: 1 }
+  )
+);

@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Download, RotateCcw, Trash2, ShieldAlert } from "lucide-react";
 import { settingsService } from "../services/SettingsService";
@@ -14,10 +14,13 @@ import Button from "../components/common/Button";
 import Modal from "../components/common/Modal";
 import { Card } from "../components/common/Card";
 import { Input, Textarea, Select } from "../components/common/Input";
-import { Alert } from "../components/common/Loading";
+import { Alert, LoadingSpinner } from "../components/common/Loading";
 import ReceiptPreview from "../components/settings/ReceiptPreview";
 import ZatcaSettingsPanel from "../components/settings/ZatcaSettingsPanel";
 import VendorBrandingPanel from "../components/settings/VendorBrandingPanel";
+import SettingsTabToolbar from "../components/settings/SettingsTabToolbar";
+import SettingsTabView from "../components/settings/SettingsTabView";
+import PaymentMethodsPanel from "../components/settings/PaymentMethodsPanel";
 import { VENDOR_SETTING_KEY_LIST } from "../config/softwareVendor";
 import { DEFAULT_RECEIPT_TEMPLATE } from "../utils/receiptTemplates";
 import {
@@ -37,11 +40,14 @@ import { notify } from "../utils/notify";
 import { getAllPermissionSettingKeys } from "../utils/actions";
 import "./Settings.css";
 
+const PermissionsPanel = lazy(() => import("../components/settings/PermissionsPanel"));
+
 const ZATCA_DEFAULTS = getZatcaDefaultSettings();
 
 const TABS = [
   { id: "store", label: "Store" },
   { id: "permissions", label: "Permissions", adminOnly: true },
+  { id: "payments", label: "Payments", adminOnly: true },
   { id: "receipt", label: "Receipt" },
   { id: "zatca", label: "ZATCA" },
   { id: "dashboard", label: "Dashboard" },
@@ -162,12 +168,30 @@ export default function Settings() {
   const { isAdmin } = usePermissions();
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [tab, setTab] = useState("store");
+  const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState(() => buildFormFromSettings(settings));
   const [backupBusy, setBackupBusy] = useState(false);
   const [sectionCounts, setSectionCounts] = useState({});
   const [feedbackModal, setFeedbackModal] = useState(null);
   const restoreInputRef = useRef(null);
   const formDirtyRef = useRef(false);
+
+  function switchTab(nextTab) {
+    setTab(nextTab);
+    setIsEditing(false);
+    formDirtyRef.current = false;
+    setForm(buildFormFromSettings(settings));
+  }
+
+  function startEditing() {
+    setIsEditing(true);
+  }
+
+  function cancelEditing() {
+    setIsEditing(false);
+    formDirtyRef.current = false;
+    setForm(buildFormFromSettings(settings));
+  }
 
   function updateField(key, value) {
     formDirtyRef.current = true;
@@ -190,7 +214,8 @@ export default function Settings() {
     return () => clearInterval(id);
   }, []);
 
-  const businessTimePreview = getBusinessDateTimeLabelFromForm(form);
+  const businessTimePreview =
+    tab === "store" ? getBusinessDateTimeLabelFromForm(form) : null;
   void clockTick;
 
   useEffect(() => {
@@ -234,6 +259,7 @@ export default function Settings() {
     e.preventDefault();
     try {
       await persistForm(form);
+      setIsEditing(false);
       const savedLabel =
         tab === "permissions"
           ? "Role and menu permissions were saved."
@@ -522,7 +548,7 @@ export default function Settings() {
             key={t.id}
             type="button"
             className={`settings-tab ${tab === t.id ? "active" : ""}`}
-            onClick={() => setTab(t.id)}
+            onClick={() => switchTab(t.id)}
           >
             {t.label}
           </button>
@@ -535,7 +561,7 @@ export default function Settings() {
               <h3 className="settings-section-title">Database Backup</h3>
               <p className="settings-section-desc">
                 Export or restore all store data including products, sales, users, and settings.
-                For Gmail cloud backup, use <strong>Backup → Gmail Backup</strong> in the sidebar.
+                For Gmail cloud backup, use <strong>Administration → Gmail Backup</strong> in the sidebar.
               </p>
               <div className="settings-backup-actions">
                 <Button type="button" variant="secondary" onClick={handleBackupClick} disabled={backupBusy}>
@@ -627,8 +653,27 @@ export default function Settings() {
             </Card>
             )}
         </>
+      ) : tab === "payments" && isAdmin ? (
+        <PaymentMethodsPanel />
+      ) : !isEditing ? (
+        <>
+          <SettingsTabToolbar isEditing={false} onEdit={startEditing} />
+          <SettingsTabView tab={tab} form={form} isAdmin={isAdmin} />
+        </>
       ) : (
-      <form onSubmit={handleSave}>
+      <form id="settings-edit-form" onSubmit={handleSave}>
+        <SettingsTabToolbar
+          isEditing
+          onCancel={cancelEditing}
+          onSave={() => document.getElementById("settings-edit-form")?.requestSubmit()}
+          saveLabel={
+            tab === "permissions"
+              ? "Save Permissions"
+              : tab === "vendor"
+                ? "Save Vendor Branding"
+                : "Save Settings"
+          }
+        />
         {tab === "store" && (
           <>
             <Card className="settings-card">
@@ -722,16 +767,18 @@ export default function Settings() {
         )}
 
         {tab === "permissions" && isAdmin && (
-          <PermissionsPanel
-            form={form}
-            updateField={updateField}
-            updateFields={updateFields}
-            onResetRole={(role) =>
-              notify.info(`${role === "admin" ? "Administrator" : "Cashier"} menu defaults restored. Click Save Settings to apply.`, {
-                title: "Defaults loaded",
-              })
-            }
-          />
+          <Suspense fallback={<LoadingSpinner message="Loading permissions…" />}>
+            <PermissionsPanel
+              form={form}
+              updateField={updateField}
+              updateFields={updateFields}
+              onResetRole={(role) =>
+                notify.info(`${role === "admin" ? "Administrator" : "Cashier"} menu defaults restored. Click Save Settings to apply.`, {
+                  title: "Defaults loaded",
+                })
+              }
+            />
+          </Suspense>
         )}
 
         {tab === "receipt" && (
@@ -870,7 +917,6 @@ export default function Settings() {
           </Card>
         )}
 
-        <Button type="submit" style={{ marginTop: "0.5rem" }}>Save Settings</Button>
       </form>
       )}
 

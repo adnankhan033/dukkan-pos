@@ -1,3 +1,5 @@
+import { parseVatModeInput, vatModeToDbFields } from "../vatPricing";
+
 export const IMPORT_MODES = {
   NEW_ONLY: "new_only",
   UPDATE: "update",
@@ -41,50 +43,19 @@ function parsePublished(value) {
   return { ok: false, error: 'published must be yes/no, 1/0, or active/inactive' };
 }
 
-const VALID_TAX_CATEGORIES = new Set(["standard", "zero_rated", "exempt"]);
-
-function parseTaxCategory(value) {
-  if (value === "" || value == null) return { ok: true, value: "standard" };
-  const norm = String(value).trim().toLowerCase().replace(/\s+/g, "_");
-  const mapped =
-    norm === "zero" || norm === "zero-rated" || norm === "zero_rated"
-      ? "zero_rated"
-      : norm === "exempt" || norm === "exempted"
-        ? "exempt"
-        : norm === "standard" || norm === "taxable"
-          ? "standard"
-          : norm;
-  if (!VALID_TAX_CATEGORIES.has(mapped)) {
-    return { ok: false, error: 'tax_category must be standard, zero_rated, or exempt' };
+function parseVat(value) {
+  const mode = parseVatModeInput(value);
+  if (!mode) {
+    return { ok: false, error: "vat must be default, zero_rated, or exempt" };
   }
-  return { ok: true, value: mapped };
-}
-
-function parseVatPriceType(value) {
-  if (value === "" || value == null) return { ok: true, value: null };
-  const norm = String(value).trim().toLowerCase().replace(/\s+/g, "_");
-  if (["inherit", "store", "store_default", "default"].includes(norm)) {
-    return { ok: true, value: null };
-  }
-  if (["inclusive", "incl", "yes", "1", "true", "vat_inclusive", "includes_vat"].includes(norm)) {
-    return { ok: true, value: 1 };
-  }
-  if (["exclusive", "excl", "no", "0", "false", "vat_exclusive", "excludes_vat"].includes(norm)) {
-    return { ok: true, value: 0 };
-  }
-  return { ok: false, error: 'vat_price_type must be inherit, inclusive, or exclusive' };
-}
-
-function parseVatRate(value, taxCategory) {
-  if (taxCategory !== "standard") {
-    return { ok: true, value: null };
-  }
-  if (value === "" || value == null) return { ok: true, value: null };
-  const num = Number(String(value).replace(/,/g, "").trim());
-  if (Number.isNaN(num) || num < 0 || num > 100) {
-    return { ok: false, error: "vat_rate must be a number between 0 and 100" };
-  }
-  return { ok: true, value: num };
+  const fields = vatModeToDbFields(mode);
+  return {
+    ok: true,
+    mode,
+    taxCategory: fields.tax_category,
+    vatRate: fields.vat_rate,
+    vatIncluded: fields.vat_included,
+  };
 }
 
 function normKey(value) {
@@ -130,14 +101,8 @@ export function validateImportRows(
     const published = parsePublished(d.published);
     if (!published.ok) issues.push(published.error);
 
-    const taxCategory = parseTaxCategory(d.tax_category);
-    if (!taxCategory.ok) issues.push(taxCategory.error);
-
-    const vatPriceType = parseVatPriceType(d.vat_price_type);
-    if (!vatPriceType.ok) issues.push(vatPriceType.error);
-
-    const vatRate = parseVatRate(d.vat_rate, taxCategory.ok ? taxCategory.value : "standard");
-    if (!vatRate.ok) issues.push(vatRate.error);
+    const vat = parseVat(d.vat);
+    if (!vat.ok) issues.push(vat.error);
 
     const skuKey = normKey(d.sku);
     const barcodeKey = normKey(d.barcode);
@@ -197,9 +162,9 @@ export function validateImportRows(
           supplier_name: d.supplier?.trim() || null,
           cost_price: cost.value ?? 0,
           selling_price: selling.value,
-          tax_category: taxCategory.value,
-          vat_rate: vatRate.value,
-          vat_included: vatPriceType.value,
+          tax_category: vat.taxCategory,
+          vat_rate: vat.vatRate,
+          vat_included: vat.vatIncluded,
           quantity: qty.value ?? 0,
           min_stock: minStock.value ?? 0,
           published: published.value,

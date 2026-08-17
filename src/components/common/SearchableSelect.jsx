@@ -1,11 +1,12 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Plus, Search, X } from "lucide-react";
 import "./SearchableSelect.css";
 
-function buildMenuItems({ filtered, clearable, showNone, showCreate, createLabel, query }) {
+function buildMenuItems({ filtered, clearable, showNone, showCreate, createLabel, query, noneLabel }) {
   const items = [];
   if (clearable && showNone) {
-    items.push({ type: "none", value: "", label: "None" });
+    items.push({ type: "none", value: "", label: noneLabel });
   }
   if (showCreate) {
     items.push({ type: "create", value: "__create__", label: createLabel(query.trim()) });
@@ -30,15 +31,18 @@ export default function SearchableSelect({
   creatable = false,
   onCreateOption,
   createLabel = (term) => `Create "${term}"`,
+  menuPortal = false,
 }) {
   const listboxId = useId();
   const rootRef = useRef(null);
+  const dropdownRef = useRef(null);
   const inputRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [highlight, setHighlight] = useState(0);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [menuStyle, setMenuStyle] = useState(null);
 
   const selected = useMemo(
     () => options.find((option) => String(option.value) === String(value)),
@@ -72,19 +76,62 @@ export default function SearchableSelect({
         showCreate,
         createLabel,
         query,
+        noneLabel,
       }),
-    [filtered, clearable, query, showCreate, createLabel]
+    [filtered, clearable, query, showCreate, createLabel, noneLabel]
   );
+
+  useLayoutEffect(() => {
+    if (!open || !menuPortal) {
+      setMenuStyle(null);
+      return undefined;
+    }
+
+    function updateMenuPosition() {
+      const root = rootRef.current;
+      if (!root) return;
+      const rect = root.getBoundingClientRect();
+      const maxHeight = 240;
+      const gap = 4;
+      const spaceBelow = window.innerHeight - rect.bottom - gap;
+      const spaceAbove = rect.top - gap;
+      const openUpward = spaceBelow < 160 && spaceAbove > spaceBelow;
+      const availableHeight = Math.min(maxHeight, openUpward ? spaceAbove : spaceBelow);
+
+      setMenuStyle({
+        position: "fixed",
+        left: rect.left,
+        width: rect.width,
+        maxHeight: Math.max(availableHeight, 120),
+        zIndex: 5000,
+        ...(openUpward
+          ? { bottom: window.innerHeight - rect.top + gap }
+          : { top: rect.bottom + gap }),
+      });
+    }
+
+    updateMenuPosition();
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+    return () => {
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [open, menuPortal, menuItems.length]);
 
   useEffect(() => {
     if (!open) return undefined;
 
     function onDocumentMouseDown(event) {
-      if (!rootRef.current?.contains(event.target)) {
-        setOpen(false);
-        setQuery("");
-        setEditing(false);
+      if (
+        rootRef.current?.contains(event.target) ||
+        dropdownRef.current?.contains(event.target)
+      ) {
+        return;
       }
+      setOpen(false);
+      setQuery("");
+      setEditing(false);
     }
 
     document.addEventListener("mousedown", onDocumentMouseDown);
@@ -183,6 +230,42 @@ export default function SearchableSelect({
 
   const showTag = selected && !editing && !open;
 
+  const dropdown = open ? (
+    <ul
+      ref={dropdownRef}
+      id={listboxId}
+      className={`searchable-select-dropdown ${menuPortal ? "searchable-select-dropdown-portal" : ""}`}
+      role="listbox"
+      style={menuPortal ? menuStyle ?? { visibility: "hidden" } : undefined}
+    >
+      {menuItems.length === 0 && (
+        <li className="searchable-select-empty">No matches</li>
+      )}
+      {menuItems.map((item, index) => (
+        <li
+          key={item.type === "option" ? item.value : item.type}
+          role="option"
+          aria-selected={item.type === "option" && String(item.value) === String(value)}
+          className={[
+            "searchable-select-option",
+            item.type === "create" ? "create" : "",
+            item.type === "option" && String(item.value) === String(value) ? "selected" : "",
+            item.type === "none" && !value ? "selected" : "",
+            highlight === index ? "highlight" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          onMouseEnter={() => setHighlight(index)}
+          onClick={() => selectItem(item)}
+        >
+          {item.type === "create" && <Plus size={14} aria-hidden="true" />}
+          <span className="searchable-select-option-label">{item.label}</span>
+          {item.hint && <span className="searchable-select-option-hint">{item.hint}</span>}
+        </li>
+      ))}
+    </ul>
+  ) : null;
+
   return (
     <div
       ref={rootRef}
@@ -267,35 +350,9 @@ export default function SearchableSelect({
         </div>
       </div>
 
-      {open && (
-        <ul id={listboxId} className="searchable-select-dropdown" role="listbox">
-          {menuItems.length === 0 && (
-            <li className="searchable-select-empty">No matches</li>
-          )}
-          {menuItems.map((item, index) => (
-            <li
-              key={item.type === "option" ? item.value : item.type}
-              role="option"
-              aria-selected={item.type === "option" && String(item.value) === String(value)}
-              className={[
-                "searchable-select-option",
-                item.type === "create" ? "create" : "",
-                item.type === "option" && String(item.value) === String(value) ? "selected" : "",
-                item.type === "none" && !value ? "selected" : "",
-                highlight === index ? "highlight" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              onMouseEnter={() => setHighlight(index)}
-              onClick={() => selectItem(item)}
-            >
-              {item.type === "create" && <Plus size={14} aria-hidden="true" />}
-              <span className="searchable-select-option-label">{item.label}</span>
-              {item.hint && <span className="searchable-select-option-hint">{item.hint}</span>}
-            </li>
-          ))}
-        </ul>
-      )}
+      {menuPortal
+        ? dropdown && createPortal(dropdown, document.body)
+        : dropdown}
 
       {error && <span className="form-error">{error}</span>}
     </div>

@@ -88,6 +88,9 @@ export const SCHEMA_STATEMENTS = [
     vat REAL DEFAULT 0,
     total REAL DEFAULT 0,
     payment_method TEXT DEFAULT 'cash',
+    payment_status TEXT DEFAULT 'paid',
+    amount_paid REAL DEFAULT 0,
+    due_date TEXT,
     status TEXT DEFAULT 'completed',
     notes TEXT,
     created_at TEXT DEFAULT (datetime('now')),
@@ -170,6 +173,21 @@ export const SCHEMA_STATEMENTS = [
     value TEXT NOT NULL
   )`,
 
+  `CREATE TABLE IF NOT EXISTS payment_methods (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    label TEXT NOT NULL,
+    label_ar TEXT,
+    icon TEXT DEFAULT 'wallet',
+    collect_cash INTEGER NOT NULL DEFAULT 0,
+    is_default INTEGER NOT NULL DEFAULT 0,
+    is_system INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+
   `CREATE TABLE IF NOT EXISTS sale_returns (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     return_number TEXT NOT NULL UNIQUE,
@@ -203,6 +221,7 @@ export const SCHEMA_STATEMENTS = [
   `CREATE INDEX IF NOT EXISTS idx_inventory_product ON inventory(product_id)`,
   `CREATE INDEX IF NOT EXISTS idx_sale_returns_sale ON sale_returns(sale_id)`,
   `CREATE INDEX IF NOT EXISTS idx_sale_returns_created ON sale_returns(created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_payment_methods_active ON payment_methods(is_active, sort_order)`,
 
   `CREATE TABLE IF NOT EXISTS user_subscriptions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

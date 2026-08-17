@@ -7,6 +7,7 @@
   justify-content: center;
   z-index: 1000;
   padding: 1rem;
+  overflow-y: auto;
 }
 
 .modal {
@@ -15,11 +16,12 @@
   border-radius: var(--radius-lg);
   width: 100%;
   max-width: 560px;
-  max-height: 90vh;
+  max-height: min(90vh, calc(100dvh - 2rem));
   overflow: hidden;
   display: flex;
   flex-direction: column;
   box-shadow: var(--shadow-lg);
+  margin: auto;
 }
 
 .modal-lg {
@@ -54,4 +56,34 @@
   gap: 0.75rem;
   padding: 1rem 1.25rem;
   border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+@media (max-height: 800px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding: 0.75rem;
+  }
+
+  .modal-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .modal-body {
+    padding: 1rem;
+  }
+
+  .modal-footer {
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .modal-footer {
+    justify-content: stretch;
+  }
+
+  .modal-footer .btn {
+    flex: 1 1 auto;
+  }
 }

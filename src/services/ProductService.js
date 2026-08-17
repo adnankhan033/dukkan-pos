@@ -1,7 +1,7 @@
 import { query, queryOne, execute, insert } from "../database/connection";
 import { invalidateDashboardCache } from "./DashboardCache";
 import { useAuthStore } from "../contexts/store";
-import { priceTypeToVatIncluded } from "../utils/vatPricing";
+import { priceTypeToVatIncluded, parseVatModeInput, vatModeToDbFields } from "../utils/vatPricing";
 
 const LIST_COLUMNS = `
   p.id, p.name, p.name_ar, p.sku, p.barcode, p.category_id, p.unit_id, p.supplier_id,
@@ -25,6 +25,18 @@ const SUPPLIER_JOIN = `LEFT JOIN suppliers s ON p.supplier_id = s.id`;
 const PRODUCT_JOINS = `${BASE_JOINS} ${SUPPLIER_JOIN}`;
 
 function normalizeProductVatFields(data = {}) {
+  if (data.vat_mode != null && data.vat_mode !== "") {
+    const mode = parseVatModeInput(data.vat_mode);
+    if (mode) {
+      const fields = vatModeToDbFields(mode);
+      return {
+        taxCategory: fields.tax_category,
+        vatRate: fields.vat_rate,
+        vatIncluded: fields.vat_included,
+      };
+    }
+  }
+
   const taxCategory = data.tax_category || "standard";
   const vatRate =
     data.vat_rate === "" || data.vat_rate == null ? null : Number(data.vat_rate);

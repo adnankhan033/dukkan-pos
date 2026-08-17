@@ -15,7 +15,7 @@ function spacerRow(colCount) {
 export function exportDirectoryExcel({ definition, rows, company, currency }) {
   const headers = definition.columns.map((column) => column.label);
   const body = mapRowsForExport(rows, definition, currency);
-  const summary = buildSummary(definition.id, rows, currency);
+  const summary = buildSummary(definition.id, rows, currency, definition);
   const metaLines = companyMetaLines(company);
   const colCount = Math.max(headers.length, 4);
 

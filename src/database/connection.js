@@ -4,6 +4,7 @@ import { SCHEMA_STATEMENTS } from "./schema";
 import bcrypt from "bcryptjs";
 import { DEFAULT_SETTINGS } from "../utils/constants";
 import { DEFAULT_UNITS } from "../utils/defaultUnits";
+import { DEFAULT_PAYMENT_METHODS } from "../utils/defaultPaymentMethods";
 import {
   DEFAULT_ADMIN_PASSWORD,
   DEFAULT_ADMIN_USERNAME,
@@ -181,6 +182,7 @@ async function runMigrations() {
   await ensureUnitsSchema();
   await ensureUsersAndExpensesSchema();
   await ensureSupplierLedgerSchema();
+  await ensureCustomerLedgerSchema();
   await ensureAttributionSchema();
   await ensureZatcaSchema();
   await ensureCashierModuleDefaults();
@@ -189,6 +191,7 @@ async function runMigrations() {
   await ensureReceiptTemplateDefault();
   await ensureBackupLogsSchema();
   await ensureDailyClosesSchema();
+  await ensurePaymentMethodsSchema();
   await ensureVatPricingSchema();
   await ensureSettingsKeys();
   await ensureDashboardPerformanceIndexes();
@@ -572,6 +575,87 @@ async function ensureSupplierLedgerSchema() {
   }
 }
 
+async function ensureCustomerLedgerSchema() {
+  let saleCols = await query("PRAGMA table_info(sales)");
+  const addSaleCol = async (name, ddl) => {
+    if (!saleCols.some((c) => c.name === name)) {
+      await execute(ddl);
+      saleCols = await query("PRAGMA table_info(sales)");
+    }
+  };
+
+  await addSaleCol(
+    "payment_status",
+    "ALTER TABLE sales ADD COLUMN payment_status TEXT DEFAULT 'paid'"
+  );
+  await addSaleCol(
+    "amount_paid",
+    "ALTER TABLE sales ADD COLUMN amount_paid REAL DEFAULT 0"
+  );
+  await addSaleCol("due_date", "ALTER TABLE sales ADD COLUMN due_date TEXT");
+
+  await execute(
+    `UPDATE sales
+     SET payment_status = 'paid', amount_paid = total
+     WHERE status IN ('completed', 'partial_return', 'returned')
+       AND COALESCE(amount_paid, 0) = 0
+       AND total > 0
+       AND COALESCE(payment_status, 'paid') = 'paid'`
+  );
+
+  await execute(
+    `CREATE TABLE IF NOT EXISTS customer_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER NOT NULL,
+      sale_id INTEGER,
+      amount REAL NOT NULL,
+      payment_method TEXT DEFAULT 'cash',
+      payment_date TEXT NOT NULL,
+      notes TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (customer_id) REFERENCES customers(id),
+      FOREIGN KEY (sale_id) REFERENCES sales(id)
+    )`
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_customer_payments_customer ON customer_payments(customer_id)"
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_customer_payments_sale ON customer_payments(sale_id)"
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_sales_payment_status ON sales(payment_status)"
+  );
+
+  for (const method of DEFAULT_PAYMENT_METHODS) {
+    const existing = await queryOne(
+      "SELECT id FROM payment_methods WHERE lower(code) = $1 LIMIT 1",
+      [method.code]
+    );
+    if (existing?.id) continue;
+    try {
+      await execute(
+        `INSERT INTO payment_methods
+         (code, label, label_ar, icon, collect_cash, is_default, is_system, is_active, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          method.code,
+          method.label,
+          method.label_ar,
+          method.icon,
+          method.collect_cash,
+          method.is_default,
+          method.is_system,
+          method.is_active,
+          method.sort_order,
+        ]
+      );
+    } catch {
+      /* ignore duplicate on race */
+    }
+  }
+}
+
 async function ensureUsersAndExpensesSchema() {
   let userCols = await query("PRAGMA table_info(users)");
   if (!userCols.some((c) => c.name === "is_active")) {
@@ -782,6 +866,54 @@ async function migrateSalesTimestampsToBusinessWallV4() {
   await execute(
     "INSERT INTO settings (key, value) VALUES ('_sales_business_wall_v4', '1')"
   );
+}
+
+async function ensurePaymentMethodsSchema() {
+  await execute(
+    `CREATE TABLE IF NOT EXISTS payment_methods (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL UNIQUE,
+      label TEXT NOT NULL,
+      label_ar TEXT,
+      icon TEXT DEFAULT 'wallet',
+      collect_cash INTEGER NOT NULL DEFAULT 0,
+      is_default INTEGER NOT NULL DEFAULT 0,
+      is_system INTEGER NOT NULL DEFAULT 0,
+      is_active INTEGER NOT NULL DEFAULT 1,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_payment_methods_active ON payment_methods(is_active, sort_order)"
+  );
+
+  const methodCount = await queryOne("SELECT COUNT(*) AS count FROM payment_methods");
+  if (Number(methodCount?.count ?? 0) === 0) {
+    for (const method of DEFAULT_PAYMENT_METHODS) {
+      try {
+        await execute(
+          `INSERT INTO payment_methods
+           (code, label, label_ar, icon, collect_cash, is_default, is_system, is_active, sort_order)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          [
+            method.code,
+            method.label,
+            method.label_ar,
+            method.icon,
+            method.collect_cash,
+            method.is_default,
+            method.is_system,
+            method.is_active,
+            method.sort_order,
+          ]
+        );
+      } catch {
+        /* ignore duplicate on race */
+      }
+    }
+  }
 }
 
 async function ensureUnitsSchema() {

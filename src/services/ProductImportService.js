@@ -9,7 +9,7 @@ import { IMPORT_MODES } from "../utils/productImport/validate";
 import { applyImportVatDefaults } from "../utils/productImport/vatDefaults";
 import { templateHeaders, templateSampleRows, PRODUCT_IMPORT_COLUMNS } from "../utils/productImport/columns";
 import { findBestSupplierMatch, supplierLookupKey } from "../utils/productImport/supplierMatch";
-import { vatIncludedToPriceType } from "../utils/vatPricing";
+import { productToVatMode } from "../utils/vatPricing";
 import { rowsToCsv } from "../utils/productImport/csv";
 import {
   buildExcelWorkbook,
@@ -451,9 +451,7 @@ class ProductImportService {
       p.supplier || "",
       Number(p.cost_price ?? 0).toFixed(2),
       Number(p.selling_price ?? 0).toFixed(2),
-      p.tax_category || "standard",
-      p.vat_rate != null && p.vat_rate !== "" ? String(p.vat_rate) : "",
-      vatIncludedToPriceType(p.vat_included),
+      productToVatMode(p),
       String(p.quantity ?? 0),
       String(p.min_stock ?? 0),
       Number(p.published ?? 1) === 1 ? "yes" : "no",

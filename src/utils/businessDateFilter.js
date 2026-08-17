@@ -4,23 +4,22 @@ function normalizeClock(value, fallback) {
   const raw = String(value ?? "").trim();
   if (!raw) return fallback;
   if (/^\d{2}:\d{2}:\d{2}$/.test(raw)) return raw;
-  if (/^\d{2}:\d{2}$/.test(raw)) return `${raw}:00`;
+  if (/^\d{2}:\d{2}$/.test(raw)) {
+    if (raw === "23:59") return "23:59:59";
+    return `${raw}:00`;
+  }
   return fallback;
 }
 
 function buildWallClockRange(range) {
   const fromTime = normalizeClock(range.fromTime, "00:00:00");
   const toTime = normalizeClock(range.toTime, "23:59:59");
-  const toNormalized =
-    toTime.length === 8 && toTime.endsWith(":00") && range.toTime?.length === 5
-      ? `${range.toTime}:59`
-      : toTime;
 
   return {
     fromDateTime: `${range.from} ${fromTime}`,
-    toDateTime: `${range.to} ${toNormalized}`,
+    toDateTime: `${range.to} ${toTime}`,
     fromTime,
-    toTime: toNormalized,
+    toTime,
   };
 }
 

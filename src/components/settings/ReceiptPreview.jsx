@@ -42,7 +42,7 @@ function formToPreviewSettings(form) {
   };
 }
 
-export default function ReceiptPreview({ form, onSelectTemplate }) {
+export default function ReceiptPreview({ form, onSelectTemplate, readOnly = false }) {
   const [previewHtml, setPreviewHtml] = useState("");
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
@@ -92,7 +92,9 @@ export default function ReceiptPreview({ form, onSelectTemplate }) {
         <div>
           <h3 className="settings-section-title">Live Preview</h3>
           <p className="settings-section-desc">
-            Sample baqala sale — updates as you change settings.
+            {readOnly
+              ? "Sample baqala sale preview using your saved receipt settings."
+              : "Sample baqala sale — updates as you change settings."}
           </p>
         </div>
         <Button variant="secondary" onClick={handleTestPrint} disabled={loading || printing || !previewHtml}>
@@ -101,6 +103,7 @@ export default function ReceiptPreview({ form, onSelectTemplate }) {
         </Button>
       </div>
 
+      {!readOnly && (
       <div className="receipt-template-picker">
         {RECEIPT_TEMPLATES.map((tpl) => {
           const selected = form.receipt_template === tpl.id;
@@ -109,7 +112,7 @@ export default function ReceiptPreview({ form, onSelectTemplate }) {
               key={tpl.id}
               type="button"
               className={`receipt-template-option ${selected ? "selected" : ""}`}
-              onClick={() => onSelectTemplate(tpl.id)}
+              onClick={() => onSelectTemplate?.(tpl.id)}
             >
               <span className="receipt-template-option-head">
                 <strong>{tpl.label}</strong>
@@ -129,6 +132,7 @@ export default function ReceiptPreview({ form, onSelectTemplate }) {
           );
         })}
       </div>
+      )}
 
       <p className="receipt-preview-meta">
         Selected: <strong>{selectedTemplate.label}</strong> · {paperWidth}mm paper

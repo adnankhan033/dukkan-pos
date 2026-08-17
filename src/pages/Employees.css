@@ -89,8 +89,13 @@
   font-weight: 500;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 900px) {
   .employees-toolbar {
     grid-template-columns: 1fr;
+  }
+
+  .employees-toolbar select {
+    min-width: 0;
+    width: 100%;
   }
 }

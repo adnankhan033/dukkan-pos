@@ -59,7 +59,7 @@ export function exportDirectoryPdf({ definition, rows, company, currency }) {
 
   const headers = [definition.columns.map((column) => column.label)];
   const body = mapRowsForExport(rows, definition, currency);
-  const summary = buildSummary(definition.id, rows, currency);
+  const summary = buildSummary(definition.id, rows, currency, definition);
 
   autoTable(doc, {
     startY: y,

@@ -4,7 +4,7 @@ import Sidebar from "../components/layout/Sidebar";
 import ZatcaSyncIndicator from "../components/zatca/ZatcaSyncIndicator";
 import SubscriptionBlocked from "../components/subscriptions/SubscriptionBlocked";
 import WelcomeModal from "../components/auth/WelcomeModal";
-import { useAuthStore, useSettingsStore } from "../contexts/store";
+import { useAuthStore, useSettingsStore, useSidebarStore } from "../contexts/store";
 import { useSubscription } from "../hooks/useSubscription";
 import { LoadingSpinner } from "../components/common/Loading";
 import { settingsService } from "../services/SettingsService";
@@ -18,6 +18,7 @@ export default function MainLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { subscription, loading, allowsAccess, isAdmin, refresh } = useSubscription();
+  const mode = useSidebarStore((s) => s.mode);
   const [welcomeOpen, setWelcomeOpen] = useState(false);
   const initialCheck = !isAdmin && loading && subscription === null;
 
@@ -70,7 +71,7 @@ export default function MainLayout() {
         onContinue={handleWelcomeContinue}
       />
 
-      <div className="main-layout">
+      <div className={`main-layout sidebar-mode-${mode}`}>
         <Sidebar />
         <main className="main-content">
           <ZatcaSyncIndicator />

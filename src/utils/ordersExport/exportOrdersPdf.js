@@ -1,13 +1,15 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import html2canvas from "html2canvas";
 import { formatCompanyAddress, companyInitial } from "../directoryExport/companyProfile.js";
 import { formatCurrency, formatDateTime } from "../format.js";
 import { ORDER_RETURN_FILTERS, SALE_STATUS } from "../constants.js";
 import { buildOrdersReportCoverHtml } from "./buildOrdersReportCoverHtml.js";
+import {
+  addCoverPageToPdf,
+  renderReportCoverToCanvas,
+} from "../pdf/renderReportCoverToCanvas.js";
 
 const EXPORT_MAX_ROWS = 10000;
-const COVER_WIDTH_PX = 1122;
 const TABLE_FONT = "helvetica";
 const FOOTER_HEIGHT_MM = 10;
 const PAGE_MARGIN = 12;
@@ -136,25 +138,11 @@ function computePaymentBreakdown(orders = [], currency) {
 }
 
 async function renderCoverToCanvas(coverHtml) {
-  const host = document.createElement("div");
-  host.style.cssText =
-    "position:fixed;left:-12000px;top:0;z-index:-1;background:#fff;direction:ltr;";
-  host.innerHTML = coverHtml;
-  document.body.appendChild(host);
+  return renderReportCoverToCanvas(coverHtml, ".orders-report-cover");
+}
 
-  try {
-    const coverEl = host.querySelector(".orders-report-cover");
-    return await html2canvas(coverEl, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff",
-      logging: false,
-      width: COVER_WIDTH_PX,
-      windowWidth: COVER_WIDTH_PX,
-    });
-  } finally {
-    document.body.removeChild(host);
-  }
+function addCoverPage(doc, coverCanvas, pageWidth, pageHeight) {
+  addCoverPageToPdf(doc, coverCanvas, pageWidth, pageHeight, FOOTER_HEIGHT_MM);
 }
 
 function statusStyle(label) {
@@ -205,21 +193,6 @@ function drawPageFooter(doc, { pageNumber, pageCount, company, pageWidth, pageHe
     footerY,
     { align: "right" }
   );
-}
-
-function addCoverPage(doc, coverCanvas, pageWidth, pageHeight) {
-  const coverImg = coverCanvas.toDataURL("image/png");
-  const maxCoverHeight = pageHeight - FOOTER_HEIGHT_MM;
-  let drawWidth = pageWidth;
-  let drawHeight = (coverCanvas.height * drawWidth) / coverCanvas.width;
-
-  if (drawHeight > maxCoverHeight) {
-    drawHeight = maxCoverHeight;
-    drawWidth = (coverCanvas.width * drawHeight) / coverCanvas.height;
-  }
-
-  const offsetX = (pageWidth - drawWidth) / 2;
-  doc.addImage(coverImg, "PNG", offsetX, 0, drawWidth, drawHeight);
 }
 
 function prepareCompany(company) {

@@ -44,6 +44,7 @@ export const DEFAULT_SETTINGS = {
 export const PAYMENT_METHODS = {
   CASH: "cash",
   CARD: "card",
+  PAY_LATER: "pay_later",
 };
 
 /** Market cash purchase vs supplier delivery (paid now or on credit). */
@@ -64,6 +65,10 @@ export const PURCHASE_PAYMENT_STATUS_LABELS = {
   pending: "Pending",
   partial: "Partial",
 };
+
+/** Sale invoice collection status (mirrors purchase payment status). */
+export const SALE_PAYMENT_STATUS = PURCHASE_PAYMENT_STATUS;
+export const SALE_PAYMENT_STATUS_LABELS = PURCHASE_PAYMENT_STATUS_LABELS;
 
 export const SALE_STATUS = {
   COMPLETED: "completed",

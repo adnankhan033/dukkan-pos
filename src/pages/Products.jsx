@@ -27,9 +27,8 @@ import { formatCurrency, formatQuantity } from "../utils/format";
 import { required, positiveNumber, runFormValidation } from "../utils/validation";
 import { translateToArabic } from "../utils/translate";
 import ProductNameFields from "../components/products/ProductNameFields";
-import ProductVatFields from "../components/products/ProductVatFields";
+import ProductVatFields, { productVatToFormFields } from "../components/products/ProductVatFields";
 import ProductBarcodeScanner from "../components/products/ProductBarcodeScanner";
-import { VAT_PRICE_TYPE, vatIncludedToPriceType } from "../utils/vatPricing";
 import { findBestCategoryMatch, findBestUnitMatch, findBestSupplierMatch, deriveUnitFields } from "../utils/productForm/resolveReferenceOption";
 import ProductImportExportModal from "../components/products/ProductImportExportModal";
 import FormValidationAlert from "../components/common/FormValidationAlert";
@@ -51,9 +50,7 @@ const emptyForm = {
   supplier_id: "",
   cost_price: "",
   selling_price: "",
-  tax_category: "standard",
-  vat_rate: "",
-  vat_price_type: VAT_PRICE_TYPE.INHERIT,
+  vat_mode: "default",
   quantity: "",
   min_stock: "",
   published: true,
@@ -168,9 +165,7 @@ export default function Products() {
       supplier_id: product.supplier_id ? String(product.supplier_id) : "",
       cost_price: String(product.cost_price),
       selling_price: String(product.selling_price),
-      tax_category: product.tax_category || "standard",
-      vat_rate: product.vat_rate != null ? String(product.vat_rate) : "",
-      vat_price_type: vatIncludedToPriceType(product.vat_included),
+      ...productVatToFormFields(product),
       quantity: String(product.quantity),
       min_stock: String(product.min_stock),
       published: Boolean(Number(product.published ?? 1)),

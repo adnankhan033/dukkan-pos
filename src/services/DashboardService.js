@@ -75,6 +75,7 @@ class DashboardService {
       smartInsights,
       employeeSummary,
       weeklyTrend,
+      customerReceivables,
     ] = await Promise.all([
       getTodayGrossSales(),
       getTodayReturnsTotal(),
@@ -104,6 +105,10 @@ class DashboardService {
         totalPayments: 0,
       })),
       getWeeklySalesTrend(settings),
+      customerService.getGlobalSummary().catch(() => ({
+        total_pending: 0,
+        customers_with_balance: 0,
+      })),
     ]);
 
     const monthlyProfit = monthlyRevenue - monthlyCost - monthlyExpenses;
@@ -129,6 +134,7 @@ class DashboardService {
       employees: employeeSummary,
       weeklyTrend,
       todayTrendPct,
+      customerReceivables,
     };
   }
 

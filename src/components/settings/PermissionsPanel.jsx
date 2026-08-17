@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, memo } from "react";
 import { Shield, Users, RotateCcw } from "lucide-react";
 import { Card } from "../common/Card";
 import Button from "../common/Button";
@@ -36,7 +36,7 @@ function defaultsToForm(defaults) {
   return form;
 }
 
-export default function PermissionsPanel({ form, updateField, updateFields, onResetRole }) {
+function PermissionsPanel({ form, updateField, updateFields, onResetRole }) {
   const [activeRole, setActiveRole] = useState(ROLES.CASHIER);
   const globalGroups = useMemo(() => getMenuPermissionGroups({ includeAdmin: false }), []);
   const roleGroups = useMemo(() => getMenuPermissionGroups({ includeAdmin: true }), []);
@@ -160,3 +160,5 @@ export default function PermissionsPanel({ form, updateField, updateFields, onRe
     </>
   );
 }
+
+export default memo(PermissionsPanel);

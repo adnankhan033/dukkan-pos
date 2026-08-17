@@ -8,7 +8,7 @@ export const NAV_GROUPS = [
     module: "sales",
     items: [
       { id: "pos", path: "/sales", label: "POS" },
-      { id: "orders", path: "/orders", label: "Orders" },
+      { id: "orders", path: "/orders", label: "Invoices" },
       { id: "zatca-sync", path: "/zatca-sync", label: "ZATCA Sync" },
     ],
   },
@@ -60,27 +60,15 @@ export const NAV_GROUPS = [
     module: "reports",
   },
   {
-    id: "backup",
-    label: "Backup",
-    icon: "CloudUpload",
-    module: "settings",
-    items: [{ id: "cloud-backup", path: "/cloud-backup", label: "Gmail Backup", module: "settings" }],
-  },
-  {
-    id: "subscriptions",
-    label: "Subscriptions",
-    icon: "CreditCard",
-    path: "/subscriptions",
-    module: "dashboard",
-  },
-  {
     id: "administration",
     label: "Administration",
     icon: "Shield",
     module: "users",
     items: [
       { id: "users", path: "/users", label: "Users", module: "users" },
+      { id: "subscriptions", path: "/subscriptions", label: "Subscriptions", module: "users" },
       { id: "settings", path: "/settings", label: "Settings", module: "settings" },
+      { id: "cloud-backup", path: "/cloud-backup", label: "Gmail Backup", module: "settings" },
       { id: "zatca-queue", path: "/zatca-queue", label: "ZATCA Queue", module: "settings" },
       { id: "zatca-test", path: "/zatca-test", label: "ZATCA Test Center", module: "settings" },
     ],

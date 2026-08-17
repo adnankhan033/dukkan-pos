@@ -306,7 +306,7 @@
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .product-barcode-preview {
     flex-direction: column;
   }

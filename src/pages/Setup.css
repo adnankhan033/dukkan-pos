@@ -107,6 +107,17 @@
   }
 }
 
+@media (max-height: 800px) {
+  .setup-onboarding {
+    margin-bottom: 1rem;
+    padding: 0.75rem 0.9rem;
+  }
+
+  .setup-submit {
+    margin-top: 1rem;
+  }
+}
+
 .setup-field-hint {
   margin: 0.35rem 0 0;
   font-size: 0.8125rem;
