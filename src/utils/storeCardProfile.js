@@ -12,12 +12,12 @@ export const STORE_CARD_SETTING_KEYS = {
 };
 
 export const STORE_CARD_THEMES = [
-  { id: "emerald", name: "Palms", caption: "Fresh green market card" },
-  { id: "midnight", name: "Night Market", caption: "Navy + yellow stripe" },
-  { id: "oasis", name: "Blue Ice", caption: "Bright sky, easy to spot" },
-  { id: "dune", name: "Saffron", caption: "Warm souk orange" },
-  { id: "royal", name: "Orchid", caption: "Bold pink, hard to forget" },
-  { id: "pearl", name: "Lemon", caption: "Cream hero, black dock" },
+  { id: "emerald", name: "Mint", caption: "Soft green shade" },
+  { id: "midnight", name: "Lilac", caption: "Light navy + butter stripe" },
+  { id: "oasis", name: "Sky", caption: "Pale blue shade" },
+  { id: "dune", name: "Peach", caption: "Warm apricot shade" },
+  { id: "royal", name: "Blush", caption: "Light rose shade" },
+  { id: "pearl", name: "Lemon", caption: "Cream and butter" },
 ];
 
 const EMPTY_PROFILE = {

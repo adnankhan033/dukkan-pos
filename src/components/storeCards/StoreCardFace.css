@@ -7,8 +7,8 @@
   overflow: hidden;
   background: #fff;
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.65) inset,
-    0 24px 48px rgba(15, 23, 42, 0.18);
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 20px 40px rgba(15, 23, 42, 0.1);
 }
 
 .poster-lg {
@@ -31,7 +31,7 @@
   flex-direction: column;
   justify-content: flex-end;
   padding: 1.15rem 1.25rem 1.05rem;
-  color: #fff;
+  color: #16302a;
   overflow: hidden;
   min-height: 0;
 }
@@ -54,11 +54,12 @@
   display: grid;
   place-items: center;
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.78);
+  color: inherit;
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.04em;
-  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.08);
 }
 
 .poster-lg .poster-initials {
@@ -98,7 +99,7 @@
   max-width: 26ch;
   font-size: 0.88rem;
   font-weight: 600;
-  opacity: 0.9;
+  opacity: 0.68;
 }
 
 .poster-dock {
@@ -168,48 +169,54 @@
 .poster-sm .poster-qr img,
 .poster-sm .poster-qr span { width: 46px; height: 46px; padding: 3px; border-radius: 9px; }
 
-/* Palms — fresh market green */
+/* Mint */
 .poster-emerald .poster-hero {
-  background: linear-gradient(160deg, #047857 0%, #059669 48%, #10b981 100%);
+  background: linear-gradient(160deg, #f0fdf4 0%, #d1fae5 48%, #a7f3d0 100%);
+  color: #065f46;
 }
+.poster-emerald .poster-dock { background: #f8fefb; }
 
-/* Night Market — navy + taxi yellow */
+/* Lilac */
 .poster-midnight .poster-hero {
-  background: linear-gradient(160deg, #0f172a 0%, #1e293b 100%);
+  background: linear-gradient(160deg, #f8fafc 0%, #eef2ff 52%, #e0e7ff 100%);
+  color: #312e81;
 }
 .poster-midnight .poster-initials {
-  background: #facc15;
-  color: #111827;
+  background: #fef9c3;
+  color: #854d0e;
 }
+.poster-midnight .poster-dock { background: #fafafe; }
 
-/* Blue Ice — juice-bar cyan */
+/* Sky */
 .poster-oasis .poster-hero {
-  background: linear-gradient(160deg, #0369a1 0%, #0ea5e9 55%, #38bdf8 100%);
+  background: linear-gradient(160deg, #f0f9ff 0%, #e0f2fe 50%, #bae6fd 100%);
+  color: #075985;
 }
+.poster-oasis .poster-dock { background: #f7fbff; }
 
-/* Saffron — souk orange */
+/* Peach */
 .poster-dune .poster-hero {
-  background: linear-gradient(160deg, #c2410c 0%, #ea580c 50%, #f97316 100%);
+  background: linear-gradient(160deg, #fff7ed 0%, #ffedd5 48%, #fed7aa 100%);
+  color: #9a3412;
 }
+.poster-dune .poster-dock { background: #fffaf5; }
 
-/* Orchid — memorable pink */
+/* Blush */
 .poster-royal .poster-hero {
-  background: linear-gradient(160deg, #9d174d 0%, #db2777 48%, #f472b6 100%);
+  background: linear-gradient(160deg, #fdf2f8 0%, #fce7f3 48%, #fbcfe8 100%);
+  color: #9d174d;
 }
+.poster-royal .poster-dock { background: #fff7fb; }
 
-/* Lemon — fashion cream + black */
+/* Lemon */
 .poster-pearl .poster-hero {
-  background: linear-gradient(160deg, #fffbeb 0%, #fde68a 100%);
-  color: #111827;
+  background: linear-gradient(160deg, #fffbeb 0%, #fef3c7 55%, #fde68a 100%);
+  color: #854d0e;
 }
 .poster-pearl .poster-initials {
-  background: #111827;
-  color: #fde68a;
+  background: #fff;
+  color: #854d0e;
 }
 .poster-pearl .poster-dock {
-  background: #111827;
-  color: #fff;
+  background: #fffbeb;
 }
-.poster-pearl .poster-place { color: #cbd5e1; }
-.poster-pearl .poster-qr img,
-.poster-pearl .poster-qr span { border-color: #334155; }
