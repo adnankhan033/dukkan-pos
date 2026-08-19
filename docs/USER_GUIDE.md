@@ -82,7 +82,15 @@ If you received a built installer, double-click the **DMG** (Mac) or **setup EXE
 
 #### First launch
 
-On first run, the app creates a local SQLite database (`nexttel_pos.db`) and seeds default settings and users.
+On first run, the app creates a local SQLite database (`nexttel_pos.db`) in the OS app-data folder and seeds default settings and users.
+
+- **macOS:** `~/Library/Application Support/com.sharedtechadnan.nexttel-pos/`
+- **Windows:** `%APPDATA%\com.sharedtechadnan.nexttel-pos\`
+
+Backups go to the user's Documents folder on both platforms:
+
+- **macOS:** `~/Documents/NexttelPOS/backups/`
+- **Windows:** `%USERPROFILE%\Documents\NexttelPOS\backups\`
 
 ### 1.2 Sign in
 

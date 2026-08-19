@@ -3,11 +3,12 @@ import { getRoleActionDefaults } from "./actions";
 import { getZatcaDefaultSettings } from "../zatca/core/config";
 import { VENDOR_DEFAULT_SETTINGS } from "../config/softwareVendor";
 import { RECEIPT_SECTION_DEFAULTS } from "./receiptSections";
+import { APP_NAME, DB_NAME } from "./appIdentity";
 
-export const DB_NAME = "sqlite:nexttel_pos.db";
+export { DB_NAME };
 
 export const DEFAULT_SETTINGS = {
-  store_name: "Nexttel POS",
+  store_name: APP_NAME,
   store_name_ar: "",
   store_address: "",
   store_phone: "",
@@ -18,7 +19,7 @@ export const DEFAULT_SETTINGS = {
   currency: "SAR",
   receipt_footer: "Thank You",
   receipt_footer_ar: "شكراً لكم",
-  receipt_branding: "Nexttel POS",
+  receipt_branding: APP_NAME,
   receipt_show_qr: "1",
   receipt_show_bilingual: "1",
   receipt_show_tax_info: "1",

@@ -1067,22 +1067,27 @@ fn send_backup_email(
     Ok(())
 }
 
-fn backup_dir() -> Result<std::path::PathBuf, String> {
-    let dir = dirs::document_dir()
-        .ok_or("Could not find Documents folder on this computer.")?
-        .join("NexttelPOS")
-        .join("backups");
+const BACKUP_APP_FOLDER: &str = "NexttelPOS";
+
+fn backup_dir(app: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    let documents = app
+        .path()
+        .document_dir()
+        .ok()
+        .or_else(dirs::document_dir)
+        .ok_or_else(|| "Could not find Documents folder on this computer.".to_string())?;
+    let dir = documents.join(BACKUP_APP_FOLDER).join("backups");
     std::fs::create_dir_all(&dir).map_err(|e| format!("Could not create backup folder: {e}"))?;
     Ok(dir)
 }
 
 #[tauri::command]
-fn get_backup_folder() -> Result<String, String> {
-    Ok(backup_dir()?.to_string_lossy().into_owned())
+fn get_backup_folder(app: tauri::AppHandle) -> Result<String, String> {
+    Ok(backup_dir(&app)?.to_string_lossy().into_owned())
 }
 
 #[tauri::command]
-fn save_backup_file(filename: String, content: String) -> Result<String, String> {
+fn save_backup_file(app: tauri::AppHandle, filename: String, content: String) -> Result<String, String> {
     let safe_name = std::path::Path::new(filename.trim())
         .file_name()
         .and_then(|name| name.to_str())
@@ -1090,7 +1095,7 @@ fn save_backup_file(filename: String, content: String) -> Result<String, String>
     if !safe_name.ends_with(".json") {
         return Err("Backup file must be a .json file.".to_string());
     }
-    let path = backup_dir()?.join(safe_name);
+    let path = backup_dir(&app)?.join(safe_name);
     std::fs::write(&path, content).map_err(|e| format!("Could not save local backup: {e}"))?;
     Ok(path.to_string_lossy().into_owned())
 }

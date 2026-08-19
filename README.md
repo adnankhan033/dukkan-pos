@@ -125,6 +125,17 @@ releases/Nexttel POS_1.0.0_x64-setup.exe
 
 **Install:** Run the setup `.exe` → follow the installer → launch from Start menu.
 
+### Data location (macOS and Windows)
+
+The same app ID is used on both platforms. Folders are chosen at runtime for each user’s computer:
+
+| | macOS | Windows |
+|---|---|---|
+| **Database** | `~/Library/Application Support/com.sharedtechadnan.nexttel-pos/nexttel_pos.db` | `%APPDATA%\com.sharedtechadnan.nexttel-pos\nexttel_pos.db` |
+| **Backups** | `~/Documents/NexttelPOS/backups/` | `%USERPROFILE%\Documents\NexttelPOS\backups\` |
+
+Windows store owners only need the setup `.exe`. They do not need Mac paths.
+
 ### App icon
 
 ```bash
@@ -388,5 +399,3 @@ nexttel-pos/
 
 Private project — Nexttel POS v1.0.0
 
-
-## End

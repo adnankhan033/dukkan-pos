@@ -10,6 +10,7 @@ import {
   getBackupBusinessDateKey,
   normalizeGmailAppPassword,
 } from "../utils/backupSettings.js";
+import { APP_NAME, APP_SLUG } from "../utils/appIdentity.js";
 
 const BACKUP_TABLES = [
   "settings",
@@ -67,11 +68,11 @@ class BackupService {
     const stamp = String(exportedAt || new Date().toISOString())
       .replace(/[:.]/g, "-")
       .slice(0, 19);
-    return `nexttel-pos-backup-${stamp}.json`;
+    return `${APP_SLUG}-backup-${stamp}.json`;
   }
 
   buildDailyBackupFilename(dateKey) {
-    return `nexttel-pos-daily-${dateKey}.json`;
+    return `${APP_SLUG}-daily-${dateKey}.json`;
   }
 
   async prepareBackup() {
@@ -265,7 +266,7 @@ class BackupService {
       throw new Error("Recipient email is required.");
     }
 
-    const storeName = (await settingsService.get("store_name")) || "Nexttel POS";
+    const storeName = (await settingsService.get("store_name")) || APP_NAME;
     const backupType = type === BACKUP_TYPES.DAILY_EMAIL ? BACKUP_TYPES.DAILY_EMAIL : BACKUP_TYPES.MANUAL_EMAIL;
     const exportedAt = JSON.parse(json).exported_at || new Date().toISOString();
     const subject =
@@ -280,7 +281,7 @@ class BackupService {
       `Tables: ${BACKUP_TABLES.length}`,
       `Type: ${backupType === BACKUP_TYPES.DAILY_EMAIL ? "Daily automatic" : "Manual"}`,
       "",
-      "Attach this JSON file to restore your store in Nexttel POS → Settings → Backup → Restore.",
+      `Attach this JSON file to restore your store in ${APP_NAME} → Settings → Backup → Restore.`,
     ].join("\n");
 
     const fileSizeBytes = new TextEncoder().encode(json).length;

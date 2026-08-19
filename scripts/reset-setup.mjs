@@ -2,11 +2,11 @@
 /**
  * Clears store setup state so the app starts at step 1.
  * Close the app before running: bun run reset:setup
+ * Works on macOS and Windows (uses that OS's app data folder).
  */
 import { existsSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { candidateSqliteDbPaths, resolveSqliteDbPath } from "./appPaths.mjs";
 
 const KEYS = [
   "installation_registration_status",
@@ -27,13 +27,14 @@ const KEYS = [
   "welcome_shown",
 ];
 
-const dbPath = join(
-  homedir(),
-  "Library/Application Support/com.sharedtechadnan.nexttel-pos/nexttel_pos.db"
-);
+const dbPath = resolveSqliteDbPath();
 
 if (!existsSync(dbPath)) {
   console.error(`Database not found: ${dbPath}`);
+  console.error("Looked in:");
+  for (const path of candidateSqliteDbPaths()) {
+    console.error(`  - ${path}`);
+  }
   console.error("Run the app once first, then close it and retry.");
   process.exit(1);
 }
@@ -45,8 +46,10 @@ const result = spawnSync("sqlite3", [dbPath, sql], { encoding: "utf8" });
 
 if (result.status !== 0) {
   console.error(result.stderr || "Could not reset setup. Close the app and try again.");
+  console.error(`Database: ${dbPath}`);
   process.exit(result.status || 1);
 }
 
 console.log(`Setup reset OK (${result.stdout.trim()} settings cleared).`);
+console.log(`Database: ${dbPath}`);
 console.log("Restart the app — you will start at step 1 (Store details).");

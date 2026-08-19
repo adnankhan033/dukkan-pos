@@ -13,6 +13,7 @@ import {
   isBackupEmailEnabled,
 } from "../../utils/backupSettings";
 import { formatDateTime } from "../../utils/format";
+import { APP_SLUG, backupFolderHint } from "../../utils/appIdentity";
 import Button from "../common/Button";
 import Badge from "../common/Badge";
 import { Card } from "../common/Card";
@@ -332,8 +333,8 @@ export default function BackupCloudPanel({ busy, onBusyChange, onNotify }) {
           <div className="backup-local-folder">
             <div>
               <strong>Local backup folder</strong>
-              <p>{localFolder || "Documents/NexttelPOS/backups"}</p>
-              <span>Daily files: nexttel-pos-daily-YYYY-MM-DD.json</span>
+              <p>{localFolder || backupFolderHint()}</p>
+              <span>Daily files: {APP_SLUG}-daily-YYYY-MM-DD.json</span>
             </div>
             <Button type="button" variant="secondary" size="sm" onClick={handleOpenLocalFolder}>
               <FolderOpen size={14} /> Open Folder
