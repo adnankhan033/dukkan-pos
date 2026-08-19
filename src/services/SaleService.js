@@ -99,6 +99,19 @@ class SaleService {
     );
   }
 
+  async getLastCompletedSale() {
+    const sale = await queryOne(
+      `SELECT s.*, c.name AS customer_name
+       FROM sales s
+       LEFT JOIN customers c ON s.customer_id = c.id
+       WHERE s.status IN ('completed', 'partial_return', 'returned')
+       ORDER BY s.created_at DESC, s.id DESC
+       LIMIT 1`
+    );
+    if (!sale) return null;
+    return this.getById(sale.id);
+  }
+
   async getHeldSales() {
     return query(
       `SELECT s.*,

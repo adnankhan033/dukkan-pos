@@ -37,6 +37,7 @@ import SaleReturnModal from "../components/sales/SaleReturnModal";
 import PosProductEditModal from "../components/sales/PosProductEditModal";
 import PosCustomerModal from "../components/sales/PosCustomerModal";
 import HeldSalesBar from "../components/sales/HeldSalesBar";
+import LastOrderReprintModal from "../components/sales/LastOrderReprintModal";
 import ProductBilingualName from "../components/products/ProductBilingualName";
 import { LoadingSpinner } from "../components/common/Loading";
 import { notify } from "../utils/notify";
@@ -133,6 +134,9 @@ export default function Sales() {
   const [cashReceived, setCashReceived] = useState("");
   const [heldSales, setHeldSales] = useState([]);
   const [lastSale, setLastSale] = useState(null);
+  const [reprintOpen, setReprintOpen] = useState(false);
+  const [reprintSale, setReprintSale] = useState(null);
+  const [reprintLoading, setReprintLoading] = useState(false);
 
   const [completeStep, setCompleteStep] = useState(null);
   const [pendingPaymentMethod, setPendingPaymentMethod] = useState(PAYMENT_METHODS.CASH);
@@ -276,12 +280,14 @@ export default function Sales() {
   useEffect(() => {
     async function init() {
       try {
-        const [products, held] = await Promise.all([
+        const [products, held, lastOrder] = await Promise.all([
           productService.getTopSellingForPos(POS_TOP_SELLERS_LIMIT),
           saleService.getHeldSales(),
+          saleService.getLastCompletedSale(),
         ]);
         setTopProducts(products);
         setHeldSales(held);
+        if (lastOrder?.items?.length) setLastSale(lastOrder);
         await loadCustomers();
       } catch (err) {
         notify.error(err.message || "Failed to load POS. Restart the app and try again.", {
@@ -762,23 +768,31 @@ export default function Sales() {
   }
 
   async function handlePrintLast() {
-    if (!lastSale) {
-      notify.warning("Complete a sale first to print a receipt.", { title: "No recent sale" });
-      return;
-    }
+    if (submitting) return;
+    setReprintOpen(true);
+    setReprintLoading(true);
+    setReprintSale(null);
     try {
-      await printReceipt({
-        sale: lastSale,
-        items: lastSale.items,
-        settings,
-        currency,
-      });
-      notify.success(`Receipt sent to printer for ${lastSale.sale_number}.`, {
-        title: "Receipt printed",
-      });
+      const sale = await saleService.getLastCompletedSale();
+      if (!sale?.items?.length) {
+        setReprintOpen(false);
+        notify.warning("No completed order to reprint.", { title: "No last order" });
+        return;
+      }
+      setReprintSale(sale);
+      setLastSale(sale);
     } catch (err) {
-      notify.error(err.message || "Print failed", { title: "Print failed" });
+      setReprintOpen(false);
+      notify.error(err.message || "Could not load the last order.", { title: "Reprint failed" });
+    } finally {
+      setReprintLoading(false);
     }
+  }
+
+  function closeReprint() {
+    setReprintOpen(false);
+    setReprintSale(null);
+    setReprintLoading(false);
   }
 
   async function resumeHeld(hold) {
@@ -1246,7 +1260,7 @@ export default function Sales() {
                 <Pause size={16} /> Hold
               </Button>
               <Button variant="secondary" disabled={submitting} onClick={handlePrintLast}>
-                <Printer size={16} /> Reprint
+                <Printer size={16} /> Reprint last
               </Button>
             </div>
           </div>
@@ -1287,6 +1301,15 @@ export default function Sales() {
         onCancel={closeCompleteFlow}
         onPrint={handlePrintReceipt}
         onSkipPrint={handleSkipPrint}
+      />
+
+      <LastOrderReprintModal
+        isOpen={reprintOpen}
+        loading={reprintLoading}
+        sale={reprintSale}
+        settings={settings}
+        currency={currency}
+        onClose={closeReprint}
       />
 
       <SaleReturnModal
