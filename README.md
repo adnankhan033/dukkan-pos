@@ -387,3 +387,6 @@ nexttel-pos/
 ## License
 
 Private project — Nexttel POS v1.0.0
+
+
+## End
