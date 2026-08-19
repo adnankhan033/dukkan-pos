@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Printer, Star } from "lucide-react";
+import { Printer } from "lucide-react";
 import Button from "../common/Button";
 import { Card } from "../common/Card";
 import { LoadingSpinner } from "../common/Loading";
@@ -42,7 +42,38 @@ function formToPreviewSettings(form) {
   };
 }
 
-export default function ReceiptPreview({ form, onSelectTemplate, readOnly = false }) {
+export function ReceiptTemplatePicker({ value, onSelect, disabled = false }) {
+  return (
+    <div className="receipt-template-picker" role="listbox" aria-label="Receipt template">
+      {RECEIPT_TEMPLATES.map((tpl) => {
+        const selected = value === tpl.id;
+        return (
+          <button
+            key={tpl.id}
+            type="button"
+            role="option"
+            aria-selected={selected}
+            disabled={disabled}
+            className={`receipt-template-option ${selected ? "selected" : ""}`}
+            onClick={() => onSelect?.(tpl.id)}
+          >
+            <span className="receipt-template-option-head">
+              <strong>{tpl.label}</strong>
+              {tpl.recommended ? <span className="receipt-template-badge">Recommended</span> : null}
+            </span>
+            {tpl.labelAr ? (
+              <span className="receipt-template-ar" dir="rtl">
+                {tpl.labelAr}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function ReceiptPreview({ form, readOnly = false }) {
   const [previewHtml, setPreviewHtml] = useState("");
   const [loading, setLoading] = useState(true);
   const [printing, setPrinting] = useState(false);
@@ -93,8 +124,8 @@ export default function ReceiptPreview({ form, onSelectTemplate, readOnly = fals
           <h3 className="settings-section-title">Live Preview</h3>
           <p className="settings-section-desc">
             {readOnly
-              ? "Sample baqala sale preview using your saved receipt settings."
-              : "Sample baqala sale — updates as you change settings."}
+              ? "Sample sale using your saved receipt settings."
+              : "Sample sale — updates as you change settings."}
           </p>
         </div>
         <Button variant="secondary" onClick={handleTestPrint} disabled={loading || printing || !previewHtml}>
@@ -102,37 +133,6 @@ export default function ReceiptPreview({ form, onSelectTemplate, readOnly = fals
           {printing ? "Printing..." : "Test Print"}
         </Button>
       </div>
-
-      {!readOnly && (
-      <div className="receipt-template-picker">
-        {RECEIPT_TEMPLATES.map((tpl) => {
-          const selected = form.receipt_template === tpl.id;
-          return (
-            <button
-              key={tpl.id}
-              type="button"
-              className={`receipt-template-option ${selected ? "selected" : ""}`}
-              onClick={() => onSelectTemplate?.(tpl.id)}
-            >
-              <span className="receipt-template-option-head">
-                <strong>{tpl.label}</strong>
-                {tpl.recommended && (
-                  <span className="receipt-template-badge">
-                    <Star size={12} /> Default
-                  </span>
-                )}
-              </span>
-              {tpl.labelAr && (
-                <span className="receipt-template-ar" dir="rtl">
-                  {tpl.labelAr}
-                </span>
-              )}
-              <small>{tpl.description}</small>
-            </button>
-          );
-        })}
-      </div>
-      )}
 
       <p className="receipt-preview-meta">
         Selected: <strong>{selectedTemplate.label}</strong> · {paperWidth}mm paper

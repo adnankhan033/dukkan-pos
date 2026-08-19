@@ -15,13 +15,13 @@ import Modal from "../components/common/Modal";
 import { Card } from "../components/common/Card";
 import { Input, Textarea, Select } from "../components/common/Input";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
-import ReceiptPreview from "../components/settings/ReceiptPreview";
+import ReceiptPreview, { ReceiptTemplatePicker } from "../components/settings/ReceiptPreview";
 import ZatcaSettingsPanel from "../components/settings/ZatcaSettingsPanel";
 import VendorBrandingPanel from "../components/settings/VendorBrandingPanel";
 import SettingsTabToolbar from "../components/settings/SettingsTabToolbar";
 import SettingsTabView from "../components/settings/SettingsTabView";
 import PaymentMethodsPanel from "../components/settings/PaymentMethodsPanel";
-import { VENDOR_SETTING_KEY_LIST } from "../config/softwareVendor";
+import { VENDOR_SETTING_KEY_LIST, VENDOR_SETTING_KEYS } from "../config/softwareVendor";
 import { DEFAULT_RECEIPT_TEMPLATE } from "../utils/receiptTemplates";
 import {
   RECEIPT_SECTION_DEFAULTS,
@@ -35,9 +35,13 @@ import { mirrorStoreFields } from "../utils/settingsSync";
 import {
   DEFAULT_ADMIN_PASSWORD,
   DEFAULT_ADMIN_USERNAME,
+  ACTIVATION_SETTING_KEYS,
 } from "../utils/activationConfig";
 import { notify } from "../utils/notify";
 import { getAllPermissionSettingKeys } from "../utils/actions";
+import { formatDbError } from "../utils/format";
+import { required, email, runFormValidation } from "../utils/validation";
+import FormValidationAlert from "../components/common/FormValidationAlert";
 import "./Settings.css";
 
 const PermissionsPanel = lazy(() => import("../components/settings/PermissionsPanel"));
@@ -162,6 +166,110 @@ function formToSettings(form) {
   return payload;
 }
 
+const STORE_SAVE_KEYS = [
+  "store_name",
+  "store_name_ar",
+  "store_address",
+  "store_phone",
+  "cr_number",
+  "vat_registration",
+  "vat_percent",
+  "vat_included",
+  "currency",
+  "business_timezone",
+  "business_date_override",
+  "business_time_override",
+  ZK.COMPANY_NAME,
+  ZK.COMPANY_NAME_AR,
+  ZK.CR_NUMBER,
+  ZK.VAT_NUMBER,
+  ZK.COMPANY_ADDRESS,
+  ACTIVATION_SETTING_KEYS.CUSTOMER_STORE,
+  ACTIVATION_SETTING_KEYS.CUSTOMER_ADDRESS,
+  ACTIVATION_SETTING_KEYS.CUSTOMER_PHONE,
+];
+
+const RECEIPT_SAVE_KEYS = [
+  "receipt_footer",
+  "receipt_footer_ar",
+  "receipt_branding",
+  "receipt_show_qr",
+  "receipt_show_bilingual",
+  "receipt_show_tax_info",
+  ...Object.keys(RECEIPT_SECTION_DEFAULTS),
+  "receipt_paper_width",
+  "receipt_header_note",
+  "receipt_template",
+  "receipt_print_on_complete",
+];
+
+const DASHBOARD_SAVE_KEYS = [
+  "dashboard_admin_show_profit",
+  "dashboard_admin_show_purchases",
+  "dashboard_cashier_show_recent",
+];
+
+function pickPayload(payload, keys) {
+  const picked = {};
+  for (const key of keys) {
+    if (payload[key] !== undefined) picked[key] = payload[key];
+  }
+  return picked;
+}
+
+function payloadForTab(payload, tab) {
+  if (tab === "store") return pickPayload(payload, STORE_SAVE_KEYS);
+  if (tab === "receipt") return pickPayload(payload, RECEIPT_SAVE_KEYS);
+  if (tab === "dashboard") return pickPayload(payload, DASHBOARD_SAVE_KEYS);
+  if (tab === "permissions") return pickPayload(payload, getAllPermissionSettingKeys());
+  if (tab === "vendor") return pickPayload(payload, VENDOR_SETTING_KEY_LIST);
+  if (tab === "zatca") return pickPayload(payload, [...Object.keys(ZATCA_DEFAULTS), ZK.ENABLED, ...STORE_SAVE_KEYS]);
+  return payload;
+}
+
+function validateVatPercent(value) {
+  if (value === null || value === undefined || String(value).trim() === "") {
+    return "VAT % is required";
+  }
+  const num = Number(value);
+  if (Number.isNaN(num) || num < 0 || num > 100) {
+    return "VAT % must be between 0 and 100";
+  }
+  return null;
+}
+
+function validatePhone(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+  if (!/^[+\d][\d\s-]{6,18}$/.test(text)) {
+    return "Enter a valid phone number";
+  }
+  return null;
+}
+
+function validateSettingsForm(form, tab) {
+  const rules = {};
+  if (tab === "store") {
+    rules.store_name = required(form.store_name, "Store name");
+    rules.vat_percent = validateVatPercent(form.vat_percent);
+    rules.currency = required(form.currency, "Currency");
+    rules.store_phone = validatePhone(form.store_phone);
+  }
+  if (tab === "receipt") {
+    if (!["58", "80"].includes(String(form.receipt_paper_width))) {
+      rules.receipt_paper_width = "Choose 58mm or 80mm paper";
+    }
+  }
+  if (tab === "vendor") {
+    rules[VENDOR_SETTING_KEYS.COMPANY_NAME] = required(
+      form[VENDOR_SETTING_KEYS.COMPANY_NAME],
+      "Company name"
+    );
+    rules[VENDOR_SETTING_KEYS.EMAIL] = email(form[VENDOR_SETTING_KEYS.EMAIL]);
+  }
+  return runFormValidation(rules);
+}
+
 export default function Settings() {
   const settings = useSettingsStore((s) => s.settings);
   const setSettings = useSettingsStore((s) => s.setSettings);
@@ -173,6 +281,9 @@ export default function Settings() {
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState(() => buildFormFromSettings(settings));
   const [backupBusy, setBackupBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [feedback, setFeedback] = useState(null);
   const [sectionCounts, setSectionCounts] = useState({});
   const [feedbackModal, setFeedbackModal] = useState(null);
   const restoreInputRef = useRef(null);
@@ -182,27 +293,75 @@ export default function Settings() {
     setTab(nextTab);
     setIsEditing(false);
     formDirtyRef.current = false;
+    setErrors({});
+    setFeedback(null);
     setForm(buildFormFromSettings(settings));
   }
 
   function startEditing() {
     setIsEditing(true);
+    setErrors({});
+    setFeedback(null);
   }
 
   function cancelEditing() {
+    if (saving) return;
     setIsEditing(false);
     formDirtyRef.current = false;
+    setErrors({});
+    setFeedback(null);
     setForm(buildFormFromSettings(settings));
   }
 
   function updateField(key, value) {
     formDirtyRef.current = true;
     setForm((prev) => ({ ...prev, [key]: value }));
+    setFeedback(null);
+    setErrors((prev) => {
+      if (!prev[key] && !prev.form) return prev;
+      const next = { ...prev };
+      delete next[key];
+      if (Object.keys(next).filter((field) => field !== "form").length === 0) return {};
+      delete next.form;
+      return next;
+    });
   }
 
   function updateFields(patch) {
     formDirtyRef.current = true;
     setForm((prev) => ({ ...prev, ...patch }));
+  }
+
+  async function handleSelectReceiptTemplate(id) {
+    if (!id || saving) return;
+
+    if (isEditing) {
+      updateField("receipt_template", id);
+      return;
+    }
+
+    if (form.receipt_template === id) return;
+
+    const previous = form.receipt_template;
+    setForm((prev) => ({ ...prev, receipt_template: id }));
+    setSaving(true);
+    setFeedback(null);
+    try {
+      await settingsService.set("receipt_template", id);
+      const updated = await settingsService.getAll();
+      setSettings(updated);
+      formDirtyRef.current = false;
+      const message = "Printed invoices will use this layout.";
+      setFeedback({ type: "success", title: "Receipt template updated", message });
+      notify.success(message, { title: "Receipt template updated" });
+    } catch (err) {
+      setForm((prev) => ({ ...prev, receipt_template: previous }));
+      const message = formatDbError(err) || "Could not save the receipt template.";
+      setFeedback({ type: "error", title: "Could not save template", message });
+      notify.error(message, { title: "Could not save template" });
+    } finally {
+      setSaving(false);
+    }
   }
 
   useEffect(() => {
@@ -247,18 +406,37 @@ export default function Settings() {
   }
 
   async function persistForm(mergedForm) {
-    const payload = mirrorStoreFields(formToSettings(mergedForm ?? form));
+    const source = mergedForm ?? form;
+    const payload = payloadForTab(mirrorStoreFields(formToSettings(source)), tab);
     const updated = await settingsService.updateMany(payload);
 
     setSettings(updated);
     setForm(buildFormFromSettings(updated));
     formDirtyRef.current = false;
-    zatcaService.restartBackgroundSync();
+    try {
+      zatcaService.restartBackgroundSync();
+    } catch {
+      /* background sync must not fail a successful save */
+    }
     return updated;
   }
 
   async function handleSave(e) {
     e.preventDefault();
+    if (saving) return;
+
+    const validation = validateSettingsForm(form, tab);
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      notify.error(validation.errors.form || "Please fix the highlighted fields.", {
+        title: "Check the form",
+      });
+      return;
+    }
+
+    setErrors({});
+    setSaving(true);
+    setFeedback(null);
     try {
       await persistForm(form);
       setIsEditing(false);
@@ -267,17 +445,25 @@ export default function Settings() {
           ? "Role and menu permissions were saved."
           : tab === "vendor"
             ? "Software vendor branding was saved."
-            : "Your store configuration was saved.";
-      notify.success(savedLabel, {
-        title:
-          tab === "permissions"
-            ? "Permissions saved"
-            : tab === "vendor"
-              ? "Vendor branding saved"
-              : "Settings saved",
-      });
+            : tab === "receipt"
+              ? "Receipt settings were saved."
+              : tab === "dashboard"
+                ? "Dashboard settings were saved."
+                : "Your store configuration was saved.";
+      const savedTitle =
+        tab === "permissions"
+          ? "Permissions saved"
+          : tab === "vendor"
+            ? "Vendor branding saved"
+            : "Settings saved";
+      setFeedback({ type: "success", title: savedTitle, message: savedLabel });
+      notify.success(savedLabel, { title: savedTitle });
     } catch (err) {
-      notify.error(err.message, { title: "Could not save settings" });
+      const message = formatDbError(err) || "Could not save settings. Try again.";
+      setFeedback({ type: "error", title: "Could not save settings", message });
+      notify.error(message, { title: "Could not save settings" });
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -550,6 +736,8 @@ export default function Settings() {
             key={t.id}
             type="button"
             className={`settings-tab ${tab === t.id ? "active" : ""}`}
+            aria-current={tab === t.id ? "page" : undefined}
+            disabled={saving}
             onClick={() => switchTab(t.id)}
           >
             {t.label}
@@ -660,12 +848,24 @@ export default function Settings() {
       ) : !isEditing ? (
         <>
           <SettingsTabToolbar isEditing={false} onEdit={startEditing} />
-          <SettingsTabView tab={tab} form={form} isAdmin={isAdmin} />
+          {feedback ? (
+            <Alert type={feedback.type} title={feedback.title} onDismiss={() => setFeedback(null)}>
+              {feedback.message}
+            </Alert>
+          ) : null}
+          <SettingsTabView
+            tab={tab}
+            form={form}
+            isAdmin={isAdmin}
+            onSelectTemplate={handleSelectReceiptTemplate}
+            saving={saving}
+          />
         </>
       ) : (
       <form id="settings-edit-form" onSubmit={handleSave}>
         <SettingsTabToolbar
           isEditing
+          saving={saving}
           onCancel={cancelEditing}
           onSave={() => document.getElementById("settings-edit-form")?.requestSubmit()}
           saveLabel={
@@ -676,11 +876,17 @@ export default function Settings() {
                 : "Save Settings"
           }
         />
+        <FormValidationAlert errors={errors} />
+        {feedback ? (
+          <Alert type={feedback.type} title={feedback.title} onDismiss={() => setFeedback(null)}>
+            {feedback.message}
+          </Alert>
+        ) : null}
         {tab === "store" && (
           <>
             <Card className="settings-card">
               <h3 className="settings-section-title">Store Information</h3>
-              <Input label="Store Name (English)" value={form.store_name} onChange={(e) => updateField("store_name", e.target.value)} />
+              <Input label="Store Name (English)" value={form.store_name} error={errors.store_name} onChange={(e) => updateField("store_name", e.target.value)} />
               <div style={{ marginTop: "1rem" }}>
                 <Input label="Store Name (Arabic)" value={form.store_name_ar} onChange={(e) => updateField("store_name_ar", e.target.value)} dir="rtl" />
               </div>
@@ -691,13 +897,14 @@ export default function Settings() {
                 <Input
                   label="Store Phone"
                   value={form.store_phone}
+                  error={errors.store_phone}
                   onChange={(e) => updateField("store_phone", e.target.value)}
                   placeholder="e.g. +966-530096993"
                 />
               </div>
               <div className="form-row" style={{ marginTop: "1rem" }}>
-                <Input label="VAT %" type="number" step="0.01" value={form.vat_percent} onChange={(e) => updateField("vat_percent", e.target.value)} />
-                <Input label="Currency" value={form.currency} onChange={(e) => updateField("currency", e.target.value)} />
+                <Input label="VAT %" type="number" step="0.01" min={0} max={100} value={form.vat_percent} error={errors.vat_percent} onChange={(e) => updateField("vat_percent", e.target.value)} />
+                <Input label="Currency" value={form.currency} error={errors.currency} onChange={(e) => updateField("currency", e.target.value)} />
               </div>
               <label className="settings-check" style={{ marginTop: "1rem" }}>
                 <input
@@ -788,18 +995,15 @@ export default function Settings() {
             <Card className="settings-card settings-receipt-form">
               <h3 className="settings-section-title">Receipt Template</h3>
               <p className="settings-section-desc">
-                Choose a Saudi-style invoice layout for your baqala. Use preview and test print before saving.
+                Choose a Saudi-style invoice layout. The live preview updates as you tap a template.
+                Click Save Settings to keep it.
               </p>
 
-              <Select
-                label="Default template"
+              <ReceiptTemplatePicker
                 value={form.receipt_template}
-                onChange={(e) => updateField("receipt_template", e.target.value)}
-              >
-                <option value="baqala">Saudi Baqala (recommended)</option>
-                <option value="classic">Classic Thermal</option>
-                <option value="compact">Compact 58mm</option>
-              </Select>
+                onSelect={handleSelectReceiptTemplate}
+                disabled={saving}
+              />
 
               <div style={{ marginTop: "1.25rem" }}>
                 <Select
@@ -849,7 +1053,7 @@ export default function Settings() {
                 </label>
               </div>
               <div className="form-row" style={{ marginTop: "1rem" }}>
-                <Select label="Paper width" value={form.receipt_paper_width} onChange={(e) => updateField("receipt_paper_width", e.target.value)}>
+                <Select label="Paper width" value={form.receipt_paper_width} error={errors.receipt_paper_width} onChange={(e) => updateField("receipt_paper_width", e.target.value)}>
                   <option value="58">58mm (small thermal)</option>
                   <option value="80">80mm (standard thermal)</option>
                 </Select>
@@ -881,10 +1085,7 @@ export default function Settings() {
               </p>
             </Card>
 
-            <ReceiptPreview
-              form={form}
-              onSelectTemplate={(id) => updateField("receipt_template", id)}
-            />
+            <ReceiptPreview form={form} />
           </div>
         )}
 
@@ -893,7 +1094,20 @@ export default function Settings() {
             form={form}
             updateField={updateField}
             baseSettings={settings}
-            saveForm={persistForm}
+            saveForm={async (merged) => {
+              setSaving(true);
+              setFeedback(null);
+              try {
+                return await persistForm(merged);
+              } catch (err) {
+                const message = formatDbError(err) || "Could not save settings. Try again.";
+                setFeedback({ type: "error", title: "Could not save settings", message });
+                notify.error(message, { title: "Could not save settings" });
+                throw err;
+              } finally {
+                setSaving(false);
+              }
+            }}
           />
         )}
 
@@ -926,9 +1140,12 @@ export default function Settings() {
             <h3 className="settings-section-title">Software Vendor Branding</h3>
             <VendorBrandingPanel
               form={form}
+              errors={errors}
               onChange={(next) => {
                 formDirtyRef.current = true;
                 setForm(next);
+                setFeedback(null);
+                setErrors({});
               }}
             />
           </Card>

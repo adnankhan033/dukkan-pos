@@ -13,7 +13,7 @@ function ToggleRow({ label, hint, checked, onChange }) {
   );
 }
 
-export default function VendorBrandingPanel({ form, onChange }) {
+export default function VendorBrandingPanel({ form, errors = {}, onChange }) {
   function set(key, value) {
     onChange({ ...form, [key]: value });
   }
@@ -54,6 +54,7 @@ export default function VendorBrandingPanel({ form, onChange }) {
           value={form[VENDOR_SETTING_KEYS.COMPANY_NAME] || ""}
           onChange={(e) => set(VENDOR_SETTING_KEYS.COMPANY_NAME, e.target.value)}
           placeholder="Your software company name"
+          error={errors[VENDOR_SETTING_KEYS.COMPANY_NAME]}
         />
         <Input
           label="Company name (Arabic)"
@@ -83,6 +84,7 @@ export default function VendorBrandingPanel({ form, onChange }) {
           type="email"
           value={form[VENDOR_SETTING_KEYS.EMAIL] || ""}
           onChange={(e) => set(VENDOR_SETTING_KEYS.EMAIL, e.target.value)}
+          error={errors[VENDOR_SETTING_KEYS.EMAIL]}
         />
         <Input
           label="Phone"

@@ -1,25 +1,54 @@
 .settings-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
+  gap: 0.3rem;
   margin-bottom: 1.25rem;
+  padding: 0.3rem;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface);
 }
 
 .settings-tab {
-  padding: 0.5rem 0.875rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-card);
+  appearance: none;
+  padding: 0.5rem 0.95rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
   color: var(--color-text-muted);
   font-size: 0.8125rem;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
+  line-height: 1.2;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.settings-tab:hover:not(:disabled):not(.active) {
+  background: var(--color-card);
+  color: var(--color-text);
 }
 
 .settings-tab.active {
-  background: var(--color-primary-light);
+  background: var(--color-primary);
   border-color: var(--color-primary);
-  color: var(--color-primary);
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-primary) 35%, transparent);
+}
+
+.settings-tab:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.settings-tab:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+[data-theme="dark"] .settings-tab.active {
+  color: #fff;
+  background: var(--color-primary);
 }
 
 .settings-tab-toolbar {
@@ -443,8 +472,8 @@
 
 .settings-receipt-layout {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(300px, 420px);
-  gap: 1.25rem;
+  grid-template-columns: minmax(280px, 1fr) minmax(280px, 380px);
+  gap: 1rem;
   align-items: start;
 }
 
@@ -454,8 +483,7 @@
 
 .receipt-preview-card {
   max-width: none;
-  position: sticky;
-  top: 1rem;
+  position: static;
 }
 
 .receipt-preview-header {
@@ -463,76 +491,79 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .receipt-template-picker {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 0 0 0.85rem;
 }
 
 .receipt-template-option {
   text-align: left;
-  padding: 0.75rem;
+  padding: 0.5rem 0.55rem;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-bg);
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.12rem;
+  min-height: 3.15rem;
 }
 
-.receipt-template-option:hover {
+.receipt-template-option:hover:not(:disabled) {
   border-color: var(--color-primary);
 }
 
 .receipt-template-option.selected {
   border-color: var(--color-primary);
   background: var(--color-primary-light);
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.receipt-template-option:disabled {
+  cursor: default;
+  opacity: 1;
 }
 
 .receipt-template-option-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.35rem;
+}
+
+.receipt-template-option-head strong {
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 .receipt-template-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  color: var(--color-primary);
+  display: none;
 }
 
 .receipt-template-ar {
-  font-size: 0.8125rem;
+  font-size: 0.6875rem;
   color: var(--color-text-muted);
-}
-
-.receipt-template-option small {
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  line-height: 1.35;
+  line-height: 1.2;
 }
 
 .receipt-preview-meta {
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   color: var(--color-text-muted);
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.65rem;
 }
 
 .receipt-preview-frame-wrap {
   margin: 0 auto;
   background: #e8e8e8;
   border-radius: var(--radius-md);
-  padding: 12px;
-  min-height: 420px;
+  padding: 10px;
+  min-height: 320px;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -554,9 +585,11 @@
   .settings-receipt-layout {
     grid-template-columns: 1fr;
   }
+}
 
-  .receipt-preview-card {
-    position: static;
+@media (max-width: 720px) {
+  .receipt-template-picker {
+    grid-template-columns: 1fr;
   }
 }
 

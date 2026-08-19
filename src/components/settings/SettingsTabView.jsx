@@ -1,5 +1,5 @@
 import { Card } from "../common/Card";
-import ReceiptPreview from "./ReceiptPreview";
+import ReceiptPreview, { ReceiptTemplatePicker } from "./ReceiptPreview";
 import { BUSINESS_TIMEZONES } from "../../utils/timezones";
 import { getBusinessDateTimeLabelFromForm } from "../../utils/businessDate";
 import { RECEIPT_SECTION_TOGGLES } from "../../utils/receiptSections";
@@ -11,12 +11,6 @@ import {
 } from "../../zatca/core/constants";
 import { VENDOR_SETTING_KEYS } from "../../config/softwareVendor";
 import { getMenuPermissionGroups, menuItemSettingKey, moduleSettingKey } from "../../utils/modules";
-
-const RECEIPT_TEMPLATE_LABELS = {
-  baqala: "Saudi Baqala (recommended)",
-  classic: "Classic Thermal",
-  compact: "Compact 58mm",
-};
 
 function boolLabel(on) {
   return on ? "Yes" : "No";
@@ -109,15 +103,19 @@ function PermissionsTabView({ form }) {
   );
 }
 
-function ReceiptTabView({ form }) {
+function ReceiptTabView({ form, onSelectTemplate, saving }) {
   const enabledSections = RECEIPT_SECTION_TOGGLES.filter((t) => form[t.key]).map((t) => t.label);
 
   return (
     <div className="settings-receipt-layout">
       <ViewCard title="Receipt template" className="settings-receipt-form">
-        <ViewRow
-          label="Template"
-          value={RECEIPT_TEMPLATE_LABELS[form.receipt_template] || form.receipt_template}
+        <p className="settings-section-desc" style={{ marginTop: 0 }}>
+          Tap a layout to save it. The preview and printed invoices update immediately.
+        </p>
+        <ReceiptTemplatePicker
+          value={form.receipt_template}
+          onSelect={onSelectTemplate}
+          disabled={saving}
         />
         <ViewRow
           label="Print invoice after sale"
@@ -182,14 +180,14 @@ function VendorTabView({ form }) {
   );
 }
 
-export default function SettingsTabView({ tab, form, isAdmin }) {
+export default function SettingsTabView({ tab, form, isAdmin, onSelectTemplate, saving = false }) {
   switch (tab) {
     case "store":
       return <StoreTabView form={form} />;
     case "permissions":
       return isAdmin ? <PermissionsTabView form={form} /> : null;
     case "receipt":
-      return <ReceiptTabView form={form} />;
+      return <ReceiptTabView form={form} onSelectTemplate={onSelectTemplate} saving={saving} />;
     case "zatca":
       return <ZatcaTabView form={form} />;
     case "dashboard":

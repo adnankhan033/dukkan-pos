@@ -96,13 +96,16 @@ export default function PaymentMethodsPanel() {
 
   async function handleSetDefault(method) {
     try {
-      await paymentMethodService.setDefault(method.id);
-      await load();
+      const { skipped } = await guard(async () => {
+        await paymentMethodService.setDefault(method.id);
+        await load();
+      });
+      if (skipped) return;
       notify.success(`"${method.label}" is now the default POS payment method.`, {
         title: "Default updated",
       });
     } catch (err) {
-      notify.error(err.message, { title: "Could not update default" });
+      notify.error(formatDbError(err) || "Could not update default.", { title: "Could not update default" });
     }
   }
 
@@ -147,13 +150,14 @@ export default function PaymentMethodsPanel() {
     }
 
     try {
-      await guard(async () => {
+      const { skipped } = await guard(async () => {
         if (editing) {
           await paymentMethodService.update(editing.id, payload);
         } else {
           await paymentMethodService.create(payload);
         }
       });
+      if (skipped) return;
       setModalOpen(false);
       setErrors({});
       await load();
@@ -161,7 +165,9 @@ export default function PaymentMethodsPanel() {
         title: editing ? "Updated" : "Created",
       });
     } catch (err) {
-      setErrors({ form: err.message });
+      const message = formatDbError(err) || "Could not save payment method.";
+      setErrors({ form: message });
+      notify.error(message, { title: "Could not save" });
     }
   }
 
@@ -201,8 +207,8 @@ export default function PaymentMethodsPanel() {
         row.is_default ? (
           <Badge variant="warning">Default</Badge>
         ) : (
-          <Button type="button" variant="ghost" size="sm" onClick={() => handleSetDefault(row)}>
-            <Star size={14} /> Set default
+          <Button type="button" variant="ghost" size="sm" disabled={submitting} onClick={() => handleSetDefault(row)}>
+            <Star size={14} /> {submitting ? "Saving…" : "Set default"}
           </Button>
         ),
     },

@@ -1,5 +1,17 @@
 import { query, queryOne, execute, enqueueDbOperation } from "../database/connection";
 
+function stringifySettingValue(value) {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "boolean") return value ? "1" : "0";
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "";
+  if (typeof value === "string") return value;
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return "";
+  }
+}
+
 class SettingsService {
   async getAll() {
     const rows = await query("SELECT key, value FROM settings");
@@ -18,7 +30,7 @@ class SettingsService {
     await execute(
       `INSERT INTO settings (key, value) VALUES ($1, $2)
        ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-      [key, String(value)]
+      [String(key), stringifySettingValue(value)]
     );
   }
 
@@ -33,37 +45,31 @@ class SettingsService {
   }
 
   async updateMany(settings) {
-    const entries = Object.entries(settings || {});
+    const entries = Object.entries(settings || {})
+      .filter(([key]) => Boolean(key))
+      .map(([key, value]) => [String(key), stringifySettingValue(value)]);
+
     if (entries.length === 0) {
       return this.getAll();
     }
 
-    return enqueueDbOperation(async (db) => {
-      await db.execute("BEGIN IMMEDIATE");
+    await enqueueDbOperation(async (db) => {
       try {
-        for (const [key, value] of entries) {
-          await db.execute(
-            `INSERT INTO settings (key, value) VALUES ($1, $2)
-             ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
-            [key, String(value)]
-          );
-        }
-        await db.execute("COMMIT");
-      } catch (err) {
-        try {
-          await db.execute("ROLLBACK");
-        } catch {
-          /* ignore */
-        }
-        throw err;
+        await db.execute("ROLLBACK");
+      } catch {
+        /* no open transaction */
       }
-      return db.select("SELECT key, value FROM settings");
-    }).then((rows) =>
-      rows.reduce((acc, row) => {
-        acc[row.key] = row.value;
-        return acc;
-      }, {})
-    );
+
+      for (const [key, value] of entries) {
+        await db.execute(
+          `INSERT INTO settings (key, value) VALUES ($1, $2)
+           ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+          [key, value]
+        );
+      }
+    });
+
+    return this.getAll();
   }
 }
 
