@@ -28,6 +28,10 @@
   max-width: 800px;
 }
 
+.modal-sm {
+  max-width: 420px;
+}
+
 .modal-xl {
   max-width: 960px;
 }

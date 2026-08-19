@@ -18,7 +18,6 @@ import {
   Wallet,
   Smartphone,
   Clock,
-  ChevronRight,
   Eye,
 } from "lucide-react";
 import { productService } from "../services/ProductService";
@@ -100,15 +99,6 @@ function paymentMethodTone(method) {
   if (code === "card" || icon === "credit-card") return "card";
   if (paymentMethodCollectsCash(method) || code === "cash" || icon === "banknote") return "cash";
   return "card";
-}
-
-function paymentMethodHint(method) {
-  const code = String(method?.code || "").toLowerCase();
-  if (isPayLaterMethod(code)) return "Save on the customer account";
-  if (paymentMethodCollectsCash(method) || code === "cash") return "Take cash and finish the sale";
-  if (code === "transfer" || method?.icon === "smartphone") return "Mark the transfer as received";
-  if (method?.icon === "wallet") return "Collect with a digital wallet";
-  return "Charge the card and finish the sale";
 }
 
 export default function Sales() {
@@ -1129,21 +1119,11 @@ export default function Sales() {
                           <ProductBilingualName name={item.name} nameAr={item.name_ar} size="sm" />
                           <div className="pos-cart-item-price">
                             {formatCurrency(cartItemDisplayUnitPrice(item), currency)} each
-                            {item.quantity > 1 ? ` · tap to review ×${item.quantity}` : " · tap to review"}
                           </div>
                         </div>
                         <span className="pos-cart-qty-badge" aria-hidden="true">
                           ×{item.quantity}
                         </span>
-                      </button>
-                      <button
-                        type="button"
-                        className="pos-cart-view-btn"
-                        onClick={() => setCartVerifyOpen(true)}
-                        aria-label="View all selected items"
-                        title="View all selected items"
-                      >
-                        <Eye size={13} />
                       </button>
                       {canEditProducts && (
                         <button
@@ -1230,23 +1210,21 @@ export default function Sales() {
           <div className="pos-payment-panel">
             {hasCashTender && (
               <div className="pos-payment-body">
-                <label className="pos-field-label">Cash received</label>
-                <p className="pos-field-hint">Used when you tap Cash. Leave empty for exact amount.</p>
-                <input
-                  className="pos-cash-input"
-                  type="number"
-                  step="0.01"
-                  min={0}
-                  placeholder="0.00"
-                  value={cashReceived}
-                  onChange={(e) => setCashReceived(e.target.value)}
-                />
-
-                <div className="pos-quick-cash">
+                <div className="pos-cash-row">
+                  <input
+                    className="pos-cash-input"
+                    type="number"
+                    step="0.01"
+                    min={0}
+                    placeholder="Cash"
+                    aria-label="Cash received"
+                    value={cashReceived}
+                    onChange={(e) => setCashReceived(e.target.value)}
+                  />
                   <button type="button" className="pos-quick-btn" onClick={setExactCash}>
                     Exact
                   </button>
-                  {[50, 100, 200, 500].map((amount) => (
+                  {[50, 100, 200].map((amount) => (
                     <button
                       key={amount}
                       type="button"
@@ -1257,10 +1235,9 @@ export default function Sales() {
                     </button>
                   ))}
                 </div>
-
                 <div className="pos-change-display">
                   <span className="pos-change-label">
-                    {balanceDue > 0 ? "Balance due" : "Change due"}
+                    {balanceDue > 0 ? "Balance" : "Change"}
                   </span>
                   <span className="pos-change-value">
                     {formatCurrency(balanceDue > 0 ? balanceDue : changeDue, currency)}
@@ -1270,19 +1247,13 @@ export default function Sales() {
             )}
 
             <section className="pos-pay-methods" aria-label="Complete sale">
-              <header className="pos-pay-methods-head">
-                <div className="pos-pay-methods-copy">
-                  <p className="pos-pay-methods-kicker">Complete this sale</p>
-                  <h3 className="pos-pay-methods-title">Tap a payment method</h3>
-                </div>
-                <div className="pos-pay-methods-due">
-                  {formatCurrency(grandTotal, currency)}
-                </div>
-              </header>
-
-              <div className="pos-pay-list">
+              <div
+                className="pos-pay-list"
+                style={{
+                  gridTemplateColumns: `repeat(${Math.min(Math.max(posPaymentMethods.length, 1), 3)}, minmax(0, 1fr))`,
+                }}
+              >
                 {posPaymentMethods.map((method) => {
-                  const later = isPayLaterMethod(method.code);
                   const empty = cart.length === 0;
                   return (
                     <button
@@ -1294,22 +1265,9 @@ export default function Sales() {
                       onClick={() => openCompleteConfirm(method.code)}
                     >
                       <span className="pos-pay-row-icon">
-                        <PosPaymentMethodIcon icon={method.icon} size={20} />
+                        <PosPaymentMethodIcon icon={method.icon} size={14} />
                       </span>
-                      <span className="pos-pay-row-copy">
-                        <span className="pos-pay-row-label">{method.label}</span>
-                        <span className="pos-pay-row-hint">
-                          {submitting
-                            ? "Processing…"
-                            : empty
-                              ? "Add items first"
-                              : paymentMethodHint(method)}
-                        </span>
-                      </span>
-                      <span className="pos-pay-row-action">
-                        {later ? "Save" : "Pay"}
-                        <ChevronRight size={16} />
-                      </span>
+                      <span className="pos-pay-row-label">{method.label}</span>
                     </button>
                   );
                 })}
@@ -1319,13 +1277,14 @@ export default function Sales() {
             <div className="pos-payment-actions">
               <Button
                 variant="secondary"
+                size="sm"
                 disabled={submitting}
                 onClick={() => completeHeldSale(paymentTab)}
               >
-                <Pause size={16} /> Hold
+                <Pause size={14} /> Hold
               </Button>
-              <Button variant="secondary" disabled={submitting} onClick={handlePrintLast}>
-                <Printer size={16} /> Reprint last
+              <Button variant="secondary" size="sm" disabled={submitting} onClick={handlePrintLast}>
+                <Printer size={14} /> Reprint
               </Button>
             </div>
           </div>

@@ -2,8 +2,8 @@ import { CheckCircle2, Package } from "lucide-react";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import ProductBilingualName from "../products/ProductBilingualName";
-import { formatCurrency, formatQuantity } from "../../utils/format";
-import { cartItemDisplayLineTotal, cartItemDisplayUnitPrice } from "../../utils/vatPricing";
+import { formatCurrency } from "../../utils/format";
+import { cartItemDisplayLineTotal } from "../../utils/vatPricing";
 import "./CartVerifyModal.css";
 
 export default function CartVerifyModal({
@@ -24,17 +24,18 @@ export default function CartVerifyModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Verify selected items"
+      title="Cart items"
+      size="sm"
       footer={
-        <Button onClick={onClose}>
-          <CheckCircle2 size={16} /> Looks good
+        <Button size="sm" onClick={onClose}>
+          <CheckCircle2 size={14} /> Looks good
         </Button>
       }
     >
       <div className="cart-verify">
         <div className="cart-verify-hero">
           <span className="cart-verify-hero-icon" aria-hidden="true">
-            <Package size={18} />
+            <Package size={14} />
           </span>
           <div>
             <p>
@@ -51,7 +52,6 @@ export default function CartVerifyModal({
             <span>#</span>
             <span>Item</span>
             <span>Qty</span>
-            <span>Each</span>
             <span>Total</span>
           </div>
           {cart.map((item, index) => (
@@ -60,10 +60,7 @@ export default function CartVerifyModal({
               <div className="cart-verify-name">
                 <ProductBilingualName name={item.name} nameAr={item.name_ar} size="sm" />
               </div>
-              <span className="cart-verify-qty">
-                ×{formatQuantity(item.quantity, item.unit_symbol)}
-              </span>
-              <span>{formatCurrency(cartItemDisplayUnitPrice(item), currency)}</span>
+              <span className="cart-verify-qty">×{item.quantity}</span>
               <strong>{formatCurrency(cartItemDisplayLineTotal(item), currency)}</strong>
             </div>
           ))}

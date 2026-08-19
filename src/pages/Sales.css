@@ -452,16 +452,9 @@
 .pos-checkout {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.45rem;
   min-height: 0;
-}
-
-.pos-payment-panel {
-  background: var(--color-card);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
 }
 
 .pos-cart-panel {
@@ -473,17 +466,18 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .pos-cart-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
+  padding: 0.55rem 0.75rem;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-surface);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  flex-shrink: 0;
 }
 
 .pos-cart-title {
@@ -553,10 +547,11 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.625rem 0.875rem;
+  padding: 0.45rem 0.75rem;
   border-bottom: 1px solid var(--color-border);
   position: relative;
   z-index: 5;
+  flex-shrink: 0;
 }
 
 .pos-customer-row.is-invalid {
@@ -628,7 +623,7 @@
 .pos-cart-items {
   flex: 1;
   overflow-y: auto;
-  min-height: 100px;
+  min-height: 0;
 }
 
 .pos-cart-empty {
@@ -654,11 +649,11 @@
 }
 
 .pos-cart-item {
-  padding: 0.7rem 0.75rem 0.65rem;
+  padding: 0.5rem 0.7rem 0.45rem;
   border-bottom: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
+  gap: 0.35rem;
 }
 
 .pos-cart-item:last-child {
@@ -851,13 +846,16 @@
 }
 
 .pos-cart-summary {
-  padding: 0.875rem 1rem;
+  padding: 0.5rem 0.75rem 0.55rem;
   border-top: 1px solid var(--color-border);
   background: var(--color-surface);
   display: flex;
   flex-direction: column;
-  gap: 0.4375rem;
+  gap: 0.22rem;
   border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
 }
 
 .pos-summary-row {
@@ -889,10 +887,10 @@
 }
 
 .pos-summary-grand {
-  margin-top: 0.375rem;
-  padding-top: 0.625rem;
+  margin-top: 0.12rem;
+  padding-top: 0.3rem;
   border-top: 1px dashed var(--color-border);
-  font-size: 1rem;
+  font-size: 0.875rem;
 }
 
 .pos-summary-grand span {
@@ -902,129 +900,155 @@
 
 .pos-summary-grand span:last-child {
   color: var(--color-primary) !important;
-  font-size: 1.25rem;
+  font-size: 1.05rem;
 }
 
 /* ── Payment panel ──────────────────────────────────────────── */
 
 .pos-payment-panel {
-  flex-shrink: 0;
+  flex: 0 0 auto;
   display: flex;
   flex-direction: column;
-}
-
-.pos-pay-methods {
-  padding: 0.85rem 0.9rem 0.4rem;
-  border-top: 1px solid var(--color-border);
   background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
-.pos-pay-methods-head {
+.pos-payment-body {
+  padding: 0.4rem 0.55rem 0.3rem;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.7rem;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
-.pos-pay-methods-copy {
+.pos-cash-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pos-cash-input {
+  flex: 1 1 4.75rem;
   min-width: 0;
-}
-
-.pos-pay-methods-kicker {
-  margin: 0;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-text-muted);
-}
-
-.pos-pay-methods-title {
-  margin: 0.2rem 0 0;
-  font-size: 1.0625rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.2;
+  width: auto;
+  padding: 0.32rem 0.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-input-bg);
   color: var(--color-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: center;
 }
 
-.pos-pay-methods-due {
-  flex-shrink: 0;
-  padding: 0.4rem 0.7rem;
-  border-radius: 999px;
-  font-size: 0.875rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--color-primary);
+.pos-cash-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.pos-quick-btn {
+  padding: 0.32rem 0.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.625rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.pos-quick-btn:hover {
+  border-color: var(--color-primary);
   background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.pos-change-display {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.22rem 0.45rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
   border: 1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
 }
 
+.pos-change-label {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.pos-change-value {
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1.1;
+}
+
+.pos-pay-methods {
+  padding: 0.35rem 0.55rem 0.3rem;
+  border-top: 1px solid var(--color-border);
+}
+
 .pos-pay-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
+  display: grid;
+  gap: 0.3rem;
 }
 
 .pos-pay-row {
   appearance: none;
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: center;
+  gap: 0.3rem;
   width: 100%;
-  padding: 0.8rem 0.85rem;
+  min-height: 2.15rem;
+  padding: 0.28rem 0.35rem;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--color-surface);
   color: var(--color-text);
-  text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  transition: border-color 0.12s ease, background 0.12s ease;
 }
 
 .pos-pay-row-icon {
-  width: 2.55rem;
-  height: 2.55rem;
-  border-radius: 12px;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
 
-.pos-pay-row-copy {
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
-  min-width: 0;
-  flex: 1;
-}
-
 .pos-pay-row-label {
-  font-size: 0.9375rem;
+  font-size: 0.6875rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.pos-pay-row-hint {
-  font-size: 0.75rem;
-  font-weight: 500;
-  color: var(--color-text-muted);
-  line-height: 1.3;
-}
-
-.pos-pay-row-action {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.05rem;
-  flex-shrink: 0;
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-primary);
+.pos-pay-row-hint,
+.pos-pay-row-action,
+.pos-pay-methods-head,
+.pos-pay-methods-kicker,
+.pos-field-hint,
+.pos-field-label {
+  display: none;
 }
 
 .pos-pay-row--cash .pos-pay-row-icon {
@@ -1042,10 +1066,6 @@
   background: color-mix(in srgb, #f59e0b 16%, var(--color-card));
 }
 
-.pos-pay-row--later .pos-pay-row-action {
-  color: #d97706;
-}
-
 .pos-pay-row--transfer .pos-pay-row-icon {
   color: #0284c7;
   background: color-mix(in srgb, #0ea5e9 16%, var(--color-card));
@@ -1059,36 +1079,23 @@
 .pos-pay-row:hover:not(:disabled) {
   background: var(--color-card);
   border-color: var(--color-primary);
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--color-primary) 12%, transparent);
-  transform: translateY(-1px);
-}
-
-.pos-pay-row:hover:not(:disabled) .pos-pay-row-action {
-  transform: translateX(1px);
-}
-
-.pos-pay-row:active:not(:disabled) {
-  transform: translateY(0);
 }
 
 .pos-pay-row:focus-visible {
   outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
 .pos-pay-row:disabled {
   cursor: not-allowed;
-  opacity: 0.55;
-  transform: none;
-  box-shadow: none;
+  opacity: 0.5;
 }
 
 [data-theme="dark"] .pos-pay-row--cash .pos-pay-row-icon {
   color: #34d399;
 }
 
-[data-theme="dark"] .pos-pay-row--later .pos-pay-row-icon,
-[data-theme="dark"] .pos-pay-row--later .pos-pay-row-action {
+[data-theme="dark"] .pos-pay-row--later .pos-pay-row-icon {
   color: #fbbf24;
 }
 
@@ -1100,142 +1107,15 @@
   color: #c4b5fd;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .pos-pay-row,
-  .pos-pay-row-action {
-    transition: none;
-  }
-
-  .pos-pay-row:hover:not(:disabled),
-  .pos-pay-row:active:not(:disabled),
-  .pos-pay-row:hover:not(:disabled) .pos-pay-row-action {
-    transform: none;
-  }
-}
-
-.pos-payment-body {
-  padding: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.pos-field-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.pos-field-hint {
-  margin: -0.45rem 0 0;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-}
-
-.pos-cash-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-input-bg);
-  color: var(--color-text);
-  font-size: 1.25rem;
-  font-weight: 700;
-  text-align: center;
-}
-
-.pos-cash-input:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-light);
-}
-
-.pos-quick-cash {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-}
-
-.pos-quick-btn {
-  flex: 1;
-  min-width: calc(20% - 0.3rem);
-  padding: 0.4375rem 0.375rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.12s ease;
-}
-
-.pos-quick-btn:hover {
-  border-color: var(--color-primary);
-  background: var(--color-primary-light);
-  color: var(--color-primary);
-}
-
-.pos-change-display {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.875rem;
-  border-radius: var(--radius-md);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--color-primary) 10%, var(--color-surface)),
-    var(--color-surface)
-  );
-  border: 1px solid color-mix(in srgb, var(--color-primary) 20%, var(--color-border));
-}
-
-.pos-change-label {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-}
-
-.pos-change-value {
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--color-primary);
-  line-height: 1.1;
-}
-
-.pos-card-info {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 1.25rem;
-  text-align: center;
-  color: var(--color-text-muted);
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-}
-
-.pos-card-info p {
-  font-size: 0.8125rem;
-  margin: 0;
-}
-
-.pos-card-info strong {
-  font-size: 1.375rem;
-  color: var(--color-primary);
-}
-
 .pos-payment-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem 1rem;
-  background: var(--color-card);
+  gap: 0.3rem;
+  padding: 0.3rem 0.55rem 0.45rem;
+}
+
+.pos-payment-actions .btn {
+  width: 100%;
 }
 
 /* ── Responsive ─────────────────────────────────────────────── */
@@ -1265,8 +1145,7 @@
     gap: 0.75rem;
   }
 
-  .pos-catalog,
-  .pos-checkout {
+  .pos-catalog {
     padding: 0.7rem;
   }
 
@@ -1289,20 +1168,6 @@
 @media (max-width: 1100px) {
   .pos-layout {
     grid-template-columns: minmax(0, 1fr) 280px;
-  }
-
-  .pos-pay-row {
-    padding: 0.7rem 0.7rem;
-    gap: 0.6rem;
-  }
-
-  .pos-pay-row-icon {
-    width: 2.25rem;
-    height: 2.25rem;
-  }
-
-  .pos-pay-row-label {
-    font-size: 0.875rem;
   }
 }
 
@@ -1346,10 +1211,6 @@
 
   .pos-product-grid {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  }
-
-  .pos-quick-btn {
-    min-width: calc(33% - 0.25rem);
   }
 
   .pos-customer-row {
