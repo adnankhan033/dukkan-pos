@@ -19,6 +19,7 @@ import {
   Smartphone,
   Clock,
   ChevronRight,
+  Eye,
 } from "lucide-react";
 import { productService } from "../services/ProductService";
 import { onCatalogChanged } from "../services/CatalogSync";
@@ -38,6 +39,8 @@ import PosProductEditModal from "../components/sales/PosProductEditModal";
 import PosCustomerModal from "../components/sales/PosCustomerModal";
 import HeldSalesBar from "../components/sales/HeldSalesBar";
 import LastOrderReprintModal from "../components/sales/LastOrderReprintModal";
+import CartLineSheet from "../components/sales/CartLineSheet";
+import CartVerifyModal from "../components/sales/CartVerifyModal";
 import ProductBilingualName from "../components/products/ProductBilingualName";
 import { LoadingSpinner } from "../components/common/Loading";
 import { notify } from "../utils/notify";
@@ -145,6 +148,8 @@ export default function Sales() {
   const [printingReceipt, setPrintingReceipt] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
+  const [cartLineId, setCartLineId] = useState(null);
+  const [cartVerifyOpen, setCartVerifyOpen] = useState(false);
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [customerModalInitialName, setCustomerModalInitialName] = useState("");
   const customerCreateResolverRef = useRef(null);
@@ -424,14 +429,35 @@ export default function Sales() {
     );
   }
 
+  function setItemQty(productId, quantity) {
+    const qty = Math.max(0, Math.floor(Number(quantity) || 0));
+    if (qty <= 0) {
+      removeItem(productId);
+      return;
+    }
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.product_id !== productId) return item;
+        return {
+          ...item,
+          quantity: qty,
+          total: qty * item.unit_price,
+          shelf_line_total: qty * item.shelf_unit_price,
+        };
+      })
+    );
+  }
+
   function removeItem(productId) {
     setCart((prev) => prev.filter((i) => i.product_id !== productId));
+    setCartLineId((current) => (current === productId ? null : current));
   }
 
   function clearCart() {
     setCart([]);
     setDiscount(0);
     setCashReceived("");
+    setCartLineId(null);
   }
 
   const cartTotals = useMemo(
@@ -445,6 +471,7 @@ export default function Sales() {
   const changeDue = Math.max(0, received - grandTotal);
   const balanceDue = Math.max(0, grandTotal - received);
   const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartLineItem = cart.find((item) => item.product_id === cartLineId) || null;
 
   async function refreshTopProducts() {
     const products = await productService.getTopSellingForPos(POS_TOP_SELLERS_LIMIT);
@@ -1028,9 +1055,18 @@ export default function Sales() {
                 {cart.length > 0 && <span className="pos-cart-count">{cart.length}</span>}
               </div>
               {cart.length > 0 && (
-                <button type="button" className="pos-clear-cart" onClick={clearCart}>
-                  Clear
-                </button>
+                <div className="pos-cart-header-actions">
+                  <button
+                    type="button"
+                    className="pos-view-cart"
+                    onClick={() => setCartVerifyOpen(true)}
+                  >
+                    <Eye size={14} /> View
+                  </button>
+                  <button type="button" className="pos-clear-cart" onClick={clearCart}>
+                    Clear
+                  </button>
+                </div>
               )}
             </div>
 
@@ -1077,25 +1113,49 @@ export default function Sales() {
                 </div>
               ) : (
                 cart.map((item) => (
-                  <div key={item.product_id} className="pos-cart-item">
-                    <div className="pos-cart-item-main">
-                      <div className="pos-cart-item-title-row">
-                        <ProductBilingualName name={item.name} nameAr={item.name_ar} size="sm" />
-                        {canEditProducts && (
-                          <button
-                            type="button"
-                            className="pos-cart-edit-btn"
-                            onClick={() => openProductEdit(item.product_id)}
-                            aria-label={`Edit ${item.name}`}
-                            title="Edit product"
-                          >
-                            <Pencil size={13} />
-                          </button>
-                        )}
-                      </div>
-                      <div className="pos-cart-item-price">
-                        {formatCurrency(cartItemDisplayUnitPrice(item), currency)} each
-                      </div>
+                  <div
+                    key={item.product_id}
+                    className={`pos-cart-item ${item.quantity > 1 ? "is-multi" : ""} ${
+                      cartLineId === item.product_id ? "is-active" : ""
+                    }`}
+                  >
+                    <div className="pos-cart-item-top">
+                      <button
+                        type="button"
+                        className="pos-cart-item-hit"
+                        onClick={() => setCartLineId(item.product_id)}
+                      >
+                        <div className="pos-cart-item-main">
+                          <ProductBilingualName name={item.name} nameAr={item.name_ar} size="sm" />
+                          <div className="pos-cart-item-price">
+                            {formatCurrency(cartItemDisplayUnitPrice(item), currency)} each
+                            {item.quantity > 1 ? ` · tap to review ×${item.quantity}` : " · tap to review"}
+                          </div>
+                        </div>
+                        <span className="pos-cart-qty-badge" aria-hidden="true">
+                          ×{item.quantity}
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        className="pos-cart-view-btn"
+                        onClick={() => setCartVerifyOpen(true)}
+                        aria-label="View all selected items"
+                        title="View all selected items"
+                      >
+                        <Eye size={13} />
+                      </button>
+                      {canEditProducts && (
+                        <button
+                          type="button"
+                          className="pos-cart-edit-btn"
+                          onClick={() => openProductEdit(item.product_id)}
+                          aria-label={`Edit ${item.name}`}
+                          title="Edit product"
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      )}
                     </div>
                     <div className="pos-cart-item-footer">
                       <div className="pos-qty-controls">
@@ -1107,9 +1167,14 @@ export default function Sales() {
                         >
                           <Minus size={14} />
                         </button>
-                        <span className="pos-qty-value">
+                        <button
+                          type="button"
+                          className="pos-qty-value"
+                          onClick={() => setCartLineId(item.product_id)}
+                          aria-label={`Review quantity for ${item.name}`}
+                        >
                           {formatQuantity(item.quantity, item.unit_symbol)}
-                        </span>
+                        </button>
                         <button
                           type="button"
                           className="pos-qty-btn"
@@ -1301,6 +1366,33 @@ export default function Sales() {
         onCancel={closeCompleteFlow}
         onPrint={handlePrintReceipt}
         onSkipPrint={handleSkipPrint}
+      />
+
+      {cartLineItem && (
+        <CartLineSheet
+          item={cartLineItem}
+          currency={currency}
+          onSetQty={(qty) => setItemQty(cartLineItem.product_id, qty)}
+          onRemove={() => removeItem(cartLineItem.product_id)}
+          onClose={() => setCartLineId(null)}
+        />
+      )}
+
+      <CartVerifyModal
+        isOpen={cartVerifyOpen}
+        cart={cart}
+        customerName={
+          customerId
+            ? customers.find((entry) => String(entry.id) === String(customerId))?.name
+            : null
+        }
+        subtotal={subtotal}
+        discount={Number(discount)}
+        vat={vat}
+        grandTotal={grandTotal}
+        currency={currency}
+        vatPercent={vatPercent}
+        onClose={() => setCartVerifyOpen(false)}
       />
 
       <LastOrderReprintModal
