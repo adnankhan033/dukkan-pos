@@ -1106,28 +1106,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f678cf4a922c215c63e0de95eb1ff08a958a81d47e485cf9da1e27bf6305cfa5"
 
 [[package]]
-name = "nexttel-pos"
-version = "0.1.0"
-dependencies = [
- "base64 0.22.1",
- "const-oid 0.10.2",
- "dirs",
- "dotenvy",
- "ecdsa",
- "k256",
- "lettre",
- "reqwest 0.12.28",
- "sec1",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-opener",
- "tauri-plugin-sql",
- "x509-cert",
-]
-
-[[package]]
 name = "dunce"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2645,6 +2623,28 @@ name = "new_debug_unreachable"
 version = "1.0.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "650eef8c711430f1a879fdd01d4745a7deea475becfb90269c06775983bbf086"
+
+[[package]]
+name = "nexttel-pos"
+version = "0.1.0"
+dependencies = [
+ "base64 0.22.1",
+ "const-oid 0.10.2",
+ "dirs",
+ "dotenvy",
+ "ecdsa",
+ "k256",
+ "lettre",
+ "reqwest 0.12.28",
+ "sec1",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-opener",
+ "tauri-plugin-sql",
+ "x509-cert",
+]
 
 [[package]]
 name = "nom"
