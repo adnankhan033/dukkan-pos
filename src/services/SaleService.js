@@ -101,9 +101,14 @@ class SaleService {
 
   async getHeldSales() {
     return query(
-      `SELECT s.*, c.name as customer_name
-       FROM sales s LEFT JOIN customers c ON s.customer_id = c.id
-       WHERE s.status = 'held' ORDER BY s.updated_at DESC`
+      `SELECT s.*,
+              c.name AS customer_name,
+              (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS item_count,
+              (SELECT COALESCE(SUM(si.quantity), 0) FROM sale_items si WHERE si.sale_id = s.id) AS item_qty
+       FROM sales s
+       LEFT JOIN customers c ON s.customer_id = c.id
+       WHERE s.status = 'held'
+       ORDER BY s.updated_at DESC`
     );
   }
 

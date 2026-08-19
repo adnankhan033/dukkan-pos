@@ -1,4 +1,4 @@
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useId, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, Plus, Search, X } from "lucide-react";
 import "./SearchableSelect.css";
@@ -17,7 +17,7 @@ function buildMenuItems({ filtered, clearable, showNone, showCreate, createLabel
   return items;
 }
 
-export default function SearchableSelect({
+const SearchableSelect = forwardRef(function SearchableSelect({
   label,
   value = "",
   onChange,
@@ -32,7 +32,7 @@ export default function SearchableSelect({
   onCreateOption,
   createLabel = (term) => `Create "${term}"`,
   menuPortal = false,
-}) {
+}, ref) {
   const listboxId = useId();
   const rootRef = useRef(null);
   const dropdownRef = useRef(null);
@@ -152,6 +152,13 @@ export default function SearchableSelect({
     setEditing(true);
     focusInput();
   }
+
+  useImperativeHandle(ref, () => ({
+    focus() {
+      rootRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      openDropdown();
+    },
+  }));
 
   function closeDropdown() {
     setOpen(false);
@@ -357,4 +364,6 @@ export default function SearchableSelect({
       {error && <span className="form-error">{error}</span>}
     </div>
   );
-}
+});
+
+export default SearchableSelect;

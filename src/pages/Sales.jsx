@@ -18,6 +18,7 @@ import {
   Wallet,
   Smartphone,
   Clock,
+  ChevronRight,
 } from "lucide-react";
 import { productService } from "../services/ProductService";
 import { onCatalogChanged } from "../services/CatalogSync";
@@ -28,12 +29,14 @@ import { saleService } from "../services/SaleService";
 import { useSettingsStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import { usePermissions } from "../hooks/usePermissions";
+import { useConfirm } from "../hooks/useConfirm";
 import Button from "../components/common/Button";
 import SearchableSelect from "../components/common/SearchableSelect";
 import SaleCompleteModal from "../components/sales/SaleCompleteModal";
 import SaleReturnModal from "../components/sales/SaleReturnModal";
 import PosProductEditModal from "../components/sales/PosProductEditModal";
 import PosCustomerModal from "../components/sales/PosCustomerModal";
+import HeldSalesBar from "../components/sales/HeldSalesBar";
 import ProductBilingualName from "../components/products/ProductBilingualName";
 import { LoadingSpinner } from "../components/common/Loading";
 import { notify } from "../utils/notify";
@@ -84,12 +87,33 @@ function PosPaymentMethodIcon({ icon, size = 18 }) {
   return <Banknote size={size} />;
 }
 
+function paymentMethodTone(method) {
+  const code = String(method?.code || "").toLowerCase();
+  const icon = String(method?.icon || "");
+  if (isPayLaterMethod(code)) return "later";
+  if (icon === "smartphone" || code === "transfer") return "transfer";
+  if (icon === "wallet") return "wallet";
+  if (code === "card" || icon === "credit-card") return "card";
+  if (paymentMethodCollectsCash(method) || code === "cash" || icon === "banknote") return "cash";
+  return "card";
+}
+
+function paymentMethodHint(method) {
+  const code = String(method?.code || "").toLowerCase();
+  if (isPayLaterMethod(code)) return "Save on the customer account";
+  if (paymentMethodCollectsCash(method) || code === "cash") return "Take cash and finish the sale";
+  if (code === "transfer" || method?.icon === "smartphone") return "Mark the transfer as received";
+  if (method?.icon === "wallet") return "Collect with a digital wallet";
+  return "Charge the card and finish the sale";
+}
+
 export default function Sales() {
   const settings = useSettingsStore((s) => s.settings);
   const currency = settings.currency || "SAR";
   const vatPercent = Number(settings.vat_percent) || 0;
   const zatcaPhase2 = resolveActivePhase(settings) === ZATCA_PHASES.PHASE2;
   const { submitting, guard } = useSubmitGuard();
+  const { confirm, dialog: confirmDialog } = useConfirm();
   const { canPerformAction } = usePermissions();
   const canEditProducts = canPerformAction("products_edit");
   const canManageCustomers = canPerformAction("customers_manage");
@@ -102,6 +126,7 @@ export default function Sales() {
   const [customers, setCustomers] = useState([]);
   const [cart, setCart] = useState([]);
   const [customerId, setCustomerId] = useState("");
+  const [customerError, setCustomerError] = useState("");
   const [discount, setDiscount] = useState(0);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [paymentTab, setPaymentTab] = useState(PAYMENT_METHODS.CASH);
@@ -119,6 +144,8 @@ export default function Sales() {
   const [customerModalOpen, setCustomerModalOpen] = useState(false);
   const [customerModalInitialName, setCustomerModalInitialName] = useState("");
   const customerCreateResolverRef = useRef(null);
+  const customerSelectRef = useRef(null);
+  const customerRowRef = useRef(null);
 
   const searchRef = useRef(null);
   const lastScanAtRef = useRef(0);
@@ -138,16 +165,25 @@ export default function Sales() {
     }
   }, []);
 
+  const posPaymentMethods = useMemo(
+    () =>
+      paymentMethods.length
+        ? paymentMethods
+        : [
+            { code: PAYMENT_METHODS.CASH, label: "Cash", icon: "banknote", collect_cash: 1 },
+            { code: PAYMENT_METHODS.CARD, label: "Card", icon: "credit-card", collect_cash: 0 },
+          ],
+    [paymentMethods]
+  );
   const selectedPaymentMethod = useMemo(
     () =>
-      paymentMethods.find((method) => method.code === paymentTab) ||
-      paymentMethods.find((method) => method.is_default) ||
-      paymentMethods[0] ||
+      posPaymentMethods.find((method) => method.code === paymentTab) ||
+      posPaymentMethods.find((method) => method.is_default) ||
+      posPaymentMethods[0] ||
       null,
-    [paymentMethods, paymentTab]
+    [posPaymentMethods, paymentTab]
   );
-  const collectsCash = paymentMethodCollectsCash(selectedPaymentMethod);
-  const paymentMethodLabel = selectedPaymentMethod?.label || resolvePaymentMethodLabel(paymentTab);
+  const hasCashTender = posPaymentMethods.some((method) => paymentMethodCollectsCash(method));
 
   const customerOptions = useMemo(
     () =>
@@ -194,9 +230,15 @@ export default function Sales() {
     resolve?.(result);
   }
 
+  function handleCustomerChange(id) {
+    setCustomerId(id);
+    if (id) setCustomerError("");
+  }
+
   function handleCustomerSaved(customer) {
     upsertCustomer(customer);
     setCustomerId(String(customer.id));
+    setCustomerError("");
     notify.success(`Customer "${customer.name}" added and selected.`, { title: "Customer saved" });
     closeCustomerModal(String(customer.id));
   }
@@ -224,7 +266,10 @@ export default function Sales() {
       return;
     }
     openCustomerModal("").then((id) => {
-      if (id) setCustomerId(id);
+      if (id) {
+        setCustomerId(id);
+        setCustomerError("");
+      }
     });
   }
 
@@ -456,32 +501,49 @@ export default function Sales() {
       return false;
     }
 
-    const method = paymentMethods.find((entry) => entry.code === paymentMethod);
+    const method = posPaymentMethods.find((entry) => entry.code === paymentMethod);
     if (paymentMethodRequiresCustomer(method) && !customerId) {
-      notify.warning("Select a customer before completing a pay later order.", { title: "Customer required" });
+      const message = "Select a customer for pay later.";
+      setCustomerError(message);
+      notify.warning(message, { title: "Customer required" });
+      requestAnimationFrame(() => {
+        const row = customerRowRef.current;
+        if (row) {
+          row.classList.remove("pos-customer-shake");
+          void row.offsetWidth;
+          row.classList.add("pos-customer-shake");
+        }
+        customerSelectRef.current?.focus?.();
+      });
       return false;
     }
 
+    setCustomerError("");
     return true;
   }
 
   function openCompleteConfirm(paymentMethod) {
+    if (submitting || completeStep) return;
     if (!validateBeforeComplete(paymentMethod)) return;
-    setPendingPaymentMethod(paymentMethod);
-    setPrintOnComplete(settingEnabled(settings.receipt_print_on_complete, true));
-    setCompleteStep("confirm");
-  }
 
-  function advanceCashCheckout() {
-    if (!validateBeforeComplete()) return;
+    const method =
+      posPaymentMethods.find((entry) => entry.code === paymentMethod) || selectedPaymentMethod;
 
-    if (collectsCash) {
+    setPaymentTab(paymentMethod);
+
+    if (paymentMethodCollectsCash(method)) {
       const currentReceived = Number(cashReceived) || 0;
       if (currentReceived < grandTotal) {
         setCashReceived(String(grandTotal));
       }
     }
 
+    setPendingPaymentMethod(paymentMethod);
+    setPrintOnComplete(settingEnabled(settings.receipt_print_on_complete, true));
+    setCompleteStep("confirm");
+  }
+
+  function advanceCashCheckout() {
     openCompleteConfirm(paymentTab);
   }
 
@@ -609,6 +671,10 @@ export default function Sales() {
     advanceCashCheckout,
     handleConfirmComplete,
     handleSkipPrint,
+    openCompleteConfirm,
+    cashMethodCode:
+      posPaymentMethods.find((method) => paymentMethodCollectsCash(method))?.code ||
+      PAYMENT_METHODS.CASH,
   };
 
   useEffect(() => {
@@ -624,6 +690,8 @@ export default function Sales() {
         advanceCashCheckout: advance,
         handleConfirmComplete: confirmComplete,
         handleSkipPrint: skipPrint,
+        openCompleteConfirm: startCheckout,
+        cashMethodCode,
       } = checkoutRef.current;
 
       if (returnModalOpen) return;
@@ -651,12 +719,31 @@ export default function Sales() {
       if (items.length === 0) return;
 
       e.preventDefault();
+      if (target.classList?.contains("pos-cash-input")) {
+        startCheckout(cashMethodCode);
+        return;
+      }
       advance();
     }
 
     window.addEventListener("keydown", handleCheckoutEnter);
     return () => window.removeEventListener("keydown", handleCheckoutEnter);
   }, []);
+
+  async function parkCurrentCart(paymentMethod) {
+    const sale = await saleService.createSale({
+      customerId: customerId ? Number(customerId) : null,
+      items: cart,
+      discount: Number(discount),
+      vat,
+      paymentMethod,
+      status: SALE_STATUS.HELD,
+    });
+    setCart([]);
+    setDiscount(0);
+    setCashReceived("");
+    return sale;
+  }
 
   async function completeHeldSale(paymentMethod) {
     if (cart.length === 0) {
@@ -665,19 +752,9 @@ export default function Sales() {
     }
     try {
       await guard(async () => {
-        const sale = await saleService.createSale({
-          customerId: customerId ? Number(customerId) : null,
-          items: cart,
-          discount: Number(discount),
-          vat,
-          paymentMethod,
-          status: SALE_STATUS.HELD,
-        });
-        notify.success(`Sale ${sale.sale_number} is on hold.`, { title: "Sale held" });
+        const sale = await parkCurrentCart(paymentMethod);
+        notify.success(`${sale.sale_number} is waiting in Held tickets.`, { title: "Sale held" });
         setHeldSales(await saleService.getHeldSales());
-        setCart([]);
-        setDiscount(0);
-        setCashReceived("");
       });
     } catch (err) {
       notify.error(err.message, { title: "Could not hold sale" });
@@ -704,23 +781,72 @@ export default function Sales() {
     }
   }
 
-  async function resumeHeld(saleId) {
-    const sale = await saleService.getById(saleId);
-    if (!sale?.items?.length) return;
-    setCart(
-      sale.items.map((i) => ({
-        product_id: i.product_id,
-        name: i.product_name,
-        unit_price: i.unit_price,
-        quantity: i.quantity,
-        discount: i.discount,
-        total: i.total,
-      }))
-    );
-    setDiscount(sale.discount);
-    setCustomerId(sale.customer_id || "");
-    await saleService.deleteHeldSale(saleId);
-    setHeldSales(await saleService.getHeldSales());
+  async function resumeHeld(hold) {
+    if (submitting || completeStep) return;
+    const saleId = hold?.id ?? hold;
+    try {
+      await guard(async () => {
+        let parkedNumber = null;
+        if (cart.length > 0) {
+          const parked = await parkCurrentCart(paymentTab);
+          parkedNumber = parked.sale_number;
+        }
+
+        const sale = await saleService.getById(saleId);
+        if (!sale?.items?.length) {
+          notify.warning("This held ticket has no items left.", { title: "Cannot resume" });
+          setHeldSales(await saleService.getHeldSales());
+          return;
+        }
+
+        setCart(
+          sale.items.map((item) => ({
+            product_id: item.product_id,
+            name: item.product_name || item.name,
+            name_ar: item.name_ar,
+            unit_price: item.unit_price,
+            quantity: item.quantity,
+            discount: item.discount,
+            total: item.total,
+          }))
+        );
+        setDiscount(sale.discount || 0);
+        setCustomerId(sale.customer_id ? String(sale.customer_id) : "");
+        await saleService.deleteHeldSale(saleId);
+        setHeldSales(await saleService.getHeldSales());
+        focusSearch();
+
+        if (parkedNumber) {
+          notify.success(`Current cart held as ${parkedNumber}. ${sale.sale_number} is back in the cart.`, {
+            title: "Ticket resumed",
+          });
+        } else {
+          notify.success(`${sale.sale_number} is back in the cart.`, { title: "Ticket resumed" });
+        }
+      });
+    } catch (err) {
+      notify.error(err.message || "Could not resume this ticket.", { title: "Resume failed" });
+    }
+  }
+
+  async function discardHeld(hold) {
+    if (submitting) return;
+    const ok = await confirm({
+      title: "Discard held ticket?",
+      message: `${hold.sale_number} will be deleted. This cannot be undone.`,
+      confirmLabel: "Discard ticket",
+      cancelLabel: "Keep ticket",
+      variant: "danger",
+    });
+    if (!ok) return;
+
+    try {
+      await saleService.deleteHeldSale(hold.id);
+      setHeldSales(await saleService.getHeldSales());
+      notify.success(`${hold.sale_number} was discarded.`, { title: "Ticket discarded" });
+    } catch (err) {
+      notify.error(err.message || "Could not discard this ticket.", { title: "Discard failed" });
+    }
   }
 
   if (catalogLoading) {
@@ -763,24 +889,13 @@ export default function Sales() {
       </header>
 
       {heldSales.length > 0 && (
-        <div className="pos-held-strip">
-          <span className="pos-held-label">
-            <Pause size={14} /> Held sales
-          </span>
-          <div className="pos-held-chips">
-            {heldSales.map((s) => (
-              <button
-                key={s.id}
-                type="button"
-                className="pos-held-chip"
-                onClick={() => resumeHeld(s.id)}
-              >
-                <span>{s.sale_number}</span>
-                <strong>{formatCurrency(s.total, currency)}</strong>
-              </button>
-            ))}
-          </div>
-        </div>
+        <HeldSalesBar
+          holds={heldSales}
+          currency={currency}
+          busy={submitting}
+          onResume={resumeHeld}
+          onDiscard={discardHeld}
+        />
       )}
 
       <div className="pos-layout">
@@ -905,17 +1020,22 @@ export default function Sales() {
               )}
             </div>
 
-            <div className="pos-customer-row">
+            <div
+              ref={customerRowRef}
+              className={`pos-customer-row ${customerError ? "is-invalid" : ""}`}
+            >
               <User size={16} className="pos-customer-icon" />
               <SearchableSelect
+                ref={customerSelectRef}
                 className="pos-customer-select"
                 value={customerId}
-                onChange={setCustomerId}
+                onChange={handleCustomerChange}
                 options={customerOptions}
                 placeholder="Search customer…"
                 noneLabel="Walk-in customer"
                 clearable
                 menuPortal
+                error={customerError}
                 creatable={canManageCustomers}
                 onCreateOption={handleCreateCustomerOption}
                 createLabel={(term) => `Add "${term}"…`}
@@ -1029,72 +1149,93 @@ export default function Sales() {
           </div>
 
           <div className="pos-payment-panel">
-            <div className="pos-payment-body">
-              {collectsCash ? (
-                <>
-                  <label className="pos-field-label">Cash received</label>
-                  <input
-                    className="pos-cash-input"
-                    type="number"
-                    step="0.01"
-                    min={0}
-                    placeholder="0.00"
-                    value={cashReceived}
-                    onChange={(e) => setCashReceived(e.target.value)}
-                  />
+            {hasCashTender && (
+              <div className="pos-payment-body">
+                <label className="pos-field-label">Cash received</label>
+                <p className="pos-field-hint">Used when you tap Cash. Leave empty for exact amount.</p>
+                <input
+                  className="pos-cash-input"
+                  type="number"
+                  step="0.01"
+                  min={0}
+                  placeholder="0.00"
+                  value={cashReceived}
+                  onChange={(e) => setCashReceived(e.target.value)}
+                />
 
-                  <div className="pos-quick-cash">
-                    <button type="button" className="pos-quick-btn" onClick={setExactCash}>
-                      Exact
+                <div className="pos-quick-cash">
+                  <button type="button" className="pos-quick-btn" onClick={setExactCash}>
+                    Exact
+                  </button>
+                  {[50, 100, 200, 500].map((amount) => (
+                    <button
+                      key={amount}
+                      type="button"
+                      className="pos-quick-btn"
+                      onClick={() => addQuickCash(amount)}
+                    >
+                      +{amount}
                     </button>
-                    {[50, 100, 200, 500].map((amount) => (
-                      <button
-                        key={amount}
-                        type="button"
-                        className="pos-quick-btn"
-                        onClick={() => addQuickCash(amount)}
-                      >
-                        +{amount}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="pos-change-display">
-                    <span className="pos-change-label">
-                      {balanceDue > 0 ? "Balance due" : "Change due"}
-                    </span>
-                    <span className="pos-change-value">
-                      {formatCurrency(balanceDue > 0 ? balanceDue : changeDue, currency)}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <div className="pos-card-info">
-                  <PosPaymentMethodIcon icon={selectedPaymentMethod?.icon} size={28} />
-                  <p>{paymentMethodLabel}</p>
-                  <strong>{formatCurrency(grandTotal, currency)}</strong>
+                  ))}
                 </div>
-              )}
-            </div>
 
-            <div
-              className="pos-payment-tabs"
-              style={{ gridTemplateColumns: `repeat(${Math.max(paymentMethods.length, 2)}, minmax(0, 1fr))` }}
-            >
-              {(paymentMethods.length ? paymentMethods : [
-                { code: PAYMENT_METHODS.CASH, label: "Cash", icon: "banknote" },
-                { code: PAYMENT_METHODS.CARD, label: "Card", icon: "credit-card" },
-              ]).map((method) => (
-                <button
-                  key={method.code}
-                  type="button"
-                  className={`pos-payment-tab ${paymentTab === method.code ? "active" : ""}`}
-                  onClick={() => setPaymentTab(method.code)}
-                >
-                  <PosPaymentMethodIcon icon={method.icon} /> {method.label}
-                </button>
-              ))}
-            </div>
+                <div className="pos-change-display">
+                  <span className="pos-change-label">
+                    {balanceDue > 0 ? "Balance due" : "Change due"}
+                  </span>
+                  <span className="pos-change-value">
+                    {formatCurrency(balanceDue > 0 ? balanceDue : changeDue, currency)}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <section className="pos-pay-methods" aria-label="Complete sale">
+              <header className="pos-pay-methods-head">
+                <div className="pos-pay-methods-copy">
+                  <p className="pos-pay-methods-kicker">Complete this sale</p>
+                  <h3 className="pos-pay-methods-title">Tap a payment method</h3>
+                </div>
+                <div className="pos-pay-methods-due">
+                  {formatCurrency(grandTotal, currency)}
+                </div>
+              </header>
+
+              <div className="pos-pay-list">
+                {posPaymentMethods.map((method) => {
+                  const later = isPayLaterMethod(method.code);
+                  const empty = cart.length === 0;
+                  return (
+                    <button
+                      key={method.code}
+                      type="button"
+                      className={`pos-pay-row pos-pay-row--${paymentMethodTone(method)}`}
+                      disabled={submitting || empty || Boolean(completeStep)}
+                      aria-label={`Complete sale with ${method.label}`}
+                      onClick={() => openCompleteConfirm(method.code)}
+                    >
+                      <span className="pos-pay-row-icon">
+                        <PosPaymentMethodIcon icon={method.icon} size={20} />
+                      </span>
+                      <span className="pos-pay-row-copy">
+                        <span className="pos-pay-row-label">{method.label}</span>
+                        <span className="pos-pay-row-hint">
+                          {submitting
+                            ? "Processing…"
+                            : empty
+                              ? "Add items first"
+                              : paymentMethodHint(method)}
+                        </span>
+                      </span>
+                      <span className="pos-pay-row-action">
+                        {later ? "Save" : "Pay"}
+                        <ChevronRight size={16} />
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
 
             <div className="pos-payment-actions">
               <Button
@@ -1107,15 +1248,6 @@ export default function Sales() {
               <Button variant="secondary" disabled={submitting} onClick={handlePrintLast}>
                 <Printer size={16} /> Reprint
               </Button>
-              <Button
-                className="pos-complete-btn"
-                disabled={submitting || cart.length === 0}
-                onClick={() => openCompleteConfirm(paymentTab)}
-              >
-                {submitting
-                  ? "Processing…"
-                  : `Complete ${paymentMethodLabel.toLowerCase()} sale`}
-              </Button>
             </div>
           </div>
         </aside>
@@ -1124,9 +1256,9 @@ export default function Sales() {
       <SaleCompleteModal
         step={completeStep}
         paymentMethod={pendingPaymentMethod}
-        paymentMethodLabel={resolvePaymentMethodLabel(pendingPaymentMethod, paymentMethods)}
+        paymentMethodLabel={resolvePaymentMethodLabel(pendingPaymentMethod, posPaymentMethods)}
         collectsCash={paymentMethodCollectsCash(
-          paymentMethods.find((method) => method.code === pendingPaymentMethod)
+          posPaymentMethods.find((method) => method.code === pendingPaymentMethod)
         )}
         cart={cart}
         subtotal={subtotal}
@@ -1184,6 +1316,7 @@ export default function Sales() {
         onClose={() => closeCustomerModal(null)}
         onSaved={handleCustomerSaved}
       />
+      {confirmDialog}
     </div>
   );
 }

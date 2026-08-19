@@ -182,4 +182,11 @@
 
 .searchable-select.has-error .searchable-select-control {
   border-color: var(--color-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 18%, transparent);
+}
+
+.searchable-select .form-error {
+  font-size: 0.75rem;
+  color: var(--color-danger);
+  line-height: 1.3;
 }
