@@ -264,7 +264,7 @@ export function templateSampleRow() {
 
 export function templateInstructionsRows() {
   return [
-    ["Product Import Template — Dukkan POS"],
+    ["Product Import Template — Nexttel POS"],
     [""],
     ["Required columns", "name, selling_price"],
     ["Optional columns", "All other columns below"],

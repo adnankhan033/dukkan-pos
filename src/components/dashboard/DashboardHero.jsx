@@ -29,7 +29,7 @@ function splitDateTime(datetime) {
 export default function DashboardHero({ variant = "admin", actions, children, chips = [] }) {
   const settings = useSettingsStore((s) => s.settings);
   const user = useAuthStore((s) => s.user);
-  const storeName = settings.store_name?.trim() || "Dukkan POS";
+  const storeName = settings.store_name?.trim() || "Nexttel POS";
   const storeNameAr = settings.store_name_ar?.trim();
   const userName = user?.full_name?.trim() || user?.username?.trim();
   const firstName = userName?.split(" ")[0];

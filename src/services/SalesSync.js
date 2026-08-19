@@ -1,5 +1,5 @@
 /** Notifies UI (Orders, Dashboard) when sales are created, updated, or deleted. */
-export const SALES_CHANGED_EVENT = "dukkan-pos-sales-changed";
+export const SALES_CHANGED_EVENT = "nexttel-pos-sales-changed";
 
 export function dispatchSalesChanged() {
   if (typeof window !== "undefined") {

@@ -2,7 +2,7 @@ import { formatDateTime } from "../format";
 
 export function buildCompanyProfile(settings = {}) {
   return {
-    name: settings.store_name?.trim() || "Dukkan POS",
+    name: settings.store_name?.trim() || "Nexttel POS",
     nameAr: settings.store_name_ar?.trim() || "",
     address: settings.store_address?.trim() || "",
     crNumber: settings.cr_number?.trim() || "",
@@ -65,6 +65,6 @@ export function companyMetaLines(company) {
 }
 
 export function companyInitial(name) {
-  const trimmed = String(name || "D").trim();
+  const trimmed = String(name || "N").trim();
   return trimmed.charAt(0).toUpperCase();
 }

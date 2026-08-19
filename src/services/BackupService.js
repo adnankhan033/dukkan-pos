@@ -67,11 +67,11 @@ class BackupService {
     const stamp = String(exportedAt || new Date().toISOString())
       .replace(/[:.]/g, "-")
       .slice(0, 19);
-    return `dukkan-pos-backup-${stamp}.json`;
+    return `nexttel-pos-backup-${stamp}.json`;
   }
 
   buildDailyBackupFilename(dateKey) {
-    return `dukkan-pos-daily-${dateKey}.json`;
+    return `nexttel-pos-daily-${dateKey}.json`;
   }
 
   async prepareBackup() {
@@ -265,7 +265,7 @@ class BackupService {
       throw new Error("Recipient email is required.");
     }
 
-    const storeName = (await settingsService.get("store_name")) || "Dukkan POS";
+    const storeName = (await settingsService.get("store_name")) || "Nexttel POS";
     const backupType = type === BACKUP_TYPES.DAILY_EMAIL ? BACKUP_TYPES.DAILY_EMAIL : BACKUP_TYPES.MANUAL_EMAIL;
     const exportedAt = JSON.parse(json).exported_at || new Date().toISOString();
     const subject =
@@ -280,7 +280,7 @@ class BackupService {
       `Tables: ${BACKUP_TABLES.length}`,
       `Type: ${backupType === BACKUP_TYPES.DAILY_EMAIL ? "Daily automatic" : "Manual"}`,
       "",
-      "Attach this JSON file to restore your store in Dukkan POS → Settings → Backup → Restore.",
+      "Attach this JSON file to restore your store in Nexttel POS → Settings → Backup → Restore.",
     ].join("\n");
 
     const fileSizeBytes = new TextEncoder().encode(json).length;

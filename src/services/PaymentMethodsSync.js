@@ -1,4 +1,4 @@
-export const PAYMENT_METHODS_CHANGED_EVENT = "dukkan-pos-payment-methods-changed";
+export const PAYMENT_METHODS_CHANGED_EVENT = "nexttel-pos-payment-methods-changed";
 
 export function dispatchPaymentMethodsChanged() {
   if (typeof window !== "undefined") {

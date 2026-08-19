@@ -21,7 +21,7 @@ function DesktopApp() {
   }
 
   if (!dbReady) {
-    return <LoadingSpinner message="Initializing Dukkan POS..." />;
+    return <LoadingSpinner message="Initializing Nexttel POS..." />;
   }
 
   return (

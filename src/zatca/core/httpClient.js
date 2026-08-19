@@ -9,7 +9,7 @@ export async function zatcaHttpRequest({ method, url, headers = {}, body = null,
   zatcaLogger.debug("ZATCA HTTP request", { method, url });
 
   if (!isTauri()) {
-    throw new Error("ZATCA API calls require the Dukkan POS desktop app.");
+    throw new Error("ZATCA API calls require the Nexttel POS desktop app.");
   }
 
   const start = performance.now();

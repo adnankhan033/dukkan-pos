@@ -130,7 +130,7 @@ export function resolveEgsUuid(config) {
     const trimmed = String(value || "").trim();
     if (UUID_RE.test(trimmed)) return trimmed;
   }
-  const seed = String(config.device?.serial || config.device?.id || "dukkan-pos-egs");
+  const seed = String(config.device?.serial || config.device?.id || "nexttel-pos-egs");
   return uuidFromSeed(seed);
 }
 
@@ -158,7 +158,7 @@ function buildEgsInfo(config, { production = false } = {}) {
   const info = {
     uuid: resolveEgsUuid(config),
     custom_id: config.device?.id || config.device?.serial || "EGS-001",
-    model: config.device?.model || "Dukkan POS",
+    model: config.device?.model || "Nexttel POS",
     CRN_number: normalizeCrnNumber(config.company?.crNumber, config.environment),
     VAT_name: config.company?.name || "Store",
     VAT_number: resolveInvoiceVatNumber(config, { production }),
@@ -234,7 +234,7 @@ export async function signZatcaInvoice(
   { production = false, invoiceKind = "simplified" } = {}
 ) {
   if (!isTauri()) {
-    throw new Error("Invoice signing requires the Dukkan POS desktop app.");
+    throw new Error("Invoice signing requires the Nexttel POS desktop app.");
   }
 
   const privateKey = config.credentials?.privateKey?.trim();

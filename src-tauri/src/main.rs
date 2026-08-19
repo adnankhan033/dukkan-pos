@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    dukkan_pos_lib::run()
+    nexttel_pos_lib::run()
 }

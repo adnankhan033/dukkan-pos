@@ -269,7 +269,7 @@ export function buildCustomersReportCoverHtml({
         ${row("Filters", filterText)}
         ${row("Currency", currency)}
         ${row("Customers", truncated ? `${customerCount} / ${totalMatched}` : String(customerCount))}
-        ${row("Document", "Customer Accounts · Dukkan POS")}
+        ${row("Document", "Customer Accounts · Nexttel POS")}
       </div>
     </div>
 

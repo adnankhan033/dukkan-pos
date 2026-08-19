@@ -94,7 +94,7 @@ export default function WelcomeModal({ open, userName, storeName, onContinue }) 
           </Button>
 
           <p className="welcome-footer-note">
-            <CheckCircle2 size={14} /> Everything is ready. Enjoy using Dukkan POS!
+            <CheckCircle2 size={14} /> Everything is ready. Enjoy using Nexttel POS!
           </p>
         </div>
       </div>

@@ -193,17 +193,17 @@ export default function Sidebar() {
         data-sidebar-mode={mode}
       >
         <div className="sidebar-brand">
-          <div className="sidebar-brand-icon" title={settings.store_name || "Dukkan POS"}>
-            D
+          <div className="sidebar-brand-icon" title={settings.store_name || "Nexttel POS"}>
+            N
           </div>
           <div className="sidebar-brand-text">
-            <h2>{settings.store_name || "Dukkan POS"}</h2>
+            <h2>{settings.store_name || "Nexttel POS"}</h2>
             {settings.store_name_ar && (
               <p className="sidebar-brand-ar" dir="rtl">
                 {settings.store_name_ar}
               </p>
             )}
-            <span className="sidebar-brand-version">Dukkan POS v1.0</span>
+            <span className="sidebar-brand-version">Nexttel POS v1.0</span>
           </div>
         </div>
 

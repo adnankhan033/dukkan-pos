@@ -694,13 +694,13 @@ async function buildCompactReceipt(ctx) {
 }
 
 export async function buildReceiptHtml({ sale, items, settings, currency }) {
-  const storeName = settings.store_name || "Dukkan POS";
+  const storeName = settings.store_name || "Nexttel POS";
   const storeNameAr = settings.store_name_ar || "";
   const address = settings.store_address || "";
   const storePhone = settings.store_phone || "";
   const footer = settings.receipt_footer || "Thank You";
   const footerAr = settings.receipt_footer_ar || "";
-  const branding = settings.receipt_branding || "Dukkan POS";
+  const branding = settings.receipt_branding || "Nexttel POS";
   const vatPercent = Number(settings.vat_percent) || 0;
   const crNumber = settings.cr_number || "";
   const vatRegistration = settings.vat_registration || "";

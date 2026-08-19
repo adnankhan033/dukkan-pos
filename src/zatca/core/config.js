@@ -33,7 +33,7 @@ export function parseZatcaConfig(settings = {}) {
       id: settings[ZATCA_SETTING_KEYS.DEVICE_ID] || "",
       serial: settings[ZATCA_SETTING_KEYS.DEVICE_SERIAL] || "",
       egsUnitName: settings[ZATCA_SETTING_KEYS.EGS_UNIT_NAME] || "",
-      model: settings[ZATCA_SETTING_KEYS.EGS_MODEL] || "Dukkan POS",
+      model: settings[ZATCA_SETTING_KEYS.EGS_MODEL] || "Nexttel POS",
       version: settings[ZATCA_SETTING_KEYS.EGS_VERSION] || "1.0.0",
     },
 
@@ -125,7 +125,7 @@ export function getZatcaDefaultSettings() {
     [ZATCA_SETTING_KEYS.DEVICE_ID]: "",
     [ZATCA_SETTING_KEYS.DEVICE_SERIAL]: "",
     [ZATCA_SETTING_KEYS.EGS_UNIT_NAME]: "",
-    [ZATCA_SETTING_KEYS.EGS_MODEL]: "Dukkan POS",
+    [ZATCA_SETTING_KEYS.EGS_MODEL]: "Nexttel POS",
     [ZATCA_SETTING_KEYS.EGS_VERSION]: "1.0.0",
     [ZATCA_SETTING_KEYS.COMPANY_NAME]: "",
     [ZATCA_SETTING_KEYS.COMPANY_NAME_AR]: "",

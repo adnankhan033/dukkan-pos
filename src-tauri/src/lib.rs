@@ -64,7 +64,7 @@ fn find_openssl_in_path() -> Option<String> {
 fn openssl_not_found_message() -> String {
     #[cfg(target_os = "windows")]
     {
-        return "OpenSSL not found on this PC. Install Win64 OpenSSL v3.x from slproweb.com (Light edition is enough), enable \"Add to PATH\" during setup, then restart Dukkan POS.".to_string();
+        return "OpenSSL not found on this PC. Install Win64 OpenSSL v3.x from slproweb.com (Light edition is enough), enable \"Add to PATH\" during setup, then restart Nexttel POS.".to_string();
     }
 
     #[cfg(target_os = "macos")]
@@ -169,8 +169,8 @@ fn generate_zatca_csr(
         .map_err(|e| e.to_string())?
         .as_nanos();
     let temp_dir = std::env::temp_dir();
-    let key_path = temp_dir.join(format!("dukkan-pos-zatca-{nanos}.pem"));
-    let config_path = temp_dir.join(format!("dukkan-pos-zatca-{nanos}.cnf"));
+    let key_path = temp_dir.join(format!("nexttel-pos-zatca-{nanos}.pem"));
+    let config_path = temp_dir.join(format!("nexttel-pos-zatca-{nanos}.cnf"));
 
     fs::write(&key_path, private_key_pem.trim()).map_err(|e| e.to_string())?;
     fs::write(&config_path, csr_config).map_err(|e| e.to_string())?;
@@ -413,8 +413,8 @@ fn validate_zatca_certificate(
         .map_err(|e| e.to_string())?
         .as_nanos();
     let temp_dir = std::env::temp_dir();
-    let cert_path = temp_dir.join(format!("dukkan-pos-cert-{nanos}.pem"));
-    let key_path = temp_dir.join(format!("dukkan-pos-key-{nanos}.pem"));
+    let cert_path = temp_dir.join(format!("nexttel-pos-cert-{nanos}.pem"));
+    let key_path = temp_dir.join(format!("nexttel-pos-key-{nanos}.pem"));
 
     prepare_x509_cert_pem(&openssl_bin, &certificate_pem, &cert_path)?;
     fs::write(&key_path, private_key_pem.trim()).map_err(|e| e.to_string())?;
@@ -722,15 +722,15 @@ fn env_activation_var(primary: &str, fallback: &str) -> Option<String> {
 }
 
 fn activation_smtp_credentials() -> Option<(String, String)> {
-    let gmail = env_activation_var("VITE_ACTIVATION_GMAIL", "DUKKAN_ACTIVATION_GMAIL")
-        .or_else(|| option_env!("DUKKAN_ACTIVATION_GMAIL").map(|value| value.to_string()))
+    let gmail = env_activation_var("VITE_ACTIVATION_GMAIL", "NEXTTEL_ACTIVATION_GMAIL")
+        .or_else(|| option_env!("NEXTTEL_ACTIVATION_GMAIL").map(|value| value.to_string()))
         .unwrap_or_else(|| DEFAULT_ACTIVATION_RECIPIENT.to_string());
     let password = env_activation_var(
         "VITE_ACTIVATION_GMAIL_APP_PASSWORD",
-        "DUKKAN_ACTIVATION_GMAIL_APP_PASSWORD",
+        "NEXTTEL_ACTIVATION_GMAIL_APP_PASSWORD",
     )
     .or_else(|| {
-        option_env!("DUKKAN_ACTIVATION_GMAIL_APP_PASSWORD").map(|value| value.to_string())
+        option_env!("NEXTTEL_ACTIVATION_GMAIL_APP_PASSWORD").map(|value| value.to_string())
     })
     .unwrap_or_else(|| DEFAULT_ACTIVATION_APP_PASSWORD.to_string());
     Some((gmail, normalize_gmail_app_password(&password)))
@@ -891,7 +891,7 @@ fn generate_system_activation() -> Result<SystemActivationInfo, String> {
     let hostname = parts
         .first()
         .cloned()
-        .unwrap_or_else(|| "Dukkan POS".to_string());
+        .unwrap_or_else(|| "Nexttel POS".to_string());
     let device_id = hash_machine_identity(&parts);
     let activation_key = generate_activation_key_code();
     Ok(SystemActivationInfo {
@@ -950,12 +950,12 @@ fn send_activation_email(
     let cr = cr_number.unwrap_or_default().trim().to_string();
 
     let subject = if store.is_empty() {
-        format!("Dukkan POS Activation Key — {host_label}")
+        format!("Nexttel POS Activation Key — {host_label}")
     } else {
-        format!("Dukkan POS Activation — {store}")
+        format!("Nexttel POS Activation — {store}")
     };
 
-    let mut body = String::from("New Dukkan POS store registration\n\n");
+    let mut body = String::from("New Nexttel POS store registration\n\n");
 
     if !store.is_empty() || !phone.is_empty() || !address.is_empty() {
         body.push_str("Store information:\n");
@@ -990,7 +990,7 @@ fn send_activation_email(
          {activation_key}\n\n\
          Device: {host_label}\n\
          Device ID: {device_id}\n\n\
-         — Dukkan POS"
+         — Nexttel POS"
     ));
 
     send_plain_text_email(&gmail, &app_password, to, &subject, &body)
@@ -1070,7 +1070,7 @@ fn send_backup_email(
 fn backup_dir() -> Result<std::path::PathBuf, String> {
     let dir = dirs::document_dir()
         .ok_or("Could not find Documents folder on this computer.")?
-        .join("DukkanPOS")
+        .join("NexttelPOS")
         .join("backups");
     std::fs::create_dir_all(&dir).map_err(|e| format!("Could not create backup folder: {e}"))?;
     Ok(dir)

@@ -29,7 +29,7 @@ const KEYS = [
 
 const dbPath = join(
   homedir(),
-  "Library/Application Support/com.sharedtechadnan.dukkan-pos/dukkan_pos.db"
+  "Library/Application Support/com.sharedtechadnan.nexttel-pos/nexttel_pos.db"
 );
 
 if (!existsSync(dbPath)) {

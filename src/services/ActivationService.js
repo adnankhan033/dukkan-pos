@@ -200,7 +200,7 @@ class ActivationService {
     deviceId,
     activationKey,
     recipient = ACTIVATION_RECIPIENT_EMAIL,
-    hostname = "Dukkan POS",
+    hostname = "Nexttel POS",
     customerName = "",
     customerPhone = "",
     storeName = "",
@@ -213,7 +213,7 @@ class ActivationService {
     }
 
     const hostLabel =
-      typeof hostname === "string" && hostname.trim() ? hostname.trim() : "Dukkan POS";
+      typeof hostname === "string" && hostname.trim() ? hostname.trim() : "Nexttel POS";
 
     const smtp = await this.resolveSmtpCredentials();
 

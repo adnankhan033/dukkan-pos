@@ -124,7 +124,7 @@ export default function SoftwareVendorModal({ vendor, isOpen, onClose }) {
         <div className="vendor-modal-footer">
           <div className="vendor-modal-product">
             <Building2 size={14} />
-            <span>Dukkan POS · Desktop POS for retail</span>
+            <span>Nexttel POS · Desktop POS for retail</span>
           </div>
           {vendor.copyright ? <span className="vendor-modal-copy">{vendor.copyright}</span> : null}
         </div>

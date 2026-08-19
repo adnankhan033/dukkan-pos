@@ -66,7 +66,7 @@ export function ensureDeviceDefaults(settings = {}) {
   }
 
   if (!config.device.model?.trim()) {
-    updates[K.EGS_MODEL] = "Dukkan POS";
+    updates[K.EGS_MODEL] = "Nexttel POS";
   }
   if (!config.device.version?.trim()) {
     updates[K.EGS_VERSION] = "1.0.0";

@@ -1,7 +1,7 @@
 import { invalidateDashboardCache } from "./DashboardCache";
 import { invalidateInventoryCache } from "./InventoryCache";
 
-export const CATALOG_CHANGED_EVENT = "dukkan-pos-catalog-changed";
+export const CATALOG_CHANGED_EVENT = "nexttel-pos-catalog-changed";
 
 export function invalidateProductCaches() {
   invalidateInventoryCache();

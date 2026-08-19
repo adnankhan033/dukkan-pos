@@ -332,8 +332,8 @@ export default function BackupCloudPanel({ busy, onBusyChange, onNotify }) {
           <div className="backup-local-folder">
             <div>
               <strong>Local backup folder</strong>
-              <p>{localFolder || "Documents/DukkanPOS/backups"}</p>
-              <span>Daily files: dukkan-pos-daily-YYYY-MM-DD.json</span>
+              <p>{localFolder || "Documents/NexttelPOS/backups"}</p>
+              <span>Daily files: nexttel-pos-daily-YYYY-MM-DD.json</span>
             </div>
             <Button type="button" variant="secondary" size="sm" onClick={handleOpenLocalFolder}>
               <FolderOpen size={14} /> Open Folder

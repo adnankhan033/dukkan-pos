@@ -1,5 +1,5 @@
 /**
- * Data models for DukkanPOS.
+ * Data models for NexttelPOS.
  * These shapes mirror SQLite rows and future Drupal REST API responses.
  */
 

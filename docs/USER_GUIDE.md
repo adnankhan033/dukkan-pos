@@ -1,6 +1,6 @@
-# DukkanPOS — User Guide
+# NexttelPOS — User Guide
 
-Complete step-by-step documentation for DukkanPOS: setup, daily workflows, and every module.
+Complete step-by-step documentation for NexttelPOS: setup, daily workflows, and every module.
 
 ---
 
@@ -38,7 +38,7 @@ Complete step-by-step documentation for DukkanPOS: setup, daily workflows, and e
 #### Install dependencies (first time only)
 
 ```bash
-cd dukkan-pos
+cd nexttel-pos
 bun install
 ```
 
@@ -48,7 +48,7 @@ bun install
 bun run tauri dev
 ```
 
-This opens the DukkanPOS window with hot reload for code changes.
+This opens the NexttelPOS window with hot reload for code changes.
 
 #### Build macOS DMG (installer)
 
@@ -61,7 +61,7 @@ bun run package:mac-dmg    # optional — copies to releases/
 
 Find the installer at:
 
-`src-tauri/target/release/bundle/dmg/DukkanPOS_1.0.0_*.dmg`
+`src-tauri/target/release/bundle/dmg/NexttelPOS_1.0.0_*.dmg`
 
 #### Build Windows EXE (installer)
 
@@ -69,12 +69,12 @@ On Windows:
 
 ```bash
 bun run build:win-exe
-bun run package:win-zip    # optional — creates DukkanPOS-Windows.zip
+bun run package:win-zip    # optional — creates NexttelPOS-Windows.zip
 ```
 
 Find the installer at:
 
-`src-tauri/target/release/bundle/nsis/DukkanPOS_1.0.0_x64-setup.exe`
+`src-tauri/target/release/bundle/nsis/NexttelPOS_1.0.0_x64-setup.exe`
 
 #### End users
 
@@ -82,7 +82,7 @@ If you received a built installer, double-click the **DMG** (Mac) or **setup EXE
 
 #### First launch
 
-On first run, the app creates a local SQLite database (`dukkan_pos.db`) and seeds default settings and users.
+On first run, the app creates a local SQLite database (`nexttel_pos.db`) and seeds default settings and users.
 
 ### 1.2 Sign in
 
@@ -637,4 +637,4 @@ Administration
 
 ---
 
-*DukkanPOS v0.1.0 — For ZATCA setup details, see [ZATCA_GUIDE.md](ZATCA_GUIDE.md).*
+*NexttelPOS v0.1.0 — For ZATCA setup details, see [ZATCA_GUIDE.md](ZATCA_GUIDE.md).*

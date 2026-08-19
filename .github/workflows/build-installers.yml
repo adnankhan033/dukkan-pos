@@ -53,11 +53,11 @@ jobs:
             echo "Installer unchanged, skipping commit"
             exit 0
           fi
-          git commit -m "Add Windows installer for DukkanPOS"
+          git commit -m "Add Windows installer for NexttelPOS"
           git push
 
       - name: Upload Windows installer
         uses: actions/upload-artifact@v4
         with:
-          name: DukkanPOS-Windows
+          name: NexttelPOS-Windows
           path: src-tauri/target/release/bundle/nsis/*-setup.exe

@@ -46,7 +46,7 @@ export function generateCSRTemplate({
   const safeVat = sanitizeCnfValue(vatNumber, { fallback: "300000000000003", maxLength: 15 });
   const safeEgsSerial = sanitizeCnfValue(
     `1-${solutionName}|2-${egsModel}|3-${egsSerialNumber}`,
-    { fallback: "1-PortalPOS|2-DukkanPOS|3-POS-001", maxLength: 250 }
+    { fallback: "1-PortalPOS|2-NexttelPOS|3-POS-001", maxLength: 250 }
   );
 
   const template = `oid_section = OIDs

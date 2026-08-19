@@ -4,10 +4,10 @@ import { getZatcaDefaultSettings } from "../zatca/core/config";
 import { VENDOR_DEFAULT_SETTINGS } from "../config/softwareVendor";
 import { RECEIPT_SECTION_DEFAULTS } from "./receiptSections";
 
-export const DB_NAME = "sqlite:dukkan_pos.db";
+export const DB_NAME = "sqlite:nexttel_pos.db";
 
 export const DEFAULT_SETTINGS = {
-  store_name: "Dukkan POS",
+  store_name: "Nexttel POS",
   store_name_ar: "",
   store_address: "",
   store_phone: "",
@@ -18,7 +18,7 @@ export const DEFAULT_SETTINGS = {
   currency: "SAR",
   receipt_footer: "Thank You",
   receipt_footer_ar: "شكراً لكم",
-  receipt_branding: "Dukkan POS",
+  receipt_branding: "Nexttel POS",
   receipt_show_qr: "1",
   receipt_show_bilingual: "1",
   receipt_show_tax_info: "1",

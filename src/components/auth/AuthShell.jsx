@@ -33,7 +33,7 @@ export default function AuthShell({
           </div>
 
           <div className="auth-hero-brand">
-            <h1 className="auth-hero-title">Dukkan POS</h1>
+            <h1 className="auth-hero-title">Nexttel POS</h1>
             <p className="auth-hero-tagline">
               Modern point of sale built for retail, speed, and daily store operations.
             </p>

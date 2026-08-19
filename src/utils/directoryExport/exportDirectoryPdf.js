@@ -96,7 +96,7 @@ export function exportDirectoryPdf({ definition, rows, company, currency }) {
   const footerY = doc.internal.pageSize.getHeight() - 8;
   doc.setFontSize(8);
   doc.setTextColor(100, 116, 139);
-  doc.text("Prepared for sharing · Dukkan POS", margin, footerY);
+  doc.text("Prepared for sharing · Nexttel POS", margin, footerY);
   doc.text(`Confidential business document · ${company.generatedAt}`, pageWidth - margin, footerY, {
     align: "right",
   });

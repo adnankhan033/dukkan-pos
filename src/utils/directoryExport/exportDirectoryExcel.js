@@ -35,7 +35,7 @@ export function exportDirectoryExcel({ definition, rows, company, currency }) {
     ["Summary", ...spacerRow(colCount - 1).slice(1)],
     ...summary.lines.map((line) => [line, ...spacerRow(colCount - 1).slice(1)]),
     spacerRow(colCount),
-    ["Prepared for sharing · Dukkan POS", ...spacerRow(colCount - 1).slice(1)],
+    ["Prepared for sharing · Nexttel POS", ...spacerRow(colCount - 1).slice(1)],
   ];
 
   const titleRowIndex = sheetRows.findIndex((row) => row[0] === definition.title);

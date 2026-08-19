@@ -1,10 +1,10 @@
-# Dukkan POS
+# Nexttel POS
 
-Desktop Point of Sale for retail stores and baqalas in Saudi Arabia. Dukkan POS runs **offline** on your computer, supports bilingual (English / Arabic) receipts, **VAT-inclusive shelf pricing**, inventory, suppliers, customers, accounting, role-based access, reports, shareable **store cards**, optional **Gmail backup**, and **ZATCA** e-invoicing (Phase 1 and Phase 2).
+Desktop Point of Sale for retail stores and baqalas in Saudi Arabia. Nexttel POS runs **offline** on your computer, supports bilingual (English / Arabic) receipts, **VAT-inclusive shelf pricing**, inventory, suppliers, customers, accounting, role-based access, reports, shareable **store cards**, optional **Gmail backup**, and **ZATCA** e-invoicing (Phase 1 and Phase 2).
 
 **Stack:** Tauri 2 · React 19 · Vite 7 · SQLite (local) · Zustand
 
-**App:** Dukkan POS v1.0.0
+**App:** Nexttel POS v1.0.0
 
 ---
 
@@ -63,7 +63,7 @@ bun run reset:setup
 
 ## Commands
 
-All commands are run from the project root (`dukkan-pos/`).
+All commands are run from the project root (`nexttel-pos/`).
 
 | Command | Description |
 |---------|-------------|
@@ -96,11 +96,11 @@ bun run build:mac-dmg
 **Output:**
 
 ```
-releases/Dukkan POS_1.0.0_aarch64.dmg   # Apple Silicon
-releases/Dukkan POS_1.0.0_x64.dmg       # Intel Mac
+releases/Nexttel POS_1.0.0_aarch64.dmg   # Apple Silicon
+releases/Nexttel POS_1.0.0_x64.dmg       # Intel Mac
 ```
 
-**Install:** Open the `.dmg` → drag **Dukkan POS** to Applications.
+**Install:** Open the `.dmg` → drag **Nexttel POS** to Applications.
 
 ### Windows (EXE)
 
@@ -120,7 +120,7 @@ bun run build:win-exe
 **Output:**
 
 ```
-releases/Dukkan POS_1.0.0_x64-setup.exe
+releases/Nexttel POS_1.0.0_x64-setup.exe
 ```
 
 **Install:** Run the setup `.exe` → follow the installer → launch from Start menu.
@@ -196,7 +196,7 @@ Each card shows a QR code that opens WhatsApp (or the store website).
 
 ## VAT & pricing (Saudi retail)
 
-Dukkan POS supports **VAT-inclusive shelf prices** — the normal approach for Saudi supermarkets and baqalas.
+Nexttel POS supports **VAT-inclusive shelf prices** — the normal approach for Saudi supermarkets and baqalas.
 
 ### Store defaults (**Settings → Store**)
 
@@ -362,7 +362,7 @@ Full details: [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
 ## Project structure
 
 ```
-dukkan-pos/
+nexttel-pos/
 ├── src/                    # React frontend
 │   ├── pages/              # Screens (Sales, Orders, StoreCards, Settings, …)
 │   ├── components/         # Shared UI and feature components
@@ -386,4 +386,4 @@ dukkan-pos/
 
 ## License
 
-Private project — Dukkan POS v1.0.0
+Private project — Nexttel POS v1.0.0

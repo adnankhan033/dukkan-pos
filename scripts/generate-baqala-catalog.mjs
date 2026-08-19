@@ -1,5 +1,5 @@
 /**
- * Generates ~1000 common Saudi baqala products for DukkanPOS import.
+ * Generates ~1000 common Saudi baqala products for NexttelPOS import.
  * Run: node scripts/generate-baqala-catalog.mjs
  */
 import { writeFileSync, mkdirSync } from "fs";

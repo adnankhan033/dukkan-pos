@@ -14,7 +14,7 @@ export const DEFAULT_ADMIN_PASSWORD = "9042@Admin02";
 /**
  * Gmail credentials for sending activation keys.
  * Dev: create `.env.local` with VITE_ACTIVATION_GMAIL and VITE_ACTIVATION_GMAIL_APP_PASSWORD
- * Production build: same vars in `.env.production.local`, or Rust build env DUKKAN_ACTIVATION_*.
+ * Production build: same vars in `.env.production.local`, or Rust build env NEXTTEL_ACTIVATION_*.
  */
 export const ACTIVATION_SETTING_KEYS = {
   KEY: "system_activation_key",

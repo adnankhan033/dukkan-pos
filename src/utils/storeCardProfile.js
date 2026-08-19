@@ -42,7 +42,7 @@ export function readStoreCardProfile(settings = {}) {
   };
 
   return {
-    name: pick(STORE_CARD_SETTING_KEYS.NAME, "store_name", "Dukkan POS"),
+    name: pick(STORE_CARD_SETTING_KEYS.NAME, "store_name", "Nexttel POS"),
     nameAr: pick(STORE_CARD_SETTING_KEYS.NAME_AR, "store_name_ar"),
     tagline: String(settings[STORE_CARD_SETTING_KEYS.TAGLINE] || "").trim() || "Your neighborhood store",
     phone: pick(STORE_CARD_SETTING_KEYS.PHONE, "store_phone"),

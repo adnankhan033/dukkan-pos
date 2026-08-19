@@ -1,12 +1,12 @@
-# DukkanPOS — ZATCA Integration Guide
+# NexttelPOS — ZATCA Integration Guide
 
-Guide for Saudi Arabia **ZATCA** (Zakat, Tax and Customs Authority) e-invoicing in DukkanPOS.
+Guide for Saudi Arabia **ZATCA** (Zakat, Tax and Customs Authority) e-invoicing in NexttelPOS.
 
 ---
 
 ## Overview
 
-DukkanPOS supports three ZATCA modes configured per store in **Settings → ZATCA**:
+NexttelPOS supports three ZATCA modes configured per store in **Settings → ZATCA**:
 
 | Mode | What it does | API required |
 |------|----------------|--------------|
@@ -202,7 +202,7 @@ QR content follows ZATCA Phase 1 TLV specification regardless of Phase 2 sync st
 
 ## Architecture (for reference)
 
-DukkanPOS uses a **module pattern**:
+NexttelPOS uses a **module pattern**:
 
 - `DisabledModule` — no ZATCA
 - `Phase1Module` — QR generation only

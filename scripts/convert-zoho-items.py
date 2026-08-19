@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert Zoho Inventory Item.csv to DukkanPOS product import format."""
+"""Convert Zoho Inventory Item.csv to NexttelPOS product import format."""
 import csv
 import re
 import sys
@@ -255,8 +255,8 @@ def main():
     src = Path("/Users/sharedtechadnan/Downloads/Item.csv")
     out_dir = Path(__file__).resolve().parent.parent / "data"
     out_dir.mkdir(exist_ok=True)
-    csv_out = out_dir / "dukkan-import-items.csv"
-    xlsx_out = out_dir / "dukkan-import-items.xlsx"
+    csv_out = out_dir / "nexttel-import-items.csv"
+    xlsx_out = out_dir / "nexttel-import-items.xlsx"
 
     with src.open(encoding="utf-8-sig", newline="") as f:
         reader = csv.DictReader(f)

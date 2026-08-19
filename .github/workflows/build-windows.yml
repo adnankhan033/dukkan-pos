@@ -35,11 +35,11 @@ jobs:
           if (-not $installer) {
             throw "Setup exe not found in src-tauri/target/release/bundle/nsis"
           }
-          Compress-Archive -Path $installer.FullName -DestinationPath "DukkanPOS-Windows.zip" -Force
-          Write-Host "Created DukkanPOS-Windows.zip containing $($installer.Name)"
+          Compress-Archive -Path $installer.FullName -DestinationPath "NexttelPOS-Windows.zip" -Force
+          Write-Host "Created NexttelPOS-Windows.zip containing $($installer.Name)"
 
       - name: Upload zip
         uses: actions/upload-artifact@v4
         with:
-          name: DukkanPOS-Windows
-          path: DukkanPOS-Windows.zip
+          name: NexttelPOS-Windows
+          path: NexttelPOS-Windows.zip

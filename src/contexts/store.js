@@ -25,7 +25,7 @@ export const useAuthStore = create(
         }),
     }),
     {
-      name: "dukkan-pos-auth",
+      name: "nexttel-pos-auth",
       version: 2,
       migrate: (persistedState, version) => {
         if (version < 2) {
@@ -49,7 +49,7 @@ export const useThemeStore = create(
         set((state) => ({ theme: state.theme === "light" ? "dark" : "light" })),
       setTheme: (theme) => set({ theme }),
     }),
-    { name: "dukkan-pos-theme" }
+    { name: "nexttel-pos-theme" }
   )
 );
 
@@ -87,6 +87,6 @@ export const useSidebarStore = create(
         else set({ mode: "expanded" });
       },
     }),
-    { name: "dukkan-pos-sidebar", version: 1 }
+    { name: "nexttel-pos-sidebar", version: 1 }
   )
 );

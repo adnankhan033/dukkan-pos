@@ -62,7 +62,7 @@ export default function AppCloseGuard({ children }) {
       {children}
       {confirmOpen && (
         <ConfirmDialog
-          title="Close Dukkan POS?"
+          title="Close Nexttel POS?"
           message="Are you sure you want to quit? Unsaved changes in open forms may be lost."
           confirmLabel="Close App"
           cancelLabel="Stay Open"

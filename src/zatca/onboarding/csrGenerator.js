@@ -29,11 +29,11 @@ export function buildCsrParams(settings = {}) {
   const environment = config.environment || ZATCA_ENVIRONMENTS.SANDBOX;
 
   const vatNumber = normalizeVatNumber(config.company.vatNumber, environment);
-  const taxpayerName = pick(config.company.name, settings.store_name, "DukkanPOS Store");
+  const taxpayerName = pick(config.company.name, settings.store_name, "NexttelPOS Store");
   const branchName = pick(config.device.egsUnitName, taxpayerName, "Main Branch");
   const branchLocation = pick(config.company.address, settings.store_address, "Riyadh");
   const branchIndustry = "Retail";
-  const egsModel = pick(config.device.model, "Dukkan POS", "1.0.0");
+  const egsModel = pick(config.device.model, "Nexttel POS", "1.0.0");
   const egsSerialNumber = pick(
     config.device.serial,
     config.device.id,
