@@ -4,7 +4,7 @@ Desktop Point of Sale for retail stores and baqalas in Saudi Arabia. Dukkan POS 
 
 **Stack:** Tauri 2 · React 19 · Vite 7 · SQLite (local) · Zustand
 
-**App:** Dukkan POS v1.0.0 (`com.sharedtechadnan.dukkan-pos`)
+**App:** Dukkan POS v1.0.0
 
 ---
 

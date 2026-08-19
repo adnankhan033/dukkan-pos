@@ -120,6 +120,42 @@
   color: var(--color-primary);
 }
 
+.sale-complete-print-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-top: 0.85rem;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+  cursor: pointer;
+}
+
+.sale-complete-print-check input {
+  margin-top: 0.2rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  accent-color: var(--color-primary);
+  flex-shrink: 0;
+}
+
+.sale-complete-print-check span {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.sale-complete-print-check strong {
+  font-size: 0.875rem;
+}
+
+.sale-complete-print-check small {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}
+
 .sale-complete-zatca-note {
   margin-top: 0.75rem;
   font-size: 0.8125rem;

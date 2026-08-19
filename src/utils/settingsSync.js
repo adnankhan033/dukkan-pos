@@ -33,6 +33,7 @@ export const LOCAL_STORE_SETTING_KEYS = [
   "receipt_paper_width",
   "receipt_header_note",
   "receipt_template",
+  "receipt_print_on_complete",
   "dashboard_admin_show_profit",
   "dashboard_admin_show_purchases",
   "dashboard_cashier_show_recent",

@@ -119,6 +119,10 @@ function ReceiptTabView({ form }) {
           label="Template"
           value={RECEIPT_TEMPLATE_LABELS[form.receipt_template] || form.receipt_template}
         />
+        <ViewRow
+          label="Print invoice after sale"
+          value={boolLabel(form.receipt_print_on_complete)}
+        />
         <ViewRow label="Paper width" value={form.receipt_paper_width === "58" ? "58mm" : "80mm"} />
         <ViewRow label="Header note" value={form.receipt_header_note} />
         <ViewRow label="Footer (English)" value={form.receipt_footer} />

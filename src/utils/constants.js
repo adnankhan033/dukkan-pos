@@ -26,6 +26,7 @@ export const DEFAULT_SETTINGS = {
   receipt_paper_width: "80",
   receipt_header_note: "",
   receipt_template: "baqala",
+  receipt_print_on_complete: "1",
   business_timezone: "Asia/Riyadh",
   business_date_override: "",
   business_time_override: "",

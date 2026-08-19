@@ -85,6 +85,7 @@ function buildFormFromSettings(settings) {
     receipt_paper_width: settings.receipt_paper_width || "80",
     receipt_header_note: settings.receipt_header_note || "",
     receipt_template: settings.receipt_template || DEFAULT_RECEIPT_TEMPLATE,
+    receipt_print_on_complete: settingBool(settings.receipt_print_on_complete ?? "1"),
     business_timezone: settings.business_timezone || DEFAULT_BUSINESS_TIMEZONE,
     business_date_override: settings.business_date_override || "",
     business_time_override: settings.business_time_override || "",
@@ -131,6 +132,7 @@ function formToSettings(form) {
     receipt_paper_width: form.receipt_paper_width,
     receipt_header_note: form.receipt_header_note,
     receipt_template: form.receipt_template || DEFAULT_RECEIPT_TEMPLATE,
+    receipt_print_on_complete: form.receipt_print_on_complete ? "1" : "0",
     business_timezone: form.business_timezone || DEFAULT_BUSINESS_TIMEZONE,
     business_date_override: form.business_date_override || "",
     business_time_override: form.business_time_override || "",
@@ -798,6 +800,21 @@ export default function Settings() {
                 <option value="classic">Classic Thermal</option>
                 <option value="compact">Compact 58mm</option>
               </Select>
+
+              <div style={{ marginTop: "1.25rem" }}>
+                <Select
+                  label="Print invoice after sale"
+                  value={form.receipt_print_on_complete ? "1" : "0"}
+                  onChange={(e) => updateField("receipt_print_on_complete", e.target.value === "1")}
+                >
+                  <option value="1">Yes — print automatically</option>
+                  <option value="0">No — save only, do not print</option>
+                </Select>
+                <p className="settings-section-desc" style={{ marginTop: "0.5rem" }}>
+                  Default for the Print invoice checkbox on the complete-sale popup. Cashiers can still
+                  change it for a single sale. The order is always saved either way.
+                </p>
+              </div>
 
               <div className="settings-check-list" style={{ marginTop: "1.25rem" }}>
                 <h4 className="settings-subsection-title">Invoice sections</h4>

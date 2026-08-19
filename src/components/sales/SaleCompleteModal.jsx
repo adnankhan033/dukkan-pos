@@ -28,6 +28,8 @@ export default function SaleCompleteModal({
   processing = false,
   printingReceipt = false,
   zatcaQueued = false,
+  printInvoice = true,
+  onPrintInvoiceChange,
   onConfirmComplete,
   onCancel,
   onPrint,
@@ -41,7 +43,10 @@ export default function SaleCompleteModal({
   const showCashFields = collectsCash || paymentMethod === "cash";
 
   return (
-    <div className="sale-complete-overlay" onClick={step === "confirm" ? onCancel : undefined}>
+    <div
+      className="sale-complete-overlay"
+      onClick={step === "confirm" && !processing ? onCancel : undefined}
+    >
       <div
         className={`sale-complete-modal ${step === "print" ? "sale-complete-modal--with-preview" : ""}`}
         onClick={(e) => e.stopPropagation()}
@@ -115,6 +120,22 @@ export default function SaleCompleteModal({
                   <span>{formatCurrency(grandTotal, currency)}</span>
                 </div>
               </div>
+              <label className="sale-complete-print-check">
+                <input
+                  type="checkbox"
+                  checked={printInvoice}
+                  disabled={processing}
+                  onChange={(e) => onPrintInvoiceChange?.(e.target.checked)}
+                />
+                <span>
+                  <strong>Print invoice</strong>
+                  <small>
+                    {printInvoice
+                      ? "The printer dialog will open after this sale is saved."
+                      : "The sale will be saved without printing."}
+                  </small>
+                </span>
+              </label>
             </div>
             <div className="sale-complete-footer">
               <Button variant="secondary" onClick={onCancel} disabled={processing}>

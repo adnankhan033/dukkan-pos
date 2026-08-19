@@ -71,6 +71,11 @@ function productInitial(name = "") {
   return trimmed ? trimmed.charAt(0).toUpperCase() : "?";
 }
 
+function settingEnabled(value, fallback = true) {
+  if (value == null || value === "") return fallback;
+  return value !== "0" && value !== "false";
+}
+
 function PosPaymentMethodIcon({ icon, size = 18 }) {
   if (icon === "credit-card") return <CreditCard size={size} />;
   if (icon === "smartphone") return <Smartphone size={size} />;
@@ -107,6 +112,7 @@ export default function Sales() {
   const [completeStep, setCompleteStep] = useState(null);
   const [pendingPaymentMethod, setPendingPaymentMethod] = useState(PAYMENT_METHODS.CASH);
   const [completedSale, setCompletedSale] = useState(null);
+  const [printOnComplete, setPrintOnComplete] = useState(true);
   const [printingReceipt, setPrintingReceipt] = useState(false);
   const [returnOpen, setReturnOpen] = useState(false);
   const [editProductId, setEditProductId] = useState(null);
@@ -462,6 +468,7 @@ export default function Sales() {
   function openCompleteConfirm(paymentMethod) {
     if (!validateBeforeComplete(paymentMethod)) return;
     setPendingPaymentMethod(paymentMethod);
+    setPrintOnComplete(settingEnabled(settings.receipt_print_on_complete, true));
     setCompleteStep("confirm");
   }
 
@@ -493,6 +500,7 @@ export default function Sales() {
 
   async function handleConfirmComplete() {
     const cartSnapshot = [...cart];
+    const shouldPrint = printOnComplete;
     try {
       await guard(async () => {
         const payLater = isPayLaterMethod(pendingPaymentMethod);
@@ -544,7 +552,23 @@ export default function Sales() {
         setDiscount(0);
         setCashReceived("");
         await refreshTopProducts();
-        setCompleteStep("print");
+
+        if (shouldPrint) {
+          try {
+            await printReceipt({
+              sale: receiptSale,
+              items: receiptSale.items,
+              settings,
+              currency,
+            });
+          } catch (err) {
+            notify.error(err.message || "Print failed", { title: "Print failed" });
+          }
+        }
+
+        notify.success(`Sale ${receiptSale.sale_number} is complete.`, { title: "Sale completed" });
+        closeCompleteFlow();
+        focusSearch();
       });
     } catch (err) {
       notify.error(err.message, { title: "Sale failed" });
@@ -1125,6 +1149,8 @@ export default function Sales() {
         processing={submitting}
         printingReceipt={printingReceipt}
         zatcaQueued={zatcaPhase2 && Boolean(completedSale)}
+        printInvoice={printOnComplete}
+        onPrintInvoiceChange={setPrintOnComplete}
         onConfirmComplete={handleConfirmComplete}
         onCancel={closeCompleteFlow}
         onPrint={handlePrintReceipt}
