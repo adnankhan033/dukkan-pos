@@ -22,7 +22,7 @@ export const ACTIONS = [
     module: "sales",
     label: "Update created invoices",
     group: "Sales",
-    description: "Show the receipt option that applies the current invoice layout to invoices already created.",
+    description: "Show Update on Orders so this role can change invoices after they are created.",
   },
   {
     id: "sales_override_price",

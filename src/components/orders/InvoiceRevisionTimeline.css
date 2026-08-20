@@ -1,0 +1,131 @@
+.invoice-revisions {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 18%, var(--color-border));
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent 55%),
+    var(--color-card);
+}
+
+.invoice-revisions-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+
+.invoice-revisions-icon {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--color-primary) 14%, var(--color-surface));
+  color: var(--color-primary);
+}
+
+.invoice-revisions-head h4 {
+  margin: 0 0 0.15rem;
+  font-size: 0.95rem;
+}
+
+.invoice-revisions-head p {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.invoice-revisions-track {
+  display: flex;
+  gap: 0.7rem;
+  overflow-x: auto;
+  padding: 0.15rem 0.1rem 0.35rem;
+}
+
+.invoice-revision-card {
+  position: relative;
+  flex: 0 0 220px;
+  display: grid;
+  grid-template-columns: 2.1rem 1fr;
+  gap: 0.65rem;
+  align-items: start;
+  padding: 0.8rem 0.8rem 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  background: var(--color-surface);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.invoice-revision-card:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+}
+
+.invoice-revision-card.is-selected {
+  border-color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 8%, var(--color-card));
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.invoice-revision-num {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+}
+
+.invoice-revision-card.is-selected .invoice-revision-num,
+.invoice-revision-card.is-current .invoice-revision-num {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.invoice-revision-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.invoice-revision-copy strong {
+  font-size: 0.8125rem;
+}
+
+.invoice-revision-copy em,
+.invoice-revision-copy span,
+.invoice-revision-copy small {
+  font-style: normal;
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.invoice-revision-now {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-primary) 16%, var(--color-card));
+  color: var(--color-primary);
+  font-size: 0.625rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.invoice-revision-connector {
+  display: none;
+}

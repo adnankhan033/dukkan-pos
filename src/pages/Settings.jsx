@@ -1108,8 +1108,9 @@ export default function Settings() {
                     Update invoices already created
                   </span>
                   <small className="settings-check-hint">
-                    When on, reprints of older invoices use the current receipt layout instead of the
-                    layout saved with each sale.
+                    When on, Orders shows an Update button so you can change items and prices on
+                    invoices already created. Catalog product prices are not changed. Reprints also
+                    use the current receipt layout.
                   </small>
                 </label>
               )}

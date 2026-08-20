@@ -94,9 +94,23 @@ export const SCHEMA_STATEMENTS = [
     status TEXT DEFAULT 'completed',
     notes TEXT,
     invoice_settings TEXT,
+    revision INTEGER DEFAULT 1,
+    original_total REAL,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (customer_id) REFERENCES customers(id)
+  )`,
+
+  `CREATE TABLE IF NOT EXISTS invoice_revisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sale_id INTEGER NOT NULL,
+    revision INTEGER NOT NULL,
+    snapshot TEXT NOT NULL,
+    created_by INTEGER,
+    created_by_name TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(sale_id, revision),
+    FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
   )`,
 
   `CREATE TABLE IF NOT EXISTS sale_items (

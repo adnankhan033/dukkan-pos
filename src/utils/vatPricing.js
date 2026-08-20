@@ -119,9 +119,23 @@ export function buildCartLineFromProduct(product, storeSettings = {}, quantity =
   };
 }
 
+function cartLineQuantity(item) {
+  return Math.max(0, Number(item?.quantity) || 0);
+}
+
+function cartLineExclusiveTotal(item) {
+  const qty = cartLineQuantity(item);
+  const unit = Number(item?.unit_price);
+  if (Number.isFinite(unit) && qty > 0) {
+    return roundMoney(unit * qty);
+  }
+  const stored = Number(item?.total);
+  return Number.isFinite(stored) ? roundMoney(stored) : 0;
+}
+
 /** Apply a customer-facing price to one cart line for this sale only. */
 export function applyCartLineShelfPrice(item, shelfPrice) {
-  const qty = Number(item.quantity) || 0;
+  const qty = cartLineQuantity(item);
   const shelfUnitPrice = roundMoney(Math.max(0, Number(shelfPrice) || 0));
   const catalogShelf = roundMoney(
     item.catalog_shelf_unit_price != null ? item.catalog_shelf_unit_price : item.shelf_unit_price
@@ -133,6 +147,7 @@ export function applyCartLineShelfPrice(item, shelfPrice) {
 
   return {
     ...item,
+    quantity: qty,
     catalog_shelf_unit_price: catalogShelf,
     shelf_unit_price: shelfUnitPrice,
     unit_price: unitPrice,
@@ -142,15 +157,56 @@ export function applyCartLineShelfPrice(item, shelfPrice) {
   };
 }
 
+/** Keep line amount in sync when quantity changes: amount = qty × price. */
+export function applyCartLineQuantity(item, quantity) {
+  const qty = Math.max(0, Math.floor(Number(quantity) || 0));
+  return applyCartLineShelfPrice({ ...item, quantity: qty }, cartItemDisplayUnitPrice(item));
+}
+
+/** Rebuild a cart line from a saved sale item, keeping the charged price. */
+export function cartLineFromSaleItem(item, product, storeSettings = {}) {
+  const qty = Math.max(1, Number(item.quantity) || 1);
+  if (product) {
+    const line = buildCartLineFromProduct(product, storeSettings, qty);
+    const soldExcl = Number(item.unit_price);
+    const shelf = line.vat_included
+      ? exclusiveToInclusiveUnitPrice(soldExcl, line.vat_rate)
+      : soldExcl;
+    return applyCartLineShelfPrice(
+      { ...line, discount: item.discount || 0 },
+      Number.isFinite(soldExcl) ? shelf : line.shelf_unit_price
+    );
+  }
+
+  const unitPrice = Number(item.unit_price) || 0;
+  return {
+    product_id: item.product_id,
+    name: item.product_name || item.name || "Item",
+    name_ar: item.name_ar || "",
+    unit_symbol: "pcs",
+    unit_price: unitPrice,
+    shelf_unit_price: unitPrice,
+    catalog_shelf_unit_price: unitPrice,
+    quantity: qty,
+    discount: item.discount || 0,
+    total: roundMoney(unitPrice * qty),
+    shelf_line_total: roundMoney(unitPrice * qty),
+    vat_rate: 0,
+    vat_included: false,
+    tax_category: TAX_CATEGORIES.STANDARD,
+    price_overridden: false,
+  };
+}
+
 /** Cart totals with per-line VAT rates and proportional order discount. */
 export function calcCartTotals(cart = [], orderDiscount = 0, storeSettings = null) {
-  const subtotal = roundMoney(cart.reduce((sum, item) => sum + (Number(item.total) || 0), 0));
+  const subtotal = roundMoney(cart.reduce((sum, item) => sum + cartLineExclusiveTotal(item), 0));
   const discount = Math.max(0, Number(orderDiscount) || 0);
   const taxOn = storeSettings == null ? true : isTaxEnabled(storeSettings);
 
   let vat = 0;
   for (const item of cart) {
-    const lineExcl = Number(item.total) || 0;
+    const lineExcl = cartLineExclusiveTotal(item);
     const lineShare = subtotal > 0 ? lineExcl / subtotal : 0;
     const lineDiscount = discount * lineShare;
     const taxableExcl = Math.max(0, lineExcl - lineDiscount);
@@ -173,10 +229,9 @@ export function cartItemDisplayUnitPrice(item) {
   return roundMoney(item.unit_price);
 }
 
-/** Display line total on POS (customer-facing). */
+/** Display line total on POS (customer-facing): always qty × price. */
 export function cartItemDisplayLineTotal(item) {
-  if (item.shelf_line_total != null) return roundMoney(item.shelf_line_total);
-  return roundMoney(cartItemDisplayUnitPrice(item) * (Number(item.quantity) || 0));
+  return roundMoney(cartItemDisplayUnitPrice(item) * cartLineQuantity(item));
 }
 
 export function vatIncludedToPriceType(vatIncluded) {

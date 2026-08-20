@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CalendarRange, ClipboardList, DollarSign, Eye, FileDown, RefreshCw, RotateCcw, ShoppingBag, Trash2, ShieldAlert } from "lucide-react";
+import { CalendarRange, ClipboardList, DollarSign, Eye, FileDown, Pencil, RefreshCw, RotateCcw, ShoppingBag, Trash2, ShieldAlert } from "lucide-react";
 import { saleService } from "../services/SaleService";
 import { onSalesChanged } from "../services/SalesSync";
 import { paymentMethodService } from "../services/PaymentMethodService";
 import { onPaymentMethodsChanged } from "../services/PaymentMethodsSync";
 import { zatcaService } from "../services/ZatcaService";
-import { ensureReturnSchema } from "../database/connection";
+import { ensureReturnSchema, ensureInvoiceRevisionSchema } from "../database/connection";
 import { useSettingsStore } from "../contexts/store";
 import { usePermissions } from "../hooks/usePermissions";
 import { useConfirm } from "../hooks/useConfirm";
@@ -23,6 +23,7 @@ import Badge from "../components/common/Badge";
 import ZatcaOrderStatusBadge from "../components/zatca/ZatcaOrderStatusBadge";
 import ZatcaXmlDownloadLink from "../components/zatca/ZatcaXmlDownloadLink";
 import OrderDetailModal from "../components/orders/OrderDetailModal";
+import OrderEditModal from "../components/orders/OrderEditModal";
 import SaleReturnModal from "../components/sales/SaleReturnModal";
 import { Input, Select } from "../components/common/Input";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
@@ -30,6 +31,8 @@ import { formatCurrency, formatDate, formatOrderDateTime } from "../utils/format
 import { getBusinessDateISO, getBusinessPeriodDateRange } from "../utils/businessDate";
 import { resolvePaymentMethodLabel } from "../utils/paymentMethods";
 import { printReceipt } from "../utils/receipt";
+import { isInvoiceUpdateExisting } from "../utils/invoiceSettings";
+import { parseRevisionList, revisionLabel, originalInvoiceBalance } from "../utils/invoiceRevisions";
 import { buildReportCompanyProfile } from "../utils/directoryExport/companyProfile";
 import { exportOrdersPdf } from "../utils/ordersExport/exportOrdersPdf";
 import { downloadArrayBuffer } from "../utils/productImport/download";
@@ -91,9 +94,39 @@ function orderStatusBadge(status) {
   return <Badge variant="success">Completed</Badge>;
 }
 
+function canEditCreatedInvoice(sale) {
+  return sale?.status === SALE_STATUS.COMPLETED;
+}
+
+function OrderRevisionsCell({ row, onOpen }) {
+  const current = Number(row.revision) || 1;
+  const revisions = parseRevisionList(row.revision_list, row.revision_count);
+  if (!revisions.length) {
+    return <span className="orders-revisions-empty">—</span>;
+  }
+
+  return (
+    <div className="orders-revisions">
+      {revisions.map((n) => (
+        <button
+          key={n}
+          type="button"
+          className={`orders-rev-pill ${n === current ? "is-latest" : ""}`}
+          title={revisionLabel(n)}
+          onClick={() => onOpen(row, n)}
+        >
+          {n === 1 ? "Original" : `R${n}`}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function Orders() {
   const settings = useSettingsStore((s) => s.settings);
-  const { isAdmin } = usePermissions();
+  const { isAdmin, canPerformAction } = usePermissions();
+  const canUpdateInvoices =
+    canPerformAction("invoices_update") && isInvoiceUpdateExisting(settings);
   const { confirm, dialog: confirmDialog } = useConfirm();
   const currency = settings.currency || "SAR";
   const vatPercent = Number(settings.vat_percent) || 0;
@@ -144,6 +177,10 @@ export default function Orders() {
 
   const [returnOpen, setReturnOpen] = useState(false);
   const [returnSaleId, setReturnSaleId] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editSale, setEditSale] = useState(null);
+  const [editSaving, setEditSaving] = useState(false);
+  const [detailRevision, setDetailRevision] = useState(null);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
@@ -185,6 +222,11 @@ export default function Orders() {
     setError("");
     try {
       await ensureReturnSchema();
+      try {
+        await ensureInvoiceRevisionSchema();
+      } catch (err) {
+        console.error("Could not ensure invoice revision schema:", err);
+      }
       const rangeArgs = { period, from, to, fromTime, toTime };
       const [result, periodStats] = await Promise.all([
         saleService.getByPeriodPaginated({
@@ -298,11 +340,12 @@ export default function Orders() {
     return unsubscribe;
   }, [showZatcaColumn, loadOrders]);
 
-  async function openOrderDetail(row) {
+  async function openOrderDetail(row, revision = null) {
     setDetailOpen(true);
     setDetailLoading(true);
     setSelectedSale(null);
     setSelectedReturns([]);
+    setDetailRevision(revision);
     setError("");
 
     try {
@@ -356,6 +399,59 @@ export default function Orders() {
     setDetailOpen(false);
     setReturnSaleId(sale.id);
     setReturnOpen(true);
+  }
+
+  async function openInvoiceEdit(row) {
+    setError("");
+    try {
+      const full = row?.items ? row : await saleService.getById(row.id);
+      if (!canEditCreatedInvoice(full)) {
+        setError("Only completed invoices with no returns can be updated.");
+        return;
+      }
+      setDetailOpen(false);
+      setEditSale(full);
+      setEditOpen(true);
+    } catch (err) {
+      setError(err.message || "Could not open this invoice for update.");
+    }
+  }
+
+  function closeInvoiceEdit() {
+    if (editSaving) return;
+    setEditOpen(false);
+    setEditSale(null);
+  }
+
+  async function handleSaveInvoiceEdit({ items, discount }) {
+    if (!editSale?.id || editSaving) return;
+    const ok = await confirm({
+      title: "Add invoice revision",
+      message:
+        "A new revision of this invoice will be added. The original and every earlier version stay in history so you can open them anytime.",
+      confirmLabel: "Add revision",
+      cancelLabel: "Cancel",
+      variant: "danger",
+    });
+    if (!ok) return;
+
+    setEditSaving(true);
+    setError("");
+    try {
+      const updated = await saleService.updateInvoice(editSale.id, { items, discount });
+      setEditOpen(false);
+      setEditSale(null);
+      setSelectedSale(updated);
+      setDetailOpen(true);
+      setMessage(
+        `${updated.sale_number} Revision ${updated.revision || 2} was added. Open any version from the timeline.`
+      );
+      await loadOrders();
+    } catch (err) {
+      setError(err.message || "Could not update this invoice.");
+    } finally {
+      setEditSaving(false);
+    }
   }
 
   function handleReturnSuccess(result) {
@@ -502,7 +598,9 @@ export default function Orders() {
           },
         ]
       : []),
-    { key: "sale_number", label: "Order #" },
+    { key: "sale_number", label: "Order #", render: (r) => (
+        <span className="orders-number-cell">{r.sale_number}</span>
+      ) },
     {
       key: "created_at",
       label: "Date & Time",
@@ -534,7 +632,7 @@ export default function Orders() {
       key: "balance_due",
       label: "Balance",
       render: (r) => {
-        const due = Math.max(0, Number(r.total || 0) - Number(r.amount_paid || 0));
+        const due = originalInvoiceBalance(r);
         return due > 0 ? (
           <span style={{ color: "var(--color-danger)", fontWeight: 700 }}>
             {formatCurrency(due, currency)}
@@ -582,17 +680,37 @@ export default function Orders() {
       label: "",
       stopPropagation: true,
       render: (r) => (
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            openOrderDetail(r);
-          }}
-        >
-          <Eye size={14} /> View
-        </Button>
+        <div className="orders-row-actions">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              openOrderDetail(r);
+            }}
+          >
+            <Eye size={14} /> View
+          </Button>
+          {canUpdateInvoices && canEditCreatedInvoice(r) ? (
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                openInvoiceEdit(r);
+              }}
+            >
+              <Pencil size={14} /> Update
+            </Button>
+          ) : null}
+        </div>
       ),
+    },
+    {
+      key: "revisions",
+      label: "Revisions",
+      stopPropagation: true,
+      render: (r) => <OrderRevisionsCell row={r} onOpen={openOrderDetail} />,
     },
   ];
 
@@ -609,7 +727,11 @@ export default function Orders() {
     <div className="orders-page">
       <PageHeader
         title="All Invoices"
-        subtitle="View and filter all invoices by date, payment method, and return status."
+        subtitle={
+          canUpdateInvoices
+            ? "View invoices, or click Update to change items and prices on an invoice already created."
+            : "View and filter all invoices by date, payment method, and return status."
+        }
         actions={
           <Button
             variant="secondary"
@@ -625,6 +747,12 @@ export default function Orders() {
 
       {message && <Alert type="success">{message}</Alert>}
       {error && <Alert>{error}</Alert>}
+      {canUpdateInvoices ? (
+        <Alert type="info">
+          Invoice updates are on. Find the order, then click Update to change items or prices. Use
+          the date filter if it is not listed today.
+        </Alert>
+      ) : null}
 
       <div className="orders-filter-panel">
         <div className="orders-filter-panel-header">
@@ -866,9 +994,12 @@ export default function Orders() {
         onClose={() => {
           setDetailOpen(false);
           setSelectedSale(null);
+          setDetailRevision(null);
         }}
+        initialRevision={detailRevision}
         onPrint={handlePrint}
         onReturn={openReturnFromDetail}
+        onUpdate={canUpdateInvoices ? openInvoiceEdit : undefined}
         onPaymentRecorded={async () => {
           await loadOrders();
           if (selectedSale?.id) {
@@ -876,6 +1007,17 @@ export default function Orders() {
             setSelectedSale(refreshed);
           }
         }}
+      />
+
+      <OrderEditModal
+        isOpen={editOpen}
+        sale={editSale}
+        settings={settings}
+        currency={currency}
+        vatPercent={vatPercent}
+        saving={editSaving}
+        onClose={closeInvoiceEdit}
+        onSave={handleSaveInvoiceEdit}
       />
 
       <SaleReturnModal

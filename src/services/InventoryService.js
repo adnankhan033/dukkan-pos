@@ -134,7 +134,9 @@ class InventoryService {
         ? "Return"
         : referenceType === "order_delete"
           ? "Order deleted"
-          : "Purchase";
+          : referenceType === "invoice_update"
+            ? "Invoice updated"
+            : "Purchase";
     await execute(
       "UPDATE products SET quantity = $1, updated_at = datetime('now') WHERE id = $2",
       [newQty, productId]

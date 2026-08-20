@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Printer, RotateCcw } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Printer, RotateCcw, Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
@@ -10,12 +10,14 @@ import ZatcaOrderStatusBadge from "../zatca/ZatcaOrderStatusBadge";
 import ZatcaInvoiceXmlActions from "../zatca/ZatcaInvoiceXmlActions";
 import ZatcaSyncedQrDisplay from "../zatca/ZatcaSyncedQrDisplay";
 import ProductBilingualName from "../products/ProductBilingualName";
+import InvoiceRevisionTimeline from "./InvoiceRevisionTimeline";
 import { LoadingSpinner, Alert } from "../common/Loading";
 import { customerService } from "../../services/CustomerService";
 import { formatCurrency, formatOrderDateTime, formatDateTime } from "../../utils/format";
 import { SALE_STATUS } from "../../utils/constants";
 import { isTaxEnabled } from "../../utils/vatPricing";
 import { resolvePaymentMethodLabel } from "../../utils/paymentMethods";
+import { revisionLabel, saleViewForRevision, originalInvoiceBalance } from "../../utils/invoiceRevisions";
 import "./OrderDetailModal.css";
 
 function paymentStatusBadge(status) {
@@ -44,20 +46,43 @@ export default function OrderDetailModal({
   onClose,
   onPrint,
   onReturn,
+  onUpdate,
   onPaymentRecorded,
+  initialRevision = null,
 }) {
   const [payAmount, setPayAmount] = useState("");
   const [payError, setPayError] = useState("");
   const [paying, setPaying] = useState(false);
+  const [selectedRevision, setSelectedRevision] = useState(null);
+
+  const revisions = sale?.revisions || [];
+  const currentRevision = Number(sale?.revision) || revisions[revisions.length - 1]?.revision || 1;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedRevision(initialRevision || currentRevision);
+    setPayAmount("");
+    setPayError("");
+  }, [isOpen, sale?.id, currentRevision, initialRevision]);
+
+  const viewingRevision =
+    revisions.find((row) => Number(row.revision) === Number(selectedRevision || currentRevision)) ||
+    null;
+  const viewSale = useMemo(
+    () => saleViewForRevision(sale, viewingRevision),
+    [sale, viewingRevision]
+  );
 
   if (!isOpen) return null;
 
-  const lineItems = sale?.items || [];
-  const balanceDue = Math.max(0, Number(sale?.total || 0) - Number(sale?.amount_paid || 0));
+  const lineItems = viewSale?.items || [];
+  const balanceDue = originalInvoiceBalance(sale);
   const canRecordPayment =
     sale?.customer_id &&
     balanceDue > 0 &&
-    sale.status !== SALE_STATUS.HELD;
+    sale.status !== SALE_STATUS.HELD &&
+    !viewSale?.isHistorical;
+  const viewingLabel = revisionLabel(viewSale?.viewingRevision || currentRevision);
 
   async function handleRecordPayment() {
     if (!sale?.customer_id) return;
@@ -83,7 +108,13 @@ export default function OrderDetailModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={sale ? `Order ${sale.sale_number}` : "Order Details"}
+      title={
+        sale
+          ? revisions.length > 0
+            ? `Order ${sale.sale_number} · ${viewingLabel}`
+            : `Order ${sale.sale_number}`
+          : "Order Details"
+      }
       size="xl"
       footer={
         sale && !loading ? (
@@ -91,13 +122,18 @@ export default function OrderDetailModal({
             <Button variant="secondary" onClick={onClose}>
               Close
             </Button>
-            {sale.status !== SALE_STATUS.HELD && (
+            {sale.status === SALE_STATUS.COMPLETED && onUpdate && !viewSale?.isHistorical && (
+              <Button variant="secondary" onClick={() => onUpdate(sale)}>
+                <Pencil size={16} /> Update Invoice
+              </Button>
+            )}
+            {sale.status !== SALE_STATUS.HELD && !viewSale?.isHistorical && (
               <Button variant="secondary" onClick={() => onReturn?.(sale)}>
                 <RotateCcw size={16} /> Return Items
               </Button>
             )}
-            <Button onClick={() => onPrint?.(sale)}>
-              <Printer size={16} /> Print Receipt
+            <Button onClick={() => onPrint?.(viewSale || sale)}>
+              <Printer size={16} /> {viewSale?.isHistorical ? `Print ${viewingLabel}` : "Print Receipt"}
             </Button>
           </>
         ) : (
@@ -113,6 +149,23 @@ export default function OrderDetailModal({
         <p className="order-detail-empty">Order could not be loaded.</p>
       ) : (
         <>
+          {revisions.length > 0 ? (
+            <InvoiceRevisionTimeline
+              revisions={revisions}
+              currentRevision={currentRevision}
+              selectedRevision={viewSale?.viewingRevision || currentRevision}
+              currency={currency}
+              onSelect={setSelectedRevision}
+            />
+          ) : null}
+
+          {viewSale?.isHistorical ? (
+            <Alert type="info" title={`Viewing ${viewingLabel}`}>
+              This is a saved snapshot. The latest invoice is Revision {currentRevision}. Print uses
+              the version you are viewing.
+            </Alert>
+          ) : null}
+
           <div className="order-detail-grid">
             <section className="order-detail-section">
               <h4>Order Info</h4>
@@ -120,12 +173,12 @@ export default function OrderDetailModal({
                 <dt>Status</dt>
                 <dd>{statusBadge(sale.status)}</dd>
                 <dt>Date</dt>
-                <dd>{formatOrderDateTime(sale.created_at)}</dd>
+                <dd>{formatOrderDateTime(viewSale?.created_at || sale.created_at)}</dd>
                 <dt>Customer</dt>
-                <dd>{sale.customer_name || "Walk-in Customer"}</dd>
+                <dd>{viewSale?.customer_name || sale.customer_name || "Walk-in Customer"}</dd>
                 <dt>Payment</dt>
                 <dd style={{ textTransform: "capitalize" }}>
-                  {resolvePaymentMethodLabel(sale.payment_method)}
+                  {resolvePaymentMethodLabel(viewSale?.payment_method || sale.payment_method)}
                 </dd>
                 <dt>Collection</dt>
                 <dd>{paymentStatusBadge(sale.payment_status || "paid")}</dd>
@@ -151,12 +204,12 @@ export default function OrderDetailModal({
             <section className="order-detail-section">
               <h4>Totals</h4>
               <div className="order-totals">
-                <div><span>Subtotal</span><span>{formatCurrency(sale.subtotal, currency)}</span></div>
-                <div><span>Discount</span><span>{formatCurrency(sale.discount, currency)}</span></div>
-                {isTaxEnabled(settings) || Number(sale.vat) > 0 ? (
-                  <div><span>VAT ({vatPercent}%)</span><span>{formatCurrency(sale.vat, currency)}</span></div>
+                <div><span>Subtotal</span><span>{formatCurrency(viewSale?.subtotal ?? sale.subtotal, currency)}</span></div>
+                <div><span>Discount</span><span>{formatCurrency(viewSale?.discount ?? sale.discount, currency)}</span></div>
+                {isTaxEnabled(settings) || Number(viewSale?.vat ?? sale.vat) > 0 ? (
+                  <div><span>VAT ({vatPercent}%)</span><span>{formatCurrency(viewSale?.vat ?? sale.vat, currency)}</span></div>
                 ) : null}
-                <div className="grand"><span>Total</span><span>{formatCurrency(sale.total, currency)}</span></div>
+                <div className="grand"><span>Total</span><span>{formatCurrency(viewSale?.total ?? sale.total, currency)}</span></div>
               </div>
             </section>
           </div>
@@ -189,7 +242,7 @@ export default function OrderDetailModal({
             <section className="order-detail-section order-detail-receipt-preview">
               <h4>Receipt Preview</h4>
               <ReceiptPreviewFrame
-                sale={sale}
+                sale={viewSale || sale}
                 items={lineItems}
                 settings={settings}
                 currency={currency}
@@ -251,7 +304,10 @@ export default function OrderDetailModal({
           )}
 
           <section className="order-detail-section" style={{ marginTop: "1rem" }}>
-            <h4>Items ({lineItems.length})</h4>
+            <h4>
+              Items ({lineItems.length})
+              {revisions.length > 0 ? ` · ${viewingLabel}` : ""}
+            </h4>
             {lineItems.length === 0 ? (
               <p className="order-detail-empty">No line items recorded for this order.</p>
             ) : (

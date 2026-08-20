@@ -83,6 +83,66 @@ export async function ensureReturnSchema() {
   await ensureReturnTables();
 }
 
+export async function ensureInvoiceRevisionSchema() {
+  await execute(
+    `CREATE TABLE IF NOT EXISTS invoice_revisions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sale_id INTEGER NOT NULL,
+      revision INTEGER NOT NULL,
+      snapshot TEXT NOT NULL,
+      created_by INTEGER,
+      created_by_name TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(sale_id, revision),
+      FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE
+    )`
+  );
+  await execute(
+    "CREATE INDEX IF NOT EXISTS idx_invoice_revisions_sale ON invoice_revisions(sale_id, revision)"
+  );
+
+  let saleCols = await query("PRAGMA table_info(sales)");
+  if (!saleCols.some((c) => c.name === "revision")) {
+    await execute("ALTER TABLE sales ADD COLUMN revision INTEGER DEFAULT 1");
+    saleCols = await query("PRAGMA table_info(sales)");
+  }
+  if (!saleCols.some((c) => c.name === "original_total")) {
+    await execute("ALTER TABLE sales ADD COLUMN original_total REAL");
+  }
+  try {
+    await execute(
+      "UPDATE sales SET original_total = total WHERE original_total IS NULL"
+    );
+  } catch {
+    /* column missing — listing still works without original_total */
+  }
+  try {
+    const backfill = await queryOne(
+      "SELECT value FROM settings WHERE key = '_invoice_original_total_v1' LIMIT 1"
+    );
+    if (!backfill) {
+      await execute(
+        `UPDATE sales
+         SET original_total = (
+           SELECT json_extract(ir.snapshot, '$.total')
+           FROM invoice_revisions ir
+           WHERE ir.sale_id = sales.id AND ir.revision = 1
+         )
+         WHERE EXISTS (
+           SELECT 1 FROM invoice_revisions ir
+           WHERE ir.sale_id = sales.id AND ir.revision = 1
+             AND json_extract(ir.snapshot, '$.total') IS NOT NULL
+         )`
+      );
+      await execute(
+        "INSERT INTO settings (key, value) VALUES ('_invoice_original_total_v1', '1')"
+      );
+    }
+  } catch {
+    /* json_extract or settings insert unavailable — keep original_total from total */
+  }
+}
+
 export async function initializeDatabase() {
   if (!initPromise) {
     initPromise = bootstrapDatabase().catch((err) => {
@@ -183,6 +243,7 @@ async function runMigrations() {
   await ensureUsersAndExpensesSchema();
   await ensureSupplierLedgerSchema();
   await ensureCustomerLedgerSchema();
+  await ensureInvoiceRevisionSchema();
   await ensureAttributionSchema();
   await ensureZatcaSchema();
   await ensureCashierModuleDefaults();
@@ -594,6 +655,11 @@ async function ensureCustomerLedgerSchema() {
   );
   await addSaleCol("due_date", "ALTER TABLE sales ADD COLUMN due_date TEXT");
   await addSaleCol("invoice_settings", "ALTER TABLE sales ADD COLUMN invoice_settings TEXT");
+  await addSaleCol("revision", "ALTER TABLE sales ADD COLUMN revision INTEGER DEFAULT 1");
+  await addSaleCol("original_total", "ALTER TABLE sales ADD COLUMN original_total REAL");
+  await execute(
+    "UPDATE sales SET original_total = total WHERE original_total IS NULL"
+  );
 
   await execute(
     `UPDATE sales

@@ -1,4 +1,4 @@
-import { query, queryOne, execute, insert } from "../database/connection";
+import { query, queryOne, execute, insert, ensureInvoiceRevisionSchema } from "../database/connection";
 import { inventoryService } from "./InventoryService";
 import { settingsService } from "./SettingsService";
 import { zatcaService } from "./ZatcaService";
@@ -14,8 +14,11 @@ import { getBusinessDateTimeISO } from "../utils/businessDate";
 import { appendBusinessDateRangeFilter } from "../utils/businessDateFilter";
 import { SALE_STATUS, SALE_PAYMENT_STATUS, PAYMENT_METHODS } from "../utils/constants";
 import { snapshotInvoiceSettings } from "../utils/invoiceSettings";
+import { buildInvoiceSnapshot, mapRevisionRow } from "../utils/invoiceRevisions";
+import { calcCartTotals } from "../utils/vatPricing";
 import { isPayLaterMethod } from "../utils/paymentMethods";
 import { useAuthStore } from "../contexts/store";
+import { ZATCA_QUEUE_STATUS } from "../zatca/core/constants";
 
 async function processZatcaForSale(sale) {
   if (!sale || sale.status !== SALE_STATUS.COMPLETED) return;
@@ -86,7 +89,7 @@ class SaleService {
        WHERE si.sale_id = $1`,
       [id]
     );
-    return { ...sale, items };
+    return { ...sale, items, revisions: await this.getRevisions(id) };
   }
 
   async getRecent(limit = 10) {
@@ -137,6 +140,7 @@ class SaleService {
     amountPaid = null,
     dueDate = null,
   }) {
+    await ensureInvoiceRevisionSchema();
     const subtotal = items.reduce((sum, item) => sum + item.total, 0);
     const total = Math.max(0, subtotal - discount + vat);
     const saleNumber = await this.getNextInvoiceNumber();
@@ -164,10 +168,10 @@ class SaleService {
 
     const saleId = await insert(
       `INSERT INTO sales (
-         sale_number, customer_id, cashier_id, terminal_id, subtotal, discount, vat, total,
+         sale_number, customer_id, cashier_id, terminal_id, subtotal, discount, vat, total, original_total,
          payment_method, payment_status, amount_paid, due_date, status, notes, invoice_settings, created_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
       [
         saleNumber,
         customerId || null,
@@ -176,6 +180,7 @@ class SaleService {
         subtotal,
         discount,
         vat,
+        total,
         total,
         paymentMethod,
         paymentStatus,
@@ -209,6 +214,11 @@ class SaleService {
 
     const saved = await this.getById(saleId);
     if (saved) {
+      try {
+        await this.saveRevision(saved, 1);
+      } catch (err) {
+        console.error("Could not store original invoice revision:", err);
+      }
       if (status === SALE_STATUS.COMPLETED) {
         await processZatcaForSale(saved);
         notifySalesChanged();
@@ -262,6 +272,12 @@ class SaleService {
 
     const completed = await this.getById(saleId);
     if (completed) {
+      try {
+        const revisions = await this.getRevisions(saleId);
+        if (!revisions.length) await this.saveRevision(completed, 1);
+      } catch (err) {
+        console.error("Could not store original invoice revision:", err);
+      }
       await processZatcaForSale(completed);
       notifySalesChanged();
     }
@@ -270,12 +286,12 @@ class SaleService {
 
   async getPendingByCustomer(customerId) {
     return query(
-      `SELECT s.*, (s.total - COALESCE(s.amount_paid, 0)) AS balance_due
+      `SELECT s.*, (COALESCE(s.original_total, s.total) - COALESCE(s.amount_paid, 0)) AS balance_due
        FROM sales s
        WHERE s.customer_id = $1
          AND s.status IN ('completed', 'partial_return')
          AND s.payment_status IN ($2, $3)
-         AND (s.total - COALESCE(s.amount_paid, 0)) > 0
+         AND (COALESCE(s.original_total, s.total) - COALESCE(s.amount_paid, 0)) > 0
        ORDER BY s.created_at ASC`,
       [customerId, SALE_PAYMENT_STATUS.PENDING, SALE_PAYMENT_STATUS.PARTIAL]
     );
@@ -285,13 +301,14 @@ class SaleService {
     const sale = await queryOne("SELECT * FROM sales WHERE id = $1", [saleId]);
     if (!sale) throw new Error("Order not found");
 
-    const balanceDue = sale.total - (sale.amount_paid || 0);
+    const collectableTotal = Number(sale.original_total ?? sale.total) || 0;
+    const balanceDue = collectableTotal - (sale.amount_paid || 0);
     if (balanceDue <= 0) return 0;
 
     const applied = Math.min(Number(amount), balanceDue);
     const newPaid = (sale.amount_paid || 0) + applied;
     let status = SALE_PAYMENT_STATUS.PARTIAL;
-    if (newPaid >= sale.total) status = SALE_PAYMENT_STATUS.PAID;
+    if (newPaid >= collectableTotal) status = SALE_PAYMENT_STATUS.PAID;
 
     await execute(
       `UPDATE sales SET amount_paid = $1, payment_status = $2, updated_at = datetime('now') WHERE id = $3`,
@@ -370,6 +387,7 @@ class SaleService {
     await execute("DELETE FROM zatca_invoices WHERE sale_id = $1", [numId]);
     await execute("DELETE FROM customer_payments WHERE sale_id = $1", [numId]);
     await execute("DELETE FROM payments WHERE sale_id = $1", [numId]);
+    await execute("DELETE FROM invoice_revisions WHERE sale_id = $1", [numId]);
     await execute("DELETE FROM sale_items WHERE sale_id = $1", [numId]);
     await execute("DELETE FROM sales WHERE id = $1", [numId]);
 
@@ -568,30 +586,50 @@ class SaleService {
     const safeLimit = Math.max(1, Number(limit) || 100);
     const offset = (safePage - 1) * safeLimit;
     const countParams = [...params];
+    try {
+      await ensureInvoiceRevisionSchema();
+    } catch (err) {
+      console.error("Could not ensure invoice revision schema:", err);
+    }
 
-    const [countRow, items] = await Promise.all([
-      queryOne(
-        `SELECT COUNT(*) AS total
-         FROM sales s
-         LEFT JOIN customers c ON s.customer_id = c.id
-         ${where}`,
-        countParams
-      ),
-      query(
-        `SELECT s.*, c.name AS customer_name,
-                (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS item_count,
-                (SELECT GROUP_CONCAT(p.name || ' ×' || si.quantity, ', ')
-                 FROM sale_items si
-                 LEFT JOIN products p ON p.id = si.product_id
-                 WHERE si.sale_id = s.id) AS items_summary
+    const countRow = await queryOne(
+      `SELECT COUNT(*) AS total
+       FROM sales s
+       LEFT JOIN customers c ON s.customer_id = c.id
+       ${where}`,
+      countParams
+    );
+
+    const fromSql = `
          FROM sales s
          LEFT JOIN customers c ON s.customer_id = c.id
          ${where}
          ORDER BY s.created_at DESC
-         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
-        [...params, safeLimit, offset]
-      ),
-    ]);
+         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    const listParams = [...params, safeLimit, offset];
+    const itemsSql = (withRevisions) =>
+      `SELECT s.*, c.name AS customer_name,
+              (SELECT COUNT(*) FROM sale_items si WHERE si.sale_id = s.id) AS item_count,
+              ${
+                withRevisions
+                  ? `(SELECT COUNT(*) FROM invoice_revisions ir WHERE ir.sale_id = s.id) AS revision_count,
+              (SELECT GROUP_CONCAT(ir.revision, ',') FROM invoice_revisions ir WHERE ir.sale_id = s.id) AS revision_list,`
+                  : `0 AS revision_count,
+              '' AS revision_list,`
+              }
+              (SELECT GROUP_CONCAT(p.name || ' ×' || si.quantity, ', ')
+               FROM sale_items si
+               LEFT JOIN products p ON p.id = si.product_id
+               WHERE si.sale_id = s.id) AS items_summary
+       ${fromSql}`;
+
+    let items;
+    try {
+      items = await query(itemsSql(true), listParams);
+    } catch (err) {
+      console.error("Orders list with revisions failed:", err);
+      items = await query(itemsSql(false), listParams);
+    }
 
     return {
       items,
@@ -704,6 +742,161 @@ class SaleService {
       returnsTotal,
       netTotal: Math.max(0, salesTotal - returnsTotal),
     };
+  }
+
+  async updateInvoice(saleId, { items, discount = 0 } = {}) {
+    const numId = Number(saleId);
+    const sale = await this.getById(numId);
+    if (!sale) throw new Error("Order not found");
+    if (sale.status === SALE_STATUS.HELD) {
+      throw new Error("Resume the held ticket to change it.");
+    }
+    if (sale.status === SALE_STATUS.RETURNED) {
+      throw new Error("Returned invoices cannot be updated.");
+    }
+
+    const returns = await this.getReturnsForSale(numId);
+    if (returns?.length) {
+      throw new Error("This invoice has returns, so it cannot be updated.");
+    }
+
+    const nextItems = Array.isArray(items) ? items.filter((item) => Number(item.quantity) > 0) : [];
+    if (!nextItems.length) throw new Error("Add at least one item.");
+
+    if (sale.original_total == null) {
+      await execute(
+        "UPDATE sales SET original_total = $1 WHERE id = $2 AND original_total IS NULL",
+        [sale.total, numId]
+      );
+    }
+
+    const existingRevisions = await this.getRevisions(numId);
+    if (existingRevisions.length === 0) {
+      await this.saveRevision(sale, 1);
+    }
+
+    const settings = await settingsService.getAll();
+    const totals = calcCartTotals(nextItems, discount, settings);
+    const subtotal = totals.subtotal;
+    const disc = totals.discount;
+    const vat = totals.vat;
+    const total = totals.total;
+
+    const oldQty = new Map();
+    for (const item of sale.items || []) {
+      const id = Number(item.product_id);
+      oldQty.set(id, (oldQty.get(id) || 0) + Number(item.quantity || 0));
+    }
+    const newQty = new Map();
+    for (const item of nextItems) {
+      const id = Number(item.product_id);
+      newQty.set(id, (newQty.get(id) || 0) + Number(item.quantity || 0));
+    }
+
+    const productIds = new Set([...oldQty.keys(), ...newQty.keys()]);
+    for (const productId of productIds) {
+      const delta = (newQty.get(productId) || 0) - (oldQty.get(productId) || 0);
+      if (delta > 0) {
+        await inventoryService.reduceStock(productId, delta, "sale", numId);
+      } else if (delta < 0) {
+        await inventoryService.increaseStock(productId, -delta, "invoice_update", numId);
+      }
+    }
+
+    await execute("DELETE FROM sale_items WHERE sale_id = $1", [numId]);
+    for (const item of nextItems) {
+      await execute(
+        `INSERT INTO sale_items (sale_id, product_id, quantity, unit_price, discount, total)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          numId,
+          item.product_id,
+          item.quantity,
+          item.unit_price,
+          item.discount || 0,
+          item.total,
+        ]
+      );
+    }
+
+    const nextRevision =
+      existingRevisions.length === 0
+        ? 2
+        : Math.max(...existingRevisions.map((row) => Number(row.revision) || 1)) + 1;
+
+    await execute(
+      `UPDATE sales
+       SET subtotal = $1,
+           discount = $2,
+           vat = $3,
+           total = $4,
+           invoice_settings = $5,
+           revision = $6,
+           updated_at = datetime('now')
+       WHERE id = $7`,
+      [
+        subtotal,
+        disc,
+        vat,
+        total,
+        JSON.stringify(snapshotInvoiceSettings(settings)),
+        nextRevision,
+        numId,
+      ]
+    );
+
+    const saved = await this.getById(numId);
+    await this.saveRevision(saved, nextRevision);
+    notifySalesChanged();
+
+    if (saved?.status === SALE_STATUS.COMPLETED) {
+      try {
+        await execute(
+          `DELETE FROM zatca_invoices WHERE sale_id = $1 AND status IN ($2, $3)`,
+          [numId, ZATCA_QUEUE_STATUS.PENDING, ZATCA_QUEUE_STATUS.FAILED]
+        );
+        await processZatcaForSale(saved);
+      } catch (err) {
+        console.error("ZATCA requeue after invoice update failed:", err);
+      }
+    }
+
+    return this.getById(numId);
+  }
+
+  async getRevisions(saleId) {
+    try {
+      await ensureInvoiceRevisionSchema();
+      const rows = await query(
+        `SELECT * FROM invoice_revisions WHERE sale_id = $1 ORDER BY revision ASC`,
+        [Number(saleId)]
+      );
+      return rows.map(mapRevisionRow);
+    } catch {
+      return [];
+    }
+  }
+
+  async saveRevision(sale, revision) {
+    if (!sale?.id) return null;
+    await ensureInvoiceRevisionSchema();
+    const { user } = useAuthStore.getState();
+    const settings = await settingsService.getAll();
+    const createdAt = getBusinessDateTimeISO(settings);
+    await execute(
+      `INSERT INTO invoice_revisions
+         (sale_id, revision, snapshot, created_by, created_by_name, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        sale.id,
+        revision,
+        JSON.stringify(buildInvoiceSnapshot(sale)),
+        user?.id ?? null,
+        user?.full_name || user?.name || user?.username || "Staff",
+        createdAt,
+      ]
+    );
+    return revision;
   }
 
   async getBySaleNumber(saleNumber) {
