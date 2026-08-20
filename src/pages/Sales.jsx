@@ -45,10 +45,12 @@ import { LoadingSpinner } from "../components/common/Loading";
 import { notify } from "../utils/notify";
 import { formatCurrency, formatQuantity } from "../utils/format";
 import {
+  applyCartLineShelfPrice,
   buildCartLineFromProduct,
   calcCartTotals,
   cartItemDisplayLineTotal,
   cartItemDisplayUnitPrice,
+  isTaxEnabled,
 } from "../utils/vatPricing";
 import { printReceipt } from "../utils/receipt";
 import {
@@ -104,13 +106,15 @@ function paymentMethodTone(method) {
 export default function Sales() {
   const settings = useSettingsStore((s) => s.settings);
   const currency = settings.currency || "SAR";
-  const vatPercent = Number(settings.vat_percent) || 0;
+  const taxEnabled = isTaxEnabled(settings);
+  const vatPercent = taxEnabled ? Number(settings.vat_percent) || 0 : 0;
   const zatcaPhase2 = resolveActivePhase(settings) === ZATCA_PHASES.PHASE2;
   const { submitting, guard } = useSubmitGuard();
   const { confirm, dialog: confirmDialog } = useConfirm();
   const { canPerformAction } = usePermissions();
   const canEditProducts = canPerformAction("products_edit");
   const canManageCustomers = canPerformAction("customers_manage");
+  const canOverridePrice = canPerformAction("sales_override_price");
 
   const [topProducts, setTopProducts] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
@@ -438,6 +442,16 @@ export default function Sales() {
     );
   }
 
+  function setItemPrice(productId, shelfPrice) {
+    if (!canOverridePrice) return;
+    setCart((prev) =>
+      prev.map((item) => {
+        if (item.product_id !== productId) return item;
+        return applyCartLineShelfPrice(item, shelfPrice);
+      })
+    );
+  }
+
   function removeItem(productId) {
     setCart((prev) => prev.filter((i) => i.product_id !== productId));
     setCartLineId((current) => (current === productId ? null : current));
@@ -451,8 +465,8 @@ export default function Sales() {
   }
 
   const cartTotals = useMemo(
-    () => calcCartTotals(cart, Number(discount)),
-    [cart, discount]
+    () => calcCartTotals(cart, Number(discount), settings),
+    [cart, discount, settings]
   );
   const subtotal = cartTotals.subtotal;
   const vat = cartTotals.vat;
@@ -507,7 +521,11 @@ export default function Sales() {
       prev.map((item) => {
         if (item.product_id !== updated.id) return item;
         const line = buildCartLineFromProduct(updated, settings, item.quantity);
-        return { ...line, discount: item.discount || 0 };
+        const next = { ...line, discount: item.discount || 0 };
+        if (item.price_overridden) {
+          return applyCartLineShelfPrice(next, item.shelf_unit_price);
+        }
+        return next;
       })
     );
   }
@@ -1119,6 +1137,9 @@ export default function Sales() {
                           <ProductBilingualName name={item.name} nameAr={item.name_ar} size="sm" />
                           <div className="pos-cart-item-price">
                             {formatCurrency(cartItemDisplayUnitPrice(item), currency)} each
+                            {item.price_overridden ? (
+                              <span className="pos-cart-price-note">This sale</span>
+                            ) : null}
                           </div>
                         </div>
                         <span className="pos-cart-qty-badge" aria-hidden="true">
@@ -1183,7 +1204,7 @@ export default function Sales() {
 
             <div className="pos-cart-summary">
               <div className="pos-summary-row">
-                <span>Subtotal (excl. VAT)</span>
+                <span>{taxEnabled ? "Subtotal (excl. VAT)" : "Subtotal"}</span>
                 <span>{formatCurrency(subtotal, currency)}</span>
               </div>
               <div className="pos-summary-row pos-summary-discount">
@@ -1196,10 +1217,12 @@ export default function Sales() {
                   onChange={(e) => setDiscount(e.target.value)}
                 />
               </div>
-              <div className="pos-summary-row">
-                <span>VAT</span>
-                <span>{formatCurrency(vat, currency)}</span>
-              </div>
+              {taxEnabled ? (
+                <div className="pos-summary-row">
+                  <span>VAT</span>
+                  <span>{formatCurrency(vat, currency)}</span>
+                </div>
+              ) : null}
               <div className="pos-summary-row pos-summary-grand">
                 <span>Total due</span>
                 <span>{formatCurrency(grandTotal, currency)}</span>
@@ -1331,7 +1354,9 @@ export default function Sales() {
         <CartLineSheet
           item={cartLineItem}
           currency={currency}
+          canOverridePrice={canOverridePrice}
           onSetQty={(qty) => setItemQty(cartLineItem.product_id, qty)}
+          onSetPrice={(price) => setItemPrice(cartLineItem.product_id, price)}
           onRemove={() => removeItem(cartLineItem.product_id)}
           onClose={() => setCartLineId(null)}
         />
@@ -1351,6 +1376,7 @@ export default function Sales() {
         grandTotal={grandTotal}
         currency={currency}
         vatPercent={vatPercent}
+        taxEnabled={taxEnabled}
         onClose={() => setCartVerifyOpen(false)}
       />
 

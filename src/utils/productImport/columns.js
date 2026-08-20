@@ -72,7 +72,7 @@ export const PRODUCT_IMPORT_COLUMNS = [
     title: "Selling Price",
     required: true,
     example: "11.50",
-    hint: "Required. Shelf price customers pay when price type is inclusive (Saudi retail default).",
+    hint: "Required. Shelf price customers pay when prices include tax.",
   },
   {
     key: "vat",

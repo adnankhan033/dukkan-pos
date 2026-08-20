@@ -1,8 +1,15 @@
 /**
- * Generates ~1000 common Saudi baqala products for NexttelPOS import.
+ * Common Saudi baqala product catalog for Nexttel POS import.
+ *
+ * - Real fast-moving SKUs only (no combinatorial filler)
+ * - Categories in typical baqala aisle order
+ * - Proper English + Arabic names and units
+ * - No barcodes (scan later), no prices, no stock
+ * - Unpublished drafts so they stay off POS until priced
+ *
  * Run: node scripts/generate-baqala-catalog.mjs
  */
-import { writeFileSync, mkdirSync } from "fs";
+import { writeFileSync, mkdirSync, unlinkSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import * as XLSX from "xlsx";
@@ -20,847 +27,850 @@ const HEADERS = [
   "supplier",
   "cost_price",
   "selling_price",
+  "vat",
   "quantity",
   "min_stock",
   "published",
 ];
 
-/** @type {Array<{ en: string; ar: string; category: string; unit: string; price: number; cost?: number }>} */
+const ALLOWED_UNITS = new Set([
+  "pcs",
+  "unit",
+  "kg",
+  "g",
+  "L",
+  "ml",
+  "pkt",
+  "pack",
+  "box",
+  "carton",
+  "bottle",
+  "can",
+  "jar",
+  "bag",
+  "sack",
+  "roll",
+  "doz",
+  "pair",
+  "bundle",
+  "tray",
+  "tube",
+  "cup",
+  "bucket",
+  "m",
+  "cotton",
+  "sheet",
+]);
+
+/** @type {Array<{ en: string; ar: string; category: string; unit: string }>} */
 const PRODUCTS = [];
+let currentCategory = "";
 
-function add(en, ar, category, unit, price, cost) {
-  PRODUCTS.push({
-    en,
-    ar,
-    category,
-    unit,
-    price,
-    cost: cost ?? Math.round(price * 0.75 * 100) / 100,
-  });
+function cat(name) {
+  currentCategory = name;
 }
 
-function brandItems(brand, brandAr, category, unit, items) {
-  for (const [en, ar, size, price] of items) {
-    add(`${brand} ${en}${size ? ` ${size}` : ""}`, `${brandAr} ${ar}${size ? ` ${size}` : ""}`, category, unit, price);
+function p(en, ar, unit) {
+  if (!ALLOWED_UNITS.has(unit)) {
+    throw new Error(`Unknown unit "${unit}" for ${en}`);
   }
+  PRODUCTS.push({ en, ar, category: currentCategory, unit });
 }
 
-// ── Dairy & Eggs ──────────────────────────────────────────────
-brandItems("Almarai", "المراعي", "Dairy & Eggs", "L", [
-  ["Fresh Milk", "حليب طازج", "1L", 6.5],
-  ["Fresh Milk", "حليب طازج", "2L", 12.0],
-  ["Low Fat Milk", "حليب قليل الدسم", "1L", 6.0],
-  ["Laban", "لبن", "1L", 5.5],
-  ["Laban", "لبن", "2L", 10.0],
-  ["Yogurt Plain", "زبادي طبيعي", "170g", 2.5],
-  ["Yogurt Strawberry", "زبادي فراولة", "170g", 2.5],
-  ["Cheese Slices", "جبن شرائح", "200g", 12.0],
-  ["Cheddar Cheese", "جبن شيدر", "400g", 18.0],
-  ["Feta Cheese", "جبنة فيتا", "400g", 15.0],
-  ["Cream Cheese", "جبنة كريمية", "250g", 10.0],
-  ["Butter", "زبدة", "200g", 8.0],
-  ["Ghee", "سمن", "800g", 35.0],
-  ["Eggs", "بيض", "30 pcs", 22.0],
-]);
+// ── 1. Dairy ──────────────────────────────────────────────────
+cat("Dairy");
+p("Almarai Fresh Milk 200ml", "حليب المراعي الطازج ٢٠٠ مل", "pcs");
+p("Almarai Fresh Milk 1L", "حليب المراعي الطازج ١ لتر", "L");
+p("Almarai Fresh Milk 2L", "حليب المراعي الطازج ٢ لتر", "L");
+p("Almarai Low Fat Milk 1L", "حليب المراعي قليل الدسم ١ لتر", "L");
+p("Almarai Full Fat UHT Milk 1L", "حليب المراعي كامل الدسم طويل الأجل ١ لتر", "L");
+p("Almarai Laban 200ml", "لبن المراعي ٢٠٠ مل", "pcs");
+p("Almarai Laban 1L", "لبن المراعي ١ لتر", "L");
+p("Almarai Laban 2L", "لبن المراعي ٢ لتر", "L");
+p("Almarai Yogurt Plain 170g", "زبادي المراعي الطبيعي ١٧٠ جم", "cup");
+p("Almarai Yogurt Strawberry 170g", "زبادي المراعي بالفراولة ١٧٠ جم", "cup");
+p("Almarai Yogurt Mixed Fruit 170g", "زبادي المراعي بالفواكه المشكلة ١٧٠ جم", "cup");
+p("Almarai Greek Yogurt 150g", "زبادي المراعي اليوناني ١٥٠ جم", "cup");
+p("Almarai Labneh 200g", "لبنة المراعي ٢٠٠ جم", "cup");
+p("Almarai Labneh 400g", "لبنة المراعي ٤٠٠ جم", "cup");
+p("Almarai Cheese Slices 200g", "شرائح جبن المراعي ٢٠٠ جم", "pkt");
+p("Almarai Cheddar Cheese 400g", "جبن شيدر المراعي ٤٠٠ جم", "pkt");
+p("Almarai Feta Cheese 200g", "جبنة فيتا المراعي ٢٠٠ جم", "pkt");
+p("Almarai Feta Cheese 400g", "جبنة فيتا المراعي ٤٠٠ جم", "pkt");
+p("Almarai Cream Cheese 150g", "جبنة كريمية المراعي ١٥٠ جم", "pkt");
+p("Almarai Cream Cheese 250g", "جبنة كريمية المراعي ٢٥٠ جم", "pkt");
+p("Almarai Butter 100g", "زبدة المراعي ١٠٠ جم", "pkt");
+p("Almarai Butter 200g", "زبدة المراعي ٢٠٠ جم", "pkt");
+p("Almarai Cooking Cream 250ml", "قشطة الطبخ المراعي ٢٥٠ مل", "pcs");
+p("Almarai Fresh Cream 250ml", "قشطة طازجة المراعي ٢٥٠ مل", "pcs");
+p("Nadec Fresh Milk 1L", "حليب نادك الطازج ١ لتر", "L");
+p("Nadec Fresh Milk 2L", "حليب نادك الطازج ٢ لتر", "L");
+p("Nadec Laban 1L", "لبن نادك ١ لتر", "L");
+p("Nadec Yogurt 170g", "زبادي نادك ١٧٠ جم", "cup");
+p("Nadec Cheese Spread 240g", "جبنة نادك قابلة للدهن ٢٤٠ جم", "pkt");
+p("Nadec Butter 200g", "زبدة نادك ٢٠٠ جم", "pkt");
+p("Saudia Fresh Milk 1L", "حليب السعودية الطازج ١ لتر", "L");
+p("Saudia Laban 1L", "لبن السعودية ١ لتر", "L");
+p("Saudia Evaporated Milk 410g", "حليب السعودية المبخر ٤١٠ جم", "can");
+p("Saudia Condensed Milk 397g", "حليب السعودية المكثف ٣٩٧ جم", "can");
+p("Nada Fresh Milk 1L", "حليب ندى الطازج ١ لتر", "L");
+p("Nada Laban 1L", "لبن ندى ١ لتر", "L");
+p("Alsafi Fresh Milk 1L", "حليب الصافي الطازج ١ لتر", "L");
+p("Nido Full Cream Milk Powder 400g", "حليب نيدو المجفف كامل الدسم ٤٠٠ جم", "can");
+p("Nido Full Cream Milk Powder 900g", "حليب نيدو المجفف كامل الدسم ٩٠٠ جم", "can");
+p("Nido Full Cream Milk Powder 1.8kg", "حليب نيدو المجفف كامل الدسم ١٫٨ كجم", "can");
+p("Puck Cream Cheese 240g", "جبنة بوك الكريمية ٢٤٠ جم", "box");
+p("Puck Cream Cheese 500g", "جبنة بوك الكريمية ٥٠٠ جم", "box");
+p("Puck Cheese Triangles 120g", "مثلثات جبن بوك ١٢٠ جم", "box");
+p("Puck Cheese Triangles 240g", "مثلثات جبن بوك ٢٤٠ جم", "box");
+p("Kraft Cheese Slices 200g", "شرائح جبن كرافت ٢٠٠ جم", "pkt");
+p("Kraft Cheddar 250g", "جبن شيدر كرافت ٢٥٠ جم", "pkt");
+p("Kiri Cheese Portions 8 pcs", "جبن كيري ٨ قطع", "box");
+p("Philadelphia Cream Cheese 150g", "جبنة فيلادلفيا ١٥٠ جم", "pkt");
+p("Lurpak Butter 200g", "زبدة لورباك ٢٠٠ جم", "pkt");
+p("President Butter 200g", "زبدة بريزيدن ٢٠٠ جم", "pkt");
+p("Rainbow Condensed Milk 397g", "حليب رينبو المكثف ٣٩٧ جم", "can");
+p("Coffee Mate Creamer 400g", "كوفي ميت ٤٠٠ جم", "jar");
+p("Almarai Ghee 400g", "سمن المراعي ٤٠٠ جم", "jar");
+p("Almarai Ghee 800g", "سمن المراعي ٨٠٠ جم", "jar");
 
-brandItems("Nadec", "نادك", "Dairy & Eggs", "L", [
-  ["Fresh Milk", "حليب طازج", "1L", 6.0],
-  ["Fresh Milk", "حليب طازج", "2L", 11.5],
-  ["Laban", "لبن", "1L", 5.0],
-  ["Yogurt", "زبادي", "170g", 2.0],
-  ["Cheese Spread", "جبنة مSpreadable", "240g", 9.0],
-  ["Butter", "زبدة", "200g", 7.5],
-]);
+// ── 2. Eggs ───────────────────────────────────────────────────
+cat("Eggs");
+p("Fresh Eggs 6 pcs", "بيض طازج ٦ حبات", "pcs");
+p("Fresh Eggs 15 pcs", "بيض طازج ١٥ حبة", "tray");
+p("Fresh Eggs 30 pcs", "بيض طازج ٣٠ حبة", "tray");
+p("Almarai Eggs 30 pcs", "بيض المراعي ٣٠ حبة", "tray");
+p("White Eggs 30 pcs", "بيض أبيض ٣٠ حبة", "tray");
+p("Brown Eggs 15 pcs", "بيض بني ١٥ حبة", "tray");
 
-brandItems("Al Rabie", "الربيع", "Dairy & Eggs", "L", [
-  ["Orange Juice", "عصير برتقال", "1L", 8.0],
-  ["Apple Juice", "عصير تفاح", "1L", 8.0],
-  ["Mango Juice", "عصير مانجو", "1L", 9.0],
-  ["Mixed Fruit Juice", "عصير فواكه مشكلة", "1L", 8.5],
-  ["Tomato Paste", "معجون طماطم", "400g", 5.0],
-]);
+// ── 3. Bread & Bakery ─────────────────────────────────────────
+cat("Bread & Bakery");
+p("Arabic Bread 5 pcs", "خبز عربي ٥ أرغفة", "pkt");
+p("Arabic Bread Large", "خبز عربي كبير", "pcs");
+p("Samoli White 6 pcs", "صامولي أبيض ٦ حبات", "pkt");
+p("Samoli Brown 6 pcs", "صامولي أسمر ٦ حبات", "pkt");
+p("Toast White 600g", "توست أبيض ٦٠٠ جم", "pkt");
+p("Toast Brown 600g", "توست أسمر ٦٠٠ جم", "pkt");
+p("Burger Buns 6 pcs", "خبز برجر ٦ حبات", "pkt");
+p("Hot Dog Buns 6 pcs", "خبز هوت دوغ ٦ حبات", "pkt");
+p("Kaak 200g", "كعك ٢٠٠ جم", "pkt");
+p("Croissant Plain 4 pcs", "كرواسون سادة ٤ حبات", "pkt");
+p("Croissant Chocolate 4 pcs", "كرواسون شوكولاتة ٤ حبات", "pkt");
+p("Cake Slice Chocolate", "قطعة كيك شوكولاتة", "pcs");
+p("Cupcakes 4 pcs", "كب كيك ٤ حبات", "pkt");
+p("Puff Pastry 400g", "عجينة puff pastry ٤٠٠ جم", "pkt");
+p("Sambousek Cheese 6 pcs", "سمبوسة جبن ٦ حبات", "pkt");
+p("Sambousek Meat 6 pcs", "سمبوسة لحم ٦ حبات", "pkt");
+p("Fatayer Spinach 6 pcs", "فطائر سبانخ ٦ حبات", "pkt");
+p("Fatayer Cheese 6 pcs", "فطائر جبن ٦ حبات", "pkt");
+p("Maamoul Dates 400g", "معمول تمر ٤٠٠ جم", "box");
+p("Rusk Toast 400g", "بقسماط ٤٠٠ جم", "pkt");
 
-brandItems("Saudia", "سعودia", "Dairy & Eggs", "L", [
-  ["Fresh Milk", "حليب طازج", "1L", 5.5],
-  ["Laban", "لبن", "1L", 4.5],
-  ["Evaporated Milk", "حليب م evaporated", "410g", 6.0],
-  ["Condensed Milk", "حليب م condensed", "397g", 7.0],
-]);
+// ── 4. Water ──────────────────────────────────────────────────
+cat("Water");
+p("Nova Water 200ml", "مياه نوفا ٢٠٠ مل", "bottle");
+p("Nova Water 330ml", "مياه نوفا ٣٣٠ مل", "bottle");
+p("Nova Water 600ml", "مياه نوفا ٦٠٠ مل", "bottle");
+p("Nova Water 1.5L", "مياه نوفا ١٫٥ لتر", "bottle");
+p("Nova Water 330ml 40 pack", "مياه نوفا ٣٣٠ مل ٤٠ حبة", "pack");
+p("Nova Water 1.5L 6 pack", "مياه نوفا ١٫٥ لتر ٦ حبات", "pack");
+p("Berain Water 330ml", "مياه بيرين ٣٣٠ مل", "bottle");
+p("Berain Water 600ml", "مياه بيرين ٦٠٠ مل", "bottle");
+p("Berain Water 1.5L", "مياه بيرين ١٫٥ لتر", "bottle");
+p("Berain Water 1.5L 6 pack", "مياه بيرين ١٫٥ لتر ٦ حبات", "pack");
+p("Aquafina Water 330ml", "مياه أكوافينا ٣٣٠ مل", "bottle");
+p("Aquafina Water 600ml", "مياه أكوافينا ٦٠٠ مل", "bottle");
+p("Aquafina Water 1.5L", "مياه أكوافينا ١٫٥ لتر", "bottle");
+p("Nestle Pure Life 330ml", "نستله بيور لايف ٣٣٠ مل", "bottle");
+p("Nestle Pure Life 600ml", "نستله بيور لايف ٦٠٠ مل", "bottle");
+p("Nestle Pure Life 1.5L", "نستله بيور لايف ١٫٥ لتر", "bottle");
+p("Hana Water 600ml", "مياه هناء ٦٠٠ مل", "bottle");
+p("Hana Water 1.5L", "مياه هناء ١٫٥ لتر", "bottle");
+p("Naqi Water 600ml", "مياه نقي ٦٠٠ مل", "bottle");
+p("Naqi Water 1.5L", "مياه نقي ١٫٥ لتر", "bottle");
+p("Arwa Water 330ml", "مياه أروى ٣٣٠ مل", "bottle");
+p("Arwa Water 1.5L", "مياه أروى ١٫٥ لتر", "bottle");
+p("Evian Water 330ml", "مياه إيفيان ٣٣٠ مل", "bottle");
+p("Evian Water 1.5L", "مياه إيفيان ١٫٥ لتر", "bottle");
 
-// ── Beverages ─────────────────────────────────────────────────
-brandItems("Aquafina", "أكوafina", "Beverages", "bottle", [
-  ["Water", "مياه", "600ml", 1.5],
-  ["Water", "مياه", "1.5L", 2.5],
-]);
-brandItems("Nova", "nova", "Beverages", "bottle", [
-  ["Water", "مياه", "330ml", 1.0],
-  ["Water", "مياه", "600ml", 1.5],
-  ["Water", "مياه", "1.5L", 2.0],
-  ["Water", "مياه", "2.25L", 3.0],
-]);
-brandItems("Pepsi", "بيبسي", "Beverages", "can", [
-  ["Cola", "كولا", "330ml", 2.5],
-  ["Cola", "كولا", "2.25L", 8.0],
-  ["Diet Cola", "دايت كولا", "330ml", 2.5],
-  ["Mirinda Orange", "ميرندا برتقال", "330ml", 2.5],
-  ["7UP", "سeven up", "330ml", 2.5],
-]);
-brandItems("Coca-Cola", "كوكا كولا", "Beverages", "can", [
-  ["Cola", "كولا", "330ml", 2.5],
-  ["Cola Zero", "كولا زيرو", "330ml", 2.5],
-  ["Sprite", "سبرايت", "330ml", 2.5],
-  ["Fanta Orange", "فانتا برتقال", "330ml", 2.5],
-]);
-brandItems("Lipton", "لipton", "Beverages", "box", [
-  ["Black Tea", "شاي أسود", "100 bags", 15.0],
-  ["Green Tea", "شاي أخضر", "25 bags", 12.0],
-]);
-brandItems("Rabea", "ربea", "Beverages", "box", [
-  ["Black Tea", "شاي أسود", "100 bags", 12.0],
-  ["Green Tea", "شاي أخضر", "100 bags", 14.0],
-]);
-brandItems("Nescafe", "نسكafe", "Beverages", "jar", [
-  ["Classic", "كلاسيك", "200g", 35.0],
-  ["Gold", "جold", "200g", 55.0],
-  ["3in1", "٣ في ١", "20 sachets", 18.0],
-]);
-brandItems("Al Ameed", "العمeed", "Beverages", "pkt", [
-  ["Arabic Coffee", "قهوة عربية", "250g", 25.0],
-  ["Turkish Coffee", "قهوة تركية", "250g", 22.0],
-  ["Cardamom Coffee", "قهوة بالهيل", "250g", 28.0],
-]);
+// ── 5. Soft Drinks ────────────────────────────────────────────
+cat("Soft Drinks");
+p("Pepsi 330ml Can", "بيبسي ٣٣٠ مل علبة", "can");
+p("Pepsi 330ml Bottle", "بيبسي ٣٣٠ مل زجاجة", "bottle");
+p("Pepsi 1.25L", "بيبسي ١٫٢٥ لتر", "bottle");
+p("Pepsi 2.25L", "بيبسي ٢٫٢٥ لتر", "bottle");
+p("Diet Pepsi 330ml Can", "بيبسي دايت ٣٣٠ مل", "can");
+p("7UP 330ml Can", "سفن أب ٣٣٠ مل علبة", "can");
+p("7UP 1.25L", "سفن أب ١٫٢٥ لتر", "bottle");
+p("7UP 2.25L", "سفن أب ٢٫٢٥ لتر", "bottle");
+p("Mirinda Orange 330ml Can", "ميرندا برتقال ٣٣٠ مل", "can");
+p("Mirinda Orange 2.25L", "ميرندا برتقال ٢٫٢٥ لتر", "bottle");
+p("Mountain Dew 330ml Can", "ماونتن ديو ٣٣٠ مل", "can");
+p("Coca-Cola 330ml Can", "كوكا كولا ٣٣٠ مل علبة", "can");
+p("Coca-Cola 1.25L", "كوكا كولا ١٫٢٥ لتر", "bottle");
+p("Coca-Cola 2.25L", "كوكا كولا ٢٫٢٥ لتر", "bottle");
+p("Coca-Cola Zero 330ml Can", "كوكا كولا زيرو ٣٣٠ مل", "can");
+p("Sprite 330ml Can", "سبرايت ٣٣٠ مل", "can");
+p("Sprite 1.25L", "سبرايت ١٫٢٥ لتر", "bottle");
+p("Fanta Orange 330ml Can", "فانتا برتقال ٣٣٠ مل", "can");
+p("Fanta Orange 1.25L", "فانتا برتقال ١٫٢٥ لتر", "bottle");
+p("Vimto 330ml Can", "فيمتو ٣٣٠ مل", "can");
+p("Vimto 1L", "فيمتو ١ لتر", "bottle");
+p("Vimto 2.25L", "فيمتو ٢٫٢٥ لتر", "bottle");
+p("Kinza Cola 330ml Can", "كنزا كولا ٣٣٠ مل", "can");
+p("Kinza Cola 2.25L", "كنزا كولا ٢٫٢٥ لتر", "bottle");
+p("Schweppes Tonic 330ml", "شويبس تونيك ٣٣٠ مل", "can");
+p("Schweppes Lemon 330ml", "شويبس ليمون ٣٣٠ مل", "can");
 
-const BEVERAGES = [
-  ["Red Bull Energy Drink", "ريd Bull مشروب طاقة", "250ml", 12.0, "can"],
-  ["Sting Energy Drink", "ستing مشروب طاقة", "250ml", 3.0, "can"],
-  ["Power Horse Energy Drink", "باور هورس", "250ml", 5.0, "can"],
-  ["Capri Sun Orange", "كapri sun برتقال", "200ml", 2.0, "pcs"],
-  ["Suntop Juice Orange", "صن تop برتقال", "125ml", 1.5, "pcs"],
-  ["Suntop Juice Apple", "صن تop تفاح", "125ml", 1.5, "pcs"],
-  ["Suntop Juice Mango", "صن تop مانجو", "125ml", 1.5, "pcs"],
-  ["Rani Float Orange", "رani فلوت برتقال", "240ml", 2.5, "can"],
-  ["Rani Float Mango", "رani فلوت مانجو", "240ml", 2.5, "can"],
-  ["Barbican Apple", "barbican تفاح", "330ml", 3.0, "bottle"],
-  ["Barbican Pomegranate", "barbican رمان", "330ml", 3.0, "bottle"],
-  ["Moussy Classic", "moussy كلاسيك", "330ml", 4.0, "bottle"],
-  ["Hollster Malt", "hollster malt", "330ml", 3.5, "can"],
-];
-for (const [en, ar, size, price, unit] of BEVERAGES) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Beverages", unit, price);
-}
+// ── 6. Juices ─────────────────────────────────────────────────
+cat("Juices");
+p("Almarai Orange Juice 200ml", "عصير المراعي برتقال ٢٠٠ مل", "pcs");
+p("Almarai Orange Juice 1L", "عصير المراعي برتقال ١ لتر", "L");
+p("Almarai Orange Juice 1.5L", "عصير المراعي برتقال ١٫٥ لتر", "L");
+p("Almarai Apple Juice 200ml", "عصير المراعي تفاح ٢٠٠ مل", "pcs");
+p("Almarai Apple Juice 1L", "عصير المراعي تفاح ١ لتر", "L");
+p("Almarai Mango Juice 1L", "عصير المراعي مانجو ١ لتر", "L");
+p("Almarai Mixed Fruit Juice 1L", "عصير المراعي فواكه مشكلة ١ لتر", "L");
+p("Almarai Cocktail Juice 1.5L", "عصير المراعي كوكتيل ١٫٥ لتر", "L");
+p("Al Rabie Orange Juice 200ml", "عصير الربيع برتقال ٢٠٠ مل", "pcs");
+p("Al Rabie Orange Juice 1L", "عصير الربيع برتقال ١ لتر", "L");
+p("Al Rabie Apple Juice 1L", "عصير الربيع تفاح ١ لتر", "L");
+p("Al Rabie Mango Juice 1L", "عصير الربيع مانجو ١ لتر", "L");
+p("Al Rabie Mixed Fruit Juice 1L", "عصير الربيع فواكه مشكلة ١ لتر", "L");
+p("Al Rabie Cocktail Juice 1L", "عصير الربيع كوكتيل ١ لتر", "L");
+p("Al Rabie Hibiscus Juice 1L", "عصير الربيع كركديه ١ لتر", "L");
+p("Al Rabie Tamarind Juice 1L", "عصير الربيع تمر هندي ١ لتر", "L");
+p("Nada Orange Juice 1L", "عصير ندى برتقال ١ لتر", "L");
+p("Nada Apple Juice 1L", "عصير ندى تفاح ١ لتر", "L");
+p("Rani Float Orange 240ml", "راني فلوت برتقال ٢٤٠ مل", "can");
+p("Rani Float Mango 240ml", "راني فلوت مانجو ٢٤٠ مل", "can");
+p("Rani Float Pineapple 240ml", "راني فلوت أناناس ٢٤٠ مل", "can");
+p("Rani Float Mixed Fruit 240ml", "راني فلوت فواكه مشكلة ٢٤٠ مل", "can");
+p("Suntop Orange 125ml", "صن توب برتقال ١٢٥ مل", "pcs");
+p("Suntop Apple 125ml", "صن توب تفاح ١٢٥ مل", "pcs");
+p("Suntop Mango 125ml", "صن توب مانجو ١٢٥ مل", "pcs");
+p("Capri Sun Orange 200ml", "كابري سن برتقال ٢٠٠ مل", "pcs");
+p("Capri Sun Apple 200ml", "كابري سن تفاح ٢٠٠ مل", "pcs");
+p("Lacnor Orange Juice 1L", "عصير لاكنور برتقال ١ لتر", "L");
+p("Rubicon Mango 1L", "روبيكون مانجو ١ لتر", "L");
+p("Caesar Mango Juice 1L", "عصير سيزر مانجو ١ لتر", "L");
 
-// ── Snacks ────────────────────────────────────────────────────
-brandItems("Lays", "lays", "Snacks & Confectionery", "pkt", [
-  ["Classic Salted", "ملح كلاسيك", "43g", 3.0],
-  ["Cheese", "جبن", "43g", 3.0],
-  ["Ketchup", "كاتشup", "43g", 3.0],
-  ["Chili", "حار", "43g", 3.0],
-  ["Family Pack Classic", "عائلي كلاسيك", "170g", 10.0],
-]);
-brandItems("Doritos", "doritos", "Snacks & Confectionery", "pkt", [
-  ["Nacho Cheese", "nacho cheese", "44g", 3.5],
-  ["Sweet Chili", "sweet chili", "44g", 3.5],
-  ["Family Pack", "عائلي", "180g", 12.0],
-]);
-brandItems("Cheetos", "cheetos", "Snacks & Confectionery", "pkt", [
-  ["Crunchy Cheese", "جبn crunchy", "35g", 3.0],
-  ["Flamin Hot", "flamin hot", "35g", 3.0],
-]);
-brandItems("Pringles", "pringles", "Snacks & Confectionery", "can", [
-  ["Original", "original", "40g", 5.0],
-  ["Sour Cream", "sour cream", "40g", 5.0],
-  ["BBQ", "bbq", "165g", 15.0],
-]);
-brandItems("Galaxy", "galaxy", "Snacks & Confectionery", "pcs", [
-  ["Milk Chocolate", "شokolat milk", "42g", 3.5],
-  ["Dark Chocolate", "شokolat dark", "42g", 3.5],
-  ["Smooth Milk Bar", "smooth milk", "110g", 8.0],
-]);
-brandItems("Cadbury", "cadbury", "Snacks & Confectionery", "pcs", [
-  ["Dairy Milk", "dairy milk", "45g", 3.5],
-  ["Flake", "flake", "32g", 3.0],
-  ["Bournville", "bournville", "45g", 4.0],
-]);
-brandItems("KitKat", "kitkat", "Snacks & Confectionery", "pcs", [
-  ["4 Finger", "4 fingers", "41.5g", 3.5],
-  ["Chunky", "chunky", "40g", 4.0],
-]);
-brandItems("Snickers", "snickers", "Snacks & Confectionery", "pcs", [
-  ["Bar", "bar", "50g", 3.5],
-  ["Mini Pack", "mini", "180g", 12.0],
-]);
-brandItems("M&M", "m&m", "Snacks & Confectionery", "pkt", [
-  ["Peanut", "peanut", "45g", 4.0],
-  ["Chocolate", "chocolate", "45g", 4.0],
-]);
-brandItems("Oreo", "oreo", "Snacks & Confectionery", "pkt", [
-  ["Original", "original", "137g", 6.0],
-  ["Double Stuff", "double stuff", "137g", 7.0],
-  ["Mini", "mini", "55g", 3.5],
-]);
-brandItems("Tiffany", "tiffany", "Snacks & Confectionery", "pkt", [
-  ["Cream Biscuits", "بiscuits cream", "400g", 8.0],
-  ["Marie Biscuits", "بiscuits marie", "400g", 7.0],
-  ["Digestive", "digestive", "400g", 9.0],
-]);
-brandItems("Ulker", "ulker", "Snacks & Confectionery", "pkt", [
-  ["Hobby Chocolate", "hobby", "80g", 4.0],
-  ["Albeni", "albeni", "34g", 2.5],
-  ["Metro", "metro", "36g", 2.5],
-]);
+// ── 7. Tea & Coffee ───────────────────────────────────────────
+cat("Tea & Coffee");
+p("Lipton Yellow Label 25 bags", "شاي ليبتون ٢٥ كيس", "box");
+p("Lipton Yellow Label 50 bags", "شاي ليبتون ٥٠ كيس", "box");
+p("Lipton Yellow Label 100 bags", "شاي ليبتون ١٠٠ كيس", "box");
+p("Lipton Yellow Label 200 bags", "شاي ليبتون ٢٠٠ كيس", "box");
+p("Lipton Green Tea 25 bags", "شاي ليبتون الأخضر ٢٥ كيس", "box");
+p("Lipton Loose Black Tea 200g", "شاي ليبتون سائب ٢٠٠ جم", "pkt");
+p("Rabea Black Tea 100 bags", "شاي ربيع ١٠٠ كيس", "box");
+p("Rabea Black Tea 200 bags", "شاي ربيع ٢٠٠ كيس", "box");
+p("Rabea Green Tea 100 bags", "شاي ربيع الأخضر ١٠٠ كيس", "box");
+p("Red Label Tea 100 bags", "شاي ريد ليبل ١٠٠ كيس", "box");
+p("Ahmad Tea 100 bags", "شاي أحمد ١٠٠ كيس", "box");
+p("Nescafe Classic 50g", "نسكافيه كلاسيك ٥٠ جم", "jar");
+p("Nescafe Classic 100g", "نسكافيه كلاسيك ١٠٠ جم", "jar");
+p("Nescafe Classic 200g", "نسكافيه كلاسيك ٢٠٠ جم", "jar");
+p("Nescafe Gold 100g", "نسكافيه جولد ١٠٠ جم", "jar");
+p("Nescafe Gold 200g", "نسكافيه جولد ٢٠٠ جم", "jar");
+p("Nescafe 3 in 1 20 sachets", "نسكافيه ٣ في ١ ٢٠ ظرف", "box");
+p("Nescafe 3 in 1 30 sachets", "نسكافيه ٣ في ١ ٣٠ ظرف", "box");
+p("Al Ameed Arabic Coffee 250g", "قهوة العميد العربية ٢٥٠ جم", "pkt");
+p("Al Ameed Arabic Coffee 500g", "قهوة العميد العربية ٥٠٠ جم", "pkt");
+p("Al Ameed Turkish Coffee 250g", "قهوة العميد التركية ٢٥٠ جم", "pkt");
+p("Al Ameed Cardamom Coffee 250g", "قهوة العميد بالهيل ٢٥٠ جم", "pkt");
+p("Najjar Coffee 200g", "قهوة نجار ٢٠٠ جم", "pkt");
+p("Lipton Iced Tea Peach 320ml", "شاي ليبتون المثلج خوخ ٣٢٠ مل", "bottle");
 
-const SNACKS = [
-  ["Halawa Plain", "حلawa سada", "500g", 12.0, "pkt"],
-  ["Halawa Chocolate", "حلawa شokolat", "500g", 14.0, "pkt"],
-  ["Tahini", "طحينة", "900g", 18.0, "jar"],
-  ["Peanuts Roasted", "فول سoudani", "250g", 8.0, "pkt"],
-  ["Cashews Roasted", "كaju", "250g", 25.0, "pkt"],
-  ["Pistachios", "فستق", "250g", 35.0, "pkt"],
-  ["Almonds", "لوز", "250g", 28.0, "pkt"],
-  ["Dates Ajwa", "تمر عجوة", "1kg", 45.0, "pkt"],
-  ["Dates Sukkari", "تمر سkkari", "1kg", 35.0, "pkt"],
-  ["Dates Khalas", "تمر خلاص", "1kg", 30.0, "pkt"],
-  ["Choco Balls", "كرات شokolat", "150g", 5.0, "pkt"],
-  ["Popcorn Microwave", "فشار microwave", "3 bags", 8.0, "box"],
-  ["Sunflower Seeds", "لب sunflower", "200g", 5.0, "pkt"],
-  ["Pumpkin Seeds", "لب pumpkin", "200g", 6.0, "pkt"],
-];
-for (const [en, ar, size, price, unit] of SNACKS) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Snacks & Confectionery", unit, price);
-}
+// ── 8. Energy & Malt Drinks ───────────────────────────────────
+cat("Energy & Malt Drinks");
+p("Red Bull 250ml", "ريد بول ٢٥٠ مل", "can");
+p("Red Bull Sugar Free 250ml", "ريد بول خالي السكر ٢٥٠ مل", "can");
+p("Sting Energy 250ml", "ستينج ٢٥٠ مل", "can");
+p("Code Red 250ml", "كود رد ٢٥٠ مل", "can");
+p("Power Horse 250ml", "باور هورس ٢٥٠ مل", "can");
+p("Bison Energy 250ml", "بايسن ٢٥٠ مل", "can");
+p("Barbican Apple 330ml", "باربيكان تفاح ٣٣٠ مل", "bottle");
+p("Barbican Pomegranate 330ml", "باربيكان رمان ٣٣٠ مل", "bottle");
+p("Barbican Raspberry 330ml", "باربيكان توت ٣٣٠ مل", "bottle");
+p("Moussy Classic 330ml", "موسي كلاسيك ٣٣٠ مل", "bottle");
+p("Moussy Apple 330ml", "موسي تفاح ٣٣٠ مل", "bottle");
 
-// ── Rice, Grains & Pasta ──────────────────────────────────────
-brandItems("Abu Kass", "abu kass", "Rice & Grains", "sack", [
-  ["Basmati Rice", "أرز basmati", "5kg", 45.0],
-  ["Basmati Rice", "أرز basmati", "10kg", 85.0],
-  ["Calrose Rice", "أرز calrose", "5kg", 35.0],
-]);
-brandItems("Sunwhite", "sunwhite", "Rice & Grains", "sack", [
-  ["Basmati Rice", "أرز basmati", "5kg", 42.0],
-  ["Basmati Rice", "أرز basmati", "10kg", 80.0],
-]);
-brandItems("Al Alali", "al alali", "Rice & Grains", "pkt", [
-  ["All Purpose Flour", "دقيق", "2kg", 8.0],
-  ["Self Rising Flour", "دقيق self rising", "2kg", 9.0],
-  ["Semolina", "semolina", "1kg", 6.0],
-  ["Corn Flour", "corn flour", "400g", 5.0],
-  ["Baking Powder", "baking powder", "100g", 4.0],
-  ["Vanilla Powder", "vanilla", "20g", 3.0],
-]);
-brandItems("Barilla", "barilla", "Rice & Grains", "pkt", [
-  ["Spaghetti", "spaghetti", "500g", 8.0],
-  ["Penne", "penne", "500g", 8.0],
-  ["Fusilli", "fusilli", "500g", 8.0],
-]);
-brandItems("Pasta Zara", "pasta zara", "Rice & Grains", "pkt", [
-  ["Spaghetti", "spaghetti", "400g", 4.0],
-  ["Macaroni", "macaroni", "400g", 4.0],
-  ["Penne", "penne", "400g", 4.0],
-  ["Fusilli", "fusilli", "400g", 4.0],
-  ["Lasagna", "lasagna", "500g", 7.0],
-]);
+// ── 9. Rice ───────────────────────────────────────────────────
+cat("Rice");
+p("Abu Kass Basmati Rice 2kg", "أرز أبو كاس بسمتي ٢ كجم", "bag");
+p("Abu Kass Basmati Rice 5kg", "أرز أبو كاس بسمتي ٥ كجم", "bag");
+p("Abu Kass Basmati Rice 10kg", "أرز أبو كاس بسمتي ١٠ كجم", "bag");
+p("Al Osra Egyptian Rice 5kg", "أرز الأسرة مصري ٥ كجم", "bag");
+p("Al Osra Egyptian Rice 10kg", "أرز الأسرة مصري ١٠ كجم", "bag");
+p("India Gate Basmati 1kg", "أرز إنديا جيت بسمتي ١ كجم", "bag");
+p("India Gate Basmati 5kg", "أرز إنديا جيت بسمتي ٥ كجم", "bag");
+p("Mahmood Basmati Rice 5kg", "أرز محمود بسمتي ٥ كجم", "bag");
+p("Mahmood Basmati Rice 10kg", "أرز محمود بسمتي ١٠ كجم", "bag");
+p("Tilda Basmati Rice 1kg", "أرز تيلدا بسمتي ١ كجم", "bag");
+p("Tilda Basmati Rice 5kg", "أرز تيلدا بسمتي ٥ كجم", "bag");
+p("Sunwhite Calrose Rice 5kg", "أرز صن وايت كالروز ٥ كجم", "bag");
+p("Sunwhite Calrose Rice 10kg", "أرز صن وايت كالروز ١٠ كجم", "bag");
+p("Al Walimah Rice 5kg", "أرز الوليمة ٥ كجم", "bag");
+p("Egyptian Rice 5kg", "أرز مصري ٥ كجم", "bag");
+p("Basmati Rice 5kg", "أرز بسمتي ٥ كجم", "bag");
 
-const GRAINS = [
-  ["White Sugar", "سugar أبيض", "1kg", 4.0, "pkt"],
-  ["Brown Sugar", "سugar بني", "1kg", 5.0, "pkt"],
-  ["Salt Fine", "ملح fine", "700g", 2.0, "pkt"],
-  ["Salt Coarse", "ملح coarse", "700g", 2.0, "pkt"],
-  ["Lentils Red", "عدس أحمر", "1kg", 8.0, "pkt"],
-  ["Lentils Yellow", "عدس أصفر", "1kg", 7.0, "pkt"],
-  ["Chickpeas", "حمص", "1kg", 10.0, "pkt"],
-  ["White Beans", "فاصولia بيضاء", "1kg", 12.0, "pkt"],
-  ["Freekeh", "freekeh", "1kg", 15.0, "pkt"],
-  ["Bulgur Fine", "bulgur fine", "1kg", 8.0, "pkt"],
-  ["Bulgur Coarse", "bulgur coarse", "1kg", 8.0, "pkt"],
-  ["Oats", "شofan", "500g", 8.0, "pkt"],
-  ["Corn Flakes", "corn flakes", "500g", 12.0, "box"],
-  ["Cereal Honey Loops", "cereal honey", "375g", 15.0, "box"],
-  ["Cereal Choco Rings", "cereal choco", "375g", 15.0, "box"],
-  ["Quaker Oats", "quaker oats", "500g", 14.0, "pkt"],
-  ["Couscous", "couscous", "1kg", 12.0, "pkt"],
-  ["Vermicelli", "vermicelli", "400g", 4.0, "pkt"],
-  ["Orzo", "orzo", "400g", 5.0, "pkt"],
-];
-for (const [en, ar, size, price, unit] of GRAINS) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Rice & Grains", unit, price);
-}
+// ── 10. Oil & Ghee ────────────────────────────────────────────
+cat("Oil & Ghee");
+p("Afia Sunflower Oil 1.5L", "زيت عافية عباد الشمس ١٫٥ لتر", "bottle");
+p("Afia Sunflower Oil 1.8L", "زيت عافية عباد الشمس ١٫٨ لتر", "bottle");
+p("Afia Sunflower Oil 3.6L", "زيت عافية عباد الشمس ٣٫٦ لتر", "bottle");
+p("Afia Corn Oil 1.5L", "زيت عافية ذرة ١٫٥ لتر", "bottle");
+p("Shams Sunflower Oil 1.5L", "زيت شمس عباد الشمس ١٫٥ لتر", "bottle");
+p("Shams Sunflower Oil 1.8L", "زيت شمس عباد الشمس ١٫٨ لتر", "bottle");
+p("Hayat Sunflower Oil 1.5L", "زيت حياة عباد الشمس ١٫٥ لتر", "bottle");
+p("Al Osra Sunflower Oil 1.5L", "زيت الأسرة عباد الشمس ١٫٥ لتر", "bottle");
+p("Noor Sunflower Oil 1.5L", "زيت نور عباد الشمس ١٫٥ لتر", "bottle");
+p("Mazola Corn Oil 1.5L", "زيت مازولا ذرة ١٫٥ لتر", "bottle");
+p("Al Arabi Olive Oil 500ml", "زيت العربي زيتون ٥٠٠ مل", "bottle");
+p("Al Arabi Olive Oil 1L", "زيت العربي زيتون ١ لتر", "bottle");
+p("Rafael Salgado Olive Oil 500ml", "زيت رافاييل زيتون ٥٠٠ مل", "bottle");
+p("Al Jouf Olive Oil 500ml", "زيت الجوف زيتون ٥٠٠ مل", "bottle");
+p("Aseel Vegetable Ghee 1kg", "سمن أصيل ١ كجم", "pkt");
+p("Safa Ghee 800g", "سمن صفا ٨٠٠ جم", "jar");
+p("Safa Ghee 1.6kg", "سمن صفا ١٫٦ كجم", "jar");
+p("Hayat Ghee 800g", "سمن حياة ٨٠٠ جم", "jar");
 
-// ── Oils & Ghee ───────────────────────────────────────────────
-brandItems("Afia", "afia", "Oils & Ghee", "L", [
-  ["Sunflower Oil", "زيت sunflower", "1.5L", 18.0],
-  ["Sunflower Oil", "زيت sunflower", "2L", 22.0],
-  ["Corn Oil", "زيت corn", "1.5L", 20.0],
-  ["Olive Oil", "زيت olive", "500ml", 25.0],
-  ["Olive Oil Extra Virgin", "زيت olive extra", "500ml", 35.0],
-]);
-brandItems("Hayat", "hayat", "Oils & Ghee", "L", [
-  ["Sunflower Oil", "زيت sunflower", "1.5L", 16.0],
-  ["Sunflower Oil", "زيت sunflower", "2L", 20.0],
-  ["Canola Oil", "زيت canola", "1.5L", 18.0],
-]);
-brandItems("Al Osra", "al osra", "Oils & Ghee", "L", [
-  ["Sunflower Oil", "زيت sunflower", "1.5L", 17.0],
-  ["Corn Oil", "زيت corn", "1.5L", 19.0],
-]);
-brandItems("Safa", "safa", "Oils & Ghee", "L", [
-  ["Ghee", "سمن", "800g", 32.0],
-  ["Ghee", "سمن", "1.6kg", 60.0],
-]);
+// ── 11. Flour, Sugar & Baking ─────────────────────────────────
+cat("Flour, Sugar & Baking");
+p("Al Othman Flour 1kg", "دقيق العثمان ١ كجم", "bag");
+p("Al Othman Flour 2kg", "دقيق العثمان ٢ كجم", "bag");
+p("Al Othman Flour 5kg", "دقيق العثمان ٥ كجم", "bag");
+p("Al Othman Flour 10kg", "دقيق العثمان ١٠ كجم", "bag");
+p("Al Walimah Flour 2kg", "دقيق الوليمة ٢ كجم", "bag");
+p("White Sugar 1kg", "سكر أبيض ١ كجم", "bag");
+p("White Sugar 2kg", "سكر أبيض ٢ كجم", "bag");
+p("White Sugar 5kg", "سكر أبيض ٥ كجم", "bag");
+p("White Sugar 10kg", "سكر أبيض ١٠ كجم", "bag");
+p("Brown Sugar 1kg", "سكر بني ١ كجم", "bag");
+p("Icing Sugar 500g", "سكر بودرة ٥٠٠ جم", "pkt");
+p("Salt Iodized 700g", "ملح مدعم باليود ٧٠٠ جم", "pkt");
+p("Salt Iodized 1kg", "ملح مدعم باليود ١ كجم", "pkt");
+p("Baking Powder 100g", "بيكنج باودر ١٠٠ جم", "pkt");
+p("Instant Yeast 10g", "خميرة فورية ١٠ جم", "pkt");
+p("Corn Starch 400g", "نشا ذرة ٤٠٠ جم", "pkt");
+p("Custard Powder 300g", "كاسترد ٣٠٠ جم", "pkt");
+p("Jelly Strawberry 80g", "جيلي فراولة ٨٠ جم", "pkt");
+p("Jelly Orange 80g", "جيلي برتقال ٨٠ جم", "pkt");
+p("Vanilla Powder 20g", "فانيليا ٢٠ جم", "pkt");
+p("Cake Mix Chocolate 500g", "خليط كيك شوكولاتة ٥٠٠ جم", "box");
+p("Semolina 1kg", "سميد ١ كجم", "bag");
 
-const OILS = [
-  ["Vegetable Ghee", "سمن vegetable", "1kg", 22.0, "pkt"],
-  ["Samna Baladi", "سمن baladi", "800g", 28.0, "jar"],
-  ["Sesame Oil", "زيت sesame", "500ml", 20.0, "bottle"],
-  ["Coconut Oil", "زيت coconut", "500ml", 25.0, "jar"],
-];
-for (const [en, ar, size, price, unit] of OILS) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Oils & Ghee", unit, price);
-}
+// ── 12. Pasta & Noodles ───────────────────────────────────────
+cat("Pasta & Noodles");
+p("Indomie Chicken 70g", "إندومي دجاج ٧٠ جم", "pkt");
+p("Indomie Vegetable 70g", "إندومي خضار ٧٠ جم", "pkt");
+p("Indomie Special Chicken 80g", "إندومي دجاج خاص ٨٠ جم", "pkt");
+p("Indomie Fried Noodles 80g", "إندومي مقلي ٨٠ جم", "pkt");
+p("Indomie BBQ Chicken 80g", "إندومي دجاج باربكيو ٨٠ جم", "pkt");
+p("Indomie Cup Chicken", "إندومي كوب دجاج", "cup");
+p("Maggi Noodles Chicken 70g", "ماجي نودلز دجاج ٧٠ جم", "pkt");
+p("Maggi Noodles Masala 70g", "ماجي نودلز ماسالا ٧٠ جم", "pkt");
+p("Barilla Spaghetti 500g", "باريللا سباغيتي ٥٠٠ جم", "pkt");
+p("Barilla Penne 500g", "باريللا بيني ٥٠٠ جم", "pkt");
+p("Panzani Spaghetti 500g", "بانزاني سباغيتي ٥٠٠ جم", "pkt");
+p("Goody Spaghetti 500g", "قودي سباغيتي ٥٠٠ جم", "pkt");
+p("Goody Macaroni 400g", "قودي مكرونة ٤٠٠ جم", "pkt");
+p("Pasta Zara Spaghetti 400g", "باستا زارا سباغيتي ٤٠٠ جم", "pkt");
+p("Pasta Zara Penne 400g", "باستا زارا بيني ٤٠٠ جم", "pkt");
+p("Pasta Zara Fusilli 400g", "باستا زارا فوسيلي ٤٠٠ جم", "pkt");
+p("Lasagna Sheets 500g", "شرائح لازانيا ٥٠٠ جم", "pkt");
+p("Vermicelli 400g", "شعيرية ٤٠٠ جم", "pkt");
 
-// ── Canned & Preserved ────────────────────────────────────────
-brandItems("Goody", "goody", "Canned & Preserved", "can", [
-  ["Tuna in Water", "تuna in water", "185g", 8.0],
-  ["Tuna in Oil", "تuna in oil", "185g", 8.0],
-  ["Tomato Paste", "معجون tomate", "135g", 3.0],
-  ["Tomato Paste", "معجون tomate", "400g", 5.0],
-  ["Peeled Tomatoes", "طماطم peeled", "400g", 4.0],
-  ["Chickpeas", "حمص canned", "400g", 4.0],
-  ["White Beans", "فاصولia canned", "400g", 4.0],
-  ["Sweet Corn", "ذرة sweet", "340g", 4.0],
-  ["Mushrooms", "فطر", "400g", 6.0],
-  ["Pickles Mixed", "مخلل mixed", "680g", 8.0],
-  ["Olives Green", "زيتون green", "450g", 10.0],
-  ["Olives Black", "زيتون black", "450g", 10.0],
-]);
-brandItems("California Garden", "california garden", "Canned & Preserved", "can", [
-  ["Tuna Light", "تuna light", "185g", 7.0],
-  ["Tomato Paste", "معجون tomate", "400g", 4.5],
-  ["Fava Beans", "فول", "400g", 3.5],
-  ["Chickpeas", "حمص", "400g", 3.5],
-  ["Peas", "بازilla", "400g", 4.0],
-  ["Mixed Vegetables", "خضار mixed", "400g", 4.0],
-]);
-brandItems("Heinz", "heinz", "Canned & Preserved", "bottle", [
-  ["Ketchup", "كاتchup", "570g", 12.0],
-  ["Ketchup", "كاتchup", "340g", 8.0],
-  ["Mayonnaise", "mayonnaise", "400g", 10.0],
-  ["Mustard", "mustard", "200g", 8.0],
-  ["BBQ Sauce", "bbq sauce", "400g", 12.0],
-]);
-brandItems("American Garden", "american garden", "Canned & Preserved", "bottle", [
-  ["Ketchup", "كاتchup", "567g", 10.0],
-  ["Mayonnaise", "mayonnaise", "340g", 9.0],
-  ["Mustard", "mustard", "340g", 8.0],
-  ["Hot Sauce", "hot sauce", "355ml", 10.0],
-  ["Pancake Syrup", "pancake syrup", "710ml", 18.0],
-]);
+// ── 13. Pulses & Dry Goods ────────────────────────────────────
+cat("Pulses & Dry Goods");
+p("Red Lentils 1kg", "عدس أحمر ١ كجم", "bag");
+p("Yellow Lentils 1kg", "عدس أصفر ١ كجم", "bag");
+p("Chickpeas 1kg", "حمص حب ١ كجم", "bag");
+p("White Beans 1kg", "فاصوليا بيضاء ١ كجم", "bag");
+p("Kidney Beans 1kg", "فاصوليا حمراء ١ كجم", "bag");
+p("Fava Beans Dry 1kg", "فول حب ١ كجم", "bag");
+p("Split Peas 1kg", "بازلاء مجروشة ١ كجم", "bag");
+p("Bulgur Fine 1kg", "برغل ناعم ١ كجم", "bag");
+p("Bulgur Coarse 1kg", "برغل خشن ١ كجم", "bag");
+p("Freekeh 1kg", "فريكة ١ كجم", "bag");
+p("Couscous 1kg", "كسكسي ١ كجم", "bag");
+p("Oats 500g", "شوفان ٥٠٠ جم", "pkt");
+p("Quaker Oats 500g", "شوفان كويكر ٥٠٠ جم", "pkt");
+p("Corn Flakes 500g", "كورن فليكس ٥٠٠ جم", "box");
+p("Nesquik Cereal 375g", "نسكويك حبوب ٣٧٥ جم", "box");
+p("Kellogg's Corn Flakes 375g", "كورن فليكس كيلوجز ٣٧٥ جم", "box");
 
-const CANNED = [
-  ["Vinegar White", "خل white", "1L", 4.0, "bottle"],
-  ["Vinegar Apple", "خل apple", "500ml", 5.0, "bottle"],
-  ["Soy Sauce", "soy sauce", "300ml", 8.0, "bottle"],
-  ["Hot Pepper Sauce", "hot pepper", "88ml", 6.0, "bottle"],
-  ["Tahini Sesame", "طحينة sesame", "450g", 12.0, "jar"],
-  ["Hummus Ready", "حمص ready", "400g", 8.0, "jar"],
-  ["Baba Ghanoush", "baba ghanoush", "400g", 10.0, "jar"],
-  ["Labneh Jar", "labneh jar", "900g", 15.0, "jar"],
-  ["Jam Strawberry", "مربى strawberry", "400g", 8.0, "jar"],
-  ["Jam Apricot", "مربى apricot", "400g", 8.0, "jar"],
-  ["Honey Natural", "عسل natural", "500g", 35.0, "jar"],
-  ["Peanut Butter", "peanut butter", "340g", 12.0, "jar"],
-  ["Nutella", "nutella", "350g", 18.0, "jar"],
-  ["Nutella", "nutella", "750g", 32.0, "jar"],
-];
-for (const [en, ar, size, price, unit] of CANNED) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Canned & Preserved", unit, price);
-}
+// ── 14. Canned Food ───────────────────────────────────────────
+cat("Canned Food");
+p("California Garden Fava Beans 400g", "فول حدائق كاليفورنيا ٤٠٠ جم", "can");
+p("California Garden Chickpeas 400g", "حمص حدائق كاليفورنيا ٤٠٠ جم", "can");
+p("California Garden Hommos 400g", "حمص مهروس حدائق كاليفورنيا ٤٠٠ جم", "can");
+p("California Garden Kidney Beans 400g", "فاصوليا حمراء حدائق كاليفورنيا ٤٠٠ جم", "can");
+p("California Garden Tuna 185g", "تونة حدائق كاليفورنيا ١٨٥ جم", "can");
+p("California Garden Peas 400g", "بازلاء حدائق كاليفورنيا ٤٠٠ جم", "can");
+p("California Garden Mixed Vegetables 400g", "خضار مشكلة حدائق كاليفورنيا ٤٠٠ جم", "can");
+p("Goody Tuna in Water 85g", "تونة قودي بالماء ٨٥ جم", "can");
+p("Goody Tuna in Water 185g", "تونة قودي بالماء ١٨٥ جم", "can");
+p("Goody Tuna in Oil 185g", "تونة قودي بالزيت ١٨٥ جم", "can");
+p("Goody Tomato Paste 135g", "معجون طماطم قودي ١٣٥ جم", "can");
+p("Goody Tomato Paste 400g", "معجون طماطم قودي ٤٠٠ جم", "can");
+p("Goody Chickpeas 400g", "حمص قودي ٤٠٠ جم", "can");
+p("Goody White Beans 400g", "فاصوليا بيضاء قودي ٤٠٠ جم", "can");
+p("Goody Sweet Corn 340g", "ذرة قودي ٣٤٠ جم", "can");
+p("Goody Mushrooms 400g", "فطر قودي ٤٠٠ جم", "can");
+p("Al Rabie Tomato Paste 70g", "معجون طماطم الربيع ٧٠ جم", "can");
+p("Al Rabie Tomato Paste 135g", "معجون طماطم الربيع ١٣٥ جم", "can");
+p("Al Rabie Tomato Paste 400g", "معجون طماطم الربيع ٤٠٠ جم", "can");
+p("Hana Tuna 170g", "تونة هناء ١٧٠ جم", "can");
+p("Green Giant Corn 340g", "ذرة جرين جاينت ٣٤٠ جم", "can");
+p("Canned Pineapple 565g", "أناناس معلب ٥٦٥ جم", "can");
+p("Goody Green Olives 450g", "زيتون أخضر قودي ٤٥٠ جم", "jar");
+p("Goody Black Olives 450g", "زيتون أسود قودي ٤٥٠ جم", "jar");
+p("Goody Mixed Pickles 680g", "مخلل مشكل قودي ٦٨٠ جم", "jar");
+p("Chtoora Mixed Pickles 600g", "مخلل شتورة مشكل ٦٠٠ جم", "jar");
+p("Chtoora Cucumber Pickles 600g", "مخلل خيار شتورة ٦٠٠ جم", "jar");
 
-// ── Spices & Seasonings ───────────────────────────────────────
-brandItems("Al Baker", "al baker", "Spices & Seasonings", "pkt", [
-  ["Black Pepper Ground", "فلفل أسود", "100g", 8.0],
-  ["Cumin Ground", "كمون", "100g", 6.0],
-  ["Coriander Ground", "كزبرة", "100g", 5.0],
-  ["Turmeric", "كركم", "100g", 5.0],
-  ["Cinnamon Stick", "قرفة", "50g", 8.0],
-  ["Cardamom Green", "هيل", "50g", 25.0],
-  ["Cloves", "قرنفل", "50g", 12.0],
-  ["Bay Leaves", "ورق غار", "20g", 4.0],
-  ["Mixed Spice Biryani", "بهارات biryani", "100g", 8.0],
-  ["Mixed Spice Kabsa", "بهارات kabsa", "100g", 8.0],
-  ["Mixed Spice Mandi", "بهارات mandi", "100g", 8.0],
-  ["Chicken Seasoning", "seasoning chicken", "100g", 6.0],
-  ["Meat Seasoning", "seasoning meat", "100g", 6.0],
-  ["Fish Seasoning", "seasoning fish", "100g", 6.0],
-  ["Saffron", "زعfran", "1g", 15.0],
-  ["Sumac", "sumac", "100g", 8.0],
-  ["Seven Spices", "سبع بهارات", "100g", 8.0],
-]);
+// ── 15. Sauces & Condiments ───────────────────────────────────
+cat("Sauces & Condiments");
+p("Heinz Ketchup 300g", "كاتشب هاينز ٣٠٠ جم", "bottle");
+p("Heinz Ketchup 570g", "كاتشب هاينز ٥٧٠ جم", "bottle");
+p("Heinz Ketchup 935g", "كاتشب هاينز ٩٣٥ جم", "bottle");
+p("Al Rabie Ketchup 500g", "كاتشب الربيع ٥٠٠ جم", "bottle");
+p("Hellmann's Mayonnaise 400g", "مايونيز هيلمانز ٤٠٠ جم", "jar");
+p("American Garden Mayonnaise 340g", "مايونيز أمريكان جاردن ٣٤٠ جم", "jar");
+p("American Garden Ketchup 567g", "كاتشب أمريكان جاردن ٥٦٧ جم", "bottle");
+p("American Garden Mustard 340g", "خردل أمريكان جاردن ٣٤٠ جم", "bottle");
+p("American Garden Hot Sauce 355ml", "صوص حار أمريكان جاردن ٣٥٥ مل", "bottle");
+p("Heinz Mustard 200g", "خردل هاينز ٢٠٠ جم", "bottle");
+p("Heinz BBQ Sauce 400g", "صوص باربكيو هاينز ٤٠٠ جم", "bottle");
+p("Maggi Chicken Cubes 24 pcs", "مكعبات ماجي دجاج ٢٤ حبة", "box");
+p("Maggi Beef Cubes 24 pcs", "مكعبات ماجي لحم ٢٤ حبة", "box");
+p("Knorr Chicken Cubes 24 pcs", "مكعبات كنور دجاج ٢٤ حبة", "box");
+p("Soy Sauce 300ml", "صوص صويا ٣٠٠ مل", "bottle");
+p("Chili Sauce 300ml", "صوص فلفل حار ٣٠٠ مل", "bottle");
+p("White Vinegar 1L", "خل أبيض ١ لتر", "bottle");
+p("Apple Cider Vinegar 500ml", "خل تفاح ٥٠٠ مل", "bottle");
+p("Tahini 450g", "طحينة ٤٥٠ جم", "jar");
+p("Tahini 900g", "طحينة ٩٠٠ جم", "jar");
+p("Date Molasses 450g", "دبس تمر ٤٥٠ جم", "jar");
+p("Honey 250g", "عسل ٢٥٠ جم", "jar");
+p("Honey 500g", "عسل ٥٠٠ جم", "jar");
+p("Honey 1kg", "عسل ١ كجم", "jar");
+p("Strawberry Jam 400g", "مربى فراولة ٤٠٠ جم", "jar");
+p("Apricot Jam 400g", "مربى مشمش ٤٠٠ جم", "jar");
+p("Mixed Fruit Jam 400g", "مربى فواكه مشكلة ٤٠٠ جم", "jar");
+p("Nutella 350g", "نوتيلا ٣٥٠ جم", "jar");
+p("Nutella 750g", "نوتيلا ٧٥٠ جم", "jar");
+p("Peanut Butter 340g", "زبدة فول سوداني ٣٤٠ جم", "jar");
+p("Halawa Plain 500g", "حلاوة طحينية سادة ٥٠٠ جم", "pkt");
+p("Halawa Chocolate 500g", "حلاوة طحينية شوكولاتة ٥٠٠ جم", "pkt");
 
-const SPICES = [
-  ["Dried Lime Black", "ليمون أسود", "100g", 10.0, "pkt"],
-  ["Dried Mint", "نعnaع مجفف", "50g", 5.0, "pkt"],
-  ["Oregano", "oregano", "50g", 5.0, "pkt"],
-  ["Paprika", "paprika", "100g", 6.0, "pkt"],
-  ["Chili Powder", "chili powder", "100g", 6.0, "pkt"],
-  ["Garlic Powder", "garlic powder", "100g", 6.0, "pkt"],
-  ["Onion Powder", "onion powder", "100g", 6.0, "pkt"],
-  ["Ginger Powder", "ginger powder", "100g", 6.0, "pkt"],
-  ["Nutmeg", "nutmeg", "50g", 10.0, "pkt"],
-  ["Star Anise", "yansoon", "50g", 12.0, "pkt"],
-  ["MSG", "msg", "100g", 5.0, "pkt"],
-  ["Bouillon Chicken", "bouillon chicken", "24 cubes", 8.0, "box"],
-  ["Bouillon Beef", "bouillon beef", "24 cubes", 8.0, "box"],
-  ["Stock Powder Vegetable", "stock vegetable", "12 cubes", 6.0, "box"],
-];
-for (const [en, ar, size, price, unit] of SPICES) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Spices & Seasonings", unit, price);
-}
+// ── 16. Spices ────────────────────────────────────────────────
+cat("Spices");
+p("Black Pepper Ground 100g", "فلفل أسود مطحون ١٠٠ جم", "pkt");
+p("White Pepper Ground 50g", "فلفل أبيض مطحون ٥٠ جم", "pkt");
+p("Cumin Ground 100g", "كمون مطحون ١٠٠ جم", "pkt");
+p("Coriander Ground 100g", "كزبرة مطحونة ١٠٠ جم", "pkt");
+p("Turmeric 100g", "كركم ١٠٠ جم", "pkt");
+p("Paprika 100g", "بابريكا ١٠٠ جم", "pkt");
+p("Chili Powder 100g", "شطة مطحونة ١٠٠ جم", "pkt");
+p("Cinnamon Stick 50g", "قرفة عيدان ٥٠ جم", "pkt");
+p("Cinnamon Ground 50g", "قرفة مطحونة ٥٠ جم", "pkt");
+p("Cardamom Green 50g", "هيل أخضر ٥٠ جم", "pkt");
+p("Cloves 50g", "قرنفل ٥٠ جم", "pkt");
+p("Bay Leaves 20g", "ورق غار ٢٠ جم", "pkt");
+p("Garlic Powder 100g", "ثوم بودرة ١٠٠ جم", "pkt");
+p("Onion Powder 100g", "بصل بودرة ١٠٠ جم", "pkt");
+p("Ginger Powder 100g", "زنجبيل مطحون ١٠٠ جم", "pkt");
+p("Sumac 100g", "سماق ١٠٠ جم", "pkt");
+p("Zaatar 200g", "زعتر ٢٠٠ جم", "pkt");
+p("Seven Spices 100g", "سبع بهارات ١٠٠ جم", "pkt");
+p("Kabsa Spices 100g", "بهارات كبسة ١٠٠ جم", "pkt");
+p("Biryani Spices 100g", "بهارات برياني ١٠٠ جم", "pkt");
+p("Mandi Spices 100g", "بهارات مندي ١٠٠ جم", "pkt");
+p("Chicken Seasoning 100g", "بهارات دجاج ١٠٠ جم", "pkt");
+p("Meat Seasoning 100g", "بهارات لحم ١٠٠ جم", "pkt");
+p("Dried Lime 100g", "ليمون أسود مجفف ١٠٠ جم", "pkt");
+p("Dried Mint 50g", "نعناع مجفف ٥٠ جم", "pkt");
+p("Saffron 1g", "زعفران ١ جم", "pkt");
+p("Oregano 50g", "أوريجانو ٥٠ جم", "pkt");
 
-// ── Bread & Bakery ────────────────────────────────────────────
-const BAKERY = [
-  ["Arabic Bread", "خبز عربي", "5 pcs", 3.0, "pkt"],
-  ["Samar Bread", "خبز samar", "6 pcs", 4.0, "pkt"],
-  ["Toast White", "toast white", "600g", 6.0, "pkt"],
-  ["Toast Brown", "toast brown", "600g", 7.0, "pkt"],
-  ["Croissant Plain", "كرواسan", "4 pcs", 8.0, "pkt"],
-  ["Croissant Chocolate", "كرواسan chocolate", "4 pcs", 10.0, "pkt"],
-  ["Pita Bread", "خبز pita", "6 pcs", 4.0, "pkt"],
-  ["Burger Buns", "burger buns", "6 pcs", 5.0, "pkt"],
-  ["Hot Dog Buns", "hot dog buns", "6 pcs", 5.0, "pkt"],
-  ["Cake Plain", "cake plain", "400g", 12.0, "pcs"],
-  ["Cake Chocolate", "cake chocolate", "400g", 14.0, "pcs"],
-  ["Muffin Blueberry", "muffin blueberry", "4 pcs", 10.0, "pkt"],
-  ["Danish Pastry", "danish", "4 pcs", 12.0, "pkt"],
-  ["Puff Pastry", "puff pastry", "400g", 10.0, "pkt"],
-  ["Sambousek Cheese", "sambousek cheese", "6 pcs", 8.0, "pkt"],
-  ["Sambousek Meat", "sambousek meat", "6 pcs", 10.0, "pkt"],
-  ["Fatayer Spinach", "fatayer spinach", "6 pcs", 8.0, "pkt"],
-  ["Fatayer Cheese", "fatayer cheese", "6 pcs", 8.0, "pkt"],
-];
-for (const [en, ar, size, price, unit] of BAKERY) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Bread & Bakery", unit, price);
-}
+// ── 17. Chips & Snacks ────────────────────────────────────────
+cat("Chips & Snacks");
+p("Lays Classic 14g", "ليز ملح ١٤ جم", "pkt");
+p("Lays Classic 43g", "ليز ملح ٤٣ جم", "pkt");
+p("Lays Classic 170g", "ليز ملح ١٧٠ جم", "pkt");
+p("Lays Cheese 43g", "ليز جبن ٤٣ جم", "pkt");
+p("Lays Ketchup 43g", "ليز كاتشب ٤٣ جم", "pkt");
+p("Lays Chili 43g", "ليز حار ٤٣ جم", "pkt");
+p("Lays Salt & Vinegar 43g", "ليز ملح وخل ٤٣ جم", "pkt");
+p("Doritos Nacho Cheese 44g", "دوريتوس جبن ٤٤ جم", "pkt");
+p("Doritos Sweet Chili 44g", "دوريتوس سويت تشيلي ٤٤ جم", "pkt");
+p("Doritos Family Pack 180g", "دوريتوس عائلي ١٨٠ جم", "pkt");
+p("Cheetos Crunchy 35g", "تشيتوس ٣٥ جم", "pkt");
+p("Cheetos Flamin Hot 35g", "تشيتوس حار ٣٥ جم", "pkt");
+p("Pringles Original 40g", "برينجلز أصلي ٤٠ جم", "can");
+p("Pringles Original 165g", "برينجلز أصلي ١٦٥ جم", "can");
+p("Pringles Sour Cream 165g", "برينجلز ساور كريم ١٦٥ جم", "can");
+p("Pringles Paprika 165g", "برينجلز بابريكا ١٦٥ جم", "can");
+p("Tasali Classic 40g", "تسالي كلاسيك ٤٠ جم", "pkt");
+p("Kitco Chips 30g", "كيتكو ٣٠ جم", "pkt");
+p("Popcorn Microwave 3 bags", "فشار مايكروويف ٣ أكياس", "box");
+p("Sunflower Seeds 200g", "لب شمس ٢٠٠ جم", "pkt");
+p("Pumpkin Seeds 200g", "لب قرع ٢٠٠ جم", "pkt");
+p("Bugles 40g", "باجلز ٤٠ جم", "pkt");
 
-// ── Frozen ────────────────────────────────────────────────────
-brandItems("Sadia", "sadia", "Frozen Foods", "pkt", [
-  ["Chicken Whole", "دجاج whole", "900g", 18.0],
-  ["Chicken Breast", "صدر دجاج", "900g", 22.0],
-  ["Chicken Wings", "أwings", "900g", 16.0],
-  ["Chicken Nuggets", "nuggets", "400g", 12.0],
-  ["Chicken Strips", "strips", "400g", 14.0],
-  ["Beef Mince", "لحم مفروم", "500g", 20.0],
-  ["Beef Burger Patties", "burger patties", "4 pcs", 15.0],
-  ["French Fries", "بطاطس fries", "1kg", 12.0],
-  ["Mixed Vegetables", "خضار mixed", "400g", 8.0],
-  ["Green Peas", "بازilla", "400g", 6.0],
-  ["Corn Kernels", "ذرة", "400g", 6.0],
-  ["Pizza Margherita", "pizza margherita", "350g", 12.0],
-  ["Pizza Pepperoni", "pizza pepperoni", "350g", 14.0],
-]);
-brandItems("Al Kabeer", "al kabeer", "Frozen Foods", "pkt", [
-  ["Paratha Plain", "paratha", "5 pcs", 8.0],
-  ["Paratha Malabar", "paratha malabar", "5 pcs", 9.0],
-  ["Samosa Potato", "samosa potato", "12 pcs", 10.0],
-  ["Spring Rolls", "spring rolls", "12 pcs", 12.0],
-  ["Kibbeh", "kibbeh", "12 pcs", 15.0],
-  ["Falafel", "falafel", "12 pcs", 8.0],
-  ["Shawarma Chicken", "shawarma chicken", "500g", 18.0],
-  ["Shawarma Meat", "shawarma meat", "500g", 22.0],
-]);
+// ── 18. Biscuits ──────────────────────────────────────────────
+cat("Biscuits");
+p("Oreo Original 66g", "أوريو ٦٦ جم", "pkt");
+p("Oreo Original 133g", "أوريو ١٣٣ جم", "pkt");
+p("Oreo Family Pack 300g", "أوريو عائلي ٣٠٠ جم", "pkt");
+p("McVitie's Digestive 250g", "ماكفيتيز دايجستف ٢٥٠ جم", "pkt");
+p("McVitie's Digestive 400g", "ماكفيتيز دايجستف ٤٠٠ جم", "pkt");
+p("Tiffany Cream Biscuits 400g", "تيفاني بسكويت كريمة ٤٠٠ جم", "pkt");
+p("Tiffany Marie 400g", "تيفاني ماري ٤٠٠ جم", "pkt");
+p("Tiffany Digestive 400g", "تيفاني دايجستف ٤٠٠ جم", "pkt");
+p("Loacker Quadratini 125g", "لواكر ١٢٥ جم", "pkt");
+p("Bahlsen Leibniz 200g", "بالزن ٢٠٠ جم", "pkt");
+p("Ulker Biscuits 200g", "أولكر بسكويت ٢٠٠ جم", "pkt");
+p("Tuc Crackers 100g", "تاك ١٠٠ جم", "pkt");
+p("Ritz Crackers 200g", "ريتز ٢٠٠ جم", "pkt");
+p("Petit Beurre 200g", "بتي بور ٢٠٠ جم", "pkt");
+p("Lotus Biscoff 250g", "لوتس بيسكوف ٢٥٠ جم", "pkt");
+p("Eti Crax 50g", "إيتي كراكس ٥٠ جم", "pkt");
+p("Halwani Maamoul 400g", "حلواني معمول ٤٠٠ جم", "box");
+p("Nabil Biscuits 400g", "نبيل بسكويت ٤٠٠ جم", "pkt");
 
-const FROZEN = [
-  ["Ice Cream Vanilla Tub", "آيس cream vanilla", "1.5L", 18.0, "pcs"],
-  ["Ice Cream Chocolate Tub", "آيس cream chocolate", "1.5L", 18.0, "pcs"],
-  ["Ice Cream Mango Tub", "آيس cream mango", "1.5L", 20.0, "pcs"],
-  ["Ice Cream Pistachio Tub", "آيس cream pistachio", "1L", 22.0, "pcs"],
-  ["Ice Cream Cone Vanilla", "آيس cream cone", "4 pcs", 8.0, "box"],
-  ["Ice Cream Bar Magnum", "magnum", "3 pcs", 15.0, "box"],
-  ["Ice Cream Cornetto", "cornetto", "4 pcs", 12.0, "box"],
-];
-for (const [en, ar, size, price, unit] of FROZEN) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Frozen Foods", unit, price);
-}
+// ── 19. Chocolate & Candy ─────────────────────────────────────
+cat("Chocolate & Candy");
+p("KitKat 2 Finger", "كيت كات إصبعان", "pcs");
+p("KitKat 4 Finger", "كيت كات ٤ أصابع", "pcs");
+p("Snickers 50g", "سنيكرز ٥٠ جم", "pcs");
+p("Twix 50g", "تويكس ٥٠ جم", "pcs");
+p("Mars 51g", "مارس ٥١ جم", "pcs");
+p("Bounty 57g", "باونتي ٥٧ جم", "pcs");
+p("Galaxy Smooth Milk 42g", "جالاكسي ٤٢ جم", "pcs");
+p("Galaxy Smooth Milk 110g", "جالاكسي ١١٠ جم", "pcs");
+p("Milky Way 52g", "ميلكي واي ٥٢ جم", "pcs");
+p("M&M Peanut 45g", "إم آند إم فول سوداني ٤٥ جم", "pkt");
+p("M&M Chocolate 45g", "إم آند إم شوكولاتة ٤٥ جم", "pkt");
+p("Kinder Bueno", "كيندر بوينو", "pcs");
+p("Kinder Surprise", "كيندر سبرايز", "pcs");
+p("Toblerone 100g", "توبليرون ١٠٠ جم", "pcs");
+p("Cadbury Dairy Milk 45g", "كادبوري ديري ميلك ٤٥ جم", "pcs");
+p("Cadbury Flake 32g", "كادبوري فليك ٣٢ جم", "pcs");
+p("Lion Bar", "ليون بار", "pcs");
+p("Ulker Hobby 80g", "أولكر هوبي ٨٠ جم", "pcs");
+p("Ulker Albeni 34g", "أولكر ألبيني ٣٤ جم", "pcs");
+p("Haribo Goldbears 80g", "هاريبو ٨٠ جم", "pkt");
+p("Mentos Mint", "مينتوس نعناع", "pcs");
+p("Orbit Gum", "أوربت علكة", "pcs");
+p("Extra Gum", "إكسترا علكة", "pcs");
+p("Trident Gum", "ترايدنت علكة", "pcs");
+p("Halls Cough Drops", "هولز حبوب", "pkt");
+p("Chiclets", "شيكليت", "pcs");
+p("Chupa Chups Lollipop", "تشوبا تشوبس", "pcs");
+p("Toffee Classic", "توفي", "pkt");
 
-// ── Fresh Produce ─────────────────────────────────────────────
-const PRODUCE = [
-  ["Tomato", "طماطم", "1kg", 5.0, "kg"],
-  ["Cucumber", "خيار", "1kg", 4.0, "kg"],
-  ["Onion White", "بصل أبيض", "1kg", 3.0, "kg"],
-  ["Onion Red", "بصل أحمر", "1kg", 4.0, "kg"],
-  ["Potato", "بطاطس", "1kg", 3.5, "kg"],
-  ["Carrot", "جزر", "1kg", 4.0, "kg"],
-  ["Bell Pepper Green", "فلفل أخضر", "1kg", 8.0, "kg"],
-  ["Bell Pepper Red", "فلفل أحمر", "1kg", 10.0, "kg"],
-  ["Eggplant", "باذنجان", "1kg", 6.0, "kg"],
-  ["Zucchini", "كوسa", "1kg", 6.0, "kg"],
-  ["Cabbage", "ملفوف", "1 pcs", 4.0, "pcs"],
-  ["Lettuce", "خس", "1 pcs", 3.0, "pcs"],
-  ["Spinach", "سبانخ", "1 bundle", 3.0, "bundle"],
-  ["Coriander Fresh", "كزبرة طازجة", "1 bundle", 2.0, "bundle"],
-  ["Parsley Fresh", "بقدونس", "1 bundle", 2.0, "bundle"],
-  ["Mint Fresh", "نعnaع طازج", "1 bundle", 2.0, "bundle"],
-  ["Garlic", "ثوم", "250g", 5.0, "pkt"],
-  ["Ginger Fresh", "زنجبيل", "250g", 6.0, "pkt"],
-  ["Lemon", "ليمون", "1kg", 5.0, "kg"],
-  ["Orange", "برتقال", "1kg", 6.0, "kg"],
-  ["Apple Red", "تفاح أحمر", "1kg", 8.0, "kg"],
-  ["Apple Green", "تفاح أخضر", "1kg", 8.0, "kg"],
-  ["Banana", "موز", "1kg", 5.0, "kg"],
-  ["Grapes Green", "عنب أخضر", "1kg", 12.0, "kg"],
-  ["Grapes Red", "عنب أحمر", "1kg", 14.0, "kg"],
-  ["Watermelon", "بطيخ", "1 pcs", 15.0, "pcs"],
-  ["Melon", "شمام", "1 pcs", 12.0, "pcs"],
-  ["Pomegranate", "رمان", "1kg", 15.0, "kg"],
-  ["Mango", "مانgo", "1kg", 12.0, "kg"],
-  ["Pineapple", "أnanas", "1 pcs", 10.0, "pcs"],
-  ["Avocado", "أvocado", "1 pcs", 5.0, "pcs"],
-  ["Kiwi", "kiwi", "1kg", 18.0, "kg"],
-  ["Strawberry", "فراولة", "250g", 12.0, "pkt"],
-  ["Blueberry", "blueberry", "125g", 15.0, "pkt"],
-];
-for (const [en, ar, size, price, unit] of PRODUCE) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Fresh Produce", unit, price);
-}
+// ── 20. Dates & Nuts ──────────────────────────────────────────
+cat("Dates & Nuts");
+p("Sukkari Dates 1kg", "تمر سكري ١ كجم", "box");
+p("Khalas Dates 1kg", "تمر خلاص ١ كجم", "box");
+p("Ajwa Dates 500g", "تمر عجوة ٥٠٠ جم", "box");
+p("Mixed Nuts 250g", "مكسرات مشكلة ٢٥٠ جم", "pkt");
+p("Pistachios 250g", "فستق ٢٥٠ جم", "pkt");
+p("Cashews 250g", "كاجو ٢٥٠ جم", "pkt");
+p("Almonds 250g", "لوز ٢٥٠ جم", "pkt");
+p("Peanuts Roasted 250g", "فول سوداني محمص ٢٥٠ جم", "pkt");
+p("Walnuts 250g", "جوز ٢٥٠ جم", "pkt");
 
-// ── Personal Care ─────────────────────────────────────────────
-brandItems("Dove", "dove", "Personal Care", "pcs", [
-  ["Soap Bar", "صابon", "135g", 5.0],
-  ["Body Wash", "body wash", "500ml", 22.0],
-  ["Shampoo", "shampoo", "400ml", 25.0],
-  ["Conditioner", "conditioner", "400ml", 25.0],
-  ["Deodorant", "deodorant", "150ml", 18.0],
-]);
-brandItems("Nivea", "nivea", "Personal Care", "pcs", [
-  ["Cream Blue", "cream blue", "150ml", 15.0],
-  ["Body Lotion", "body lotion", "400ml", 25.0],
-  ["Deodorant Roll On", "deodorant", "50ml", 12.0],
-  ["Lip Balm", "lip balm", "4.8g", 10.0],
-  ["Men Shaving Foam", "shaving foam", "200ml", 18.0],
-]);
-brandItems("Head & Shoulders", "head & shoulders", "Personal Care", "bottle", [
-  ["Shampoo Classic", "shampoo", "400ml", 28.0],
-  ["Shampoo Menthol", "shampoo menthol", "400ml", 28.0],
-  ["Shampoo Smooth", "shampoo smooth", "400ml", 28.0],
-]);
-brandItems("Colgate", "colgate", "Personal Care", "tube", [
-  ["Toothpaste Max Fresh", "معجون أسنان", "120ml", 12.0],
-  ["Toothpaste Total", "معجون total", "120ml", 14.0],
-  ["Toothpaste Kids", "معجون kids", "50ml", 8.0],
-  ["Mouthwash", "غargle", "250ml", 15.0],
-]);
-brandItems("Signal", "signal", "Personal Care", "tube", [
-  ["Toothpaste White", "معجون", "120ml", 8.0],
-  ["Toothpaste Herbal", "معجون herbal", "120ml", 8.0],
-]);
-brandItems("Pantene", "pantene", "Personal Care", "bottle", [
-  ["Shampoo", "shampoo", "400ml", 22.0],
-  ["Conditioner", "conditioner", "360ml", 22.0],
-  ["Hair Oil", "hair oil", "100ml", 18.0],
-]);
-brandItems("Gillette", "gillette", "Personal Care", "pcs", [
-  ["Razor Blue 2", "razor", "2 pcs", 8.0],
-  ["Razor Mach3", "mach3", "1 pcs", 35.0],
-  ["Shaving Gel", "shaving gel", "200ml", 22.0],
-  ["Foam Sensitive", "foam", "200ml", 18.0],
-]);
+// ── 21. Frozen Food ───────────────────────────────────────────
+cat("Frozen Food");
+p("Americana Chicken Nuggets 400g", "ناجتس أمريكانا ٤٠٠ جم", "pkt");
+p("Americana Chicken Burger 4 pcs", "برجر دجاج أمريكانا ٤ قطع", "pkt");
+p("Americana Beef Burger 4 pcs", "برجر لحم أمريكانا ٤ قطع", "pkt");
+p("Americana Minced Beef 400g", "لحم بقري مفروم أمريكانا ٤٠٠ جم", "pkt");
+p("Americana Minced Lamb 400g", "لحم غنم مفروم أمريكانا ٤٠٠ جم", "pkt");
+p("Sadia Whole Chicken 900g", "دجاج ساديا كامل ٩٠٠ جم", "pkt");
+p("Sadia Chicken Breast 900g", "صدر دجاج ساديا ٩٠٠ جم", "pkt");
+p("Sadia Chicken Nuggets 400g", "ناجتس ساديا ٤٠٠ جم", "pkt");
+p("Al Watania Whole Chicken", "دجاج الوطنية كامل", "pcs");
+p("Al Watania Chicken Pieces", "قطع دجاج الوطنية", "pkt");
+p("French Fries 1kg", "بطاطس مقلية مجمدة ١ كجم", "pkt");
+p("Frozen Mixed Vegetables 400g", "خضار مشكلة مجمدة ٤٠٠ جم", "pkt");
+p("Frozen Green Peas 400g", "بازلاء مجمدة ٤٠٠ جم", "pkt");
+p("Frozen Okra 400g", "بامية مجمدة ٤٠٠ جم", "pkt");
+p("Frozen Molokhia 400g", "ملوخية مجمدة ٤٠٠ جم", "pkt");
+p("Samosa Vegetable 12 pcs", "سمبوسة خضار ١٢ حبة", "pkt");
+p("Spring Rolls 12 pcs", "سبرينج رول ١٢ حبة", "pkt");
+p("Kibbeh 12 pcs", "كبة ١٢ حبة", "pkt");
+p("Falafel 12 pcs", "فلافل ١٢ حبة", "pkt");
+p("Fish Fingers 400g", "أصابع سمك ٤٠٠ جم", "pkt");
+p("Frozen Pizza Margherita", "بيتزا مارغريتا مجمدة", "pcs");
+p("Paratha Plain 5 pcs", "براثا سادة ٥ قطع", "pkt");
 
-const PERSONAL = [
-  ["Toothbrush Soft", "فرشاة أسنان soft", "1 pcs", 5.0, "pcs"],
-  ["Toothbrush Medium", "فرشاة أسنان medium", "1 pcs", 5.0, "pcs"],
-  ["Dental Floss", "dental floss", "50m", 8.0, "pcs"],
-  ["Cotton Buds", "cotton buds", "200 pcs", 6.0, "box"],
-  ["Cotton Pads", "cotton pads", "80 pcs", 8.0, "pkt"],
-  ["Sanitary Pads Regular", "فوط صحية", "10 pcs", 12.0, "pkt"],
-  ["Sanitary Pads Night", "فوط ليلية", "8 pcs", 14.0, "pkt"],
-  ["Baby Diapers Size 3", "حفاضات size 3", "44 pcs", 55.0, "pkt"],
-  ["Baby Diapers Size 4", "حفاضات size 4", "40 pcs", 55.0, "pkt"],
-  ["Baby Diapers Size 5", "حفاضات size 5", "36 pcs", 55.0, "pkt"],
-  ["Baby Wipes", "مناديل baby", "80 pcs", 12.0, "pkt"],
-  ["Shampoo Anti Dandruff", "shampoo anti dandruff", "400ml", 20.0, "bottle"],
-  ["Hair Gel", "gel شعر", "250ml", 12.0, "jar"],
-  ["Hair Spray", "hair spray", "250ml", 15.0, "bottle"],
-  ["Face Wash", "face wash", "150ml", 18.0, "tube"],
-  ["Body Soap Antibacterial", "صابon antibacterial", "125g", 4.0, "pcs"],
-  ["Hand Sanitizer", "معقم يد", "500ml", 12.0, "bottle"],
-  ["Sunscreen SPF 50", "sunscreen", "100ml", 35.0, "tube"],
-  ["Vaseline Petroleum", "vaseline", "100ml", 10.0, "jar"],
-  ["Aloe Vera Gel", "aloe vera", "200ml", 15.0, "tube"],
-  ["Comb", "مشط", "1 pcs", 3.0, "pcs"],
-  ["Hair Brush", "فرشaة شعر", "1 pcs", 8.0, "pcs"],
-  ["Nail Clipper", "مقص أظافر", "1 pcs", 5.0, "pcs"],
-  ["Razor Disposable 5pk", "razor disposable", "5 pcs", 10.0, "pkt"],
-  ["Shower Cap", "shower cap", "1 pcs", 3.0, "pcs"],
-];
-for (const [en, ar, size, price, unit] of PERSONAL) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Personal Care", unit, price);
-}
+// ── 22. Ice Cream ─────────────────────────────────────────────
+cat("Ice Cream");
+p("Almarai Ice Cream Vanilla 1.5L", "آيس كريم المراعي فانيليا ١٫٥ لتر", "pcs");
+p("Almarai Ice Cream Chocolate 1.5L", "آيس كريم المراعي شوكولاتة ١٫٥ لتر", "pcs");
+p("Almarai Ice Cream Cup", "كأس آيس كريم المراعي", "pcs");
+p("Magnum Classic", "ماغنوم كلاسيك", "pcs");
+p("Cornetto Classico", "كورنيتو كلاسيكو", "pcs");
+p("Paddle Pop", "باديل بوب", "pcs");
+p("Igloo Ice Cream Tub 1.5L", "آيس كريم إغلو ١٫٥ لتر", "pcs");
+p("Kwality Walls Cup", "كأس كواليتي وولز", "pcs");
 
-// ── Household & Cleaning ──────────────────────────────────────
-brandItems("Persil", "persil", "Household & Cleaning", "pkt", [
-  ["Detergent Powder", "مسحوق غسيل", "3kg", 35.0],
-  ["Detergent Powder", "مسحوق غسيل", "6kg", 60.0],
-  ["Detergent Liquid", "سائل غسيل", "2.5L", 40.0],
-  ["Fabric Softener", "منعم", "2L", 25.0],
-]);
-brandItems("Tide", "tide", "Household & Cleaning", "pkt", [
-  ["Detergent Powder", "مسحوق", "3kg", 38.0],
-  ["Detergent Liquid", "سائل", "2.5L", 42.0],
-  ["Pods", "pods", "15 pcs", 35.0],
-]);
-brandItems("Ariel", "ariel", "Household & Cleaning", "pkt", [
-  ["Detergent Powder", "مسحوق", "3kg", 36.0],
-  ["Detergent Liquid", "سائل", "2.5L", 40.0],
-  ["Pods", "pods", "12 pcs", 30.0],
-]);
-brandItems("Fairy", "fairy", "Household & Cleaning", "bottle", [
-  ["Dishwashing Liquid", "سائل جلي", "1L", 12.0],
-  ["Dishwashing Liquid Lemon", "سائل lemon", "1L", 12.0],
-  ["Dishwashing Liquid Apple", "سائل apple", "1L", 12.0],
-]);
-brandItems("Pril", "pril", "Household & Cleaning", "bottle", [
-  ["Dishwashing Liquid", "سائل جلي", "1L", 10.0],
-  ["Dishwashing Liquid Lemon", "سائل lemon", "1L", 10.0],
-]);
-brandItems("Clorox", "clorox", "Household & Cleaning", "bottle", [
-  ["Bleach", "كلorox", "3.78L", 15.0],
-  ["Bleach", "كلorox", "1.89L", 10.0],
-  ["Toilet Cleaner", "منظف مرحاض", "750ml", 12.0],
-  ["Multi Surface", "multi surface", "750ml", 14.0],
-]);
-brandItems("Dettol", "dettol", "Household & Cleaning", "bottle", [
-  ["Antiseptic", "معقم", "750ml", 22.0],
-  ["Antiseptic", "معقم", "1L", 28.0],
-  ["Hand Wash", "hand wash", "200ml", 12.0],
-  ["Surface Cleaner", "surface cleaner", "750ml", 15.0],
-]);
-brandItems("Fine", "fine", "Household & Cleaning", "roll", [
-  ["Tissue Toilet Roll", "منadil wc", "12 rolls", 18.0],
-  ["Tissue Toilet Roll", "منadil wc", "24 rolls", 32.0],
-  ["Facial Tissue Box", "منadil وجه", "200 sheets", 8.0],
-  ["Kitchen Towel", "kitchen towel", "2 rolls", 12.0],
-  ["Wet Wipes", "wet wipes", "80 pcs", 10.0],
-]);
-brandItems("Pampers", "pampers", "Household & Cleaning", "pkt", [
-  ["Baby Diapers Size 1", "حفاضات 1", "44 pcs", 50.0],
-  ["Baby Diapers Size 2", "حفاضات 2", "44 pcs", 52.0],
-  ["Baby Wipes Sensitive", "wipes sensitive", "64 pcs", 14.0],
-]);
+// ── 23. Meat & Poultry ────────────────────────────────────────
+cat("Meat & Poultry");
+p("Fresh Whole Chicken", "دجاج طازج كامل", "kg");
+p("Fresh Chicken Breast", "صدر دجاج طازج", "kg");
+p("Fresh Chicken Thighs", "أفخاذ دجاج طازجة", "kg");
+p("Minced Beef", "لحم بقري مفروم", "kg");
+p("Minced Lamb", "لحم غنم مفروم", "kg");
+p("Beef Steak", "ستيك لحم بقري", "kg");
+p("Lamb Chops", "ريش غنم", "kg");
+p("Chicken Sausages", "سجق دجاج", "pkt");
+p("Beef Mortadella 250g", "مرتديلا بقري ٢٥٠ جم", "pkt");
+p("Turkey Slices 200g", "شرائح ديك رومي ٢٠٠ جم", "pkt");
+p("Chicken Franks 400g", "نقانق دجاج ٤٠٠ جم", "pkt");
 
-const HOUSEHOLD = [
-  ["Trash Bags Large", "أكياس نفايات", "30 pcs", 12.0, "roll"],
-  ["Trash Bags Medium", "أكياس medium", "30 pcs", 10.0, "roll"],
-  ["Aluminum Foil", "ورق أluminum", "30m", 12.0, "roll"],
-  ["Cling Film", "ناylon", "30m", 8.0, "roll"],
-  ["Baking Paper", "baking paper", "20 sheets", 8.0, "roll"],
-  ["Sponge Scrub", "sponge", "3 pcs", 5.0, "pkt"],
-  ["Steel Wool", "steel wool", "6 pcs", 4.0, "pkt"],
-  ["Floor Cleaner Pine", "منظف أرضيات", "1.5L", 15.0, "bottle"],
-  ["Floor Cleaner Lavender", "منظف lavender", "1.5L", 15.0, "bottle"],
-  ["Glass Cleaner", "glass cleaner", "750ml", 10.0, "bottle"],
-  ["Air Freshener Spray", "معطر", "300ml", 12.0, "can"],
-  ["Air Freshener Gel", "معطر gel", "150g", 8.0, "jar"],
-  ["Insect Spray", "رsh insect", "400ml", 15.0, "can"],
-  ["Moth Balls", "moth balls", "100g", 6.0, "pkt"],
-  ["Matches Box", "عود ثقاب", "10 boxes", 5.0, "box"],
-  ["Lighter Disposable", "ولاعة", "1 pcs", 2.0, "pcs"],
-  ["Charcoal BBQ", "فحم", "3kg", 15.0, "bag"],
-  ["Fire Starter", "fire starter", "24 cubes", 8.0, "box"],
-  ["Battery AA 4pk", "بطاريات AA", "4 pcs", 8.0, "pkt"],
-  ["Battery AAA 4pk", "بطاريات AAA", "4 pcs", 8.0, "pkt"],
-  ["Light Bulb LED 9W", "لمبة LED", "1 pcs", 8.0, "pcs"],
-  ["Extension Cord 3m", "موصل كهrb", "1 pcs", 25.0, "pcs"],
-  ["Duct Tape", "شريط لاصق", "1 roll", 6.0, "roll"],
-  ["Super Glue", "super glue", "1 pcs", 4.0, "pcs"],
-  ["Plastic Cups 50pk", "أكواب plastic", "50 pcs", 8.0, "pkt"],
-  ["Plastic Plates 25pk", "أطباق plastic", "25 pcs", 10.0, "pkt"],
-  ["Paper Plates 25pk", "أطباق paper", "25 pcs", 8.0, "pkt"],
-  ["Garbage Bin 30L", "سلة نفايات", "1 pcs", 35.0, "pcs"],
-  ["Mop Stick", "ممسحة", "1 pcs", 25.0, "pcs"],
-  ["Broom", "مكنسة", "1 pcs", 20.0, "pcs"],
-];
-for (const [en, ar, size, price, unit] of HOUSEHOLD) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Household & Cleaning", unit, price);
-}
+// ── 24. Fresh Produce ─────────────────────────────────────────
+cat("Fresh Produce");
+p("Tomato", "طماطم", "kg");
+p("Cucumber", "خيار", "kg");
+p("White Onion", "بصل أبيض", "kg");
+p("Red Onion", "بصل أحمر", "kg");
+p("Potato", "بطاطس", "kg");
+p("Carrot", "جزر", "kg");
+p("Green Bell Pepper", "فلفل أخضر", "kg");
+p("Red Bell Pepper", "فلفل أحمر", "kg");
+p("Eggplant", "باذنجان", "kg");
+p("Zucchini", "كوسة", "kg");
+p("Cabbage", "ملفوف", "pcs");
+p("Lettuce", "خس", "pcs");
+p("Spinach Bundle", "سبانخ حزمة", "bundle");
+p("Coriander Bundle", "كزبرة حزمة", "bundle");
+p("Parsley Bundle", "بقدونس حزمة", "bundle");
+p("Mint Bundle", "نعناع حزمة", "bundle");
+p("Garlic 250g", "ثوم ٢٥٠ جم", "pkt");
+p("Fresh Ginger 250g", "زنجبيل طازج ٢٥٠ جم", "pkt");
+p("Lemon", "ليمون", "kg");
+p("Orange", "برتقال", "kg");
+p("Red Apple", "تفاح أحمر", "kg");
+p("Green Apple", "تفاح أخضر", "kg");
+p("Banana", "موز", "kg");
+p("Green Grapes", "عنب أخضر", "kg");
+p("Watermelon", "بطيخ", "pcs");
+p("Melon", "شمام", "pcs");
+p("Pomegranate", "رمان", "kg");
+p("Mango", "مانجو", "kg");
+p("Dates Loose", "تمر سائب", "kg");
 
-// ── Baby Care ─────────────────────────────────────────────────
-brandItems("Johnson's", "johnson's", "Baby Care", "bottle", [
-  ["Baby Shampoo", "shampoo baby", "200ml", 18.0],
-  ["Baby Oil", "زيت baby", "200ml", 15.0],
-  ["Baby Lotion", "lotion baby", "200ml", 18.0],
-  ["Baby Powder", "powder baby", "200g", 12.0],
-  ["Baby Soap", "صابon baby", "125g", 8.0],
-  ["Baby Wipes", "wipes baby", "72 pcs", 14.0],
-]);
-brandItems("Huggies", "huggies", "Baby Care", "pkt", [
-  ["Diapers Size 3", "حفاضات 3", "44 pcs", 58.0],
-  ["Diapers Size 4", "حفاضات 4", "40 pcs", 58.0],
-  ["Diapers Size 5", "حفاضات 5", "36 pcs", 58.0],
-  ["Pull Ups Size 4", "pull ups 4", "22 pcs", 45.0],
-]);
+// ── 25. Baby Care ─────────────────────────────────────────────
+cat("Baby Care");
+p("Pampers Size 1", "بامبرز مقاس ١", "pkt");
+p("Pampers Size 2", "بامبرز مقاس ٢", "pkt");
+p("Pampers Size 3", "بامبرز مقاس ٣", "pkt");
+p("Pampers Size 4", "بامبرز مقاس ٤", "pkt");
+p("Pampers Size 5", "بامبرز مقاس ٥", "pkt");
+p("Pampers Size 6", "بامبرز مقاس ٦", "pkt");
+p("Fine Baby Size 3", "فاين بيبي مقاس ٣", "pkt");
+p("Fine Baby Size 4", "فاين بيبي مقاس ٤", "pkt");
+p("Fine Baby Size 5", "فاين بيبي مقاس ٥", "pkt");
+p("Sanita Bambi Size 3", "سانيتا بامبي مقاس ٣", "pkt");
+p("Sanita Bambi Size 4", "سانيتا بامبي مقاس ٤", "pkt");
+p("Molfix Size 4", "مولفيكس مقاس ٤", "pkt");
+p("Baby Wipes 80 pcs", "مناديل أطفال ٨٠ حبة", "pkt");
+p("Johnson's Baby Shampoo 200ml", "شامبو جونسون أطفال ٢٠٠ مل", "bottle");
+p("Johnson's Baby Oil 200ml", "زيت جونسون أطفال ٢٠٠ مل", "bottle");
+p("Johnson's Baby Powder 200g", "بودرة جونسون أطفال ٢٠٠ جم", "pcs");
+p("Johnson's Baby Lotion 200ml", "لوشن جونسون أطفال ٢٠٠ مل", "bottle");
+p("Cerelac Rice 200g", "سيريلاك أرز ٢٠٠ جم", "box");
+p("Cerelac Wheat 200g", "سيريلاك قمح ٢٠٠ جم", "box");
+p("Nido 1+ 400g", "نيدو ١+ ٤٠٠ جم", "can");
+p("Nido 3+ 400g", "نيدو ٣+ ٤٠٠ جم", "can");
+p("Baby Bottle 250ml", "رضاعة ٢٥٠ مل", "pcs");
 
-const BABY = [
-  ["Baby Formula Stage 1", "حليب أطفال 1", "400g", 45.0, "can"],
-  ["Baby Formula Stage 2", "حليب أطفال 2", "400g", 45.0, "can"],
-  ["Baby Formula Stage 3", "حليب أطفال 3", "400g", 42.0, "can"],
-  ["Baby Cereal Rice", "cereal rice", "200g", 15.0, "box"],
-  ["Baby Cereal Wheat", "cereal wheat", "200g", 15.0, "box"],
-  ["Baby Biscuits", "biscuits baby", "150g", 10.0, "pkt"],
-  ["Baby Bottle 250ml", "bottle baby", "250ml", 25.0, "pcs"],
-  ["Pacifier", "لهاية", "1 pcs", 12.0, "pcs"],
-  ["Baby Nail Scissors", "مقص أظافر baby", "1 pcs", 10.0, "pcs"],
-  ["Baby Thermometer", "thermometer", "1 pcs", 35.0, "pcs"],
-];
-for (const [en, ar, size, price, unit] of BABY) {
-  add(`${en} ${size}`, `${ar} ${size}`, "Baby Care", unit, price);
-}
+// ── 26. Personal Care ─────────────────────────────────────────
+cat("Personal Care");
+p("Colgate Toothpaste 125ml", "معجون كولجيت ١٢٥ مل", "tube");
+p("Signal Toothpaste 120ml", "معجون سيجنال ١٢٠ مل", "tube");
+p("Closeup Toothpaste 120ml", "معجون كلوس أب ١٢٠ مل", "tube");
+p("Sensodyne Toothpaste 100ml", "معجون سنسوداين ١٠٠ مل", "tube");
+p("Oral-B Toothbrush", "فرشاة أسنان أورال بي", "pcs");
+p("Toothbrush Soft", "فرشاة أسنان ناعمة", "pcs");
+p("Head & Shoulders Shampoo 400ml", "شامبو هيد آند شولدرز ٤٠٠ مل", "bottle");
+p("Pantene Shampoo 400ml", "شامبو بانتين ٤٠٠ مل", "bottle");
+p("Pantene Conditioner 360ml", "بلسم بانتين ٣٦٠ مل", "bottle");
+p("Sunsilk Shampoo 400ml", "شامبو صانسيلك ٤٠٠ مل", "bottle");
+p("Dove Shampoo 400ml", "شامبو دوف ٤٠٠ مل", "bottle");
+p("Dove Body Wash 500ml", "غسول جسم دوف ٥٠٠ مل", "bottle");
+p("Dove Soap 135g", "صابون دوف ١٣٥ جم", "pcs");
+p("Lux Soap 125g", "صابون لوكس ١٢٥ جم", "pcs");
+p("Dettol Soap 125g", "صابون ديتول ١٢٥ جم", "pcs");
+p("Lifebuoy Soap 125g", "صابون لايف بوي ١٢٥ جم", "pcs");
+p("Fa Soap 125g", "صابون فا ١٢٥ جم", "pcs");
+p("Palmolive Shower Gel 500ml", "شاور بالموليف ٥٠٠ مل", "bottle");
+p("Nivea Cream 150ml", "كريم نيفيا ١٥٠ مل", "jar");
+p("Nivea Body Lotion 400ml", "لوشن نيفيا ٤٠٠ مل", "bottle");
+p("Nivea Deodorant 150ml", "مزيل عرق نيفيا ١٥٠ مل", "can");
+p("Rexona Deodorant 150ml", "مزيل عرق ركسونا ١٥٠ مل", "can");
+p("Gillette Blue 2 Razor 2 pcs", "جيليت بلو ٢ قطعتان", "pkt");
+p("Gillette Shaving Foam 200ml", "رغوة حلاقة جيليت ٢٠٠ مل", "can");
+p("Always Pads 10 pcs", "فوط أولويز ١٠ قطع", "pkt");
+p("Always Night Pads 8 pcs", "فوط أولويز ليلية ٨ قطع", "pkt");
+p("Kotex Pads 10 pcs", "فوط كوتكس ١٠ قطع", "pkt");
+p("Vaseline 100ml", "فازلين ١٠٠ مل", "jar");
+p("Cotton Pads 80 pcs", "أقراص قطن ٨٠ حبة", "pkt");
+p("Cotton Buds 200 pcs", "أعواد أذن ٢٠٠ حبة", "box");
+p("Hand Sanitizer 500ml", "معقم يدين ٥٠٠ مل", "bottle");
+p("Hair Gel 250ml", "جل شعر ٢٥٠ مل", "jar");
+p("Comb", "مشط", "pcs");
+p("Nail Clipper", "قصاصة أظافر", "pcs");
 
-// ── Expand to ~1000 with size/variant duplicates ──────────────
-const EXPANSION_TEMPLATES = [
-  ["Instant Noodles Chicken", "نoodles chicken", "Snacks & Confectionery", "pkt", 2.0],
-  ["Instant Noodles Beef", "نoodles beef", "Snacks & Confectionery", "pkt", 2.0],
-  ["Instant Noodles Vegetable", "نoodles veg", "Snacks & Confectionering", "pkt", 2.0],
-  ["Cup Noodles Chicken", "cup noodles", "Snacks & Confectionery", "cup", 4.0],
-  ["Cup Noodles Spicy", "cup noodles spicy", "Snacks & Confectionery", "cup", 4.0],
-];
+// ── 27. Laundry & Cleaning ────────────────────────────────────
+cat("Laundry & Cleaning");
+p("Ariel Powder 3kg", "أريال مسحوق ٣ كجم", "pkt");
+p("Ariel Liquid 2.5L", "أريال سائل ٢٫٥ لتر", "bottle");
+p("Persil Powder 3kg", "برسيل مسحوق ٣ كجم", "pkt");
+p("Persil Liquid 2.5L", "برسيل سائل ٢٫٥ لتر", "bottle");
+p("Tide Powder 3kg", "تايد مسحوق ٣ كجم", "pkt");
+p("Tide Liquid 2.5L", "تايد سائل ٢٫٥ لتر", "bottle");
+p("Fairy Dish Soap 1L", "فيري سائل جلي ١ لتر", "bottle");
+p("Fairy Dish Soap Lemon 1L", "فيري ليمون ١ لتر", "bottle");
+p("Pril Dish Soap 1L", "بريل سائل جلي ١ لتر", "bottle");
+p("Dettol Antiseptic 750ml", "ديتول مطهر ٧٥٠ مل", "bottle");
+p("Dettol Antiseptic 1L", "ديتول مطهر ١ لتر", "bottle");
+p("Dettol Hand Wash 200ml", "ديتول غسول يدين ٢٠٠ مل", "bottle");
+p("Clorox Bleach 1.89L", "كلوركس ١٫٨٩ لتر", "bottle");
+p("Clorox Bleach 3.78L", "كلوركس ٣٫٧٨ لتر", "bottle");
+p("Clorox Toilet Cleaner 750ml", "كلوركس منظف مرحاض ٧٥٠ مل", "bottle");
+p("Harpic Toilet Cleaner 750ml", "هاربيك ٧٥٠ مل", "bottle");
+p("Jif Cream Cleaner 500ml", "جيف ٥٠٠ مل", "bottle");
+p("Mr Muscle Kitchen 750ml", "مستر ماسل مطبخ ٧٥٠ مل", "bottle");
+p("Ajax Floor Cleaner 1.5L", "أجاكس أرضيات ١٫٥ لتر", "bottle");
+p("Flash Floor Cleaner 1.5L", "فلاش أرضيات ١٫٥ لتر", "bottle");
+p("Glass Cleaner 750ml", "منظف زجاج ٧٥٠ مل", "bottle");
+p("Abaya Wash 1L", "سائل غسيل عبايات ١ لتر", "bottle");
+p("Fabric Softener 2L", "منعم أقمشة ٢ لتر", "bottle");
+p("Dish Sponge 3 pcs", "إسفنج جلي ٣ حبات", "pkt");
+p("Steel Wool 6 pcs", "سلك جلي ٦ حبات", "pkt");
+p("Trash Bags Large 30 pcs", "أكياس نفايات كبيرة ٣٠ كيس", "roll");
+p("Trash Bags Medium 30 pcs", "أكياس نفايات وسط ٣٠ كيس", "roll");
+p("Cleaning Gloves", "قفازات تنظيف", "pair");
+p("Insect Spray 400ml", "مبيد حشرات ٤٠٠ مل", "can");
+p("Air Freshener Spray 300ml", "معطر جو ٣٠٠ مل", "can");
+p("Air Freshener Gel 150g", "معطر جو جل ١٥٠ جم", "jar");
 
-const NOODLE_BRANDS = ["Indomie", "Maggi", "Nissin", "Samyang", "Knorr"];
-for (const brand of NOODLE_BRANDS) {
-  for (let i = 1; i <= 8; i++) {
-    add(
-      `${brand} Instant Noodles Flavor ${i}`,
-      `${brand} نoodles ${i}`,
-      "Snacks & Confectionery",
-      "pkt",
-      2 + (i % 3)
-    );
+// ── 28. Paper & Tissue ────────────────────────────────────────
+cat("Paper & Tissue");
+p("Fine Facial Tissue 150 sheets", "مناديل فاين ١٥٠ ورقة", "box");
+p("Fine Facial Tissue 5 pack", "مناديل فاين ٥ علب", "pack");
+p("Fine Toilet Paper 4 rolls", "ورق تواليت فاين ٤ رول", "pack");
+p("Fine Toilet Paper 12 rolls", "ورق تواليت فاين ١٢ رول", "pack");
+p("Fine Kitchen Towel 2 rolls", "مناشف مطبخ فاين رولان", "pack");
+p("Sanita Facial Tissue", "مناديل سانيتا", "box");
+p("Sanita Toilet Paper 8 rolls", "ورق تواليت سانيتا ٨ رول", "pack");
+p("Kleenex Facial Tissue", "مناديل كلينكس", "box");
+p("Wet Wipes 80 pcs", "مناديل مبللة ٨٠ حبة", "pkt");
+p("Aluminum Foil 30m", "ورق ألمنيوم ٣٠ م", "roll");
+p("Cling Film 30m", "نايلون حفظ ٣٠ م", "roll");
+p("Baking Paper 20 sheets", "ورق زبدة ٢٠ ورقة", "roll");
+p("Paper Cups 50 pcs", "أكواب ورق ٥٠ حبة", "pkt");
+p("Plastic Cups 50 pcs", "أكواب بلاستيك ٥٠ حبة", "pkt");
+p("Plastic Plates 25 pcs", "أطباق بلاستيك ٢٥ حبة", "pkt");
+p("Paper Plates 25 pcs", "أطباق ورق ٢٥ حبة", "pkt");
+p("Plastic Spoons 50 pcs", "ملاعق بلاستيك ٥٠ حبة", "pkt");
+p("Garbage Bags Small 50 pcs", "أكياس نفايات صغيرة ٥٠ كيس", "roll");
+
+// ── 29. Household ─────────────────────────────────────────────
+cat("Household");
+p("AA Batteries 4 pcs", "بطاريات AA ٤ حبات", "pkt");
+p("AAA Batteries 4 pcs", "بطاريات AAA ٤ حبات", "pkt");
+p("Disposable Lighter", "ولاعة", "pcs");
+p("Matches 10 boxes", "عيدان ثقاب ١٠ علب", "box");
+p("LED Bulb 9W", "لمبة LED ٩ واط", "pcs");
+p("Duct Tape", "شريط لاصق عريض", "roll");
+p("Super Glue", "صمغ قوي", "pcs");
+p("Candles 6 pcs", "شموع ٦ حبات", "pkt");
+p("Incense Bakhoor", "بخور", "pkt");
+p("Charcoal 3kg", "فحم ٣ كجم", "bag");
+p("Broom", "مكنسة", "pcs");
+p("Mop", "ممسحة", "pcs");
+p("Mosquito Coil", "مبيد ناموس لولبي", "box");
+
+function escapeCsvCell(value) {
+  const str = value == null ? "" : String(value);
+  if (/[",\n\r]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
   }
+  return str;
 }
 
-const SAUCE_BRANDS = ["Heinz", "Goody", "American Garden", "Maggi", "Knorr"];
-const SAUCE_TYPES = ["Hot", "Garlic", "Soy", "Teriyaki", "Chili Garlic", "BBQ", "Ranch", "Caesar"];
-for (const brand of SAUCE_BRANDS) {
-  for (const type of SAUCE_TYPES) {
-    add(`${brand} ${type} Sauce 400g`, `${brand} ${type} صلصة`, "Canned & Preserved", "bottle", 8 + Math.random() * 6);
+function skuFor(index) {
+  return `BAQ-${String(index + 1).padStart(4, "0")}`;
+}
+
+const seen = new Map();
+for (const [i, product] of PRODUCTS.entries()) {
+  const key = product.en.trim().toLowerCase();
+  if (seen.has(key)) {
+    throw new Error(`Duplicate English name: "${product.en}" (also #${seen.get(key) + 1})`);
   }
+  seen.set(key, i);
 }
 
-const JUICE_BRANDS = ["Al Rabie", "Sun Top", "Capri Sun", "Rani", "Tropicana", "Minute Maid"];
-const JUICE_FLAVORS = ["Orange", "Apple", "Mango", "Grape", "Mixed Fruit", "Pineapple", "Pomegranate", "Peach"];
-for (const brand of JUICE_BRANDS) {
-  for (const flavor of JUICE_FLAVORS) {
-    add(`${brand} ${flavor} Juice 1L`, `${brand} ${flavor} عصير`, "Beverages", "L", 6 + Math.random() * 5);
-    add(`${brand} ${flavor} Juice 200ml`, `${brand} ${flavor} عصير`, "Beverages", "pcs", 1.5 + Math.random() * 2);
-  }
-}
-
-const CANDY_TYPES = ["Gummy Bears", "Lollipops", "Chewing Gum", "Mints", "Hard Candy", "Jelly", "Marshmallow", "Toffee"];
-const CANDY_BRANDS = ["Haribo", "Chupa Chups", "Extra", "Mentos", "Alpenliebe", "Halls", "Trolli", "Fruittella"];
-for (const brand of CANDY_BRANDS) {
-  for (const type of CANDY_TYPES) {
-    add(`${brand} ${type}`, `${brand} ${type}`, "Snacks & Confectionery", "pkt", 2 + Math.random() * 4);
-  }
-}
-
-const CLEANING_BRANDS = ["DAC", "Mr Muscle", "Vanish", "Harpic", "Jif", "Ajax", "Pledge", "Glade"];
-const CLEANING_TYPES = ["Bathroom", "Kitchen", "Floor", "Glass", "Drain", "Oven", "Furniture", "Carpet"];
-for (const brand of CLEANING_BRANDS) {
-  for (const type of CLEANING_TYPES) {
-    add(`${brand} ${type} Cleaner 750ml`, `${brand} ${type} منظف`, "Household & Cleaning", "bottle", 10 + Math.random() * 8);
-  }
-}
-
-const SHAMPOO_BRANDS = ["Clear", "Sunsilk", "Herbal Essences", "Tresemme", "L'Oreal", "Garnier", "Vatika", "Dabur"];
-const SHAMPOO_TYPES = ["Anti Dandruff", "Smooth", "Volume", "Repair", "Color", "Keratin", "Argan", "Coconut"];
-for (const brand of SHAMPOO_BRANDS) {
-  for (const type of SHAMPOO_TYPES) {
-    add(`${brand} ${type} Shampoo 400ml`, `${brand} ${type} شامبو`, "Personal Care", "bottle", 15 + Math.random() * 15);
-    add(`${brand} ${type} Conditioner 360ml`, `${brand} ${type} بلسم`, "Personal Care", "bottle", 15 + Math.random() * 15);
-  }
-}
-
-const RICE_BRANDS = ["Abu Kass", "Sunwhite", "Tilda", "Royal", "India Gate", "Al Wadi", "Sera", "Mahmood"];
-const RICE_TYPES = ["Basmati", "Calrose", "Jasmine", "Sushi", "Brown", "Wild", "Parboiled", "Premium"];
-const RICE_SIZES = ["1kg", "2kg", "5kg", "10kg"];
-for (const brand of RICE_BRANDS) {
-  for (const type of RICE_TYPES) {
-    for (const size of RICE_SIZES) {
-      const base = size === "1kg" ? 10 : size === "2kg" ? 18 : size === "5kg" ? 40 : 75;
-      add(`${brand} ${type} Rice ${size}`, `${brand} ${type} أرز`, "Rice & Grains", size.includes("kg") ? "sack" : "pkt", base);
-    }
-  }
-}
-
-// Dedupe by English name
-const seen = new Set();
-const unique = [];
-for (const p of PRODUCTS) {
-  const key = p.en.toLowerCase();
-  if (seen.has(key)) continue;
-  seen.add(key);
-  unique.push(p);
-}
-
-// Trim or pad to ~1000
-const TARGET = 1000;
-let catalog = unique.slice(0, TARGET);
-let counter = catalog.length + 1;
-while (catalog.length < TARGET) {
-  const base = catalog[counter % catalog.length];
-  catalog.push({
-    ...base,
-    en: `${base.en} (Alt ${counter})`,
-    ar: `${base.ar} (بديل ${counter})`,
-    price: base.price,
-  });
-  counter++;
-}
-
-function slugify(text) {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 40);
-}
-
-const rows = catalog.map((p, i) => {
-  const sku = `BQ-${String(i + 1).padStart(4, "0")}-${slugify(p.en).slice(0, 20)}`;
-  return [
-    p.en,
-    p.ar,
-    sku,
-    "", // barcode — fill from supplier or Open Food Facts
-    p.category,
-    p.unit,
-    "",
-    p.cost.toFixed(2),
-    p.price.toFixed(2),
-    "0",
-    "5",
-    "yes",
-  ];
-});
+const rows = PRODUCTS.map((product, i) => [
+  product.en,
+  product.ar,
+  skuFor(i),
+  "",
+  product.category,
+  product.unit,
+  "",
+  "0.00",
+  "0.00",
+  "default",
+  "0",
+  "0",
+  "no",
+]);
 
 mkdirSync(OUT_DIR, { recursive: true });
 
-const csvLines = [
-  HEADERS.join(","),
-  ...rows.map((row) =>
-    row.map((cell) => {
-      const s = String(cell);
-      return s.includes(",") || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s;
-    }).join(",")
-  ),
-];
-const csvPath = join(OUT_DIR, "baqala-products-1000.csv");
-writeFileSync(csvPath, "\uFEFF" + csvLines.join("\n"), "utf8");
+const csv = `\uFEFF${[HEADERS.map(escapeCsvCell).join(","), ...rows.map((row) => row.map(escapeCsvCell).join(","))].join("\r\n")}\r\n`;
+const csvPath = join(OUT_DIR, "baqala-common-products.csv");
+writeFileSync(csvPath, csv, "utf8");
 
-const wb = XLSX.utils.book_new();
-const ws = XLSX.utils.aoa_to_sheet([HEADERS, ...rows]);
-XLSX.utils.book_append_sheet(wb, ws, "Products");
-const xlsxPath = join(OUT_DIR, "baqala-products-1000.xlsx");
-XLSX.writeFile(wb, xlsxPath);
+const workbook = XLSX.utils.book_new();
+const sheet = XLSX.utils.aoa_to_sheet([HEADERS, ...rows]);
+sheet["!cols"] = HEADERS.map((header) => ({
+  wch: Math.min(40, Math.max(12, header.length + 4)),
+}));
+XLSX.utils.book_append_sheet(workbook, sheet, "Products");
+const xlsxPath = join(OUT_DIR, "baqala-common-products.xlsx");
+XLSX.writeFile(workbook, xlsxPath);
 
-console.log(`Generated ${catalog.length} products`);
+const oldCsv = join(OUT_DIR, "baqala-products-1000.csv");
+const oldXlsx = join(OUT_DIR, "baqala-products-1000.xlsx");
+for (const stale of [oldCsv, oldXlsx]) {
+  if (existsSync(stale)) unlinkSync(stale);
+}
+
+const counts = new Map();
+for (const product of PRODUCTS) {
+  counts.set(product.category, (counts.get(product.category) || 0) + 1);
+}
+
+console.log(`Generated ${PRODUCTS.length} products in ${counts.size} categories`);
+console.log("");
+for (const [name, count] of counts) {
+  console.log(`  ${String(count).padStart(3)}  ${name}`);
+}
+console.log("");
 console.log(`CSV:  ${csvPath}`);
 console.log(`XLSX: ${xlsxPath}`);
+console.log("");
+console.log("Import via Products → Import / Export.");
+console.log("Prices and stock are 0. Products are unpublished until you set a selling price.");

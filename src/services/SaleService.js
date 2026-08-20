@@ -13,6 +13,7 @@ import { generateNumber, formatInvoiceNumber, parseInvoiceSequence, getPeriodDat
 import { getBusinessDateTimeISO } from "../utils/businessDate";
 import { appendBusinessDateRangeFilter } from "../utils/businessDateFilter";
 import { SALE_STATUS, SALE_PAYMENT_STATUS, PAYMENT_METHODS } from "../utils/constants";
+import { snapshotInvoiceSettings } from "../utils/invoiceSettings";
 import { isPayLaterMethod } from "../utils/paymentMethods";
 import { useAuthStore } from "../contexts/store";
 
@@ -164,9 +165,9 @@ class SaleService {
     const saleId = await insert(
       `INSERT INTO sales (
          sale_number, customer_id, cashier_id, terminal_id, subtotal, discount, vat, total,
-         payment_method, payment_status, amount_paid, due_date, status, notes, created_at
+         payment_method, payment_status, amount_paid, due_date, status, notes, invoice_settings, created_at
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
       [
         saleNumber,
         customerId || null,
@@ -182,6 +183,7 @@ class SaleService {
         dueDate || null,
         status,
         notes || null,
+        JSON.stringify(snapshotInvoiceSettings(settings)),
         createdAt,
       ]
     );

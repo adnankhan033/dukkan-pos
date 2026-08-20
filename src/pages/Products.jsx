@@ -749,8 +749,8 @@ export default function Products() {
               creatable
               onCreateOption={createSupplierOption}
             />
-            <Input label="Cost Price" type="number" step="0.01" min={0} value={form.cost_price} onChange={(e) => { setForm({ ...form, cost_price: e.target.value }); setErrors((p) => ({ ...p, cost_price: undefined, form: undefined })); }} error={errors.cost_price} />
-            <Input label="Selling Price *" type="number" step="0.01" min={0} value={form.selling_price} onChange={(e) => { setForm({ ...form, selling_price: e.target.value }); setErrors((p) => ({ ...p, selling_price: undefined, form: undefined })); }} error={errors.selling_price} />
+            <Input label={`Cost Price (${currency})`} type="number" step="0.01" min={0} value={form.cost_price} onChange={(e) => { setForm({ ...form, cost_price: e.target.value }); setErrors((p) => ({ ...p, cost_price: undefined, form: undefined })); }} error={errors.cost_price} />
+            <Input label={`Selling Price (${currency}) *`} type="number" step="0.01" min={0} value={form.selling_price} onChange={(e) => { setForm({ ...form, selling_price: e.target.value }); setErrors((p) => ({ ...p, selling_price: undefined, form: undefined })); }} error={errors.selling_price} />
             <Input label="Quantity " type="number" min={0} value={form.quantity} onChange={(e) => { setForm({ ...form, quantity: e.target.value }); setErrors((p) => ({ ...p, quantity: undefined, form: undefined })); }} error={errors.quantity} />
             <Input label="Min Stock" type="number" min={0} value={form.min_stock} onChange={(e) => { setForm({ ...form, min_stock: e.target.value }); setErrors((p) => ({ ...p, min_stock: undefined, form: undefined })); }} error={errors.min_stock} />
           </div>

@@ -1,4 +1,4 @@
-/** Common regions for Saudi/GCC baqala and international use. */
+/** Common store regions and timezones. */
 export const DEFAULT_BUSINESS_TIMEZONE = "Asia/Riyadh";
 
 export const BUSINESS_TIMEZONES = [

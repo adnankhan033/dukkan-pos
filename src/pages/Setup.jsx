@@ -21,6 +21,7 @@ import { Input } from "../components/common/Input";
 import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
 import AuthShell from "../components/auth/AuthShell";
+import { PHONE_PLACEHOLDER } from "../utils/constants";
 import "./Setup.css";
 
 export default function Setup() {
@@ -190,7 +191,7 @@ export default function Setup() {
               label="Phone Number"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              placeholder="+966 5X XXX XXXX"
+              placeholder={PHONE_PLACEHOLDER}
               required
             />
           </div>

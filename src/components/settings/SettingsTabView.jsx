@@ -3,6 +3,7 @@ import ReceiptPreview, { ReceiptTemplatePicker } from "./ReceiptPreview";
 import { BUSINESS_TIMEZONES } from "../../utils/timezones";
 import { getBusinessDateTimeLabelFromForm } from "../../utils/businessDate";
 import { RECEIPT_SECTION_TOGGLES } from "../../utils/receiptSections";
+import { currencyLabel, DEFAULT_CURRENCY } from "../../utils/currencies";
 import {
   ZATCA_ENVIRONMENT_LABELS,
   ZATCA_PHASE_LABELS,
@@ -52,9 +53,14 @@ function StoreTabView({ form }) {
         <ViewRow label="Store name (Arabic)" value={form.store_name_ar} dir="rtl" />
         <ViewRow label="Address" value={form.store_address} />
         <ViewRow label="Phone" value={form.store_phone} />
-        <ViewRow label="VAT %" value={form.vat_percent} />
-        <ViewRow label="Currency" value={form.currency} />
-        <ViewRow label="Prices include VAT" value={boolLabel(form.vat_included)} />
+        <ViewRow label="Currency" value={currencyLabel(form.currency || DEFAULT_CURRENCY)} />
+        <ViewRow label="Tax (VAT)" value={boolLabel(form.tax_enabled)} />
+        {form.tax_enabled ? (
+          <>
+            <ViewRow label="VAT %" value={form.vat_percent} />
+            <ViewRow label="Prices include VAT" value={boolLabel(form.vat_included)} />
+          </>
+        ) : null}
       </ViewCard>
       <ViewCard title="Business Region & Time">
         <ViewRow label="Region / timezone" value={timezoneLabel(form.business_timezone)} />
@@ -62,7 +68,7 @@ function StoreTabView({ form }) {
         <ViewRow label="Fixed date" value={form.business_date_override || "Live clock"} />
         <ViewRow label="Fixed time" value={form.business_time_override || "Live clock"} />
       </ViewCard>
-      <ViewCard title="Saudi Arabia — Tax & Compliance">
+      <ViewCard title="Tax & Registration">
         <ViewRow label="CR number" value={form.cr_number} />
         <ViewRow label="VAT registration" value={form.vat_registration} />
       </ViewCard>
@@ -103,7 +109,7 @@ function PermissionsTabView({ form }) {
   );
 }
 
-function ReceiptTabView({ form, onSelectTemplate, saving }) {
+function ReceiptTabView({ form, onSelectTemplate, saving, canUpdateInvoices }) {
   const enabledSections = RECEIPT_SECTION_TOGGLES.filter((t) => form[t.key]).map((t) => t.label);
 
   return (
@@ -116,11 +122,19 @@ function ReceiptTabView({ form, onSelectTemplate, saving }) {
           value={form.receipt_template}
           onSelect={onSelectTemplate}
           disabled={saving}
+          storeName={form.store_name}
+          storeNameAr={form.store_name_ar}
         />
         <ViewRow
           label="Print invoice after sale"
           value={boolLabel(form.receipt_print_on_complete)}
         />
+        {canUpdateInvoices ? (
+          <ViewRow
+            label="Update invoices already created"
+            value={boolLabel(form.invoice_update_existing)}
+          />
+        ) : null}
         <ViewRow label="Paper width" value={form.receipt_paper_width === "58" ? "58mm" : "80mm"} />
         <ViewRow label="Header note" value={form.receipt_header_note} />
         <ViewRow label="Footer (English)" value={form.receipt_footer} />
@@ -180,14 +194,28 @@ function VendorTabView({ form }) {
   );
 }
 
-export default function SettingsTabView({ tab, form, isAdmin, onSelectTemplate, saving = false }) {
+export default function SettingsTabView({
+  tab,
+  form,
+  isAdmin,
+  canUpdateInvoices = false,
+  onSelectTemplate,
+  saving = false,
+}) {
   switch (tab) {
     case "store":
       return <StoreTabView form={form} />;
     case "permissions":
       return isAdmin ? <PermissionsTabView form={form} /> : null;
     case "receipt":
-      return <ReceiptTabView form={form} onSelectTemplate={onSelectTemplate} saving={saving} />;
+      return (
+        <ReceiptTabView
+          form={form}
+          onSelectTemplate={onSelectTemplate}
+          saving={saving}
+          canUpdateInvoices={canUpdateInvoices}
+        />
+      );
     case "zatca":
       return <ZatcaTabView form={form} />;
     case "dashboard":

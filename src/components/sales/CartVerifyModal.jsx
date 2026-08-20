@@ -3,7 +3,7 @@ import Modal from "../common/Modal";
 import Button from "../common/Button";
 import ProductBilingualName from "../products/ProductBilingualName";
 import { formatCurrency } from "../../utils/format";
-import { cartItemDisplayLineTotal } from "../../utils/vatPricing";
+import { cartItemDisplayLineTotal, cartItemDisplayUnitPrice } from "../../utils/vatPricing";
 import "./CartVerifyModal.css";
 
 export default function CartVerifyModal({
@@ -16,6 +16,7 @@ export default function CartVerifyModal({
   grandTotal,
   currency,
   vatPercent,
+  taxEnabled = true,
   onClose,
 }) {
   const itemCount = cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
@@ -59,6 +60,10 @@ export default function CartVerifyModal({
               <span className="cart-verify-index">{index + 1}</span>
               <div className="cart-verify-name">
                 <ProductBilingualName name={item.name} nameAr={item.name_ar} size="sm" />
+                <small>
+                  {formatCurrency(cartItemDisplayUnitPrice(item), currency)} each
+                  {item.price_overridden ? " · this sale" : ""}
+                </small>
               </div>
               <span className="cart-verify-qty">×{item.quantity}</span>
               <strong>{formatCurrency(cartItemDisplayLineTotal(item), currency)}</strong>
@@ -75,10 +80,12 @@ export default function CartVerifyModal({
             <span>Discount</span>
             <span>{formatCurrency(discount, currency)}</span>
           </div>
-          <div>
-            <span>VAT ({vatPercent}%)</span>
-            <span>{formatCurrency(vat, currency)}</span>
-          </div>
+          {taxEnabled ? (
+            <div>
+              <span>VAT ({vatPercent}%)</span>
+              <span>{formatCurrency(vat, currency)}</span>
+            </div>
+          ) : null}
           <div className="cart-verify-grand">
             <span>Total due</span>
             <strong>{formatCurrency(grandTotal, currency)}</strong>

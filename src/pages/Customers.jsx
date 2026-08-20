@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Pencil, Trash2, Users, Wallet } from "lucide-react";
+import { Plus, Pencil, Trash2, Users, Wallet, FileSpreadsheet } from "lucide-react";
 import { customerService } from "../services/CustomerService";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import { useSettingsStore } from "../contexts/store";
-import { ITEMS_PER_PAGE } from "../utils/constants";
+import { CUSTOMERS_PAGE_SIZE } from "../utils/constants";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import CustomerExportPanel from "../components/customers/CustomerExportPanel";
+import CustomerImportModal from "../components/customers/CustomerImportModal";
 import CustomerFilterPanel, { CUSTOMER_FILTER_PERIODS } from "../components/customers/CustomerFilterPanel";
 import { Card, StatCard } from "../components/common/Card";
 import Table from "../components/common/Table";
@@ -48,6 +49,7 @@ export default function Customers() {
   const [draftFilters, setDraftFilters] = useState(EMPTY_CUSTOMER_FILTERS);
   const [activeFilters, setActiveFilters] = useState(EMPTY_CUSTOMER_FILTERS);
   const [modalOpen, setModalOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [accountCustomer, setAccountCustomer] = useState(null);
   const [form, setForm] = useState(emptyForm);
@@ -79,7 +81,7 @@ export default function Customers() {
         customerService.getAllWithBalances({
           filters: activeFilters,
           page,
-          limit: ITEMS_PER_PAGE,
+          limit: CUSTOMERS_PAGE_SIZE,
           settings,
         }),
         customerService.getFilteredSummary(activeFilters, settings),
@@ -237,9 +239,14 @@ export default function Customers() {
         title="Customers"
         subtitle="Filter by customer, contact details, or invoice dates — stats, list, and exports stay in sync."
         actions={
-          <Button onClick={openCreate}>
-            <Plus size={16} /> Add Customer
-          </Button>
+          <>
+            <Button variant="secondary" onClick={() => setImportOpen(true)}>
+              <FileSpreadsheet size={16} /> Import
+            </Button>
+            <Button onClick={openCreate}>
+              <Plus size={16} /> Add Customer
+            </Button>
+          </>
         }
       />
 
@@ -314,7 +321,7 @@ export default function Customers() {
             <Table columns={columns} data={customers} />
             <Pagination
               page={page}
-              totalPages={Math.ceil(total / ITEMS_PER_PAGE)}
+              totalPages={Math.ceil(total / CUSTOMERS_PAGE_SIZE)}
               total={total}
               onPageChange={setPage}
             />
@@ -381,6 +388,15 @@ export default function Customers() {
           </div>
         </form>
       </Modal>
+
+      <CustomerImportModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        onComplete={() => {
+          loadPickerCustomers();
+          load();
+        }}
+      />
 
       <CustomerAccountModal
         customer={accountCustomer}

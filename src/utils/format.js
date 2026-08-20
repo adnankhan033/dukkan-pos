@@ -11,9 +11,11 @@ export function formatQuantity(qty, symbol = "pcs") {
   return `${value} ${unit}`;
 }
 
-export function formatCurrency(amount, currency = "SAR") {
+export function formatCurrency(amount, currency) {
   const value = Number(amount) || 0;
-  return `${value.toFixed(2)} ${currency}`;
+  const code =
+    String(currency || useSettingsStore.getState()?.settings?.currency || "SAR").trim() || "SAR";
+  return `${value.toFixed(2)} ${code}`;
 }
 
 export function formatDate(dateStr) {

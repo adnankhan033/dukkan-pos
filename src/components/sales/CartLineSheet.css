@@ -95,6 +95,65 @@
   font-size: 1.05rem;
 }
 
+.cart-line-price {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-surface);
+}
+
+.cart-line-price-row {
+  display: grid;
+  grid-template-columns: 1fr 8.5rem;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.cart-line-price-label {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.cart-line-price-input {
+  height: 2.6rem;
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 28%, var(--color-border));
+  border-radius: 12px;
+  background: var(--color-input-bg);
+  color: var(--color-text);
+  text-align: right;
+  font-size: 1.05rem;
+  font-weight: 800;
+  padding: 0 0.7rem;
+}
+
+.cart-line-price-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.cart-line-price-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  line-height: 1.35;
+}
+
+.cart-line-price-reset {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--color-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .cart-line-qty-row {
   display: grid;
   grid-template-columns: 3.2rem 1fr 3.2rem;

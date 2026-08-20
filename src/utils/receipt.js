@@ -1,8 +1,10 @@
 import { formatCurrency, formatOrderDateTime } from "./format";
 import { zatcaService } from "../services/ZatcaService";
 import { ZATCA_PHASES, ZATCA_QUEUE_STATUS } from "../zatca/core/constants";
+import { resolvePrintSettings } from "./invoiceSettings";
 import { DEFAULT_RECEIPT_TEMPLATE, getReceiptTemplate } from "./receiptTemplates";
 import { resolveReceiptSectionVisibility } from "./receiptSections";
+import { isTaxEnabled } from "./vatPricing";
 import { zatcaTlvBase64ToDataUrl, resolveZatcaQrTlv } from "./zatcaQr";
 import {
   resolveBusinessTimezone,
@@ -149,7 +151,24 @@ function buildClassicItemRows(items, currency, showBilingual) {
     .join("");
 }
 
-function buildSaudiTotalsBlock(sale, currency, vatPercent, showBilingual, showChange = true) {
+function invoiceTitleHtml(taxEnabled, showBilingual, compact = false) {
+  if (taxEnabled) {
+    if (compact) {
+      return `<div class="center" style="font-size:9px;margin:4px 0">${showBilingual ? "فاتورة ضريبية مبسطة" : "Simplified Tax Invoice"}</div>`;
+    }
+    return `
+      <div class="en">Simplified Tax Invoice</div>
+      ${showBilingual ? `<div class="ar">فاتورة ضريبية مبسطة</div>` : ""}`;
+  }
+  if (compact) {
+    return `<div class="center" style="font-size:9px;margin:4px 0">${showBilingual ? "فاتورة" : "Invoice"}</div>`;
+  }
+  return `
+      <div class="en">Invoice</div>
+      ${showBilingual ? `<div class="ar">فاتورة</div>` : ""}`;
+}
+
+function buildSaudiTotalsBlock(sale, currency, vatPercent, showBilingual, showChange = true, taxEnabled = true) {
   const taxable = calcTaxableTotal(sale);
   const vat = Number(sale.vat) || 0;
   const total = Number(sale.total) || 0;
@@ -192,18 +211,22 @@ function buildSaudiTotalsBlock(sale, currency, vatPercent, showBilingual, showCh
 
   return `
     ${discountRow}
+    ${
+      taxEnabled
+        ? `${buildBilingualTotalRow(
+            "Total Taxable Amount",
+            "الإجمالي الخاضع للضريبة",
+            formatReceiptAmount(taxable, currency),
+            showBilingual
+          )}
     ${buildBilingualTotalRow(
-      "Total Taxable Amount",
-      "الإجمالي الخاضع للضريبة",
-      formatReceiptAmount(taxable, currency),
-      showBilingual
-    )}
-    ${buildBilingualTotalRow(
-      "VAT Added",
-      "تمت إضافة ضريبة القيمة المضافة",
-      formatReceiptAmount(vat, currency),
-      showBilingual
-    )}
+            "VAT Added",
+            "تمت إضافة ضريبة القيمة المضافة",
+            formatReceiptAmount(vat, currency),
+            showBilingual
+          )}`
+        : ""
+    }
     ${buildBilingualTotalRow(
       "Total Amount",
       "المبلغ الإجمالي",
@@ -214,7 +237,7 @@ function buildSaudiTotalsBlock(sale, currency, vatPercent, showBilingual, showCh
     ${changeBlock}`;
 }
 
-function buildClassicTotalsBlock(sale, currency, vatPercent, showChange = true) {
+function buildClassicTotalsBlock(sale, currency, vatPercent, showChange = true, taxEnabled = true) {
   const changeBlock =
     showChange && sale.amount_received != null
       ? `<div class="row"><span>Received / المستلم</span><span>${formatCurrency(sale.amount_received, currency)}</span></div>
@@ -228,7 +251,7 @@ function buildClassicTotalsBlock(sale, currency, vatPercent, showChange = true) 
   return `
     <div class="row"><span>Subtotal / المجموع</span><span>${formatCurrency(sale.subtotal, currency)}</span></div>
     <div class="row"><span>Discount / الخصم</span><span>${formatCurrency(sale.discount, currency)}</span></div>
-    <div class="row"><span>VAT (${vatPercent}%) / الضريبة</span><span>${formatCurrency(sale.vat, currency)}</span></div>
+    ${taxEnabled ? `<div class="row"><span>VAT (${vatPercent}%) / الضريبة</span><span>${formatCurrency(sale.vat, currency)}</span></div>` : ""}
     <div class="row grand"><span>Total / الإجمالي</span><span>${formatCurrency(sale.total, currency)}</span></div>
     ${changeBlock}`;
 }
@@ -319,6 +342,7 @@ async function buildBaqalaReceipt(ctx) {
     vatRegistration,
     showBilingual,
     showTaxInfo,
+    taxEnabled,
     paperWidth,
     headerNote,
     branding,
@@ -378,7 +402,7 @@ async function buildBaqalaReceipt(ctx) {
   `;
 
   const vatLine =
-    sections.storeHeader && showTaxInfo && vatRegistration
+    sections.storeHeader && showTaxInfo && taxEnabled && vatRegistration
       ? `<div class="head-line">VAT No.${escapeHtml(vatRegistration)}</div>`
       : "";
   const phoneLine =
@@ -411,8 +435,7 @@ async function buildBaqalaReceipt(ctx) {
   const invoiceTitleBlock = sections.invoiceTitle
     ? `
       <div class="invoice-title">
-        <div class="en">Simplified Tax Invoice</div>
-        ${showBilingual ? `<div class="ar">فاتورة ضريبية مبسطة</div>` : ""}
+        ${invoiceTitleHtml(taxEnabled, showBilingual)}
       </div>`
     : "";
 
@@ -435,7 +458,7 @@ async function buildBaqalaReceipt(ctx) {
     : "";
 
   const totalsBlock = sections.totals
-    ? `<div class="totals">${buildSaudiTotalsBlock(sale, currency, vatPercent, showBilingual)}</div>`
+    ? `<div class="totals">${buildSaudiTotalsBlock(sale, currency, vatPercent, showBilingual, true, taxEnabled)}</div>`
     : "";
 
   const paymentBlock = sections.payment
@@ -504,6 +527,7 @@ async function buildClassicReceipt(ctx) {
     vatRegistration,
     showBilingual,
     showTaxInfo,
+    taxEnabled,
     paperWidth,
     headerNote,
     qrHtml,
@@ -514,7 +538,7 @@ async function buildClassicReceipt(ctx) {
 
   const taxInfo = [];
   if (sections.storeHeader && showTaxInfo && crNumber) taxInfo.push(`CR: ${escapeHtml(crNumber)}`);
-  if (sections.storeHeader && showTaxInfo && vatRegistration) {
+  if (sections.storeHeader && showTaxInfo && taxEnabled && vatRegistration) {
     taxInfo.push(`VAT: ${escapeHtml(vatRegistration)}`);
   }
 
@@ -549,8 +573,7 @@ async function buildClassicReceipt(ctx) {
   const invoiceTitleBlock = sections.invoiceTitle
     ? `
     <div class="invoice-type">
-      <div>Simplified Tax Invoice</div>
-      <div class="invoice-type-ar">فاتورة ضريبية مبسطة</div>
+      ${invoiceTitleHtml(taxEnabled, showBilingual)}
     </div>`
     : "";
 
@@ -584,7 +607,7 @@ async function buildClassicReceipt(ctx) {
     : "";
 
   const totalsBlock = sections.totals
-    ? `<div class="totals">${buildClassicTotalsBlock(sale, currency, vatPercent)}</div>`
+    ? `<div class="totals">${buildClassicTotalsBlock(sale, currency, vatPercent, true, taxEnabled)}</div>`
     : "";
 
   const footerBlock = sections.footer
@@ -622,6 +645,7 @@ async function buildCompactReceipt(ctx) {
     footer,
     vatPercent,
     showBilingual,
+    taxEnabled,
     paperWidth,
     qrHtml,
     sections,
@@ -658,7 +682,7 @@ async function buildCompactReceipt(ctx) {
     : "";
 
   const invoiceTitleBlock = sections.invoiceTitle
-    ? `<div class="center" style="font-size:9px;margin:4px 0">فاتورة ضريبية مبسطة</div>`
+    ? invoiceTitleHtml(taxEnabled, showBilingual, true)
     : "";
 
   const invoiceMetaBlock =
@@ -669,7 +693,7 @@ async function buildCompactReceipt(ctx) {
   const itemsBlock = sections.items ? `<table><tbody>${rows}</tbody></table>` : "";
 
   const totalsBlock = sections.totals
-    ? `<div class="total"><span>Total (VAT ${vatPercent}%)</span><span>${formatCurrency(sale.total, currency)}</span></div>`
+    ? `<div class="total"><span>${taxEnabled ? `Total (VAT ${vatPercent}%)` : "Total"}</span><span>${formatCurrency(sale.total, currency)}</span></div>`
     : "";
 
   const footerBlock = sections.footer
@@ -694,28 +718,30 @@ async function buildCompactReceipt(ctx) {
 }
 
 export async function buildReceiptHtml({ sale, items, settings, currency }) {
-  const storeName = settings.store_name || "Nexttel POS";
-  const storeNameAr = settings.store_name_ar || "";
-  const address = settings.store_address || "";
-  const storePhone = settings.store_phone || "";
-  const footer = settings.receipt_footer || "Thank You";
-  const footerAr = settings.receipt_footer_ar || "";
-  const branding = settings.receipt_branding || "Nexttel POS";
-  const vatPercent = Number(settings.vat_percent) || 0;
-  const crNumber = settings.cr_number || "";
-  const vatRegistration = settings.vat_registration || "";
-  const sections = resolveReceiptSectionVisibility(settings);
-  const paperWidth = settings.receipt_paper_width || "80";
-  const headerNote = settings.receipt_header_note || "";
-  const templateId = resolveTemplateId(settings);
+  const printSettings = resolvePrintSettings(sale, settings);
+  const storeName = printSettings.store_name || "Nexttel POS";
+  const storeNameAr = printSettings.store_name_ar || "";
+  const address = printSettings.store_address || "";
+  const storePhone = printSettings.store_phone || "";
+  const footer = printSettings.receipt_footer || "Thank You";
+  const footerAr = printSettings.receipt_footer_ar || "";
+  const branding = printSettings.receipt_branding || "Nexttel POS";
+  const taxEnabled = isTaxEnabled(printSettings);
+  const vatPercent = taxEnabled ? Number(printSettings.vat_percent) || 0 : 0;
+  const crNumber = printSettings.cr_number || "";
+  const vatRegistration = printSettings.vat_registration || "";
+  const sections = resolveReceiptSectionVisibility(printSettings);
+  const paperWidth = printSettings.receipt_paper_width || "80";
+  const headerNote = printSettings.receipt_header_note || "";
+  const templateId = resolveTemplateId(printSettings);
 
-  const qrHtml = await buildQrHtml(sale, settings, sections.showQr);
+  const qrHtml = await buildQrHtml(sale, printSettings, sections.showQr);
 
   const ctx = {
     sale,
     items,
-    settings,
-    currency,
+    settings: printSettings,
+    currency: currency || printSettings.currency || "SAR",
     storeName,
     storeNameAr,
     address,
@@ -727,6 +753,7 @@ export async function buildReceiptHtml({ sale, items, settings, currency }) {
     vatRegistration,
     showBilingual: sections.showBilingual,
     showTaxInfo: sections.showTaxInfo,
+    taxEnabled,
     paperWidth,
     headerNote,
     branding,

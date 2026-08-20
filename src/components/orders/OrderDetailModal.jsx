@@ -14,6 +14,7 @@ import { LoadingSpinner, Alert } from "../common/Loading";
 import { customerService } from "../../services/CustomerService";
 import { formatCurrency, formatOrderDateTime, formatDateTime } from "../../utils/format";
 import { SALE_STATUS } from "../../utils/constants";
+import { isTaxEnabled } from "../../utils/vatPricing";
 import { resolvePaymentMethodLabel } from "../../utils/paymentMethods";
 import "./OrderDetailModal.css";
 
@@ -152,7 +153,9 @@ export default function OrderDetailModal({
               <div className="order-totals">
                 <div><span>Subtotal</span><span>{formatCurrency(sale.subtotal, currency)}</span></div>
                 <div><span>Discount</span><span>{formatCurrency(sale.discount, currency)}</span></div>
-                <div><span>VAT ({vatPercent}%)</span><span>{formatCurrency(sale.vat, currency)}</span></div>
+                {isTaxEnabled(settings) || Number(sale.vat) > 0 ? (
+                  <div><span>VAT ({vatPercent}%)</span><span>{formatCurrency(sale.vat, currency)}</span></div>
+                ) : null}
                 <div className="grand"><span>Total</span><span>{formatCurrency(sale.total, currency)}</span></div>
               </div>
             </section>

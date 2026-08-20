@@ -17,6 +17,9 @@ export default function ActionPermissionList({ actionsByGroup, form, updateField
                 />
                 <span>
                   <strong>{action.label}</strong>
+                  {action.description ? (
+                    <small className="settings-check-hint">{action.description}</small>
+                  ) : null}
                 </span>
               </label>
             );

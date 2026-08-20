@@ -9,6 +9,7 @@ import {
   SAMPLE_RECEIPT_ITEMS,
   SAMPLE_RECEIPT_SALE,
   getReceiptTemplate,
+  receiptTemplateDisplay,
 } from "../../utils/receiptTemplates";
 import { RECEIPT_SECTION_DEFAULTS } from "../../utils/receiptSections";
 
@@ -28,6 +29,8 @@ function formToPreviewSettings(form) {
     cr_number: form.cr_number,
     vat_registration: form.vat_registration,
     vat_percent: form.vat_percent,
+    vat_included: form.vat_included ? "1" : "0",
+    tax_enabled: form.tax_enabled ? "1" : "0",
     currency: form.currency,
     receipt_footer: form.receipt_footer,
     receipt_footer_ar: form.receipt_footer_ar,
@@ -42,11 +45,18 @@ function formToPreviewSettings(form) {
   };
 }
 
-export function ReceiptTemplatePicker({ value, onSelect, disabled = false }) {
+export function ReceiptTemplatePicker({
+  value,
+  onSelect,
+  disabled = false,
+  storeName = "",
+  storeNameAr = "",
+}) {
   return (
     <div className="receipt-template-picker" role="listbox" aria-label="Receipt template">
       {RECEIPT_TEMPLATES.map((tpl) => {
         const selected = value === tpl.id;
+        const display = receiptTemplateDisplay(tpl, storeName, storeNameAr);
         return (
           <button
             key={tpl.id}
@@ -58,12 +68,12 @@ export function ReceiptTemplatePicker({ value, onSelect, disabled = false }) {
             onClick={() => onSelect?.(tpl.id)}
           >
             <span className="receipt-template-option-head">
-              <strong>{tpl.label}</strong>
+              <strong>{display.label}</strong>
               {tpl.recommended ? <span className="receipt-template-badge">Recommended</span> : null}
             </span>
-            {tpl.labelAr ? (
+            {display.labelAr ? (
               <span className="receipt-template-ar" dir="rtl">
-                {tpl.labelAr}
+                {display.labelAr}
               </span>
             ) : null}
           </button>
@@ -135,7 +145,11 @@ export default function ReceiptPreview({ form, readOnly = false }) {
       </div>
 
       <p className="receipt-preview-meta">
-        Selected: <strong>{selectedTemplate.label}</strong> · {paperWidth}mm paper
+        Selected:{" "}
+        <strong>
+          {receiptTemplateDisplay(selectedTemplate, form.store_name, form.store_name_ar).label}
+        </strong>{" "}
+        · {paperWidth}mm paper
       </p>
 
       <div

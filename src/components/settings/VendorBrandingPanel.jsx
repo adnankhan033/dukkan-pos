@@ -1,5 +1,6 @@
 import { Input, Textarea } from "../common/Input";
 import { VENDOR_SETTING_KEYS } from "../../config/softwareVendor";
+import { PHONE_PLACEHOLDER } from "../../utils/constants";
 
 function ToggleRow({ label, hint, checked, onChange }) {
   return (
@@ -95,7 +96,7 @@ export default function VendorBrandingPanel({ form, errors = {}, onChange }) {
           label="WhatsApp"
           value={form[VENDOR_SETTING_KEYS.WHATSAPP] || ""}
           onChange={(e) => set(VENDOR_SETTING_KEYS.WHATSAPP, e.target.value)}
-          placeholder="+966..."
+          placeholder={PHONE_PLACEHOLDER}
         />
         <Input
           label="Address"

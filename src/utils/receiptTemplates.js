@@ -1,10 +1,10 @@
-/** Receipt template definitions for Saudi baqala / POS. */
+/** Receipt template definitions. The default layout uses the store name as its label. */
 export const RECEIPT_TEMPLATES = [
   {
     id: "baqala",
-    label: "Saudi Baqala",
-    labelAr: "بقالة — فاتورة سعودية",
-    description: "ZATCA simplified tax invoice — bilingual layout for grocery & retail.",
+    label: "Store invoice",
+    labelAr: "فاتورة المتجر",
+    description: "Bilingual invoice layout using your store name.",
     recommended: true,
   },
   {
@@ -25,6 +25,17 @@ export const DEFAULT_RECEIPT_TEMPLATE = "baqala";
 
 export function getReceiptTemplate(id) {
   return RECEIPT_TEMPLATES.find((t) => t.id === id) || RECEIPT_TEMPLATES[0];
+}
+
+/** Display label for a template — default layout uses the store name. */
+export function receiptTemplateDisplay(tpl, storeName = "", storeNameAr = "") {
+  if (tpl?.id === "baqala") {
+    return {
+      label: String(storeName || "").trim() || tpl.label,
+      labelAr: String(storeNameAr || "").trim() || tpl.labelAr,
+    };
+  }
+  return { label: tpl.label, labelAr: tpl.labelAr };
 }
 
 /** Sample sale used in Settings preview and test print — matches ZATCA simplified invoice totals. */

@@ -593,6 +593,7 @@ async function ensureCustomerLedgerSchema() {
     "ALTER TABLE sales ADD COLUMN amount_paid REAL DEFAULT 0"
   );
   await addSaleCol("due_date", "ALTER TABLE sales ADD COLUMN due_date TEXT");
+  await addSaleCol("invoice_settings", "ALTER TABLE sales ADD COLUMN invoice_settings TEXT");
 
   await execute(
     `UPDATE sales

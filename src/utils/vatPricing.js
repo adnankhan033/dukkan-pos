@@ -1,4 +1,4 @@
-/** VAT pricing for Saudi retail — inclusive shelf prices and tax categories. */
+/** VAT pricing — inclusive shelf prices and tax categories. */
 
 export const TAX_CATEGORIES = {
   STANDARD: "standard",
@@ -20,6 +20,13 @@ export const VAT_PRICE_TYPE = {
 
 function settingOn(value) {
   return value !== "0" && value !== "false" && value !== false;
+}
+
+/** Tax/VAT is on by default so existing stores keep current behavior. */
+export function isTaxEnabled(storeSettings = {}) {
+  const value = storeSettings.tax_enabled;
+  if (value === undefined || value === null || value === "") return true;
+  return settingOn(value);
 }
 
 function roundMoney(amount) {
@@ -50,6 +57,10 @@ export function resolveStoreVatIncluded(storeSettings = {}) {
 }
 
 export function resolveProductVatSettings(product = {}, storeSettings = {}) {
+  if (!isTaxEnabled(storeSettings)) {
+    return { taxCategory: TAX_CATEGORIES.STANDARD, vatRate: 0, vatIncluded: false };
+  }
+
   const taxCategory = product.tax_category || TAX_CATEGORIES.STANDARD;
   const storeRate = Number(storeSettings.vat_percent) || 0;
 
@@ -96,6 +107,7 @@ export function buildCartLineFromProduct(product, storeSettings = {}, quantity =
     unit_symbol: product.unit_symbol || "pcs",
     unit_price: unitPrice,
     shelf_unit_price: shelfUnitPrice,
+    catalog_shelf_unit_price: shelfUnitPrice,
     quantity,
     discount: 0,
     total: lineTotalExcl,
@@ -103,13 +115,38 @@ export function buildCartLineFromProduct(product, storeSettings = {}, quantity =
     vat_rate: vat.vatRate,
     vat_included: vat.vatIncluded,
     tax_category: vat.taxCategory,
+    price_overridden: false,
+  };
+}
+
+/** Apply a customer-facing price to one cart line for this sale only. */
+export function applyCartLineShelfPrice(item, shelfPrice) {
+  const qty = Number(item.quantity) || 0;
+  const shelfUnitPrice = roundMoney(Math.max(0, Number(shelfPrice) || 0));
+  const catalogShelf = roundMoney(
+    item.catalog_shelf_unit_price != null ? item.catalog_shelf_unit_price : item.shelf_unit_price
+  );
+  const unitPrice = shelfToExclusiveUnitPrice(shelfUnitPrice, {
+    vatIncluded: item.vat_included,
+    vatRate: item.vat_rate,
+  });
+
+  return {
+    ...item,
+    catalog_shelf_unit_price: catalogShelf,
+    shelf_unit_price: shelfUnitPrice,
+    unit_price: unitPrice,
+    total: roundMoney(unitPrice * qty),
+    shelf_line_total: roundMoney(shelfUnitPrice * qty),
+    price_overridden: catalogShelf !== shelfUnitPrice,
   };
 }
 
 /** Cart totals with per-line VAT rates and proportional order discount. */
-export function calcCartTotals(cart = [], orderDiscount = 0) {
+export function calcCartTotals(cart = [], orderDiscount = 0, storeSettings = null) {
   const subtotal = roundMoney(cart.reduce((sum, item) => sum + (Number(item.total) || 0), 0));
   const discount = Math.max(0, Number(orderDiscount) || 0);
+  const taxOn = storeSettings == null ? true : isTaxEnabled(storeSettings);
 
   let vat = 0;
   for (const item of cart) {
@@ -117,7 +154,7 @@ export function calcCartTotals(cart = [], orderDiscount = 0) {
     const lineShare = subtotal > 0 ? lineExcl / subtotal : 0;
     const lineDiscount = discount * lineShare;
     const taxableExcl = Math.max(0, lineExcl - lineDiscount);
-    const rate = Number(item.vat_rate) || 0;
+    const rate = taxOn ? Number(item.vat_rate) || 0 : 0;
     vat += (taxableExcl * rate) / 100;
   }
 

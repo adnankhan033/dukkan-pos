@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { buildReceiptHtml } from "../../utils/receipt";
+import { resolvePrintSettings } from "../../utils/invoiceSettings";
 import { LoadingSpinner } from "../common/Loading";
 import "./ReceiptPreviewFrame.css";
 
@@ -47,7 +48,8 @@ export default function ReceiptPreviewFrame({
 
   if (!sale) return null;
 
-  const paperWidth = Number(settings?.receipt_paper_width) || 80;
+  const printSettings = resolvePrintSettings(sale, settings || {});
+  const paperWidth = Number(printSettings.receipt_paper_width) || 80;
 
   return (
     <div className={`receipt-preview-block ${compact ? "receipt-preview-block--compact" : ""}`}>

@@ -21,6 +21,7 @@ import {
   storeCardToSettingsPayload,
   storeCardWhatsAppUrl,
 } from "../utils/storeCardProfile";
+import { PHONE_PLACEHOLDER } from "../utils/constants";
 import "./StoreCards.css";
 
 export default function StoreCards() {
@@ -203,13 +204,13 @@ export default function StoreCards() {
                 label="Phone"
                 value={form.phone}
                 onChange={(e) => updateField("phone", e.target.value)}
-                placeholder="+966 5X XXX XXXX"
+                placeholder={PHONE_PLACEHOLDER}
               />
               <Input
                 label="WhatsApp"
                 value={form.whatsapp}
                 onChange={(e) => updateField("whatsapp", e.target.value)}
-                placeholder="+966 5X XXX XXXX"
+                placeholder={PHONE_PLACEHOLDER}
               />
             </div>
             <Textarea

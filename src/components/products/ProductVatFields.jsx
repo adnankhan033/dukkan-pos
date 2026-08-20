@@ -3,6 +3,7 @@ import { Select } from "../common/Input";
 import { useSettingsStore } from "../../contexts/store";
 import {
   VAT_MODE,
+  isTaxEnabled,
   previewVatBreakdown,
   productToVatMode,
   storeDefaultVatLabel,
@@ -12,12 +13,15 @@ import "./ProductVatFields.css";
 
 export default function ProductVatFields({ form, onChange, currency = "SAR" }) {
   const storeSettings = useSettingsStore((s) => s.settings);
+  const taxOn = isTaxEnabled(storeSettings);
   const vatMode = form.vat_mode || VAT_MODE.DEFAULT;
 
   const preview = useMemo(() => {
     const dbFields = vatModeToDbFields(vatMode);
     return previewVatBreakdown(form.selling_price, storeSettings, dbFields);
   }, [form.selling_price, vatMode, storeSettings]);
+
+  if (!taxOn) return null;
 
   const priceHint =
     vatMode === VAT_MODE.DEFAULT

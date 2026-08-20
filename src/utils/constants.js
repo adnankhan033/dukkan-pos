@@ -16,6 +16,7 @@ export const DEFAULT_SETTINGS = {
   vat_registration: "",
   vat_percent: "15",
   vat_included: "1",
+  tax_enabled: "1",
   currency: "SAR",
   receipt_footer: "Thank You",
   receipt_footer_ar: "شكراً لكم",
@@ -28,6 +29,7 @@ export const DEFAULT_SETTINGS = {
   receipt_header_note: "",
   receipt_template: "baqala",
   receipt_print_on_complete: "1",
+  invoice_update_existing: "0",
   business_timezone: "Asia/Riyadh",
   business_date_override: "",
   business_time_override: "",
@@ -117,6 +119,9 @@ export const EXPENSE_PERIODS = {
   ALL: "all",
 };
 
+/** Phone placeholder — local number, no country code. */
+export const PHONE_PLACEHOLDER = "05XXXXXXXX";
+
 export const ITEMS_PER_PAGE = 10;
 
 /** Products list page size. */
@@ -127,5 +132,8 @@ export const INVENTORY_PAGE_SIZE = 200;
 
 /** Orders list page size. */
 export const ORDERS_PAGE_SIZE = 100;
+
+/** Customers directory page size. */
+export const CUSTOMERS_PAGE_SIZE = 100;
 
 export { NAV_GROUPS } from "./nav";

@@ -1,0 +1,637 @@
+﻿name,name_ar,sku,barcode,category,unit,supplier,cost_price,selling_price,vat,quantity,min_stock,published
+Almarai Fresh Milk 200ml,حليب المراعي الطازج ٢٠٠ مل,BAQ-0001,,Dairy,pcs,,0.00,0.00,default,0,0,no
+Almarai Fresh Milk 1L,حليب المراعي الطازج ١ لتر,BAQ-0002,,Dairy,L,,0.00,0.00,default,0,0,no
+Almarai Fresh Milk 2L,حليب المراعي الطازج ٢ لتر,BAQ-0003,,Dairy,L,,0.00,0.00,default,0,0,no
+Almarai Low Fat Milk 1L,حليب المراعي قليل الدسم ١ لتر,BAQ-0004,,Dairy,L,,0.00,0.00,default,0,0,no
+Almarai Full Fat UHT Milk 1L,حليب المراعي كامل الدسم طويل الأجل ١ لتر,BAQ-0005,,Dairy,L,,0.00,0.00,default,0,0,no
+Almarai Laban 200ml,لبن المراعي ٢٠٠ مل,BAQ-0006,,Dairy,pcs,,0.00,0.00,default,0,0,no
+Almarai Laban 1L,لبن المراعي ١ لتر,BAQ-0007,,Dairy,L,,0.00,0.00,default,0,0,no
+Almarai Laban 2L,لبن المراعي ٢ لتر,BAQ-0008,,Dairy,L,,0.00,0.00,default,0,0,no
+Almarai Yogurt Plain 170g,زبادي المراعي الطبيعي ١٧٠ جم,BAQ-0009,,Dairy,cup,,0.00,0.00,default,0,0,no
+Almarai Yogurt Strawberry 170g,زبادي المراعي بالفراولة ١٧٠ جم,BAQ-0010,,Dairy,cup,,0.00,0.00,default,0,0,no
+Almarai Yogurt Mixed Fruit 170g,زبادي المراعي بالفواكه المشكلة ١٧٠ جم,BAQ-0011,,Dairy,cup,,0.00,0.00,default,0,0,no
+Almarai Greek Yogurt 150g,زبادي المراعي اليوناني ١٥٠ جم,BAQ-0012,,Dairy,cup,,0.00,0.00,default,0,0,no
+Almarai Labneh 200g,لبنة المراعي ٢٠٠ جم,BAQ-0013,,Dairy,cup,,0.00,0.00,default,0,0,no
+Almarai Labneh 400g,لبنة المراعي ٤٠٠ جم,BAQ-0014,,Dairy,cup,,0.00,0.00,default,0,0,no
+Almarai Cheese Slices 200g,شرائح جبن المراعي ٢٠٠ جم,BAQ-0015,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Almarai Cheddar Cheese 400g,جبن شيدر المراعي ٤٠٠ جم,BAQ-0016,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Almarai Feta Cheese 200g,جبنة فيتا المراعي ٢٠٠ جم,BAQ-0017,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Almarai Feta Cheese 400g,جبنة فيتا المراعي ٤٠٠ جم,BAQ-0018,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Almarai Cream Cheese 150g,جبنة كريمية المراعي ١٥٠ جم,BAQ-0019,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Almarai Cream Cheese 250g,جبنة كريمية المراعي ٢٥٠ جم,BAQ-0020,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Almarai Butter 100g,زبدة المراعي ١٠٠ جم,BAQ-0021,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Almarai Butter 200g,زبدة المراعي ٢٠٠ جم,BAQ-0022,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Almarai Cooking Cream 250ml,قشطة الطبخ المراعي ٢٥٠ مل,BAQ-0023,,Dairy,pcs,,0.00,0.00,default,0,0,no
+Almarai Fresh Cream 250ml,قشطة طازجة المراعي ٢٥٠ مل,BAQ-0024,,Dairy,pcs,,0.00,0.00,default,0,0,no
+Nadec Fresh Milk 1L,حليب نادك الطازج ١ لتر,BAQ-0025,,Dairy,L,,0.00,0.00,default,0,0,no
+Nadec Fresh Milk 2L,حليب نادك الطازج ٢ لتر,BAQ-0026,,Dairy,L,,0.00,0.00,default,0,0,no
+Nadec Laban 1L,لبن نادك ١ لتر,BAQ-0027,,Dairy,L,,0.00,0.00,default,0,0,no
+Nadec Yogurt 170g,زبادي نادك ١٧٠ جم,BAQ-0028,,Dairy,cup,,0.00,0.00,default,0,0,no
+Nadec Cheese Spread 240g,جبنة نادك قابلة للدهن ٢٤٠ جم,BAQ-0029,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Nadec Butter 200g,زبدة نادك ٢٠٠ جم,BAQ-0030,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Saudia Fresh Milk 1L,حليب السعودية الطازج ١ لتر,BAQ-0031,,Dairy,L,,0.00,0.00,default,0,0,no
+Saudia Laban 1L,لبن السعودية ١ لتر,BAQ-0032,,Dairy,L,,0.00,0.00,default,0,0,no
+Saudia Evaporated Milk 410g,حليب السعودية المبخر ٤١٠ جم,BAQ-0033,,Dairy,can,,0.00,0.00,default,0,0,no
+Saudia Condensed Milk 397g,حليب السعودية المكثف ٣٩٧ جم,BAQ-0034,,Dairy,can,,0.00,0.00,default,0,0,no
+Nada Fresh Milk 1L,حليب ندى الطازج ١ لتر,BAQ-0035,,Dairy,L,,0.00,0.00,default,0,0,no
+Nada Laban 1L,لبن ندى ١ لتر,BAQ-0036,,Dairy,L,,0.00,0.00,default,0,0,no
+Alsafi Fresh Milk 1L,حليب الصافي الطازج ١ لتر,BAQ-0037,,Dairy,L,,0.00,0.00,default,0,0,no
+Nido Full Cream Milk Powder 400g,حليب نيدو المجفف كامل الدسم ٤٠٠ جم,BAQ-0038,,Dairy,can,,0.00,0.00,default,0,0,no
+Nido Full Cream Milk Powder 900g,حليب نيدو المجفف كامل الدسم ٩٠٠ جم,BAQ-0039,,Dairy,can,,0.00,0.00,default,0,0,no
+Nido Full Cream Milk Powder 1.8kg,حليب نيدو المجفف كامل الدسم ١٫٨ كجم,BAQ-0040,,Dairy,can,,0.00,0.00,default,0,0,no
+Puck Cream Cheese 240g,جبنة بوك الكريمية ٢٤٠ جم,BAQ-0041,,Dairy,box,,0.00,0.00,default,0,0,no
+Puck Cream Cheese 500g,جبنة بوك الكريمية ٥٠٠ جم,BAQ-0042,,Dairy,box,,0.00,0.00,default,0,0,no
+Puck Cheese Triangles 120g,مثلثات جبن بوك ١٢٠ جم,BAQ-0043,,Dairy,box,,0.00,0.00,default,0,0,no
+Puck Cheese Triangles 240g,مثلثات جبن بوك ٢٤٠ جم,BAQ-0044,,Dairy,box,,0.00,0.00,default,0,0,no
+Kraft Cheese Slices 200g,شرائح جبن كرافت ٢٠٠ جم,BAQ-0045,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Kraft Cheddar 250g,جبن شيدر كرافت ٢٥٠ جم,BAQ-0046,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Kiri Cheese Portions 8 pcs,جبن كيري ٨ قطع,BAQ-0047,,Dairy,box,,0.00,0.00,default,0,0,no
+Philadelphia Cream Cheese 150g,جبنة فيلادلفيا ١٥٠ جم,BAQ-0048,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Lurpak Butter 200g,زبدة لورباك ٢٠٠ جم,BAQ-0049,,Dairy,pkt,,0.00,0.00,default,0,0,no
+President Butter 200g,زبدة بريزيدن ٢٠٠ جم,BAQ-0050,,Dairy,pkt,,0.00,0.00,default,0,0,no
+Rainbow Condensed Milk 397g,حليب رينبو المكثف ٣٩٧ جم,BAQ-0051,,Dairy,can,,0.00,0.00,default,0,0,no
+Coffee Mate Creamer 400g,كوفي ميت ٤٠٠ جم,BAQ-0052,,Dairy,jar,,0.00,0.00,default,0,0,no
+Almarai Ghee 400g,سمن المراعي ٤٠٠ جم,BAQ-0053,,Dairy,jar,,0.00,0.00,default,0,0,no
+Almarai Ghee 800g,سمن المراعي ٨٠٠ جم,BAQ-0054,,Dairy,jar,,0.00,0.00,default,0,0,no
+Fresh Eggs 6 pcs,بيض طازج ٦ حبات,BAQ-0055,,Eggs,pcs,,0.00,0.00,default,0,0,no
+Fresh Eggs 15 pcs,بيض طازج ١٥ حبة,BAQ-0056,,Eggs,tray,,0.00,0.00,default,0,0,no
+Fresh Eggs 30 pcs,بيض طازج ٣٠ حبة,BAQ-0057,,Eggs,tray,,0.00,0.00,default,0,0,no
+Almarai Eggs 30 pcs,بيض المراعي ٣٠ حبة,BAQ-0058,,Eggs,tray,,0.00,0.00,default,0,0,no
+White Eggs 30 pcs,بيض أبيض ٣٠ حبة,BAQ-0059,,Eggs,tray,,0.00,0.00,default,0,0,no
+Brown Eggs 15 pcs,بيض بني ١٥ حبة,BAQ-0060,,Eggs,tray,,0.00,0.00,default,0,0,no
+Arabic Bread 5 pcs,خبز عربي ٥ أرغفة,BAQ-0061,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Arabic Bread Large,خبز عربي كبير,BAQ-0062,,Bread & Bakery,pcs,,0.00,0.00,default,0,0,no
+Samoli White 6 pcs,صامولي أبيض ٦ حبات,BAQ-0063,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Samoli Brown 6 pcs,صامولي أسمر ٦ حبات,BAQ-0064,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Toast White 600g,توست أبيض ٦٠٠ جم,BAQ-0065,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Toast Brown 600g,توست أسمر ٦٠٠ جم,BAQ-0066,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Burger Buns 6 pcs,خبز برجر ٦ حبات,BAQ-0067,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Hot Dog Buns 6 pcs,خبز هوت دوغ ٦ حبات,BAQ-0068,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Kaak 200g,كعك ٢٠٠ جم,BAQ-0069,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Croissant Plain 4 pcs,كرواسون سادة ٤ حبات,BAQ-0070,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Croissant Chocolate 4 pcs,كرواسون شوكولاتة ٤ حبات,BAQ-0071,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Cake Slice Chocolate,قطعة كيك شوكولاتة,BAQ-0072,,Bread & Bakery,pcs,,0.00,0.00,default,0,0,no
+Cupcakes 4 pcs,كب كيك ٤ حبات,BAQ-0073,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Puff Pastry 400g,عجينة puff pastry ٤٠٠ جم,BAQ-0074,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Sambousek Cheese 6 pcs,سمبوسة جبن ٦ حبات,BAQ-0075,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Sambousek Meat 6 pcs,سمبوسة لحم ٦ حبات,BAQ-0076,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Fatayer Spinach 6 pcs,فطائر سبانخ ٦ حبات,BAQ-0077,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Fatayer Cheese 6 pcs,فطائر جبن ٦ حبات,BAQ-0078,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Maamoul Dates 400g,معمول تمر ٤٠٠ جم,BAQ-0079,,Bread & Bakery,box,,0.00,0.00,default,0,0,no
+Rusk Toast 400g,بقسماط ٤٠٠ جم,BAQ-0080,,Bread & Bakery,pkt,,0.00,0.00,default,0,0,no
+Nova Water 200ml,مياه نوفا ٢٠٠ مل,BAQ-0081,,Water,bottle,,0.00,0.00,default,0,0,no
+Nova Water 330ml,مياه نوفا ٣٣٠ مل,BAQ-0082,,Water,bottle,,0.00,0.00,default,0,0,no
+Nova Water 600ml,مياه نوفا ٦٠٠ مل,BAQ-0083,,Water,bottle,,0.00,0.00,default,0,0,no
+Nova Water 1.5L,مياه نوفا ١٫٥ لتر,BAQ-0084,,Water,bottle,,0.00,0.00,default,0,0,no
+Nova Water 330ml 40 pack,مياه نوفا ٣٣٠ مل ٤٠ حبة,BAQ-0085,,Water,pack,,0.00,0.00,default,0,0,no
+Nova Water 1.5L 6 pack,مياه نوفا ١٫٥ لتر ٦ حبات,BAQ-0086,,Water,pack,,0.00,0.00,default,0,0,no
+Berain Water 330ml,مياه بيرين ٣٣٠ مل,BAQ-0087,,Water,bottle,,0.00,0.00,default,0,0,no
+Berain Water 600ml,مياه بيرين ٦٠٠ مل,BAQ-0088,,Water,bottle,,0.00,0.00,default,0,0,no
+Berain Water 1.5L,مياه بيرين ١٫٥ لتر,BAQ-0089,,Water,bottle,,0.00,0.00,default,0,0,no
+Berain Water 1.5L 6 pack,مياه بيرين ١٫٥ لتر ٦ حبات,BAQ-0090,,Water,pack,,0.00,0.00,default,0,0,no
+Aquafina Water 330ml,مياه أكوافينا ٣٣٠ مل,BAQ-0091,,Water,bottle,,0.00,0.00,default,0,0,no
+Aquafina Water 600ml,مياه أكوافينا ٦٠٠ مل,BAQ-0092,,Water,bottle,,0.00,0.00,default,0,0,no
+Aquafina Water 1.5L,مياه أكوافينا ١٫٥ لتر,BAQ-0093,,Water,bottle,,0.00,0.00,default,0,0,no
+Nestle Pure Life 330ml,نستله بيور لايف ٣٣٠ مل,BAQ-0094,,Water,bottle,,0.00,0.00,default,0,0,no
+Nestle Pure Life 600ml,نستله بيور لايف ٦٠٠ مل,BAQ-0095,,Water,bottle,,0.00,0.00,default,0,0,no
+Nestle Pure Life 1.5L,نستله بيور لايف ١٫٥ لتر,BAQ-0096,,Water,bottle,,0.00,0.00,default,0,0,no
+Hana Water 600ml,مياه هناء ٦٠٠ مل,BAQ-0097,,Water,bottle,,0.00,0.00,default,0,0,no
+Hana Water 1.5L,مياه هناء ١٫٥ لتر,BAQ-0098,,Water,bottle,,0.00,0.00,default,0,0,no
+Naqi Water 600ml,مياه نقي ٦٠٠ مل,BAQ-0099,,Water,bottle,,0.00,0.00,default,0,0,no
+Naqi Water 1.5L,مياه نقي ١٫٥ لتر,BAQ-0100,,Water,bottle,,0.00,0.00,default,0,0,no
+Arwa Water 330ml,مياه أروى ٣٣٠ مل,BAQ-0101,,Water,bottle,,0.00,0.00,default,0,0,no
+Arwa Water 1.5L,مياه أروى ١٫٥ لتر,BAQ-0102,,Water,bottle,,0.00,0.00,default,0,0,no
+Evian Water 330ml,مياه إيفيان ٣٣٠ مل,BAQ-0103,,Water,bottle,,0.00,0.00,default,0,0,no
+Evian Water 1.5L,مياه إيفيان ١٫٥ لتر,BAQ-0104,,Water,bottle,,0.00,0.00,default,0,0,no
+Pepsi 330ml Can,بيبسي ٣٣٠ مل علبة,BAQ-0105,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+Pepsi 330ml Bottle,بيبسي ٣٣٠ مل زجاجة,BAQ-0106,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Pepsi 1.25L,بيبسي ١٫٢٥ لتر,BAQ-0107,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Pepsi 2.25L,بيبسي ٢٫٢٥ لتر,BAQ-0108,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Diet Pepsi 330ml Can,بيبسي دايت ٣٣٠ مل,BAQ-0109,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+7UP 330ml Can,سفن أب ٣٣٠ مل علبة,BAQ-0110,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+7UP 1.25L,سفن أب ١٫٢٥ لتر,BAQ-0111,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+7UP 2.25L,سفن أب ٢٫٢٥ لتر,BAQ-0112,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Mirinda Orange 330ml Can,ميرندا برتقال ٣٣٠ مل,BAQ-0113,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+Mirinda Orange 2.25L,ميرندا برتقال ٢٫٢٥ لتر,BAQ-0114,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Mountain Dew 330ml Can,ماونتن ديو ٣٣٠ مل,BAQ-0115,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+Coca-Cola 330ml Can,كوكا كولا ٣٣٠ مل علبة,BAQ-0116,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+Coca-Cola 1.25L,كوكا كولا ١٫٢٥ لتر,BAQ-0117,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Coca-Cola 2.25L,كوكا كولا ٢٫٢٥ لتر,BAQ-0118,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Coca-Cola Zero 330ml Can,كوكا كولا زيرو ٣٣٠ مل,BAQ-0119,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+Sprite 330ml Can,سبرايت ٣٣٠ مل,BAQ-0120,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+Sprite 1.25L,سبرايت ١٫٢٥ لتر,BAQ-0121,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Fanta Orange 330ml Can,فانتا برتقال ٣٣٠ مل,BAQ-0122,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+Fanta Orange 1.25L,فانتا برتقال ١٫٢٥ لتر,BAQ-0123,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Vimto 330ml Can,فيمتو ٣٣٠ مل,BAQ-0124,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+Vimto 1L,فيمتو ١ لتر,BAQ-0125,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Vimto 2.25L,فيمتو ٢٫٢٥ لتر,BAQ-0126,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Kinza Cola 330ml Can,كنزا كولا ٣٣٠ مل,BAQ-0127,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+Kinza Cola 2.25L,كنزا كولا ٢٫٢٥ لتر,BAQ-0128,,Soft Drinks,bottle,,0.00,0.00,default,0,0,no
+Schweppes Tonic 330ml,شويبس تونيك ٣٣٠ مل,BAQ-0129,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+Schweppes Lemon 330ml,شويبس ليمون ٣٣٠ مل,BAQ-0130,,Soft Drinks,can,,0.00,0.00,default,0,0,no
+Almarai Orange Juice 200ml,عصير المراعي برتقال ٢٠٠ مل,BAQ-0131,,Juices,pcs,,0.00,0.00,default,0,0,no
+Almarai Orange Juice 1L,عصير المراعي برتقال ١ لتر,BAQ-0132,,Juices,L,,0.00,0.00,default,0,0,no
+Almarai Orange Juice 1.5L,عصير المراعي برتقال ١٫٥ لتر,BAQ-0133,,Juices,L,,0.00,0.00,default,0,0,no
+Almarai Apple Juice 200ml,عصير المراعي تفاح ٢٠٠ مل,BAQ-0134,,Juices,pcs,,0.00,0.00,default,0,0,no
+Almarai Apple Juice 1L,عصير المراعي تفاح ١ لتر,BAQ-0135,,Juices,L,,0.00,0.00,default,0,0,no
+Almarai Mango Juice 1L,عصير المراعي مانجو ١ لتر,BAQ-0136,,Juices,L,,0.00,0.00,default,0,0,no
+Almarai Mixed Fruit Juice 1L,عصير المراعي فواكه مشكلة ١ لتر,BAQ-0137,,Juices,L,,0.00,0.00,default,0,0,no
+Almarai Cocktail Juice 1.5L,عصير المراعي كوكتيل ١٫٥ لتر,BAQ-0138,,Juices,L,,0.00,0.00,default,0,0,no
+Al Rabie Orange Juice 200ml,عصير الربيع برتقال ٢٠٠ مل,BAQ-0139,,Juices,pcs,,0.00,0.00,default,0,0,no
+Al Rabie Orange Juice 1L,عصير الربيع برتقال ١ لتر,BAQ-0140,,Juices,L,,0.00,0.00,default,0,0,no
+Al Rabie Apple Juice 1L,عصير الربيع تفاح ١ لتر,BAQ-0141,,Juices,L,,0.00,0.00,default,0,0,no
+Al Rabie Mango Juice 1L,عصير الربيع مانجو ١ لتر,BAQ-0142,,Juices,L,,0.00,0.00,default,0,0,no
+Al Rabie Mixed Fruit Juice 1L,عصير الربيع فواكه مشكلة ١ لتر,BAQ-0143,,Juices,L,,0.00,0.00,default,0,0,no
+Al Rabie Cocktail Juice 1L,عصير الربيع كوكتيل ١ لتر,BAQ-0144,,Juices,L,,0.00,0.00,default,0,0,no
+Al Rabie Hibiscus Juice 1L,عصير الربيع كركديه ١ لتر,BAQ-0145,,Juices,L,,0.00,0.00,default,0,0,no
+Al Rabie Tamarind Juice 1L,عصير الربيع تمر هندي ١ لتر,BAQ-0146,,Juices,L,,0.00,0.00,default,0,0,no
+Nada Orange Juice 1L,عصير ندى برتقال ١ لتر,BAQ-0147,,Juices,L,,0.00,0.00,default,0,0,no
+Nada Apple Juice 1L,عصير ندى تفاح ١ لتر,BAQ-0148,,Juices,L,,0.00,0.00,default,0,0,no
+Rani Float Orange 240ml,راني فلوت برتقال ٢٤٠ مل,BAQ-0149,,Juices,can,,0.00,0.00,default,0,0,no
+Rani Float Mango 240ml,راني فلوت مانجو ٢٤٠ مل,BAQ-0150,,Juices,can,,0.00,0.00,default,0,0,no
+Rani Float Pineapple 240ml,راني فلوت أناناس ٢٤٠ مل,BAQ-0151,,Juices,can,,0.00,0.00,default,0,0,no
+Rani Float Mixed Fruit 240ml,راني فلوت فواكه مشكلة ٢٤٠ مل,BAQ-0152,,Juices,can,,0.00,0.00,default,0,0,no
+Suntop Orange 125ml,صن توب برتقال ١٢٥ مل,BAQ-0153,,Juices,pcs,,0.00,0.00,default,0,0,no
+Suntop Apple 125ml,صن توب تفاح ١٢٥ مل,BAQ-0154,,Juices,pcs,,0.00,0.00,default,0,0,no
+Suntop Mango 125ml,صن توب مانجو ١٢٥ مل,BAQ-0155,,Juices,pcs,,0.00,0.00,default,0,0,no
+Capri Sun Orange 200ml,كابري سن برتقال ٢٠٠ مل,BAQ-0156,,Juices,pcs,,0.00,0.00,default,0,0,no
+Capri Sun Apple 200ml,كابري سن تفاح ٢٠٠ مل,BAQ-0157,,Juices,pcs,,0.00,0.00,default,0,0,no
+Lacnor Orange Juice 1L,عصير لاكنور برتقال ١ لتر,BAQ-0158,,Juices,L,,0.00,0.00,default,0,0,no
+Rubicon Mango 1L,روبيكون مانجو ١ لتر,BAQ-0159,,Juices,L,,0.00,0.00,default,0,0,no
+Caesar Mango Juice 1L,عصير سيزر مانجو ١ لتر,BAQ-0160,,Juices,L,,0.00,0.00,default,0,0,no
+Lipton Yellow Label 25 bags,شاي ليبتون ٢٥ كيس,BAQ-0161,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Lipton Yellow Label 50 bags,شاي ليبتون ٥٠ كيس,BAQ-0162,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Lipton Yellow Label 100 bags,شاي ليبتون ١٠٠ كيس,BAQ-0163,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Lipton Yellow Label 200 bags,شاي ليبتون ٢٠٠ كيس,BAQ-0164,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Lipton Green Tea 25 bags,شاي ليبتون الأخضر ٢٥ كيس,BAQ-0165,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Lipton Loose Black Tea 200g,شاي ليبتون سائب ٢٠٠ جم,BAQ-0166,,Tea & Coffee,pkt,,0.00,0.00,default,0,0,no
+Rabea Black Tea 100 bags,شاي ربيع ١٠٠ كيس,BAQ-0167,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Rabea Black Tea 200 bags,شاي ربيع ٢٠٠ كيس,BAQ-0168,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Rabea Green Tea 100 bags,شاي ربيع الأخضر ١٠٠ كيس,BAQ-0169,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Red Label Tea 100 bags,شاي ريد ليبل ١٠٠ كيس,BAQ-0170,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Ahmad Tea 100 bags,شاي أحمد ١٠٠ كيس,BAQ-0171,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Nescafe Classic 50g,نسكافيه كلاسيك ٥٠ جم,BAQ-0172,,Tea & Coffee,jar,,0.00,0.00,default,0,0,no
+Nescafe Classic 100g,نسكافيه كلاسيك ١٠٠ جم,BAQ-0173,,Tea & Coffee,jar,,0.00,0.00,default,0,0,no
+Nescafe Classic 200g,نسكافيه كلاسيك ٢٠٠ جم,BAQ-0174,,Tea & Coffee,jar,,0.00,0.00,default,0,0,no
+Nescafe Gold 100g,نسكافيه جولد ١٠٠ جم,BAQ-0175,,Tea & Coffee,jar,,0.00,0.00,default,0,0,no
+Nescafe Gold 200g,نسكافيه جولد ٢٠٠ جم,BAQ-0176,,Tea & Coffee,jar,,0.00,0.00,default,0,0,no
+Nescafe 3 in 1 20 sachets,نسكافيه ٣ في ١ ٢٠ ظرف,BAQ-0177,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Nescafe 3 in 1 30 sachets,نسكافيه ٣ في ١ ٣٠ ظرف,BAQ-0178,,Tea & Coffee,box,,0.00,0.00,default,0,0,no
+Al Ameed Arabic Coffee 250g,قهوة العميد العربية ٢٥٠ جم,BAQ-0179,,Tea & Coffee,pkt,,0.00,0.00,default,0,0,no
+Al Ameed Arabic Coffee 500g,قهوة العميد العربية ٥٠٠ جم,BAQ-0180,,Tea & Coffee,pkt,,0.00,0.00,default,0,0,no
+Al Ameed Turkish Coffee 250g,قهوة العميد التركية ٢٥٠ جم,BAQ-0181,,Tea & Coffee,pkt,,0.00,0.00,default,0,0,no
+Al Ameed Cardamom Coffee 250g,قهوة العميد بالهيل ٢٥٠ جم,BAQ-0182,,Tea & Coffee,pkt,,0.00,0.00,default,0,0,no
+Najjar Coffee 200g,قهوة نجار ٢٠٠ جم,BAQ-0183,,Tea & Coffee,pkt,,0.00,0.00,default,0,0,no
+Lipton Iced Tea Peach 320ml,شاي ليبتون المثلج خوخ ٣٢٠ مل,BAQ-0184,,Tea & Coffee,bottle,,0.00,0.00,default,0,0,no
+Red Bull 250ml,ريد بول ٢٥٠ مل,BAQ-0185,,Energy & Malt Drinks,can,,0.00,0.00,default,0,0,no
+Red Bull Sugar Free 250ml,ريد بول خالي السكر ٢٥٠ مل,BAQ-0186,,Energy & Malt Drinks,can,,0.00,0.00,default,0,0,no
+Sting Energy 250ml,ستينج ٢٥٠ مل,BAQ-0187,,Energy & Malt Drinks,can,,0.00,0.00,default,0,0,no
+Code Red 250ml,كود رد ٢٥٠ مل,BAQ-0188,,Energy & Malt Drinks,can,,0.00,0.00,default,0,0,no
+Power Horse 250ml,باور هورس ٢٥٠ مل,BAQ-0189,,Energy & Malt Drinks,can,,0.00,0.00,default,0,0,no
+Bison Energy 250ml,بايسن ٢٥٠ مل,BAQ-0190,,Energy & Malt Drinks,can,,0.00,0.00,default,0,0,no
+Barbican Apple 330ml,باربيكان تفاح ٣٣٠ مل,BAQ-0191,,Energy & Malt Drinks,bottle,,0.00,0.00,default,0,0,no
+Barbican Pomegranate 330ml,باربيكان رمان ٣٣٠ مل,BAQ-0192,,Energy & Malt Drinks,bottle,,0.00,0.00,default,0,0,no
+Barbican Raspberry 330ml,باربيكان توت ٣٣٠ مل,BAQ-0193,,Energy & Malt Drinks,bottle,,0.00,0.00,default,0,0,no
+Moussy Classic 330ml,موسي كلاسيك ٣٣٠ مل,BAQ-0194,,Energy & Malt Drinks,bottle,,0.00,0.00,default,0,0,no
+Moussy Apple 330ml,موسي تفاح ٣٣٠ مل,BAQ-0195,,Energy & Malt Drinks,bottle,,0.00,0.00,default,0,0,no
+Abu Kass Basmati Rice 2kg,أرز أبو كاس بسمتي ٢ كجم,BAQ-0196,,Rice,bag,,0.00,0.00,default,0,0,no
+Abu Kass Basmati Rice 5kg,أرز أبو كاس بسمتي ٥ كجم,BAQ-0197,,Rice,bag,,0.00,0.00,default,0,0,no
+Abu Kass Basmati Rice 10kg,أرز أبو كاس بسمتي ١٠ كجم,BAQ-0198,,Rice,bag,,0.00,0.00,default,0,0,no
+Al Osra Egyptian Rice 5kg,أرز الأسرة مصري ٥ كجم,BAQ-0199,,Rice,bag,,0.00,0.00,default,0,0,no
+Al Osra Egyptian Rice 10kg,أرز الأسرة مصري ١٠ كجم,BAQ-0200,,Rice,bag,,0.00,0.00,default,0,0,no
+India Gate Basmati 1kg,أرز إنديا جيت بسمتي ١ كجم,BAQ-0201,,Rice,bag,,0.00,0.00,default,0,0,no
+India Gate Basmati 5kg,أرز إنديا جيت بسمتي ٥ كجم,BAQ-0202,,Rice,bag,,0.00,0.00,default,0,0,no
+Mahmood Basmati Rice 5kg,أرز محمود بسمتي ٥ كجم,BAQ-0203,,Rice,bag,,0.00,0.00,default,0,0,no
+Mahmood Basmati Rice 10kg,أرز محمود بسمتي ١٠ كجم,BAQ-0204,,Rice,bag,,0.00,0.00,default,0,0,no
+Tilda Basmati Rice 1kg,أرز تيلدا بسمتي ١ كجم,BAQ-0205,,Rice,bag,,0.00,0.00,default,0,0,no
+Tilda Basmati Rice 5kg,أرز تيلدا بسمتي ٥ كجم,BAQ-0206,,Rice,bag,,0.00,0.00,default,0,0,no
+Sunwhite Calrose Rice 5kg,أرز صن وايت كالروز ٥ كجم,BAQ-0207,,Rice,bag,,0.00,0.00,default,0,0,no
+Sunwhite Calrose Rice 10kg,أرز صن وايت كالروز ١٠ كجم,BAQ-0208,,Rice,bag,,0.00,0.00,default,0,0,no
+Al Walimah Rice 5kg,أرز الوليمة ٥ كجم,BAQ-0209,,Rice,bag,,0.00,0.00,default,0,0,no
+Egyptian Rice 5kg,أرز مصري ٥ كجم,BAQ-0210,,Rice,bag,,0.00,0.00,default,0,0,no
+Basmati Rice 5kg,أرز بسمتي ٥ كجم,BAQ-0211,,Rice,bag,,0.00,0.00,default,0,0,no
+Afia Sunflower Oil 1.5L,زيت عافية عباد الشمس ١٫٥ لتر,BAQ-0212,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Afia Sunflower Oil 1.8L,زيت عافية عباد الشمس ١٫٨ لتر,BAQ-0213,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Afia Sunflower Oil 3.6L,زيت عافية عباد الشمس ٣٫٦ لتر,BAQ-0214,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Afia Corn Oil 1.5L,زيت عافية ذرة ١٫٥ لتر,BAQ-0215,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Shams Sunflower Oil 1.5L,زيت شمس عباد الشمس ١٫٥ لتر,BAQ-0216,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Shams Sunflower Oil 1.8L,زيت شمس عباد الشمس ١٫٨ لتر,BAQ-0217,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Hayat Sunflower Oil 1.5L,زيت حياة عباد الشمس ١٫٥ لتر,BAQ-0218,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Al Osra Sunflower Oil 1.5L,زيت الأسرة عباد الشمس ١٫٥ لتر,BAQ-0219,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Noor Sunflower Oil 1.5L,زيت نور عباد الشمس ١٫٥ لتر,BAQ-0220,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Mazola Corn Oil 1.5L,زيت مازولا ذرة ١٫٥ لتر,BAQ-0221,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Al Arabi Olive Oil 500ml,زيت العربي زيتون ٥٠٠ مل,BAQ-0222,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Al Arabi Olive Oil 1L,زيت العربي زيتون ١ لتر,BAQ-0223,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Rafael Salgado Olive Oil 500ml,زيت رافاييل زيتون ٥٠٠ مل,BAQ-0224,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Al Jouf Olive Oil 500ml,زيت الجوف زيتون ٥٠٠ مل,BAQ-0225,,Oil & Ghee,bottle,,0.00,0.00,default,0,0,no
+Aseel Vegetable Ghee 1kg,سمن أصيل ١ كجم,BAQ-0226,,Oil & Ghee,pkt,,0.00,0.00,default,0,0,no
+Safa Ghee 800g,سمن صفا ٨٠٠ جم,BAQ-0227,,Oil & Ghee,jar,,0.00,0.00,default,0,0,no
+Safa Ghee 1.6kg,سمن صفا ١٫٦ كجم,BAQ-0228,,Oil & Ghee,jar,,0.00,0.00,default,0,0,no
+Hayat Ghee 800g,سمن حياة ٨٠٠ جم,BAQ-0229,,Oil & Ghee,jar,,0.00,0.00,default,0,0,no
+Al Othman Flour 1kg,دقيق العثمان ١ كجم,BAQ-0230,,"Flour, Sugar & Baking",bag,,0.00,0.00,default,0,0,no
+Al Othman Flour 2kg,دقيق العثمان ٢ كجم,BAQ-0231,,"Flour, Sugar & Baking",bag,,0.00,0.00,default,0,0,no
+Al Othman Flour 5kg,دقيق العثمان ٥ كجم,BAQ-0232,,"Flour, Sugar & Baking",bag,,0.00,0.00,default,0,0,no
+Al Othman Flour 10kg,دقيق العثمان ١٠ كجم,BAQ-0233,,"Flour, Sugar & Baking",bag,,0.00,0.00,default,0,0,no
+Al Walimah Flour 2kg,دقيق الوليمة ٢ كجم,BAQ-0234,,"Flour, Sugar & Baking",bag,,0.00,0.00,default,0,0,no
+White Sugar 1kg,سكر أبيض ١ كجم,BAQ-0235,,"Flour, Sugar & Baking",bag,,0.00,0.00,default,0,0,no
+White Sugar 2kg,سكر أبيض ٢ كجم,BAQ-0236,,"Flour, Sugar & Baking",bag,,0.00,0.00,default,0,0,no
+White Sugar 5kg,سكر أبيض ٥ كجم,BAQ-0237,,"Flour, Sugar & Baking",bag,,0.00,0.00,default,0,0,no
+White Sugar 10kg,سكر أبيض ١٠ كجم,BAQ-0238,,"Flour, Sugar & Baking",bag,,0.00,0.00,default,0,0,no
+Brown Sugar 1kg,سكر بني ١ كجم,BAQ-0239,,"Flour, Sugar & Baking",bag,,0.00,0.00,default,0,0,no
+Icing Sugar 500g,سكر بودرة ٥٠٠ جم,BAQ-0240,,"Flour, Sugar & Baking",pkt,,0.00,0.00,default,0,0,no
+Salt Iodized 700g,ملح مدعم باليود ٧٠٠ جم,BAQ-0241,,"Flour, Sugar & Baking",pkt,,0.00,0.00,default,0,0,no
+Salt Iodized 1kg,ملح مدعم باليود ١ كجم,BAQ-0242,,"Flour, Sugar & Baking",pkt,,0.00,0.00,default,0,0,no
+Baking Powder 100g,بيكنج باودر ١٠٠ جم,BAQ-0243,,"Flour, Sugar & Baking",pkt,,0.00,0.00,default,0,0,no
+Instant Yeast 10g,خميرة فورية ١٠ جم,BAQ-0244,,"Flour, Sugar & Baking",pkt,,0.00,0.00,default,0,0,no
+Corn Starch 400g,نشا ذرة ٤٠٠ جم,BAQ-0245,,"Flour, Sugar & Baking",pkt,,0.00,0.00,default,0,0,no
+Custard Powder 300g,كاسترد ٣٠٠ جم,BAQ-0246,,"Flour, Sugar & Baking",pkt,,0.00,0.00,default,0,0,no
+Jelly Strawberry 80g,جيلي فراولة ٨٠ جم,BAQ-0247,,"Flour, Sugar & Baking",pkt,,0.00,0.00,default,0,0,no
+Jelly Orange 80g,جيلي برتقال ٨٠ جم,BAQ-0248,,"Flour, Sugar & Baking",pkt,,0.00,0.00,default,0,0,no
+Vanilla Powder 20g,فانيليا ٢٠ جم,BAQ-0249,,"Flour, Sugar & Baking",pkt,,0.00,0.00,default,0,0,no
+Cake Mix Chocolate 500g,خليط كيك شوكولاتة ٥٠٠ جم,BAQ-0250,,"Flour, Sugar & Baking",box,,0.00,0.00,default,0,0,no
+Semolina 1kg,سميد ١ كجم,BAQ-0251,,"Flour, Sugar & Baking",bag,,0.00,0.00,default,0,0,no
+Indomie Chicken 70g,إندومي دجاج ٧٠ جم,BAQ-0252,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Indomie Vegetable 70g,إندومي خضار ٧٠ جم,BAQ-0253,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Indomie Special Chicken 80g,إندومي دجاج خاص ٨٠ جم,BAQ-0254,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Indomie Fried Noodles 80g,إندومي مقلي ٨٠ جم,BAQ-0255,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Indomie BBQ Chicken 80g,إندومي دجاج باربكيو ٨٠ جم,BAQ-0256,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Indomie Cup Chicken,إندومي كوب دجاج,BAQ-0257,,Pasta & Noodles,cup,,0.00,0.00,default,0,0,no
+Maggi Noodles Chicken 70g,ماجي نودلز دجاج ٧٠ جم,BAQ-0258,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Maggi Noodles Masala 70g,ماجي نودلز ماسالا ٧٠ جم,BAQ-0259,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Barilla Spaghetti 500g,باريللا سباغيتي ٥٠٠ جم,BAQ-0260,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Barilla Penne 500g,باريللا بيني ٥٠٠ جم,BAQ-0261,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Panzani Spaghetti 500g,بانزاني سباغيتي ٥٠٠ جم,BAQ-0262,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Goody Spaghetti 500g,قودي سباغيتي ٥٠٠ جم,BAQ-0263,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Goody Macaroni 400g,قودي مكرونة ٤٠٠ جم,BAQ-0264,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Pasta Zara Spaghetti 400g,باستا زارا سباغيتي ٤٠٠ جم,BAQ-0265,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Pasta Zara Penne 400g,باستا زارا بيني ٤٠٠ جم,BAQ-0266,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Pasta Zara Fusilli 400g,باستا زارا فوسيلي ٤٠٠ جم,BAQ-0267,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Lasagna Sheets 500g,شرائح لازانيا ٥٠٠ جم,BAQ-0268,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Vermicelli 400g,شعيرية ٤٠٠ جم,BAQ-0269,,Pasta & Noodles,pkt,,0.00,0.00,default,0,0,no
+Red Lentils 1kg,عدس أحمر ١ كجم,BAQ-0270,,Pulses & Dry Goods,bag,,0.00,0.00,default,0,0,no
+Yellow Lentils 1kg,عدس أصفر ١ كجم,BAQ-0271,,Pulses & Dry Goods,bag,,0.00,0.00,default,0,0,no
+Chickpeas 1kg,حمص حب ١ كجم,BAQ-0272,,Pulses & Dry Goods,bag,,0.00,0.00,default,0,0,no
+White Beans 1kg,فاصوليا بيضاء ١ كجم,BAQ-0273,,Pulses & Dry Goods,bag,,0.00,0.00,default,0,0,no
+Kidney Beans 1kg,فاصوليا حمراء ١ كجم,BAQ-0274,,Pulses & Dry Goods,bag,,0.00,0.00,default,0,0,no
+Fava Beans Dry 1kg,فول حب ١ كجم,BAQ-0275,,Pulses & Dry Goods,bag,,0.00,0.00,default,0,0,no
+Split Peas 1kg,بازلاء مجروشة ١ كجم,BAQ-0276,,Pulses & Dry Goods,bag,,0.00,0.00,default,0,0,no
+Bulgur Fine 1kg,برغل ناعم ١ كجم,BAQ-0277,,Pulses & Dry Goods,bag,,0.00,0.00,default,0,0,no
+Bulgur Coarse 1kg,برغل خشن ١ كجم,BAQ-0278,,Pulses & Dry Goods,bag,,0.00,0.00,default,0,0,no
+Freekeh 1kg,فريكة ١ كجم,BAQ-0279,,Pulses & Dry Goods,bag,,0.00,0.00,default,0,0,no
+Couscous 1kg,كسكسي ١ كجم,BAQ-0280,,Pulses & Dry Goods,bag,,0.00,0.00,default,0,0,no
+Oats 500g,شوفان ٥٠٠ جم,BAQ-0281,,Pulses & Dry Goods,pkt,,0.00,0.00,default,0,0,no
+Quaker Oats 500g,شوفان كويكر ٥٠٠ جم,BAQ-0282,,Pulses & Dry Goods,pkt,,0.00,0.00,default,0,0,no
+Corn Flakes 500g,كورن فليكس ٥٠٠ جم,BAQ-0283,,Pulses & Dry Goods,box,,0.00,0.00,default,0,0,no
+Nesquik Cereal 375g,نسكويك حبوب ٣٧٥ جم,BAQ-0284,,Pulses & Dry Goods,box,,0.00,0.00,default,0,0,no
+Kellogg's Corn Flakes 375g,كورن فليكس كيلوجز ٣٧٥ جم,BAQ-0285,,Pulses & Dry Goods,box,,0.00,0.00,default,0,0,no
+California Garden Fava Beans 400g,فول حدائق كاليفورنيا ٤٠٠ جم,BAQ-0286,,Canned Food,can,,0.00,0.00,default,0,0,no
+California Garden Chickpeas 400g,حمص حدائق كاليفورنيا ٤٠٠ جم,BAQ-0287,,Canned Food,can,,0.00,0.00,default,0,0,no
+California Garden Hommos 400g,حمص مهروس حدائق كاليفورنيا ٤٠٠ جم,BAQ-0288,,Canned Food,can,,0.00,0.00,default,0,0,no
+California Garden Kidney Beans 400g,فاصوليا حمراء حدائق كاليفورنيا ٤٠٠ جم,BAQ-0289,,Canned Food,can,,0.00,0.00,default,0,0,no
+California Garden Tuna 185g,تونة حدائق كاليفورنيا ١٨٥ جم,BAQ-0290,,Canned Food,can,,0.00,0.00,default,0,0,no
+California Garden Peas 400g,بازلاء حدائق كاليفورنيا ٤٠٠ جم,BAQ-0291,,Canned Food,can,,0.00,0.00,default,0,0,no
+California Garden Mixed Vegetables 400g,خضار مشكلة حدائق كاليفورنيا ٤٠٠ جم,BAQ-0292,,Canned Food,can,,0.00,0.00,default,0,0,no
+Goody Tuna in Water 85g,تونة قودي بالماء ٨٥ جم,BAQ-0293,,Canned Food,can,,0.00,0.00,default,0,0,no
+Goody Tuna in Water 185g,تونة قودي بالماء ١٨٥ جم,BAQ-0294,,Canned Food,can,,0.00,0.00,default,0,0,no
+Goody Tuna in Oil 185g,تونة قودي بالزيت ١٨٥ جم,BAQ-0295,,Canned Food,can,,0.00,0.00,default,0,0,no
+Goody Tomato Paste 135g,معجون طماطم قودي ١٣٥ جم,BAQ-0296,,Canned Food,can,,0.00,0.00,default,0,0,no
+Goody Tomato Paste 400g,معجون طماطم قودي ٤٠٠ جم,BAQ-0297,,Canned Food,can,,0.00,0.00,default,0,0,no
+Goody Chickpeas 400g,حمص قودي ٤٠٠ جم,BAQ-0298,,Canned Food,can,,0.00,0.00,default,0,0,no
+Goody White Beans 400g,فاصوليا بيضاء قودي ٤٠٠ جم,BAQ-0299,,Canned Food,can,,0.00,0.00,default,0,0,no
+Goody Sweet Corn 340g,ذرة قودي ٣٤٠ جم,BAQ-0300,,Canned Food,can,,0.00,0.00,default,0,0,no
+Goody Mushrooms 400g,فطر قودي ٤٠٠ جم,BAQ-0301,,Canned Food,can,,0.00,0.00,default,0,0,no
+Al Rabie Tomato Paste 70g,معجون طماطم الربيع ٧٠ جم,BAQ-0302,,Canned Food,can,,0.00,0.00,default,0,0,no
+Al Rabie Tomato Paste 135g,معجون طماطم الربيع ١٣٥ جم,BAQ-0303,,Canned Food,can,,0.00,0.00,default,0,0,no
+Al Rabie Tomato Paste 400g,معجون طماطم الربيع ٤٠٠ جم,BAQ-0304,,Canned Food,can,,0.00,0.00,default,0,0,no
+Hana Tuna 170g,تونة هناء ١٧٠ جم,BAQ-0305,,Canned Food,can,,0.00,0.00,default,0,0,no
+Green Giant Corn 340g,ذرة جرين جاينت ٣٤٠ جم,BAQ-0306,,Canned Food,can,,0.00,0.00,default,0,0,no
+Canned Pineapple 565g,أناناس معلب ٥٦٥ جم,BAQ-0307,,Canned Food,can,,0.00,0.00,default,0,0,no
+Goody Green Olives 450g,زيتون أخضر قودي ٤٥٠ جم,BAQ-0308,,Canned Food,jar,,0.00,0.00,default,0,0,no
+Goody Black Olives 450g,زيتون أسود قودي ٤٥٠ جم,BAQ-0309,,Canned Food,jar,,0.00,0.00,default,0,0,no
+Goody Mixed Pickles 680g,مخلل مشكل قودي ٦٨٠ جم,BAQ-0310,,Canned Food,jar,,0.00,0.00,default,0,0,no
+Chtoora Mixed Pickles 600g,مخلل شتورة مشكل ٦٠٠ جم,BAQ-0311,,Canned Food,jar,,0.00,0.00,default,0,0,no
+Chtoora Cucumber Pickles 600g,مخلل خيار شتورة ٦٠٠ جم,BAQ-0312,,Canned Food,jar,,0.00,0.00,default,0,0,no
+Heinz Ketchup 300g,كاتشب هاينز ٣٠٠ جم,BAQ-0313,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+Heinz Ketchup 570g,كاتشب هاينز ٥٧٠ جم,BAQ-0314,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+Heinz Ketchup 935g,كاتشب هاينز ٩٣٥ جم,BAQ-0315,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+Al Rabie Ketchup 500g,كاتشب الربيع ٥٠٠ جم,BAQ-0316,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+Hellmann's Mayonnaise 400g,مايونيز هيلمانز ٤٠٠ جم,BAQ-0317,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+American Garden Mayonnaise 340g,مايونيز أمريكان جاردن ٣٤٠ جم,BAQ-0318,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+American Garden Ketchup 567g,كاتشب أمريكان جاردن ٥٦٧ جم,BAQ-0319,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+American Garden Mustard 340g,خردل أمريكان جاردن ٣٤٠ جم,BAQ-0320,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+American Garden Hot Sauce 355ml,صوص حار أمريكان جاردن ٣٥٥ مل,BAQ-0321,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+Heinz Mustard 200g,خردل هاينز ٢٠٠ جم,BAQ-0322,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+Heinz BBQ Sauce 400g,صوص باربكيو هاينز ٤٠٠ جم,BAQ-0323,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+Maggi Chicken Cubes 24 pcs,مكعبات ماجي دجاج ٢٤ حبة,BAQ-0324,,Sauces & Condiments,box,,0.00,0.00,default,0,0,no
+Maggi Beef Cubes 24 pcs,مكعبات ماجي لحم ٢٤ حبة,BAQ-0325,,Sauces & Condiments,box,,0.00,0.00,default,0,0,no
+Knorr Chicken Cubes 24 pcs,مكعبات كنور دجاج ٢٤ حبة,BAQ-0326,,Sauces & Condiments,box,,0.00,0.00,default,0,0,no
+Soy Sauce 300ml,صوص صويا ٣٠٠ مل,BAQ-0327,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+Chili Sauce 300ml,صوص فلفل حار ٣٠٠ مل,BAQ-0328,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+White Vinegar 1L,خل أبيض ١ لتر,BAQ-0329,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+Apple Cider Vinegar 500ml,خل تفاح ٥٠٠ مل,BAQ-0330,,Sauces & Condiments,bottle,,0.00,0.00,default,0,0,no
+Tahini 450g,طحينة ٤٥٠ جم,BAQ-0331,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Tahini 900g,طحينة ٩٠٠ جم,BAQ-0332,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Date Molasses 450g,دبس تمر ٤٥٠ جم,BAQ-0333,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Honey 250g,عسل ٢٥٠ جم,BAQ-0334,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Honey 500g,عسل ٥٠٠ جم,BAQ-0335,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Honey 1kg,عسل ١ كجم,BAQ-0336,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Strawberry Jam 400g,مربى فراولة ٤٠٠ جم,BAQ-0337,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Apricot Jam 400g,مربى مشمش ٤٠٠ جم,BAQ-0338,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Mixed Fruit Jam 400g,مربى فواكه مشكلة ٤٠٠ جم,BAQ-0339,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Nutella 350g,نوتيلا ٣٥٠ جم,BAQ-0340,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Nutella 750g,نوتيلا ٧٥٠ جم,BAQ-0341,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Peanut Butter 340g,زبدة فول سوداني ٣٤٠ جم,BAQ-0342,,Sauces & Condiments,jar,,0.00,0.00,default,0,0,no
+Halawa Plain 500g,حلاوة طحينية سادة ٥٠٠ جم,BAQ-0343,,Sauces & Condiments,pkt,,0.00,0.00,default,0,0,no
+Halawa Chocolate 500g,حلاوة طحينية شوكولاتة ٥٠٠ جم,BAQ-0344,,Sauces & Condiments,pkt,,0.00,0.00,default,0,0,no
+Black Pepper Ground 100g,فلفل أسود مطحون ١٠٠ جم,BAQ-0345,,Spices,pkt,,0.00,0.00,default,0,0,no
+White Pepper Ground 50g,فلفل أبيض مطحون ٥٠ جم,BAQ-0346,,Spices,pkt,,0.00,0.00,default,0,0,no
+Cumin Ground 100g,كمون مطحون ١٠٠ جم,BAQ-0347,,Spices,pkt,,0.00,0.00,default,0,0,no
+Coriander Ground 100g,كزبرة مطحونة ١٠٠ جم,BAQ-0348,,Spices,pkt,,0.00,0.00,default,0,0,no
+Turmeric 100g,كركم ١٠٠ جم,BAQ-0349,,Spices,pkt,,0.00,0.00,default,0,0,no
+Paprika 100g,بابريكا ١٠٠ جم,BAQ-0350,,Spices,pkt,,0.00,0.00,default,0,0,no
+Chili Powder 100g,شطة مطحونة ١٠٠ جم,BAQ-0351,,Spices,pkt,,0.00,0.00,default,0,0,no
+Cinnamon Stick 50g,قرفة عيدان ٥٠ جم,BAQ-0352,,Spices,pkt,,0.00,0.00,default,0,0,no
+Cinnamon Ground 50g,قرفة مطحونة ٥٠ جم,BAQ-0353,,Spices,pkt,,0.00,0.00,default,0,0,no
+Cardamom Green 50g,هيل أخضر ٥٠ جم,BAQ-0354,,Spices,pkt,,0.00,0.00,default,0,0,no
+Cloves 50g,قرنفل ٥٠ جم,BAQ-0355,,Spices,pkt,,0.00,0.00,default,0,0,no
+Bay Leaves 20g,ورق غار ٢٠ جم,BAQ-0356,,Spices,pkt,,0.00,0.00,default,0,0,no
+Garlic Powder 100g,ثوم بودرة ١٠٠ جم,BAQ-0357,,Spices,pkt,,0.00,0.00,default,0,0,no
+Onion Powder 100g,بصل بودرة ١٠٠ جم,BAQ-0358,,Spices,pkt,,0.00,0.00,default,0,0,no
+Ginger Powder 100g,زنجبيل مطحون ١٠٠ جم,BAQ-0359,,Spices,pkt,,0.00,0.00,default,0,0,no
+Sumac 100g,سماق ١٠٠ جم,BAQ-0360,,Spices,pkt,,0.00,0.00,default,0,0,no
+Zaatar 200g,زعتر ٢٠٠ جم,BAQ-0361,,Spices,pkt,,0.00,0.00,default,0,0,no
+Seven Spices 100g,سبع بهارات ١٠٠ جم,BAQ-0362,,Spices,pkt,,0.00,0.00,default,0,0,no
+Kabsa Spices 100g,بهارات كبسة ١٠٠ جم,BAQ-0363,,Spices,pkt,,0.00,0.00,default,0,0,no
+Biryani Spices 100g,بهارات برياني ١٠٠ جم,BAQ-0364,,Spices,pkt,,0.00,0.00,default,0,0,no
+Mandi Spices 100g,بهارات مندي ١٠٠ جم,BAQ-0365,,Spices,pkt,,0.00,0.00,default,0,0,no
+Chicken Seasoning 100g,بهارات دجاج ١٠٠ جم,BAQ-0366,,Spices,pkt,,0.00,0.00,default,0,0,no
+Meat Seasoning 100g,بهارات لحم ١٠٠ جم,BAQ-0367,,Spices,pkt,,0.00,0.00,default,0,0,no
+Dried Lime 100g,ليمون أسود مجفف ١٠٠ جم,BAQ-0368,,Spices,pkt,,0.00,0.00,default,0,0,no
+Dried Mint 50g,نعناع مجفف ٥٠ جم,BAQ-0369,,Spices,pkt,,0.00,0.00,default,0,0,no
+Saffron 1g,زعفران ١ جم,BAQ-0370,,Spices,pkt,,0.00,0.00,default,0,0,no
+Oregano 50g,أوريجانو ٥٠ جم,BAQ-0371,,Spices,pkt,,0.00,0.00,default,0,0,no
+Lays Classic 14g,ليز ملح ١٤ جم,BAQ-0372,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Lays Classic 43g,ليز ملح ٤٣ جم,BAQ-0373,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Lays Classic 170g,ليز ملح ١٧٠ جم,BAQ-0374,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Lays Cheese 43g,ليز جبن ٤٣ جم,BAQ-0375,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Lays Ketchup 43g,ليز كاتشب ٤٣ جم,BAQ-0376,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Lays Chili 43g,ليز حار ٤٣ جم,BAQ-0377,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Lays Salt & Vinegar 43g,ليز ملح وخل ٤٣ جم,BAQ-0378,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Doritos Nacho Cheese 44g,دوريتوس جبن ٤٤ جم,BAQ-0379,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Doritos Sweet Chili 44g,دوريتوس سويت تشيلي ٤٤ جم,BAQ-0380,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Doritos Family Pack 180g,دوريتوس عائلي ١٨٠ جم,BAQ-0381,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Cheetos Crunchy 35g,تشيتوس ٣٥ جم,BAQ-0382,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Cheetos Flamin Hot 35g,تشيتوس حار ٣٥ جم,BAQ-0383,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Pringles Original 40g,برينجلز أصلي ٤٠ جم,BAQ-0384,,Chips & Snacks,can,,0.00,0.00,default,0,0,no
+Pringles Original 165g,برينجلز أصلي ١٦٥ جم,BAQ-0385,,Chips & Snacks,can,,0.00,0.00,default,0,0,no
+Pringles Sour Cream 165g,برينجلز ساور كريم ١٦٥ جم,BAQ-0386,,Chips & Snacks,can,,0.00,0.00,default,0,0,no
+Pringles Paprika 165g,برينجلز بابريكا ١٦٥ جم,BAQ-0387,,Chips & Snacks,can,,0.00,0.00,default,0,0,no
+Tasali Classic 40g,تسالي كلاسيك ٤٠ جم,BAQ-0388,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Kitco Chips 30g,كيتكو ٣٠ جم,BAQ-0389,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Popcorn Microwave 3 bags,فشار مايكروويف ٣ أكياس,BAQ-0390,,Chips & Snacks,box,,0.00,0.00,default,0,0,no
+Sunflower Seeds 200g,لب شمس ٢٠٠ جم,BAQ-0391,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Pumpkin Seeds 200g,لب قرع ٢٠٠ جم,BAQ-0392,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Bugles 40g,باجلز ٤٠ جم,BAQ-0393,,Chips & Snacks,pkt,,0.00,0.00,default,0,0,no
+Oreo Original 66g,أوريو ٦٦ جم,BAQ-0394,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Oreo Original 133g,أوريو ١٣٣ جم,BAQ-0395,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Oreo Family Pack 300g,أوريو عائلي ٣٠٠ جم,BAQ-0396,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+McVitie's Digestive 250g,ماكفيتيز دايجستف ٢٥٠ جم,BAQ-0397,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+McVitie's Digestive 400g,ماكفيتيز دايجستف ٤٠٠ جم,BAQ-0398,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Tiffany Cream Biscuits 400g,تيفاني بسكويت كريمة ٤٠٠ جم,BAQ-0399,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Tiffany Marie 400g,تيفاني ماري ٤٠٠ جم,BAQ-0400,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Tiffany Digestive 400g,تيفاني دايجستف ٤٠٠ جم,BAQ-0401,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Loacker Quadratini 125g,لواكر ١٢٥ جم,BAQ-0402,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Bahlsen Leibniz 200g,بالزن ٢٠٠ جم,BAQ-0403,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Ulker Biscuits 200g,أولكر بسكويت ٢٠٠ جم,BAQ-0404,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Tuc Crackers 100g,تاك ١٠٠ جم,BAQ-0405,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Ritz Crackers 200g,ريتز ٢٠٠ جم,BAQ-0406,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Petit Beurre 200g,بتي بور ٢٠٠ جم,BAQ-0407,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Lotus Biscoff 250g,لوتس بيسكوف ٢٥٠ جم,BAQ-0408,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Eti Crax 50g,إيتي كراكس ٥٠ جم,BAQ-0409,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+Halwani Maamoul 400g,حلواني معمول ٤٠٠ جم,BAQ-0410,,Biscuits,box,,0.00,0.00,default,0,0,no
+Nabil Biscuits 400g,نبيل بسكويت ٤٠٠ جم,BAQ-0411,,Biscuits,pkt,,0.00,0.00,default,0,0,no
+KitKat 2 Finger,كيت كات إصبعان,BAQ-0412,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+KitKat 4 Finger,كيت كات ٤ أصابع,BAQ-0413,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Snickers 50g,سنيكرز ٥٠ جم,BAQ-0414,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Twix 50g,تويكس ٥٠ جم,BAQ-0415,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Mars 51g,مارس ٥١ جم,BAQ-0416,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Bounty 57g,باونتي ٥٧ جم,BAQ-0417,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Galaxy Smooth Milk 42g,جالاكسي ٤٢ جم,BAQ-0418,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Galaxy Smooth Milk 110g,جالاكسي ١١٠ جم,BAQ-0419,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Milky Way 52g,ميلكي واي ٥٢ جم,BAQ-0420,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+M&M Peanut 45g,إم آند إم فول سوداني ٤٥ جم,BAQ-0421,,Chocolate & Candy,pkt,,0.00,0.00,default,0,0,no
+M&M Chocolate 45g,إم آند إم شوكولاتة ٤٥ جم,BAQ-0422,,Chocolate & Candy,pkt,,0.00,0.00,default,0,0,no
+Kinder Bueno,كيندر بوينو,BAQ-0423,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Kinder Surprise,كيندر سبرايز,BAQ-0424,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Toblerone 100g,توبليرون ١٠٠ جم,BAQ-0425,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Cadbury Dairy Milk 45g,كادبوري ديري ميلك ٤٥ جم,BAQ-0426,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Cadbury Flake 32g,كادبوري فليك ٣٢ جم,BAQ-0427,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Lion Bar,ليون بار,BAQ-0428,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Ulker Hobby 80g,أولكر هوبي ٨٠ جم,BAQ-0429,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Ulker Albeni 34g,أولكر ألبيني ٣٤ جم,BAQ-0430,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Haribo Goldbears 80g,هاريبو ٨٠ جم,BAQ-0431,,Chocolate & Candy,pkt,,0.00,0.00,default,0,0,no
+Mentos Mint,مينتوس نعناع,BAQ-0432,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Orbit Gum,أوربت علكة,BAQ-0433,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Extra Gum,إكسترا علكة,BAQ-0434,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Trident Gum,ترايدنت علكة,BAQ-0435,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Halls Cough Drops,هولز حبوب,BAQ-0436,,Chocolate & Candy,pkt,,0.00,0.00,default,0,0,no
+Chiclets,شيكليت,BAQ-0437,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Chupa Chups Lollipop,تشوبا تشوبس,BAQ-0438,,Chocolate & Candy,pcs,,0.00,0.00,default,0,0,no
+Toffee Classic,توفي,BAQ-0439,,Chocolate & Candy,pkt,,0.00,0.00,default,0,0,no
+Sukkari Dates 1kg,تمر سكري ١ كجم,BAQ-0440,,Dates & Nuts,box,,0.00,0.00,default,0,0,no
+Khalas Dates 1kg,تمر خلاص ١ كجم,BAQ-0441,,Dates & Nuts,box,,0.00,0.00,default,0,0,no
+Ajwa Dates 500g,تمر عجوة ٥٠٠ جم,BAQ-0442,,Dates & Nuts,box,,0.00,0.00,default,0,0,no
+Mixed Nuts 250g,مكسرات مشكلة ٢٥٠ جم,BAQ-0443,,Dates & Nuts,pkt,,0.00,0.00,default,0,0,no
+Pistachios 250g,فستق ٢٥٠ جم,BAQ-0444,,Dates & Nuts,pkt,,0.00,0.00,default,0,0,no
+Cashews 250g,كاجو ٢٥٠ جم,BAQ-0445,,Dates & Nuts,pkt,,0.00,0.00,default,0,0,no
+Almonds 250g,لوز ٢٥٠ جم,BAQ-0446,,Dates & Nuts,pkt,,0.00,0.00,default,0,0,no
+Peanuts Roasted 250g,فول سوداني محمص ٢٥٠ جم,BAQ-0447,,Dates & Nuts,pkt,,0.00,0.00,default,0,0,no
+Walnuts 250g,جوز ٢٥٠ جم,BAQ-0448,,Dates & Nuts,pkt,,0.00,0.00,default,0,0,no
+Americana Chicken Nuggets 400g,ناجتس أمريكانا ٤٠٠ جم,BAQ-0449,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Americana Chicken Burger 4 pcs,برجر دجاج أمريكانا ٤ قطع,BAQ-0450,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Americana Beef Burger 4 pcs,برجر لحم أمريكانا ٤ قطع,BAQ-0451,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Americana Minced Beef 400g,لحم بقري مفروم أمريكانا ٤٠٠ جم,BAQ-0452,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Americana Minced Lamb 400g,لحم غنم مفروم أمريكانا ٤٠٠ جم,BAQ-0453,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Sadia Whole Chicken 900g,دجاج ساديا كامل ٩٠٠ جم,BAQ-0454,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Sadia Chicken Breast 900g,صدر دجاج ساديا ٩٠٠ جم,BAQ-0455,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Sadia Chicken Nuggets 400g,ناجتس ساديا ٤٠٠ جم,BAQ-0456,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Al Watania Whole Chicken,دجاج الوطنية كامل,BAQ-0457,,Frozen Food,pcs,,0.00,0.00,default,0,0,no
+Al Watania Chicken Pieces,قطع دجاج الوطنية,BAQ-0458,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+French Fries 1kg,بطاطس مقلية مجمدة ١ كجم,BAQ-0459,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Frozen Mixed Vegetables 400g,خضار مشكلة مجمدة ٤٠٠ جم,BAQ-0460,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Frozen Green Peas 400g,بازلاء مجمدة ٤٠٠ جم,BAQ-0461,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Frozen Okra 400g,بامية مجمدة ٤٠٠ جم,BAQ-0462,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Frozen Molokhia 400g,ملوخية مجمدة ٤٠٠ جم,BAQ-0463,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Samosa Vegetable 12 pcs,سمبوسة خضار ١٢ حبة,BAQ-0464,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Spring Rolls 12 pcs,سبرينج رول ١٢ حبة,BAQ-0465,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Kibbeh 12 pcs,كبة ١٢ حبة,BAQ-0466,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Falafel 12 pcs,فلافل ١٢ حبة,BAQ-0467,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Fish Fingers 400g,أصابع سمك ٤٠٠ جم,BAQ-0468,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Frozen Pizza Margherita,بيتزا مارغريتا مجمدة,BAQ-0469,,Frozen Food,pcs,,0.00,0.00,default,0,0,no
+Paratha Plain 5 pcs,براثا سادة ٥ قطع,BAQ-0470,,Frozen Food,pkt,,0.00,0.00,default,0,0,no
+Almarai Ice Cream Vanilla 1.5L,آيس كريم المراعي فانيليا ١٫٥ لتر,BAQ-0471,,Ice Cream,pcs,,0.00,0.00,default,0,0,no
+Almarai Ice Cream Chocolate 1.5L,آيس كريم المراعي شوكولاتة ١٫٥ لتر,BAQ-0472,,Ice Cream,pcs,,0.00,0.00,default,0,0,no
+Almarai Ice Cream Cup,كأس آيس كريم المراعي,BAQ-0473,,Ice Cream,pcs,,0.00,0.00,default,0,0,no
+Magnum Classic,ماغنوم كلاسيك,BAQ-0474,,Ice Cream,pcs,,0.00,0.00,default,0,0,no
+Cornetto Classico,كورنيتو كلاسيكو,BAQ-0475,,Ice Cream,pcs,,0.00,0.00,default,0,0,no
+Paddle Pop,باديل بوب,BAQ-0476,,Ice Cream,pcs,,0.00,0.00,default,0,0,no
+Igloo Ice Cream Tub 1.5L,آيس كريم إغلو ١٫٥ لتر,BAQ-0477,,Ice Cream,pcs,,0.00,0.00,default,0,0,no
+Kwality Walls Cup,كأس كواليتي وولز,BAQ-0478,,Ice Cream,pcs,,0.00,0.00,default,0,0,no
+Fresh Whole Chicken,دجاج طازج كامل,BAQ-0479,,Meat & Poultry,kg,,0.00,0.00,default,0,0,no
+Fresh Chicken Breast,صدر دجاج طازج,BAQ-0480,,Meat & Poultry,kg,,0.00,0.00,default,0,0,no
+Fresh Chicken Thighs,أفخاذ دجاج طازجة,BAQ-0481,,Meat & Poultry,kg,,0.00,0.00,default,0,0,no
+Minced Beef,لحم بقري مفروم,BAQ-0482,,Meat & Poultry,kg,,0.00,0.00,default,0,0,no
+Minced Lamb,لحم غنم مفروم,BAQ-0483,,Meat & Poultry,kg,,0.00,0.00,default,0,0,no
+Beef Steak,ستيك لحم بقري,BAQ-0484,,Meat & Poultry,kg,,0.00,0.00,default,0,0,no
+Lamb Chops,ريش غنم,BAQ-0485,,Meat & Poultry,kg,,0.00,0.00,default,0,0,no
+Chicken Sausages,سجق دجاج,BAQ-0486,,Meat & Poultry,pkt,,0.00,0.00,default,0,0,no
+Beef Mortadella 250g,مرتديلا بقري ٢٥٠ جم,BAQ-0487,,Meat & Poultry,pkt,,0.00,0.00,default,0,0,no
+Turkey Slices 200g,شرائح ديك رومي ٢٠٠ جم,BAQ-0488,,Meat & Poultry,pkt,,0.00,0.00,default,0,0,no
+Chicken Franks 400g,نقانق دجاج ٤٠٠ جم,BAQ-0489,,Meat & Poultry,pkt,,0.00,0.00,default,0,0,no
+Tomato,طماطم,BAQ-0490,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Cucumber,خيار,BAQ-0491,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+White Onion,بصل أبيض,BAQ-0492,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Red Onion,بصل أحمر,BAQ-0493,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Potato,بطاطس,BAQ-0494,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Carrot,جزر,BAQ-0495,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Green Bell Pepper,فلفل أخضر,BAQ-0496,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Red Bell Pepper,فلفل أحمر,BAQ-0497,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Eggplant,باذنجان,BAQ-0498,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Zucchini,كوسة,BAQ-0499,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Cabbage,ملفوف,BAQ-0500,,Fresh Produce,pcs,,0.00,0.00,default,0,0,no
+Lettuce,خس,BAQ-0501,,Fresh Produce,pcs,,0.00,0.00,default,0,0,no
+Spinach Bundle,سبانخ حزمة,BAQ-0502,,Fresh Produce,bundle,,0.00,0.00,default,0,0,no
+Coriander Bundle,كزبرة حزمة,BAQ-0503,,Fresh Produce,bundle,,0.00,0.00,default,0,0,no
+Parsley Bundle,بقدونس حزمة,BAQ-0504,,Fresh Produce,bundle,,0.00,0.00,default,0,0,no
+Mint Bundle,نعناع حزمة,BAQ-0505,,Fresh Produce,bundle,,0.00,0.00,default,0,0,no
+Garlic 250g,ثوم ٢٥٠ جم,BAQ-0506,,Fresh Produce,pkt,,0.00,0.00,default,0,0,no
+Fresh Ginger 250g,زنجبيل طازج ٢٥٠ جم,BAQ-0507,,Fresh Produce,pkt,,0.00,0.00,default,0,0,no
+Lemon,ليمون,BAQ-0508,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Orange,برتقال,BAQ-0509,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Red Apple,تفاح أحمر,BAQ-0510,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Green Apple,تفاح أخضر,BAQ-0511,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Banana,موز,BAQ-0512,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Green Grapes,عنب أخضر,BAQ-0513,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Watermelon,بطيخ,BAQ-0514,,Fresh Produce,pcs,,0.00,0.00,default,0,0,no
+Melon,شمام,BAQ-0515,,Fresh Produce,pcs,,0.00,0.00,default,0,0,no
+Pomegranate,رمان,BAQ-0516,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Mango,مانجو,BAQ-0517,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Dates Loose,تمر سائب,BAQ-0518,,Fresh Produce,kg,,0.00,0.00,default,0,0,no
+Pampers Size 1,بامبرز مقاس ١,BAQ-0519,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Pampers Size 2,بامبرز مقاس ٢,BAQ-0520,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Pampers Size 3,بامبرز مقاس ٣,BAQ-0521,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Pampers Size 4,بامبرز مقاس ٤,BAQ-0522,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Pampers Size 5,بامبرز مقاس ٥,BAQ-0523,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Pampers Size 6,بامبرز مقاس ٦,BAQ-0524,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Fine Baby Size 3,فاين بيبي مقاس ٣,BAQ-0525,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Fine Baby Size 4,فاين بيبي مقاس ٤,BAQ-0526,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Fine Baby Size 5,فاين بيبي مقاس ٥,BAQ-0527,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Sanita Bambi Size 3,سانيتا بامبي مقاس ٣,BAQ-0528,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Sanita Bambi Size 4,سانيتا بامبي مقاس ٤,BAQ-0529,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Molfix Size 4,مولفيكس مقاس ٤,BAQ-0530,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Baby Wipes 80 pcs,مناديل أطفال ٨٠ حبة,BAQ-0531,,Baby Care,pkt,,0.00,0.00,default,0,0,no
+Johnson's Baby Shampoo 200ml,شامبو جونسون أطفال ٢٠٠ مل,BAQ-0532,,Baby Care,bottle,,0.00,0.00,default,0,0,no
+Johnson's Baby Oil 200ml,زيت جونسون أطفال ٢٠٠ مل,BAQ-0533,,Baby Care,bottle,,0.00,0.00,default,0,0,no
+Johnson's Baby Powder 200g,بودرة جونسون أطفال ٢٠٠ جم,BAQ-0534,,Baby Care,pcs,,0.00,0.00,default,0,0,no
+Johnson's Baby Lotion 200ml,لوشن جونسون أطفال ٢٠٠ مل,BAQ-0535,,Baby Care,bottle,,0.00,0.00,default,0,0,no
+Cerelac Rice 200g,سيريلاك أرز ٢٠٠ جم,BAQ-0536,,Baby Care,box,,0.00,0.00,default,0,0,no
+Cerelac Wheat 200g,سيريلاك قمح ٢٠٠ جم,BAQ-0537,,Baby Care,box,,0.00,0.00,default,0,0,no
+Nido 1+ 400g,نيدو ١+ ٤٠٠ جم,BAQ-0538,,Baby Care,can,,0.00,0.00,default,0,0,no
+Nido 3+ 400g,نيدو ٣+ ٤٠٠ جم,BAQ-0539,,Baby Care,can,,0.00,0.00,default,0,0,no
+Baby Bottle 250ml,رضاعة ٢٥٠ مل,BAQ-0540,,Baby Care,pcs,,0.00,0.00,default,0,0,no
+Colgate Toothpaste 125ml,معجون كولجيت ١٢٥ مل,BAQ-0541,,Personal Care,tube,,0.00,0.00,default,0,0,no
+Signal Toothpaste 120ml,معجون سيجنال ١٢٠ مل,BAQ-0542,,Personal Care,tube,,0.00,0.00,default,0,0,no
+Closeup Toothpaste 120ml,معجون كلوس أب ١٢٠ مل,BAQ-0543,,Personal Care,tube,,0.00,0.00,default,0,0,no
+Sensodyne Toothpaste 100ml,معجون سنسوداين ١٠٠ مل,BAQ-0544,,Personal Care,tube,,0.00,0.00,default,0,0,no
+Oral-B Toothbrush,فرشاة أسنان أورال بي,BAQ-0545,,Personal Care,pcs,,0.00,0.00,default,0,0,no
+Toothbrush Soft,فرشاة أسنان ناعمة,BAQ-0546,,Personal Care,pcs,,0.00,0.00,default,0,0,no
+Head & Shoulders Shampoo 400ml,شامبو هيد آند شولدرز ٤٠٠ مل,BAQ-0547,,Personal Care,bottle,,0.00,0.00,default,0,0,no
+Pantene Shampoo 400ml,شامبو بانتين ٤٠٠ مل,BAQ-0548,,Personal Care,bottle,,0.00,0.00,default,0,0,no
+Pantene Conditioner 360ml,بلسم بانتين ٣٦٠ مل,BAQ-0549,,Personal Care,bottle,,0.00,0.00,default,0,0,no
+Sunsilk Shampoo 400ml,شامبو صانسيلك ٤٠٠ مل,BAQ-0550,,Personal Care,bottle,,0.00,0.00,default,0,0,no
+Dove Shampoo 400ml,شامبو دوف ٤٠٠ مل,BAQ-0551,,Personal Care,bottle,,0.00,0.00,default,0,0,no
+Dove Body Wash 500ml,غسول جسم دوف ٥٠٠ مل,BAQ-0552,,Personal Care,bottle,,0.00,0.00,default,0,0,no
+Dove Soap 135g,صابون دوف ١٣٥ جم,BAQ-0553,,Personal Care,pcs,,0.00,0.00,default,0,0,no
+Lux Soap 125g,صابون لوكس ١٢٥ جم,BAQ-0554,,Personal Care,pcs,,0.00,0.00,default,0,0,no
+Dettol Soap 125g,صابون ديتول ١٢٥ جم,BAQ-0555,,Personal Care,pcs,,0.00,0.00,default,0,0,no
+Lifebuoy Soap 125g,صابون لايف بوي ١٢٥ جم,BAQ-0556,,Personal Care,pcs,,0.00,0.00,default,0,0,no
+Fa Soap 125g,صابون فا ١٢٥ جم,BAQ-0557,,Personal Care,pcs,,0.00,0.00,default,0,0,no
+Palmolive Shower Gel 500ml,شاور بالموليف ٥٠٠ مل,BAQ-0558,,Personal Care,bottle,,0.00,0.00,default,0,0,no
+Nivea Cream 150ml,كريم نيفيا ١٥٠ مل,BAQ-0559,,Personal Care,jar,,0.00,0.00,default,0,0,no
+Nivea Body Lotion 400ml,لوشن نيفيا ٤٠٠ مل,BAQ-0560,,Personal Care,bottle,,0.00,0.00,default,0,0,no
+Nivea Deodorant 150ml,مزيل عرق نيفيا ١٥٠ مل,BAQ-0561,,Personal Care,can,,0.00,0.00,default,0,0,no
+Rexona Deodorant 150ml,مزيل عرق ركسونا ١٥٠ مل,BAQ-0562,,Personal Care,can,,0.00,0.00,default,0,0,no
+Gillette Blue 2 Razor 2 pcs,جيليت بلو ٢ قطعتان,BAQ-0563,,Personal Care,pkt,,0.00,0.00,default,0,0,no
+Gillette Shaving Foam 200ml,رغوة حلاقة جيليت ٢٠٠ مل,BAQ-0564,,Personal Care,can,,0.00,0.00,default,0,0,no
+Always Pads 10 pcs,فوط أولويز ١٠ قطع,BAQ-0565,,Personal Care,pkt,,0.00,0.00,default,0,0,no
+Always Night Pads 8 pcs,فوط أولويز ليلية ٨ قطع,BAQ-0566,,Personal Care,pkt,,0.00,0.00,default,0,0,no
+Kotex Pads 10 pcs,فوط كوتكس ١٠ قطع,BAQ-0567,,Personal Care,pkt,,0.00,0.00,default,0,0,no
+Vaseline 100ml,فازلين ١٠٠ مل,BAQ-0568,,Personal Care,jar,,0.00,0.00,default,0,0,no
+Cotton Pads 80 pcs,أقراص قطن ٨٠ حبة,BAQ-0569,,Personal Care,pkt,,0.00,0.00,default,0,0,no
+Cotton Buds 200 pcs,أعواد أذن ٢٠٠ حبة,BAQ-0570,,Personal Care,box,,0.00,0.00,default,0,0,no
+Hand Sanitizer 500ml,معقم يدين ٥٠٠ مل,BAQ-0571,,Personal Care,bottle,,0.00,0.00,default,0,0,no
+Hair Gel 250ml,جل شعر ٢٥٠ مل,BAQ-0572,,Personal Care,jar,,0.00,0.00,default,0,0,no
+Comb,مشط,BAQ-0573,,Personal Care,pcs,,0.00,0.00,default,0,0,no
+Nail Clipper,قصاصة أظافر,BAQ-0574,,Personal Care,pcs,,0.00,0.00,default,0,0,no
+Ariel Powder 3kg,أريال مسحوق ٣ كجم,BAQ-0575,,Laundry & Cleaning,pkt,,0.00,0.00,default,0,0,no
+Ariel Liquid 2.5L,أريال سائل ٢٫٥ لتر,BAQ-0576,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Persil Powder 3kg,برسيل مسحوق ٣ كجم,BAQ-0577,,Laundry & Cleaning,pkt,,0.00,0.00,default,0,0,no
+Persil Liquid 2.5L,برسيل سائل ٢٫٥ لتر,BAQ-0578,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Tide Powder 3kg,تايد مسحوق ٣ كجم,BAQ-0579,,Laundry & Cleaning,pkt,,0.00,0.00,default,0,0,no
+Tide Liquid 2.5L,تايد سائل ٢٫٥ لتر,BAQ-0580,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Fairy Dish Soap 1L,فيري سائل جلي ١ لتر,BAQ-0581,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Fairy Dish Soap Lemon 1L,فيري ليمون ١ لتر,BAQ-0582,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Pril Dish Soap 1L,بريل سائل جلي ١ لتر,BAQ-0583,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Dettol Antiseptic 750ml,ديتول مطهر ٧٥٠ مل,BAQ-0584,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Dettol Antiseptic 1L,ديتول مطهر ١ لتر,BAQ-0585,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Dettol Hand Wash 200ml,ديتول غسول يدين ٢٠٠ مل,BAQ-0586,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Clorox Bleach 1.89L,كلوركس ١٫٨٩ لتر,BAQ-0587,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Clorox Bleach 3.78L,كلوركس ٣٫٧٨ لتر,BAQ-0588,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Clorox Toilet Cleaner 750ml,كلوركس منظف مرحاض ٧٥٠ مل,BAQ-0589,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Harpic Toilet Cleaner 750ml,هاربيك ٧٥٠ مل,BAQ-0590,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Jif Cream Cleaner 500ml,جيف ٥٠٠ مل,BAQ-0591,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Mr Muscle Kitchen 750ml,مستر ماسل مطبخ ٧٥٠ مل,BAQ-0592,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Ajax Floor Cleaner 1.5L,أجاكس أرضيات ١٫٥ لتر,BAQ-0593,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Flash Floor Cleaner 1.5L,فلاش أرضيات ١٫٥ لتر,BAQ-0594,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Glass Cleaner 750ml,منظف زجاج ٧٥٠ مل,BAQ-0595,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Abaya Wash 1L,سائل غسيل عبايات ١ لتر,BAQ-0596,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Fabric Softener 2L,منعم أقمشة ٢ لتر,BAQ-0597,,Laundry & Cleaning,bottle,,0.00,0.00,default,0,0,no
+Dish Sponge 3 pcs,إسفنج جلي ٣ حبات,BAQ-0598,,Laundry & Cleaning,pkt,,0.00,0.00,default,0,0,no
+Steel Wool 6 pcs,سلك جلي ٦ حبات,BAQ-0599,,Laundry & Cleaning,pkt,,0.00,0.00,default,0,0,no
+Trash Bags Large 30 pcs,أكياس نفايات كبيرة ٣٠ كيس,BAQ-0600,,Laundry & Cleaning,roll,,0.00,0.00,default,0,0,no
+Trash Bags Medium 30 pcs,أكياس نفايات وسط ٣٠ كيس,BAQ-0601,,Laundry & Cleaning,roll,,0.00,0.00,default,0,0,no
+Cleaning Gloves,قفازات تنظيف,BAQ-0602,,Laundry & Cleaning,pair,,0.00,0.00,default,0,0,no
+Insect Spray 400ml,مبيد حشرات ٤٠٠ مل,BAQ-0603,,Laundry & Cleaning,can,,0.00,0.00,default,0,0,no
+Air Freshener Spray 300ml,معطر جو ٣٠٠ مل,BAQ-0604,,Laundry & Cleaning,can,,0.00,0.00,default,0,0,no
+Air Freshener Gel 150g,معطر جو جل ١٥٠ جم,BAQ-0605,,Laundry & Cleaning,jar,,0.00,0.00,default,0,0,no
+Fine Facial Tissue 150 sheets,مناديل فاين ١٥٠ ورقة,BAQ-0606,,Paper & Tissue,box,,0.00,0.00,default,0,0,no
+Fine Facial Tissue 5 pack,مناديل فاين ٥ علب,BAQ-0607,,Paper & Tissue,pack,,0.00,0.00,default,0,0,no
+Fine Toilet Paper 4 rolls,ورق تواليت فاين ٤ رول,BAQ-0608,,Paper & Tissue,pack,,0.00,0.00,default,0,0,no
+Fine Toilet Paper 12 rolls,ورق تواليت فاين ١٢ رول,BAQ-0609,,Paper & Tissue,pack,,0.00,0.00,default,0,0,no
+Fine Kitchen Towel 2 rolls,مناشف مطبخ فاين رولان,BAQ-0610,,Paper & Tissue,pack,,0.00,0.00,default,0,0,no
+Sanita Facial Tissue,مناديل سانيتا,BAQ-0611,,Paper & Tissue,box,,0.00,0.00,default,0,0,no
+Sanita Toilet Paper 8 rolls,ورق تواليت سانيتا ٨ رول,BAQ-0612,,Paper & Tissue,pack,,0.00,0.00,default,0,0,no
+Kleenex Facial Tissue,مناديل كلينكس,BAQ-0613,,Paper & Tissue,box,,0.00,0.00,default,0,0,no
+Wet Wipes 80 pcs,مناديل مبللة ٨٠ حبة,BAQ-0614,,Paper & Tissue,pkt,,0.00,0.00,default,0,0,no
+Aluminum Foil 30m,ورق ألمنيوم ٣٠ م,BAQ-0615,,Paper & Tissue,roll,,0.00,0.00,default,0,0,no
+Cling Film 30m,نايلون حفظ ٣٠ م,BAQ-0616,,Paper & Tissue,roll,,0.00,0.00,default,0,0,no
+Baking Paper 20 sheets,ورق زبدة ٢٠ ورقة,BAQ-0617,,Paper & Tissue,roll,,0.00,0.00,default,0,0,no
+Paper Cups 50 pcs,أكواب ورق ٥٠ حبة,BAQ-0618,,Paper & Tissue,pkt,,0.00,0.00,default,0,0,no
+Plastic Cups 50 pcs,أكواب بلاستيك ٥٠ حبة,BAQ-0619,,Paper & Tissue,pkt,,0.00,0.00,default,0,0,no
+Plastic Plates 25 pcs,أطباق بلاستيك ٢٥ حبة,BAQ-0620,,Paper & Tissue,pkt,,0.00,0.00,default,0,0,no
+Paper Plates 25 pcs,أطباق ورق ٢٥ حبة,BAQ-0621,,Paper & Tissue,pkt,,0.00,0.00,default,0,0,no
+Plastic Spoons 50 pcs,ملاعق بلاستيك ٥٠ حبة,BAQ-0622,,Paper & Tissue,pkt,,0.00,0.00,default,0,0,no
+Garbage Bags Small 50 pcs,أكياس نفايات صغيرة ٥٠ كيس,BAQ-0623,,Paper & Tissue,roll,,0.00,0.00,default,0,0,no
+AA Batteries 4 pcs,بطاريات AA ٤ حبات,BAQ-0624,,Household,pkt,,0.00,0.00,default,0,0,no
+AAA Batteries 4 pcs,بطاريات AAA ٤ حبات,BAQ-0625,,Household,pkt,,0.00,0.00,default,0,0,no
+Disposable Lighter,ولاعة,BAQ-0626,,Household,pcs,,0.00,0.00,default,0,0,no
+Matches 10 boxes,عيدان ثقاب ١٠ علب,BAQ-0627,,Household,box,,0.00,0.00,default,0,0,no
+LED Bulb 9W,لمبة LED ٩ واط,BAQ-0628,,Household,pcs,,0.00,0.00,default,0,0,no
+Duct Tape,شريط لاصق عريض,BAQ-0629,,Household,roll,,0.00,0.00,default,0,0,no
+Super Glue,صمغ قوي,BAQ-0630,,Household,pcs,,0.00,0.00,default,0,0,no
+Candles 6 pcs,شموع ٦ حبات,BAQ-0631,,Household,pkt,,0.00,0.00,default,0,0,no
+Incense Bakhoor,بخور,BAQ-0632,,Household,pkt,,0.00,0.00,default,0,0,no
+Charcoal 3kg,فحم ٣ كجم,BAQ-0633,,Household,bag,,0.00,0.00,default,0,0,no
+Broom,مكنسة,BAQ-0634,,Household,pcs,,0.00,0.00,default,0,0,no
+Mop,ممسحة,BAQ-0635,,Household,pcs,,0.00,0.00,default,0,0,no
+Mosquito Coil,مبيد ناموس لولبي,BAQ-0636,,Household,box,,0.00,0.00,default,0,0,no

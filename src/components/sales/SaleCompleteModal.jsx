@@ -4,6 +4,7 @@ import Button from "../common/Button";
 import ProductBilingualName from "../products/ProductBilingualName";
 import ReceiptPreviewFrame from "../receipt/ReceiptPreviewFrame";
 import { formatCurrency } from "../../utils/format";
+import { cartItemDisplayUnitPrice, isTaxEnabled } from "../../utils/vatPricing";
 import "./SaleCompleteModal.css";
 
 export default function SaleCompleteModal({
@@ -41,6 +42,7 @@ export default function SaleCompleteModal({
     paymentMethodLabel ||
     String(paymentMethod || "cash").replace(/_/g, " ");
   const showCashFields = collectsCash || paymentMethod === "cash";
+  const taxEnabled = isTaxEnabled(settings);
 
   return (
     <div
@@ -73,7 +75,10 @@ export default function SaleCompleteModal({
                   <div key={item.product_id} className="sale-complete-item">
                     <div className="sale-complete-item-name">
                       <ProductBilingualName name={item.name} nameAr={item.name_ar} size="sm" />
-                      <span className="sale-complete-item-qty">× {item.quantity}</span>
+                      <span className="sale-complete-item-qty">
+                        {formatCurrency(cartItemDisplayUnitPrice(item), currency)} × {item.quantity}
+                        {item.price_overridden ? " · this sale" : ""}
+                      </span>
                     </div>
                     <strong>{formatCurrency(item.total, currency)}</strong>
                   </div>
@@ -88,10 +93,12 @@ export default function SaleCompleteModal({
                   <span>Discount</span>
                   <span>{formatCurrency(discount, currency)}</span>
                 </div>
-                <div className="sale-complete-row">
-                  <span>VAT ({vatPercent}%)</span>
-                  <span>{formatCurrency(vat, currency)}</span>
-                </div>
+                {taxEnabled ? (
+                  <div className="sale-complete-row">
+                    <span>VAT ({vatPercent}%)</span>
+                    <span>{formatCurrency(vat, currency)}</span>
+                  </div>
+                ) : null}
                 {showCashFields && (
                   <>
                     <div className="sale-complete-row">

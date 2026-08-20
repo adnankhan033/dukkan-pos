@@ -23,6 +23,8 @@ import SettingsTabView from "../components/settings/SettingsTabView";
 import PaymentMethodsPanel from "../components/settings/PaymentMethodsPanel";
 import { VENDOR_SETTING_KEY_LIST, VENDOR_SETTING_KEYS } from "../config/softwareVendor";
 import { DEFAULT_RECEIPT_TEMPLATE } from "../utils/receiptTemplates";
+import { currencyOptions, DEFAULT_CURRENCY } from "../utils/currencies";
+import { PHONE_PLACEHOLDER } from "../utils/constants";
 import {
   RECEIPT_SECTION_DEFAULTS,
   RECEIPT_SECTION_TOGGLES,
@@ -73,7 +75,8 @@ function buildFormFromSettings(settings) {
     vat_registration: settings.vat_registration || "",
     vat_percent: settings.vat_percent || "15",
     vat_included: settingBool(settings.vat_included ?? "1"),
-    currency: settings.currency || "SAR",
+    tax_enabled: settingBool(settings.tax_enabled ?? "1"),
+    currency: settings.currency || DEFAULT_CURRENCY,
     receipt_footer: settings.receipt_footer || "",
     receipt_footer_ar: settings.receipt_footer_ar || "",
     receipt_branding: settings.receipt_branding || "Nexttel POS",
@@ -90,6 +93,7 @@ function buildFormFromSettings(settings) {
     receipt_header_note: settings.receipt_header_note || "",
     receipt_template: settings.receipt_template || DEFAULT_RECEIPT_TEMPLATE,
     receipt_print_on_complete: settingBool(settings.receipt_print_on_complete ?? "1"),
+    invoice_update_existing: settingBool(settings.invoice_update_existing),
     business_timezone: settings.business_timezone || DEFAULT_BUSINESS_TIMEZONE,
     business_date_override: settings.business_date_override || "",
     business_time_override: settings.business_time_override || "",
@@ -123,7 +127,8 @@ function formToSettings(form) {
     vat_registration: form.vat_registration,
     vat_percent: form.vat_percent,
     vat_included: form.vat_included ? "1" : "0",
-    currency: form.currency,
+    tax_enabled: form.tax_enabled ? "1" : "0",
+    currency: form.currency || DEFAULT_CURRENCY,
     receipt_footer: form.receipt_footer,
     receipt_footer_ar: form.receipt_footer_ar,
     receipt_branding: form.receipt_branding,
@@ -137,6 +142,7 @@ function formToSettings(form) {
     receipt_header_note: form.receipt_header_note,
     receipt_template: form.receipt_template || DEFAULT_RECEIPT_TEMPLATE,
     receipt_print_on_complete: form.receipt_print_on_complete ? "1" : "0",
+    invoice_update_existing: form.invoice_update_existing ? "1" : "0",
     business_timezone: form.business_timezone || DEFAULT_BUSINESS_TIMEZONE,
     business_date_override: form.business_date_override || "",
     business_time_override: form.business_time_override || "",
@@ -175,6 +181,7 @@ const STORE_SAVE_KEYS = [
   "vat_registration",
   "vat_percent",
   "vat_included",
+  "tax_enabled",
   "currency",
   "business_timezone",
   "business_date_override",
@@ -201,6 +208,7 @@ const RECEIPT_SAVE_KEYS = [
   "receipt_header_note",
   "receipt_template",
   "receipt_print_on_complete",
+  "invoice_update_existing",
 ];
 
 const DASHBOARD_SAVE_KEYS = [
@@ -251,7 +259,9 @@ function validateSettingsForm(form, tab) {
   const rules = {};
   if (tab === "store") {
     rules.store_name = required(form.store_name, "Store name");
-    rules.vat_percent = validateVatPercent(form.vat_percent);
+    if (form.tax_enabled) {
+      rules.vat_percent = validateVatPercent(form.vat_percent);
+    }
     rules.currency = required(form.currency, "Currency");
     rules.store_phone = validatePhone(form.store_phone);
   }
@@ -275,7 +285,8 @@ export default function Settings() {
   const setSettings = useSettingsStore((s) => s.setSettings);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
-  const { isAdmin } = usePermissions();
+  const { isAdmin, canPerformAction } = usePermissions();
+  const canUpdateInvoices = canPerformAction("invoices_update");
   const { confirm, dialog: confirmDialog } = useConfirm();
   const [tab, setTab] = useState("store");
   const [isEditing, setIsEditing] = useState(false);
@@ -332,6 +343,16 @@ export default function Settings() {
     setForm((prev) => ({ ...prev, ...patch }));
   }
 
+  async function confirmUpdateExistingInvoices() {
+    return confirm({
+      title: "Update created invoices",
+      message: "Are you sure you want to update invoices already created?",
+      confirmLabel: "Update invoices",
+      cancelLabel: "Cancel",
+      variant: "danger",
+    });
+  }
+
   async function handleSelectReceiptTemplate(id) {
     if (!id || saving) return;
 
@@ -341,6 +362,11 @@ export default function Settings() {
     }
 
     if (form.receipt_template === id) return;
+
+    if (form.invoice_update_existing) {
+      const ok = await confirmUpdateExistingInvoices();
+      if (!ok) return;
+    }
 
     const previous = form.receipt_template;
     setForm((prev) => ({ ...prev, receipt_template: id }));
@@ -408,6 +434,9 @@ export default function Settings() {
   async function persistForm(mergedForm) {
     const source = mergedForm ?? form;
     const payload = payloadForTab(mirrorStoreFields(formToSettings(source)), tab);
+    if (!canUpdateInvoices) {
+      delete payload.invoice_update_existing;
+    }
     const updated = await settingsService.updateMany(payload);
 
     setSettings(updated);
@@ -432,6 +461,13 @@ export default function Settings() {
         title: "Check the form",
       });
       return;
+    }
+
+    const applyingToExistingInvoices =
+      tab === "receipt" && Boolean(form.invoice_update_existing);
+    if (applyingToExistingInvoices) {
+      const ok = await confirmUpdateExistingInvoices();
+      if (!ok) return;
     }
 
     setErrors({});
@@ -857,6 +893,7 @@ export default function Settings() {
             tab={tab}
             form={form}
             isAdmin={isAdmin}
+            canUpdateInvoices={canUpdateInvoices}
             onSelectTemplate={handleSelectReceiptTemplate}
             saving={saving}
           />
@@ -899,30 +936,68 @@ export default function Settings() {
                   value={form.store_phone}
                   error={errors.store_phone}
                   onChange={(e) => updateField("store_phone", e.target.value)}
-                  placeholder="e.g. +966-530096993"
+                  placeholder={PHONE_PLACEHOLDER}
                 />
               </div>
               <div className="form-row" style={{ marginTop: "1rem" }}>
-                <Input label="VAT %" type="number" step="0.01" min={0} max={100} value={form.vat_percent} error={errors.vat_percent} onChange={(e) => updateField("vat_percent", e.target.value)} />
-                <Input label="Currency" value={form.currency} error={errors.currency} onChange={(e) => updateField("currency", e.target.value)} />
+                <Select
+                  label="Currency"
+                  value={form.currency}
+                  error={errors.currency}
+                  onChange={(e) => updateField("currency", e.target.value)}
+                >
+                  {currencyOptions(form.currency).map((item) => (
+                    <option key={item.code} value={item.code}>
+                      {item.code} — {item.name}
+                      {item.code === DEFAULT_CURRENCY ? " (Default)" : ""}
+                    </option>
+                  ))}
+                </Select>
               </div>
-              <label className="settings-check" style={{ marginTop: "1rem" }}>
+              <label className="settings-check settings-check-block" style={{ marginTop: "1rem" }}>
                 <input
                   type="checkbox"
-                  checked={form.vat_included}
-                  onChange={(e) => updateField("vat_included", e.target.checked)}
+                  checked={form.tax_enabled}
+                  onChange={(e) => updateField("tax_enabled", e.target.checked)}
                 />
-                Prices include VAT (recommended for Saudi retail)
+                <span>
+                  <strong>Enable tax (VAT)</strong>
+                  <small>When off, VAT is hidden on products and sales.</small>
+                </span>
               </label>
-              <p className="settings-section-desc" style={{ marginTop: "0.35rem" }}>
-                When enabled, product selling prices are shelf prices customers pay. VAT is extracted
-                using price × rate ÷ (100 + rate), e.g. 11.50 SAR at 15% → 10.00 net + 1.50 VAT.
-              </p>
+              {form.tax_enabled ? (
+                <>
+                  <div className="form-row" style={{ marginTop: "1rem" }}>
+                    <Input
+                      label="VAT %"
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      max={100}
+                      value={form.vat_percent}
+                      error={errors.vat_percent}
+                      onChange={(e) => updateField("vat_percent", e.target.value)}
+                    />
+                  </div>
+                  <label className="settings-check" style={{ marginTop: "1rem" }}>
+                    <input
+                      type="checkbox"
+                      checked={form.vat_included}
+                      onChange={(e) => updateField("vat_included", e.target.checked)}
+                    />
+                    Prices include tax (VAT)
+                  </label>
+                  <p className="settings-section-desc" style={{ marginTop: "0.35rem" }}>
+                    When enabled, selling prices are what customers pay. Tax is extracted from the
+                    price, e.g. 11.50 at 15% → 10.00 net + 1.50 tax.
+                  </p>
+                </>
+              ) : null}
             </Card>
             <Card className="settings-card">
               <h3 className="settings-section-title">Business Region & Time</h3>
               <p className="settings-section-desc">
-                Select your store region (default: Saudi Arabia — Riyadh). Receipts, invoices, and order
+                Select your store region. Receipts, invoices, and order
                 filters use this timezone automatically.
               </p>
               <Select
@@ -948,7 +1023,7 @@ export default function Settings() {
                 )}
               </div>
               <p className="settings-section-desc" style={{ marginTop: "1rem" }}>
-                Optional: set a fixed date/time for new sales, expenses, and reports (leave empty to use live Saudi/business time).
+                Optional: set a fixed date/time for new sales, expenses, and reports (leave empty to use the live clock).
               </p>
               <div className="form-row">
                 <Input
@@ -966,7 +1041,7 @@ export default function Settings() {
               </div>
             </Card>
             <Card className="settings-card">
-              <h3 className="settings-section-title">Saudi Arabia — Tax & Compliance</h3>
+              <h3 className="settings-section-title">Tax & Registration</h3>
               <Input label="CR Number" value={form.cr_number} onChange={(e) => updateField("cr_number", e.target.value)} />
               <div style={{ marginTop: "1rem" }}>
                 <Input label="VAT Registration Number" value={form.vat_registration} onChange={(e) => updateField("vat_registration", e.target.value)} />
@@ -995,7 +1070,7 @@ export default function Settings() {
             <Card className="settings-card settings-receipt-form">
               <h3 className="settings-section-title">Receipt Template</h3>
               <p className="settings-section-desc">
-                Choose a Saudi-style invoice layout. The live preview updates as you tap a template.
+                Choose an invoice layout. The live preview updates as you tap a template.
                 Click Save Settings to keep it.
               </p>
 
@@ -1003,6 +1078,8 @@ export default function Settings() {
                 value={form.receipt_template}
                 onSelect={handleSelectReceiptTemplate}
                 disabled={saving}
+                storeName={form.store_name}
+                storeNameAr={form.store_name_ar}
               />
 
               <div style={{ marginTop: "1.25rem" }}>
@@ -1019,6 +1096,23 @@ export default function Settings() {
                   change it for a single sale. The order is always saved either way.
                 </p>
               </div>
+
+              {canUpdateInvoices && (
+                <label className="settings-check settings-check--stacked" style={{ marginTop: "1.25rem" }}>
+                  <span className="settings-check-row">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(form.invoice_update_existing)}
+                      onChange={(e) => updateField("invoice_update_existing", e.target.checked)}
+                    />
+                    Update invoices already created
+                  </span>
+                  <small className="settings-check-hint">
+                    When on, reprints of older invoices use the current receipt layout instead of the
+                    layout saved with each sale.
+                  </small>
+                </label>
+              )}
 
               <div className="settings-check-list" style={{ marginTop: "1.25rem" }}>
                 <h4 className="settings-subsection-title">Invoice sections</h4>

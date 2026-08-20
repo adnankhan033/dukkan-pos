@@ -93,6 +93,7 @@ export const SCHEMA_STATEMENTS = [
     due_date TEXT,
     status TEXT DEFAULT 'completed',
     notes TEXT,
+    invoice_settings TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (customer_id) REFERENCES customers(id)
