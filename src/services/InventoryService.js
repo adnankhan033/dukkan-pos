@@ -2,6 +2,7 @@ import { query, queryOne, execute } from "../database/connection";
 import { INVENTORY_PAGE_SIZE } from "../utils/constants";
 import { invalidateInventoryCache } from "./InventoryCache";
 import { invalidateDashboardCache } from "./DashboardCache";
+import { accountingService, safeAccountingPost } from "./AccountingService";
 
 const LIST_COLUMNS = `
   p.id, p.name, p.name_ar, p.sku, p.barcode, p.quantity, p.min_stock,
@@ -101,6 +102,17 @@ class InventoryService {
 
     invalidateInventoryCache();
     invalidateDashboardCache();
+
+    if (change !== 0) {
+      await safeAccountingPost(() =>
+        accountingService.postInventoryAdjustment({
+          productId,
+          quantityChange: change,
+          costPrice: product.cost_price,
+          adjustmentId: productId,
+        })
+      );
+    }
 
     return queryOne("SELECT * FROM products WHERE id = $1", [productId]);
   }

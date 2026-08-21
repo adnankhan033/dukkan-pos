@@ -8,6 +8,7 @@ export { inventoryService } from "./InventoryService";
 export { saleService } from "./SaleService";
 export { purchaseService } from "./PurchaseService";
 export { expenseService } from "./ExpenseService";
+export { accountingService } from "./AccountingService";
 export { employeeService } from "./EmployeeService";
 export { dashboardService } from "./DashboardService";
 export { reportService } from "./ReportService";

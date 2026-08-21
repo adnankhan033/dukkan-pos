@@ -2,6 +2,8 @@ import { query, queryOne, execute, insert } from "../database/connection";
 import { invalidateDashboardCache } from "./DashboardCache";
 import { useAuthStore } from "../contexts/store";
 import { priceTypeToVatIncluded, parseVatModeInput, vatModeToDbFields } from "../utils/vatPricing";
+import { accountingService, safeAccountingPost } from "./AccountingService";
+import { roundMoney } from "../utils/accounting";
 
 const LIST_COLUMNS = `
   p.id, p.name, p.name_ar, p.sku, p.barcode, p.category_id, p.unit_id, p.supplier_id,
@@ -23,6 +25,28 @@ const BASE_JOINS = `
 const SUPPLIER_JOIN = `LEFT JOIN suppliers s ON p.supplier_id = s.id`;
 
 const PRODUCT_JOINS = `${BASE_JOINS} ${SUPPLIER_JOIN}`;
+
+function buildProductFilters({ search = "", categoryId = null, published = null } = {}) {
+  let where = "WHERE 1=1";
+  const params = [];
+
+  if (search) {
+    params.push(`%${search}%`);
+    where += ` AND (p.name LIKE $${params.length} OR p.name_ar LIKE $${params.length} OR p.sku LIKE $${params.length} OR p.barcode LIKE $${params.length})`;
+  }
+
+  if (categoryId) {
+    params.push(categoryId);
+    where += ` AND p.category_id = $${params.length}`;
+  }
+
+  if (published !== null && published !== undefined) {
+    params.push(published ? 1 : 0);
+    where += ` AND COALESCE(p.published, 1) = $${params.length}`;
+  }
+
+  return { where, params };
+}
 
 function normalizeProductVatFields(data = {}) {
   if (data.vat_mode != null && data.vat_mode !== "") {
@@ -55,24 +79,7 @@ class ProductService {
     page = 1,
     limit = 10,
   } = {}) {
-    let where = "WHERE 1=1";
-    const params = [];
-
-    if (search) {
-      params.push(`%${search}%`);
-      where += ` AND (p.name LIKE $${params.length} OR p.name_ar LIKE $${params.length} OR p.sku LIKE $${params.length} OR p.barcode LIKE $${params.length})`;
-    }
-
-    if (categoryId) {
-      params.push(categoryId);
-      where += ` AND p.category_id = $${params.length}`;
-    }
-
-    if (published !== null && published !== undefined) {
-      params.push(published ? 1 : 0);
-      where += ` AND COALESCE(p.published, 1) = $${params.length}`;
-    }
-
+    const { where, params } = buildProductFilters({ search, categoryId, published });
     const countParams = [...params];
     const [countRow, items] = await Promise.all([
       queryOne(`SELECT COUNT(*) AS total FROM products p ${where}`, countParams),
@@ -88,6 +95,26 @@ class ProductService {
     ]);
 
     return { items, total: countRow?.total ?? 0, page, limit };
+  }
+
+  async getValueSummary({ search = "", categoryId = null, published = null } = {}) {
+    const { where, params } = buildProductFilters({ search, categoryId, published });
+    const row = await queryOne(
+      `SELECT
+         COUNT(*) AS product_count,
+         COALESCE(SUM(p.quantity), 0) AS quantity,
+         COALESCE(SUM(p.quantity * p.cost_price), 0) AS purchase_total,
+         COALESCE(SUM(p.quantity * p.selling_price), 0) AS selling_total
+       FROM products p
+       ${where}`,
+      params
+    );
+    return {
+      productCount: Number(row?.product_count ?? 0),
+      quantity: Number(row?.quantity ?? 0),
+      purchaseTotal: Number(row?.purchase_total ?? 0),
+      sellingTotal: Number(row?.selling_total ?? 0),
+    };
   }
 
   async getPosCatalog(limit = 500) {
@@ -223,6 +250,12 @@ class ProductService {
         [id, Number(data.quantity), Number(data.quantity), "Initial stock", "adjustment"]
       );
     }
+    const stockValue = roundMoney((Number(data.quantity) || 0) * (Number(data.cost_price) || 0));
+    if (stockValue) {
+      await safeAccountingPost(() =>
+        accountingService.postInventoryValueDelta(stockValue, `Initial stock: ${data.name}`, id)
+      );
+    }
     invalidateDashboardCache();
     return { id, ...data, published, has_image: data.image ? 1 : 0 };
   }
@@ -232,6 +265,7 @@ class ProductService {
     const numId = Number(id);
     const unitId = await this.resolveUnitId(data.unit_id);
     const supplierId = await this.resolveSupplierId(data.supplier_id);
+    const existing = await queryOne("SELECT quantity, cost_price, name FROM products WHERE id = $1", [numId]);
 
     const { taxCategory, vatRate, vatIncluded } = normalizeProductVatFields(data);
 
@@ -291,6 +325,27 @@ class ProductService {
         ]
       );
     }
+    const newQty = Number(data.quantity) || 0;
+    const oldQty = Number(existing?.quantity) || 0;
+    if (newQty !== oldQty) {
+      await execute(
+        `INSERT INTO inventory (product_id, quantity_change, quantity_after, reason, reference_type)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [numId, newQty - oldQty, newQty, "Product edit", "adjustment"]
+      );
+    }
+    const oldValue = roundMoney(oldQty * (Number(existing?.cost_price) || 0));
+    const newValue = roundMoney(newQty * (Number(data.cost_price) || 0));
+    const valueDelta = roundMoney(newValue - oldValue);
+    if (valueDelta) {
+      await safeAccountingPost(() =>
+        accountingService.postInventoryValueDelta(
+          valueDelta,
+          `Product update: ${data.name || existing?.name || numId}`,
+          numId
+        )
+      );
+    }
     invalidateDashboardCache();
     return { id: numId, ...data, published, has_image: data.image ? 1 : 0 };
   }
@@ -298,9 +353,16 @@ class ProductService {
   /** Remove product and all dependent rows (inventory, line items). */
   async delete(id) {
     const numId = Number(id);
-    const product = await queryOne("SELECT id, name FROM products WHERE id = $1", [numId]);
+    const product = await queryOne("SELECT id, name, quantity, cost_price FROM products WHERE id = $1", [numId]);
     if (!product) {
       throw new Error("Product not found");
+    }
+
+    const stockValue = roundMoney((Number(product.quantity) || 0) * (Number(product.cost_price) || 0));
+    if (stockValue) {
+      await safeAccountingPost(() =>
+        accountingService.postInventoryValueDelta(-stockValue, `Product deleted: ${product.name}`, numId)
+      );
     }
 
     await execute("DELETE FROM inventory WHERE product_id = $1", [numId]);

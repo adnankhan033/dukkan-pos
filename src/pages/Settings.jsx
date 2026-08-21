@@ -21,6 +21,7 @@ import VendorBrandingPanel from "../components/settings/VendorBrandingPanel";
 import SettingsTabToolbar from "../components/settings/SettingsTabToolbar";
 import SettingsTabView from "../components/settings/SettingsTabView";
 import PaymentMethodsPanel from "../components/settings/PaymentMethodsPanel";
+import AccountingSettingsPanel from "../components/settings/AccountingSettingsPanel";
 import { VENDOR_SETTING_KEY_LIST, VENDOR_SETTING_KEYS } from "../config/softwareVendor";
 import { DEFAULT_RECEIPT_TEMPLATE } from "../utils/receiptTemplates";
 import { currencyOptions, DEFAULT_CURRENCY } from "../utils/currencies";
@@ -54,6 +55,7 @@ const TABS = [
   { id: "store", label: "Store" },
   { id: "permissions", label: "Permissions", adminOnly: true },
   { id: "payments", label: "Payments", adminOnly: true },
+  { id: "accounting", label: "Accounting", adminOnly: true },
   { id: "receipt", label: "Receipt" },
   { id: "zatca", label: "ZATCA" },
   { id: "dashboard", label: "Dashboard" },
@@ -763,7 +765,7 @@ export default function Settings() {
     <div>
       <PageHeader
         title="Settings"
-        subtitle="Store configuration, receipts, dashboards, and backups."
+        subtitle="Store configuration, receipts, accounting, dashboards, and backups."
       />
 
       <div className="settings-tabs">
@@ -881,6 +883,8 @@ export default function Settings() {
         </>
       ) : tab === "payments" && isAdmin ? (
         <PaymentMethodsPanel />
+      ) : tab === "accounting" && isAdmin ? (
+        <AccountingSettingsPanel />
       ) : !isEditing ? (
         <>
           <SettingsTabToolbar isEditing={false} onEdit={startEditing} />

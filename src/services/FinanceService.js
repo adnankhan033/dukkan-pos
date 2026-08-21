@@ -68,6 +68,55 @@ export async function getNetCogsInRange(from, to) {
   return Math.max(0, gross - returned);
 }
 
+export async function getExpensesTotalInRange(from, to) {
+  const row = await queryOne(
+    `SELECT COALESCE(SUM(amount), 0) AS total FROM expenses
+     WHERE date(expense_date) >= date($1) AND date(expense_date) <= date($2)`,
+    [from, to]
+  );
+  return Number(row?.total ?? 0);
+}
+
+export async function getExpenseBreakdownInRange(from, to) {
+  return query(
+    `SELECT category AS id, COALESCE(SUM(amount), 0) AS balance
+     FROM expenses
+     WHERE date(expense_date) >= date($1) AND date(expense_date) <= date($2)
+     GROUP BY category
+     HAVING COALESCE(SUM(amount), 0) > 0
+     ORDER BY balance DESC`,
+    [from, to]
+  );
+}
+
+/** Operational profit from POS sales, returns, COGS, and expenses — shared by dashboard, reports, and accounting. */
+export async function getProfitInRange(from, to) {
+  const [grossSales, returnsTotal, cogs, expenses] = await Promise.all([
+    getGrossSalesInRange(from, to),
+    getReturnsTotalInRange(from, to),
+    getNetCogsInRange(from, to),
+    getExpensesTotalInRange(from, to),
+  ]);
+  const sales = Number(grossSales) || 0;
+  const salesReturns = Number(returnsTotal) || 0;
+  const netRevenue = Math.max(0, sales - salesReturns);
+  const cogsValue = Number(cogs) || 0;
+  const expensesValue = Number(expenses) || 0;
+  const grossProfit = netRevenue - cogsValue;
+  const netProfit = grossProfit - expensesValue;
+  return {
+    sales,
+    salesReturns,
+    otherIncome: 0,
+    discounts: 0,
+    netRevenue,
+    cogs: cogsValue,
+    expenses: expensesValue,
+    grossProfit,
+    netProfit,
+  };
+}
+
 export async function getReturnsInRange(from, to) {
   const { clause, params } = saleDateRangeClause(from, to, "sr.created_at");
   return query(

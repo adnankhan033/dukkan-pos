@@ -207,8 +207,8 @@ export default function Accounting() {
   return (
     <div>
       <PageHeader
-        title="Accounting"
-        subtitle="Track rent, salaries, utilities, supplies, and all baqala expenses."
+        title="Expenses"
+        subtitle="Track rent, salaries, utilities, supplies, and all baqala expenses. Posted to the ledger when accounting is active."
         actions={
           <Button onClick={openCreate}>
             <Plus size={16} /> Add Expense

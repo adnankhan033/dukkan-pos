@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { formatCurrency } from "../../utils/format";
+import { formatSignedCurrency } from "../../utils/format";
 
 export default function DashboardMetricTiles({ tiles = [] }) {
   const navigate = useNavigate();
@@ -26,7 +26,7 @@ export default function DashboardMetricTiles({ tiles = [] }) {
             <span className="dashboard-metric-tile-label">{tile.label}</span>
             <strong className="dashboard-metric-tile-value">
               {typeof tile.value === "number" && tile.currency
-                ? formatCurrency(tile.value, tile.currency)
+                ? formatSignedCurrency(tile.value, tile.currency, tile.sign)
                 : tile.value}
             </strong>
             {tile.hint ? <small className="dashboard-metric-tile-hint">{tile.hint}</small> : null}

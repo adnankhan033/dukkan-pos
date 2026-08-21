@@ -26,7 +26,7 @@ import {
 } from "../utils/customerFilters";
 import "./Customers.css";
 
-const emptyForm = { name: "", phone: "", email: "", address: "", notes: "" };
+const emptyForm = { name: "", phone: "", email: "", address: "", notes: "", credit_limit: "" };
 const FORM_ID = "customer-form";
 
 export default function Customers() {
@@ -144,6 +144,7 @@ export default function Customers() {
       email: customer.email || "",
       address: customer.address || "",
       notes: customer.notes || "",
+      credit_limit: customer.credit_limit || "",
     });
     setErrors({});
     setModalOpen(true);
@@ -378,6 +379,16 @@ export default function Customers() {
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
             />
+            <div style={{ marginTop: "1rem" }}>
+              <Input
+                label="Credit limit (SAR, 0 = no limit)"
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.credit_limit}
+                onChange={(e) => setForm({ ...form, credit_limit: e.target.value })}
+              />
+            </div>
             <div style={{ marginTop: "1rem" }}>
               <Textarea
                 label="Notes"

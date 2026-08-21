@@ -39,6 +39,15 @@ const BACKUP_TABLES = [
   "import_logs",
   "daily_closes",
   "payment_methods",
+  "account_groups",
+  "accounts",
+  "fiscal_periods",
+  "partners",
+  "partner_transactions",
+  "journal_entries",
+  "journal_lines",
+  "accounting_audit_log",
+  "accounting_sequences",
 ];
 
 class BackupService {

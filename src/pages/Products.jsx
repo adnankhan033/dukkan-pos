@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2, Package, FileSpreadsheet } from "lucide-react";
 import { productService } from "../services/ProductService";
 import { onCatalogChanged } from "../services/CatalogSync";
@@ -31,7 +31,9 @@ import ProductVatFields, { productVatToFormFields } from "../components/products
 import ProductBarcodeScanner from "../components/products/ProductBarcodeScanner";
 import { findBestCategoryMatch, findBestUnitMatch, findBestSupplierMatch, deriveUnitFields } from "../utils/productForm/resolveReferenceOption";
 import ProductImportExportModal from "../components/products/ProductImportExportModal";
+import ProductValueTotals from "../components/products/ProductValueTotals";
 import FormValidationAlert from "../components/common/FormValidationAlert";
+import { computeProductValueTotals, emptyProductValueSummary } from "../utils/productValue";
 import "./Products.css";
 
 function sortByName(items, key = "name") {
@@ -85,7 +87,12 @@ export default function Products() {
   const [imageLoading, setImageLoading] = useState(false);
   const [translating, setTranslating] = useState(false);
   const [importExportOpen, setImportExportOpen] = useState(false);
+  const [valueSummary, setValueSummary] = useState(emptyProductValueSummary);
   const debouncedSearch = useDebounce(search);
+  const formValueTotals = useMemo(
+    () => computeProductValueTotals(form),
+    [form]
+  );
 
   const isPublishedSection = section === "published";
 
@@ -122,6 +129,15 @@ export default function Products() {
     }
   }, [debouncedSearch, categoryFilter, page, isPublishedSection]);
 
+  const loadValueSummary = useCallback(async () => {
+    try {
+      const summary = await productService.getValueSummary();
+      setValueSummary(summary);
+    } catch {
+      setValueSummary(emptyProductValueSummary());
+    }
+  }, []);
+
   useEffect(() => {
     Promise.all([
       loadCategories(),
@@ -138,11 +154,16 @@ export default function Products() {
   }, [loadProducts]);
 
   useEffect(() => {
+    loadValueSummary();
+  }, [loadValueSummary]);
+
+  useEffect(() => {
     return onCatalogChanged(() => {
       loadCategories();
       loadProducts(true);
+      loadValueSummary();
     });
-  }, [loadCategories, loadProducts]);
+  }, [loadCategories, loadProducts, loadValueSummary]);
 
   function openCreate() {
     setEditing(null);
@@ -201,6 +222,7 @@ export default function Products() {
         return next;
       });
       await loadProducts(true);
+      await loadValueSummary();
     } catch (err) {
       notify.error(err.message || "Delete failed", { title: "Delete failed" });
     }
@@ -225,6 +247,7 @@ export default function Products() {
       await productService.setPublishedMany([...selectedIds], published);
       setSection(published ? "published" : "unpublished");
       await loadProducts(true);
+      await loadValueSummary();
       notify.success(`${selectedIds.size} product(s) ${published ? "published" : "unpublished"}.`, {
         title: published ? "Published" : "Unpublished",
       });
@@ -260,6 +283,7 @@ export default function Products() {
         notify.success(`${deleted.length} product(s) deleted.`, { title: "Products deleted" });
       }
       await loadProducts(true);
+      await loadValueSummary();
     } catch (err) {
       notify.error(err.message || "Bulk delete failed", { title: "Delete failed" });
     } finally {
@@ -420,6 +444,7 @@ export default function Products() {
         if (payload.published === 1) setSection("published");
         else setSection("unpublished");
         await loadProducts(true);
+        await loadValueSummary();
       });
     } catch (err) {
       setErrors({ form: err.message });
@@ -589,6 +614,14 @@ export default function Products() {
         />
       </div>
 
+      <ProductValueTotals
+        quantity={valueSummary.quantity}
+        purchaseTotal={valueSummary.purchaseTotal}
+        sellingTotal={valueSummary.sellingTotal}
+        currency={currency}
+        productCount={valueSummary.productCount}
+      />
+
       {products.length > 0 && (
         <div className="bulk-bar">
           <input
@@ -754,6 +787,14 @@ export default function Products() {
             <Input label="Quantity " type="number" min={0} value={form.quantity} onChange={(e) => { setForm({ ...form, quantity: e.target.value }); setErrors((p) => ({ ...p, quantity: undefined, form: undefined })); }} error={errors.quantity} />
             <Input label="Min Stock" type="number" min={0} value={form.min_stock} onChange={(e) => { setForm({ ...form, min_stock: e.target.value }); setErrors((p) => ({ ...p, min_stock: undefined, form: undefined })); }} error={errors.min_stock} />
           </div>
+          <ProductValueTotals
+            compact
+            quantity={formValueTotals.quantity}
+            purchaseTotal={formValueTotals.purchaseTotal}
+            sellingTotal={formValueTotals.sellingTotal}
+            currency={currency}
+            unitSymbol={units.find((u) => String(u.id) === String(form.unit_id))?.symbol}
+          />
 
           <ProductVatFields
             form={form}
@@ -790,6 +831,7 @@ export default function Products() {
         onComplete={() => {
           loadCategories();
           loadProducts(true);
+          loadValueSummary();
         }}
       />
 

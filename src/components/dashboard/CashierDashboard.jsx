@@ -3,7 +3,7 @@ import { ShoppingCart, ClipboardList, DollarSign, ArrowRight, Sparkles, Zap } fr
 import { useSettingsStore } from "../../contexts/store";
 import Button from "../common/Button";
 import { StatCard, Card } from "../common/Card";
-import { formatCurrency } from "../../utils/format";
+import { formatSignedCurrency } from "../../utils/format";
 import DashboardHero from "./DashboardHero";
 import DashboardQuickNav from "./DashboardQuickNav";
 import DashboardSalesChart from "./DashboardSalesChart";
@@ -30,7 +30,7 @@ export default function CashierDashboard({ stats }) {
             value: heldCount,
             tone: heldCount > 0 ? "warn" : "success",
           },
-          { label: "Today", value: formatCurrency(stats.todaySales, currency), tone: "primary" },
+          { label: "Today", value: formatSignedCurrency(stats.todaySales, currency, "in"), tone: "primary" },
         ]}
       />
 
@@ -51,7 +51,7 @@ export default function CashierDashboard({ stats }) {
       <section className="dashboard-kpi-row dashboard-kpi-row-cashier">
         <StatCard
           label="Today's Sales"
-          value={formatCurrency(stats.todaySales, currency)}
+          value={formatSignedCurrency(stats.todaySales, currency, "in")}
           numericValue={stats.todaySales}
           currency={currency}
           icon={DollarSign}

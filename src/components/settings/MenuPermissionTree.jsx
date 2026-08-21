@@ -29,17 +29,34 @@ export default function MenuPermissionTree({
   scope = "global",
   role = null,
   lockModuleIds = [],
+  lockForcedOn = false,
 }) {
   function isModuleLocked(moduleId) {
     return lockModuleIds.includes(moduleId);
   }
 
+  function isForcedOn(moduleId) {
+    return lockForcedOn && isModuleLocked(moduleId);
+  }
+
+  function isForcedOff(moduleId) {
+    return !lockForcedOn && isModuleLocked(moduleId);
+  }
+
+  function isItemOn(moduleId, key) {
+    if (isForcedOn(moduleId)) return true;
+    if (isForcedOff(moduleId)) return false;
+    return !!form[key];
+  }
+
   function toggleParent(group, checked) {
+    if (isModuleLocked(group.module)) return;
     const parentKey = getParentKey(scope, role, group.module);
     const patch = { [parentKey]: checked };
 
     if (shouldShowChildren(group)) {
       for (const item of group.items) {
+        if (isModuleLocked(item.module || group.module)) continue;
         patch[getChildKey(scope, role, item.id)] = checked;
       }
     }
@@ -55,13 +72,17 @@ export default function MenuPermissionTree({
   }
 
   function toggleChild(group, itemId, checked) {
+    const item = group.items.find((entry) => entry.id === itemId);
+    const itemModule = item?.module || group.module;
+    if (isModuleLocked(itemModule)) return;
+
     const childKey = getChildKey(scope, role, itemId);
     updateField(childKey, checked);
 
     if (!checked) return;
 
     const parentKey = getParentKey(scope, role, group.module);
-    if (!form[parentKey]) {
+    if (!form[parentKey] && !isModuleLocked(group.module)) {
       updateField(parentKey, true);
     }
   }
@@ -70,11 +91,13 @@ export default function MenuPermissionTree({
     <div className="settings-menu-tree">
       {groups.map((group) => {
         const parentKey = getParentKey(scope, role, group.module);
-        const parentEnabled = !!form[parentKey];
+        const parentEnabled = isItemOn(group.module, parentKey);
         const locked = isModuleLocked(group.module);
         const showChildren = shouldShowChildren(group);
         const enabledChildren = showChildren
-          ? group.items.filter((item) => !!form[getChildKey(scope, role, item.id)]).length
+          ? group.items.filter((item) =>
+              isItemOn(item.module || group.module, getChildKey(scope, role, item.id))
+            ).length
           : 0;
 
         return (
@@ -100,18 +123,19 @@ export default function MenuPermissionTree({
             </div>
 
             {showChildren ? (
-              <div className={`settings-menu-children${parentEnabled && !locked ? "" : " is-disabled"}`}>
+              <div className={`settings-menu-children${parentEnabled ? "" : " is-disabled"}`}>
                 {group.items.map((item) => {
                   const childKey = getChildKey(scope, role, item.id);
+                  const itemLocked = isModuleLocked(item.module || group.module);
                   return (
                     <label
                       key={item.id}
-                      className={`settings-check settings-check-block settings-menu-child${locked ? " is-locked" : ""}`}
+                      className={`settings-check settings-check-block settings-menu-child${itemLocked ? " is-locked" : ""}`}
                     >
                       <input
                         type="checkbox"
-                        checked={!!form[childKey]}
-                        disabled={locked || !parentEnabled}
+                        checked={isItemOn(item.module || group.module, childKey)}
+                        disabled={itemLocked || !parentEnabled}
                         onChange={(e) => toggleChild(group, item.id, e.target.checked)}
                       />
                       <span>

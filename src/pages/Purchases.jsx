@@ -15,10 +15,12 @@ import Button from "../components/common/Button";
 import Table from "../components/common/Table";
 import Badge from "../components/common/Badge";
 import { Input, Select, Textarea } from "../components/common/Input";
+import SearchableSelect from "../components/common/SearchableSelect";
 import { Card } from "../components/common/Card";
 import { Alert, LoadingSpinner } from "../components/common/Loading";
 import PurchaseSaveModal from "../components/purchases/PurchaseSaveModal";
 import { formatCurrency, formatDateTime } from "../utils/format";
+import { findBestSupplierMatch } from "../utils/productImport/supplierMatch";
 
 const PURCHASE_TYPE_OPTIONS = [
   { value: PURCHASE_TYPE.MARKET, label: "Market / Cash (no supplier account)" },
@@ -38,7 +40,7 @@ export default function Purchases() {
   const [dueDate, setDueDate] = useState("");
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState([]);
-  const [productSearch, setProductSearch] = useState("");
+  const [productPick, setProductPick] = useState("");
   const [error, setError] = useState("");
   const [saveStep, setSaveStep] = useState(null);
   const [savedPurchase, setSavedPurchase] = useState(null);
@@ -60,7 +62,7 @@ export default function Purchases() {
   useEffect(() => {
     async function init() {
       const [supplierList, products] = await Promise.all([
-        supplierService.getAll({ limit: 100, page: 1 }),
+        supplierService.getAll({ limit: 500, page: 1 }),
         productService.getPosCatalog(),
         loadPurchases(),
       ]);
@@ -76,18 +78,27 @@ export default function Purchases() {
     });
   }, []);
 
-  const searchResults = useMemo(() => {
-    const term = productSearch.trim().toLowerCase();
-    if (!term) return [];
-    return catalog
-      .filter(
-        (p) =>
-          p.name?.toLowerCase().includes(term) ||
-          p.sku?.toLowerCase().includes(term) ||
-          p.barcode?.toLowerCase().includes(term)
-      )
-      .slice(0, 15);
-  }, [catalog, productSearch]);
+  const supplierOptions = useMemo(
+    () =>
+      suppliers.map((s) => ({
+        value: String(s.id),
+        label: s.company,
+        hint: s.phone || undefined,
+        meta: [s.contact_person, s.phone, s.email].filter(Boolean).join(" "),
+      })),
+    [suppliers]
+  );
+
+  const productOptions = useMemo(
+    () =>
+      catalog.map((p) => ({
+        value: String(p.id),
+        label: p.name,
+        hint: formatCurrency(p.cost_price || p.selling_price || 0, currency),
+        meta: [p.sku, p.barcode].filter(Boolean).join(" "),
+      })),
+    [catalog, currency]
+  );
 
   const supplierName = suppliers.find((s) => String(s.id) === String(supplierId))?.company || "";
   const total = items.reduce((s, i) => s + i.total, 0);
@@ -114,7 +125,25 @@ export default function Purchases() {
         },
       ];
     });
-    setProductSearch("");
+    setProductPick("");
+  }
+
+  function handleProductPick(id) {
+    const product = catalog.find((p) => String(p.id) === String(id));
+    if (product) addItem(product);
+  }
+
+  async function createSupplierOption(name) {
+    const trimmed = String(name ?? "").trim();
+    if (!trimmed) throw new Error("Supplier name is required");
+    const match = findBestSupplierMatch(
+      trimmed,
+      suppliers.map((s) => ({ id: s.id, company: s.company }))
+    );
+    if (match) return String(match.id);
+    const created = await supplierService.create({ company: trimmed });
+    setSuppliers((prev) => [...prev, created].sort((a, b) => String(a.company).localeCompare(String(b.company))));
+    return String(created.id);
   }
 
   function updateItem(productId, field, value) {
@@ -228,14 +257,18 @@ export default function Purchases() {
 
           {isSupplierPurchase && (
             <div style={{ marginTop: "1rem" }}>
-              <Select label="Supplier *" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-                <option value="">Select supplier</option>
-                {suppliers.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.company}
-                  </option>
-                ))}
-              </Select>
+              <SearchableSelect
+                label="Supplier *"
+                value={supplierId}
+                onChange={setSupplierId}
+                options={supplierOptions}
+                placeholder="Search or create supplier…"
+                noneLabel="Select supplier"
+                menuPortal
+                creatable
+                onCreateOption={createSupplierOption}
+                createLabel={(term) => `Add "${term}"…`}
+              />
             </div>
           )}
 
@@ -251,36 +284,15 @@ export default function Purchases() {
           )}
 
           <div style={{ marginTop: "1rem" }}>
-            <Input
+            <SearchableSelect
               label="Search Product"
-              value={productSearch}
-              onChange={(e) => setProductSearch(e.target.value)}
-              placeholder="Search products..."
+              value={productPick}
+              onChange={handleProductPick}
+              options={productOptions}
+              placeholder="Search product by name, SKU, or barcode…"
+              noneLabel="Pick a product to add"
+              menuPortal
             />
-            {searchResults.length > 0 && (
-              <div
-                style={{
-                  marginTop: "0.5rem",
-                  border: "1px solid var(--color-border)",
-                  borderRadius: "var(--radius-md)",
-                }}
-              >
-                {searchResults.map((p) => (
-                  <div
-                    key={p.id}
-                    onClick={() => addItem(p)}
-                    style={{
-                      padding: "0.5rem 0.75rem",
-                      cursor: "pointer",
-                      fontSize: "0.875rem",
-                      borderBottom: "1px solid var(--color-border)",
-                    }}
-                  >
-                    {p.name} — {formatCurrency(p.cost_price, currency)}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
 
           {items.length > 0 && (

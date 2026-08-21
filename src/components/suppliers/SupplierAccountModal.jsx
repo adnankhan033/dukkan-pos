@@ -11,7 +11,7 @@ import { useSubmitGuard } from "../../hooks/useSubmitGuard";
 import { supplierService } from "../../services/SupplierService";
 import { purchaseService } from "../../services/PurchaseService";
 import { PURCHASE_PAYMENT_STATUS_LABELS, PURCHASE_TYPE } from "../../utils/constants";
-import { formatCurrency, formatDateTime } from "../../utils/format";
+import { formatCurrency, formatDateTime, formatSignedCurrency } from "../../utils/format";
 
 const PURCHASE_TYPE_LABELS = {
   [PURCHASE_TYPE.MARKET]: "Market",
@@ -86,7 +86,7 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
       recordType: "payment",
       sortDate: p.payment_date || p.created_at,
       id: `p-${p.id}`,
-      reference: p.purchase_number || "General payment",
+      reference: p.purchase_number || "Extra paid",
       date: p.payment_date || p.created_at,
       amount: p.amount,
       notes: p.notes,
@@ -172,7 +172,7 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
     {
       key: "purchase_number",
       label: "For delivery",
-      render: (r) => r.purchase_number || "Auto (oldest due)",
+      render: (r) => r.purchase_number || "Extra paid (next delivery)",
     },
     { key: "notes", label: "Notes", render: (r) => r.notes || "-" },
   ];
@@ -187,6 +187,8 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
   if (!supplier) return null;
 
   const balancePending = ledger?.summary?.balance_pending ?? 0;
+  const amountDue = Math.max(0, balancePending);
+  const advanceBalance = Math.max(0, -balancePending);
 
   function renderDeliveryItemsBlock(deliveryId) {
     if (expandedDeliveryId !== deliveryId) return null;
@@ -257,6 +259,20 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
         <>
           {error && <Alert>{error}</Alert>}
 
+          {amountDue > 0.01 ? (
+            <Alert type="warning" title="− Still to pay">
+              You still need to pay this supplier {formatSignedCurrency(amountDue, currency, "out")}.
+            </Alert>
+          ) : advanceBalance > 0.01 ? (
+            <Alert type="success" title="+ Extra paid">
+              You already paid {formatSignedCurrency(advanceBalance, currency, "in")} extra. It will be used on the next delivery.
+            </Alert>
+          ) : (
+            <Alert type="info" title="Settled">
+              This account is settled. You can still pay extra — it will be used on the next delivery.
+            </Alert>
+          )}
+
           <div
             style={{
               display: "grid",
@@ -278,19 +294,27 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
               variant="success"
             />
             <StatCard
-              label="Balance pending"
-              value={formatCurrency(balancePending, currency)}
+              label="Still to pay"
+              value={formatSignedCurrency(amountDue, currency, "out")}
               icon={Wallet}
-              variant={balancePending > 0 ? "danger" : "success"}
+              variant={amountDue > 0 ? "danger" : "success"}
+            />
+            <StatCard
+              label="Extra paid"
+              value={formatSignedCurrency(advanceBalance, currency, "in")}
+              icon={Wallet}
+              variant={advanceBalance > 0 ? "success" : "info"}
             />
             <StatCard label="Linked products" value={String(products.length)} icon={Package} variant="primary" />
           </div>
 
-          {balancePending > 0 && (
-            <Card style={{ marginBottom: "1.25rem" }}>
-              <h4 className="card-title" style={{ marginBottom: "0.75rem" }}>
+          <Card style={{ marginBottom: "1.25rem" }}>
+              <h4 className="card-title" style={{ marginBottom: "0.35rem" }}>
                 Record payment (cash given to supplier)
               </h4>
+              <p style={{ margin: "0 0 0.75rem", fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
+                You can pay more than what you owe. Extra cash is kept as + Extra paid and used automatically on the next delivery.
+              </p>
               <form onSubmit={handlePayment}>
                 <div className="form-row">
                   <Input
@@ -313,7 +337,7 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
                     value={payForm.purchaseId}
                     onChange={(e) => setPayForm({ ...payForm, purchaseId: e.target.value })}
                   >
-                    <option value="">Oldest pending first</option>
+                    <option value="">Oldest pending first, then extra paid</option>
                     {pendingDeliveries.map((d) => (
                       <option key={d.id} value={d.id}>
                         {d.purchase_number} — due {formatCurrency(d.balance_due, currency)}
@@ -326,7 +350,7 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
                     label="Notes"
                     value={payForm.notes}
                     onChange={(e) => setPayForm({ ...payForm, notes: e.target.value })}
-                    placeholder="e.g. Paid when supplier visited"
+                    placeholder="e.g. Paid extra for next delivery"
                   />
                 </div>
                 <Button type="submit" disabled={submitting} style={{ marginTop: "0.75rem" }}>
@@ -334,7 +358,6 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
                 </Button>
               </form>
             </Card>
-          )}
 
           {!showFullLedger && (
             <>
@@ -413,7 +436,7 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
                             </>
                           ) : (
                             <div style={{ color: "var(--color-success)", fontWeight: 600 }}>
-                              − {formatCurrency(record.amount, currency)}
+                              Paid {formatCurrency(record.amount, currency)}
                             </div>
                           )}
                         </div>

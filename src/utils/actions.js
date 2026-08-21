@@ -1,4 +1,4 @@
-import { ROLES, isAdmin, normalizeRole } from "./roles";
+import { ROLES, isAdmin, normalizeRole, ALL_ROLES } from "./roles";
 import {
   MODULES,
   ADMIN_MODULES,
@@ -34,7 +34,10 @@ export const ACTIONS = [
   { id: "customers_manage", module: "customers", label: "Manage customers", group: "Customers" },
   { id: "suppliers_manage", module: "suppliers", label: "Manage suppliers", group: "Suppliers" },
   { id: "purchases_manage", module: "suppliers", label: "Manage purchases", group: "Suppliers" },
-  { id: "accounting_manage", module: "accounting", label: "Manage accounting", group: "Accounting" },
+  { id: "accounting_manage", module: "accounting", label: "Manage expenses", group: "Accounting" },
+  { id: "accounting_journals", module: "accounting", label: "Post and reverse journals", group: "Accounting" },
+  { id: "accounting_partners", module: "accounting", label: "Manage partners and capital", group: "Accounting" },
+  { id: "accounting_close_period", module: "accounting", label: "Close fiscal periods", group: "Accounting" },
   { id: "users_manage", module: "users", label: "Manage users", group: "Administration" },
   { id: "settings_manage", module: "settings", label: "Manage settings", group: "Administration" },
 ];
@@ -48,8 +51,6 @@ export function canPerformAction(user, settings, actionId) {
   if (isAdmin(user)) return true;
 
   const role = normalizeRole(user.role);
-  if (role !== ROLES.CASHIER) return false;
-
   const key = roleActionSettingKey(role, actionId);
   const value = settings?.[key];
   if (value === undefined || value === "") return false;
@@ -59,8 +60,9 @@ export function canPerformAction(user, settings, actionId) {
 export function getRoleActionDefaults() {
   const defaults = {};
   for (const action of ACTIONS) {
-    defaults[roleActionSettingKey(ROLES.ADMIN, action.id)] = "1";
-    defaults[roleActionSettingKey(ROLES.CASHIER, action.id)] = "0";
+    for (const role of ALL_ROLES) {
+      defaults[roleActionSettingKey(role, action.id)] = role === ROLES.ADMIN ? "1" : "0";
+    }
   }
   return defaults;
 }
@@ -86,16 +88,19 @@ export function getAllPermissionSettingKeys() {
     keys.push(menuItemSettingKey(item.id));
   }
   for (const mod of [...MODULES, ...ADMIN_MODULES]) {
-    keys.push(roleModuleSettingKey(ROLES.ADMIN, mod.id));
-    keys.push(roleModuleSettingKey(ROLES.CASHIER, mod.id));
+    for (const role of ALL_ROLES) {
+      keys.push(roleModuleSettingKey(role, mod.id));
+    }
   }
   for (const item of MENU_ITEMS) {
-    keys.push(roleMenuItemSettingKey(ROLES.ADMIN, item.id));
-    keys.push(roleMenuItemSettingKey(ROLES.CASHIER, item.id));
+    for (const role of ALL_ROLES) {
+      keys.push(roleMenuItemSettingKey(role, item.id));
+    }
   }
   for (const action of ACTIONS) {
-    keys.push(roleActionSettingKey(ROLES.ADMIN, action.id));
-    keys.push(roleActionSettingKey(ROLES.CASHIER, action.id));
+    for (const role of ALL_ROLES) {
+      keys.push(roleActionSettingKey(role, action.id));
+    }
   }
   return keys;
 }

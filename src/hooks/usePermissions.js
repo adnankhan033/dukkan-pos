@@ -31,8 +31,6 @@ export function useVisibleNavGroups() {
 
   return useMemo(() => {
     return NAV_GROUPS.map((group) => {
-      if (group.module && !canAccessModule(group.module)) return null;
-
       if (group.items) {
         const items = group.items.filter((item) => {
           if (item.id) return canAccessMenuItem(item.id);
@@ -44,6 +42,7 @@ export function useVisibleNavGroups() {
         return { ...group, items };
       }
 
+      if (group.module && !canAccessModule(group.module)) return null;
       if (group.id && !canAccessMenuItem(group.id)) return null;
 
       return group;

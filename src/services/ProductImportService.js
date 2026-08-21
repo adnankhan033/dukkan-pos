@@ -4,6 +4,7 @@ import { unitService } from "./UnitService";
 import { supplierService } from "./SupplierService";
 import { invalidateDashboardCache } from "./DashboardCache";
 import { settingsService } from "./SettingsService";
+import { accountingService, safeAccountingPost } from "./AccountingService";
 import { PRODUCT_IMPORT_BATCH_SIZE } from "../utils/constants";
 import { IMPORT_MODES } from "../utils/productImport/validate";
 import { applyImportVatDefaults } from "../utils/productImport/vatDefaults";
@@ -423,6 +424,7 @@ class ProductImportService {
 
     report("done");
     invalidateDashboardCache();
+    await safeAccountingPost(() => accountingService.syncInventoryBookToStock());
     return summary;
   }
 

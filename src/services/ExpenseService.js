@@ -1,5 +1,6 @@
 import { query, queryOne, execute, insert } from "../database/connection";
 import { getPeriodDateRange } from "../utils/format";
+import { accountingService, safeAccountingPost } from "./AccountingService";
 
 function buildExpenseFilters({ period, dateFrom, dateTo, category, search, referenceDate }) {
   const conditions = [];
@@ -125,7 +126,9 @@ class ExpenseService {
         data.notes || null,
       ]
     );
-    return this.getById(id);
+    const saved = await this.getById(id);
+    await safeAccountingPost(() => accountingService.postExpense(saved));
+    return saved;
   }
 
   async update(id, data) {
@@ -141,10 +144,19 @@ class ExpenseService {
         id,
       ]
     );
-    return this.getById(id);
+    const saved = await this.getById(id);
+    if (saved?.journal_entry_id) {
+      await safeAccountingPost(() => accountingService.reverseJournal(saved.journal_entry_id, "Expense updated"));
+    }
+    await safeAccountingPost(() => accountingService.postExpense({ ...saved, journal_entry_id: null }));
+    return saved;
   }
 
   async delete(id) {
+    const existing = await this.getById(id);
+    if (existing?.journal_entry_id) {
+      await safeAccountingPost(() => accountingService.reverseJournal(existing.journal_entry_id, "Expense cancelled"));
+    }
     await execute("DELETE FROM expenses WHERE id = $1", [id]);
     return true;
   }

@@ -8,6 +8,7 @@ import {
   Users,
   Settings,
   Wallet,
+  Banknote,
 } from "lucide-react";
 import { usePermissions } from "../../hooks/usePermissions";
 import "./DashboardQuickNav.css";
@@ -18,8 +19,9 @@ const NAV_ITEMS = [
   { path: "/products", label: "Products", hint: "Catalog", icon: Package, module: "products" },
   { path: "/inventory", label: "Stock", hint: "Levels", icon: Boxes, module: "inventory" },
   { path: "/customers", label: "Customers", hint: "CRM", icon: Users, module: "customers" },
+  { path: "/accounting/receive", label: "Receive cash", hint: "Collect dues", icon: Banknote, module: "accounting" },
+  { path: "/accounting/pay", label: "Pay cash", hint: "Pay suppliers", icon: Wallet, module: "accounting" },
   { path: "/reports", label: "Reports", hint: "Analytics", icon: BarChart3, module: "reports" },
-  { path: "/accounting", label: "Finance", hint: "Money", icon: Wallet, module: "accounting" },
   { path: "/settings", label: "Settings", hint: "Store", icon: Settings, module: "settings" },
 ];
 

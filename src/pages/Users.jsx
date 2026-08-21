@@ -3,7 +3,7 @@ import { Plus, Pencil, Trash2 } from "lucide-react";
 import { userService } from "../services/UserService";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import { ITEMS_PER_PAGE } from "../utils/constants";
-import { ROLES, ROLE_LABELS } from "../utils/roles";
+import { ROLES, ROLE_LABELS, normalizeRole } from "../utils/roles";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import SearchBar from "../components/common/SearchBar";
@@ -81,7 +81,7 @@ export default function Users() {
       email: user.email || "",
       notes: user.notes || "",
       password: "",
-      role: user.role || ROLES.CASHIER,
+      role: normalizeRole(user.role),
       is_active: Number(user.is_active ?? 1) !== 0,
     });
     setErrors({});
@@ -150,8 +150,8 @@ export default function Users() {
       key: "role",
       label: "Role",
       render: (r) => (
-        <Badge variant={r.role === ROLES.ADMIN ? "info" : "neutral"}>
-          {ROLE_LABELS[r.role] || r.role}
+        <Badge variant={normalizeRole(r.role) === ROLES.ADMIN ? "info" : "neutral"}>
+          {ROLE_LABELS[normalizeRole(r.role)] || r.role}
         </Badge>
       ),
     },

@@ -8,6 +8,8 @@ export const ROLE_LABELS = {
   [ROLES.CASHIER]: "Cashier",
 };
 
+export const ALL_ROLES = [ROLES.ADMIN, ROLES.CASHIER];
+
 /** Fallback when per-role settings are not saved yet. */
 export const ROLE_MODULES = {
   [ROLES.ADMIN]: [

@@ -47,8 +47,12 @@ export const NAV_GROUPS = [
     icon: "Receipt",
     module: "accounting",
     items: [
-      { id: "expenses", path: "/accounting", label: "Expenses" },
+      { id: "cash-receive", path: "/accounting/receive", label: "Receive cash" },
+      { id: "cash-pay", path: "/accounting/pay", label: "Pay cash" },
+      { id: "expenses", path: "/accounting/expenses", label: "Expenses" },
       { id: "employees", path: "/employees", label: "Employees" },
+      { id: "partners", path: "/accounting/partners", label: "Partners" },
+      { id: "journals", path: "/accounting/journals", label: "Books" },
     ],
   },
   { id: "reports", label: "Reports", icon: "BarChart3", path: "/reports", module: "reports" },

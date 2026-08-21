@@ -18,6 +18,7 @@ import { StatCard, Card } from "../common/Card";
 import Badge from "../common/Badge";
 import DashboardHero from "./DashboardHero";
 import DashboardQuickNav from "./DashboardQuickNav";
+import DailyBoard from "./DailyBoard";
 import DashboardSalesChart from "./DashboardSalesChart";
 import DashboardHealthScore from "./DashboardHealthScore";
 import DashboardMetricTiles from "./DashboardMetricTiles";
@@ -26,7 +27,9 @@ import DashboardActivityFeed from "./DashboardActivityFeed";
 import ZatcaSyncWidget from "./ZatcaSyncWidget";
 import EmployeesDashboardWidget from "./EmployeesDashboardWidget";
 import DashboardInsights from "./DashboardInsights";
-import { formatCurrency } from "../../utils/format";
+import ProductValueTotals from "../products/ProductValueTotals";
+import { formatSignedCurrency } from "../../utils/format";
+import { emptyProductValueSummary } from "../../utils/productValue";
 import "../../pages/Dashboard.css";
 import "./DashboardQuickNav.css";
 
@@ -44,12 +47,14 @@ export default function AdminDashboard({ stats }) {
     receivables.customers_with_balance > 0
       ? `${receivables.customers_with_balance} customer${receivables.customers_with_balance === 1 ? "" : "s"} owing`
       : "All settled";
+  const stockValue = stats.stockValue ?? emptyProductValueSummary();
 
   const sideMetrics = [
     {
       label: "Customer dues",
       value: receivables.total_pending,
       currency,
+      sign: "in",
       icon: Wallet,
       tone: receivables.total_pending > 0 ? "warn" : "success",
       path: "/customers",
@@ -59,6 +64,7 @@ export default function AdminDashboard({ stats }) {
       label: "Today's returns",
       value: stats.todayReturns,
       currency,
+      sign: "out",
       icon: RotateCcw,
       tone: "warn",
       path: "/orders",
@@ -70,6 +76,7 @@ export default function AdminDashboard({ stats }) {
             label: "Today's purchases",
             value: stats.todayPurchases,
             currency,
+            sign: "out",
             icon: ShoppingBag,
             tone: "info",
             path: "/purchases",
@@ -88,6 +95,7 @@ export default function AdminDashboard({ stats }) {
       label: "Monthly returns",
       value: stats.monthlyReturns,
       currency,
+      sign: "out",
       icon: RotateCcw,
       tone: "muted",
     },
@@ -107,7 +115,7 @@ export default function AdminDashboard({ stats }) {
           },
           {
             label: "Customer dues",
-            value: formatCurrency(receivables.total_pending, currency),
+            value: formatSignedCurrency(receivables.total_pending, currency, "in"),
             tone: receivables.total_pending > 0 ? "warn" : "success",
           },
         ]}
@@ -115,6 +123,9 @@ export default function AdminDashboard({ stats }) {
           <>
             <Button onClick={() => navigate("/sales")}>
               <ShoppingCart size={16} /> Open POS
+            </Button>
+            <Button variant="secondary" onClick={() => navigate("/accounting/receive")}>
+              <Wallet size={16} /> Receive cash
             </Button>
             <Button variant="secondary" onClick={() => navigate("/reports")}>
               <BarChart3 size={16} /> Reports
@@ -126,6 +137,12 @@ export default function AdminDashboard({ stats }) {
       <DashboardQuickNav variant="admin" />
 
       <DashboardSectionTitle
+        title="Today at a glance"
+        subtitle="Sales, cash, customers, suppliers, and stock — + coming in, − going out"
+      />
+      <DailyBoard board={stats.dailyBoard} currency={currency} />
+
+      <DashboardSectionTitle
         title="Today's pulse"
         subtitle="Your most important numbers — updated live"
       />
@@ -133,7 +150,7 @@ export default function AdminDashboard({ stats }) {
       <section className="dashboard-kpi-row">
         <StatCard
           label="Today's Sales"
-          value={formatCurrency(stats.todaySales, currency)}
+          value={formatSignedCurrency(stats.todaySales, currency, "in")}
           numericValue={stats.todaySales}
           currency={currency}
           icon={DollarSign}
@@ -145,7 +162,7 @@ export default function AdminDashboard({ stats }) {
         />
         <StatCard
           label="Monthly Revenue"
-          value={formatCurrency(stats.monthlyRevenue, currency)}
+          value={formatSignedCurrency(stats.monthlyRevenue, currency, "in")}
           numericValue={stats.monthlyRevenue}
           currency={currency}
           icon={TrendingUp}
@@ -156,7 +173,7 @@ export default function AdminDashboard({ stats }) {
         {showProfit ? (
           <StatCard
             label="Monthly Profit"
-            value={formatCurrency(stats.monthlyProfit, currency)}
+            value={formatSignedCurrency(stats.monthlyProfit, currency)}
             numericValue={stats.monthlyProfit}
             currency={currency}
             icon={Wallet}
@@ -178,7 +195,7 @@ export default function AdminDashboard({ stats }) {
         )}
         <StatCard
           label="Customer Dues"
-          value={formatCurrency(receivables.total_pending, currency)}
+          value={formatSignedCurrency(receivables.total_pending, currency, "in")}
           numericValue={receivables.total_pending}
           currency={currency}
           icon={Wallet}
@@ -187,6 +204,23 @@ export default function AdminDashboard({ stats }) {
           delay={240}
         />
       </section>
+
+      <DashboardSectionTitle
+        title="Stock value"
+        subtitle="On-hand inventory at cost (purchase) and at selling price"
+        action={
+          <button type="button" className="dashboard-link-btn" onClick={() => navigate("/products")}>
+            View products →
+          </button>
+        }
+      />
+      <ProductValueTotals
+        quantity={stockValue.quantity}
+        purchaseTotal={stockValue.purchaseTotal}
+        sellingTotal={stockValue.sellingTotal}
+        currency={currency}
+        productCount={stockValue.productCount ?? stats.totalProducts}
+      />
 
       <div className="dashboard-bento">
         <div className="dashboard-bento-main">
@@ -218,7 +252,7 @@ export default function AdminDashboard({ stats }) {
           />
           <StatCard
             label="Customer Dues"
-            value={formatCurrency(receivables.total_pending, currency)}
+            value={formatSignedCurrency(receivables.total_pending, currency, "in")}
             numericValue={receivables.total_pending}
             currency={currency}
             icon={Wallet}
@@ -226,7 +260,7 @@ export default function AdminDashboard({ stats }) {
           />
           <StatCard
             label="Today's Returns"
-            value={formatCurrency(stats.todayReturns, currency)}
+            value={formatSignedCurrency(stats.todayReturns, currency, "out")}
             numericValue={stats.todayReturns}
             currency={currency}
             icon={RotateCcw}
@@ -235,7 +269,7 @@ export default function AdminDashboard({ stats }) {
           {showPurchases && (
             <StatCard
               label="Today's Purchases"
-              value={formatCurrency(stats.todayPurchases, currency)}
+              value={formatSignedCurrency(stats.todayPurchases, currency, "out")}
               numericValue={stats.todayPurchases}
               currency={currency}
               icon={ShoppingBag}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { productService } from "../../services/ProductService";
 import { categoryService } from "../../services/CategoryService";
 import { unitService } from "../../services/UnitService";
@@ -12,7 +12,9 @@ import SearchableSelect from "../common/SearchableSelect";
 import ProductNameFields from "../products/ProductNameFields";
 import ProductVatFields, { productVatToFormFields } from "../products/ProductVatFields";
 import ProductBarcodeScanner from "../products/ProductBarcodeScanner";
+import ProductValueTotals from "../products/ProductValueTotals";
 import { productToVatMode, vatModeToDbFields } from "../../utils/vatPricing";
+import { computeProductValueTotals } from "../../utils/productValue";
 import FormValidationAlert from "../common/FormValidationAlert";
 import { LoadingSpinner } from "../common/Loading";
 import { required, positiveNumber, runFormValidation } from "../../utils/validation";
@@ -67,6 +69,10 @@ export default function PosProductEditModal({ isOpen, productId, currency = "SAR
   const [categories, setCategories] = useState([]);
   const [units, setUnits] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
+  const formValueTotals = useMemo(
+    () => computeProductValueTotals(form),
+    [form]
+  );
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -429,6 +435,14 @@ export default function PosProductEditModal({ isOpen, productId, currency = "SAR
               autoComplete="off"
             />
           </div>
+          <ProductValueTotals
+            compact
+            quantity={formValueTotals.quantity}
+            purchaseTotal={formValueTotals.purchaseTotal}
+            sellingTotal={formValueTotals.sellingTotal}
+            currency={currency}
+            unitSymbol={units.find((u) => String(u.id) === String(form.unit_id))?.symbol}
+          />
 
           <ProductVatFields form={form} currency={currency} onChange={updateForm} />
 

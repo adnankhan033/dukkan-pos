@@ -1,4 +1,4 @@
-import { ROLES, ROLE_MODULES } from "./roles";
+import { ROLES, ROLE_MODULES, ALL_ROLES, normalizeRole } from "./roles";
 import { NAV_GROUPS } from "./nav";
 
 export const MODULES = [
@@ -8,7 +8,7 @@ export const MODULES = [
   { id: "inventory", label: "Inventory", description: "Stock and purchases" },
   { id: "customers", label: "Customers", description: "Customer management" },
   { id: "suppliers", label: "Suppliers", description: "Supplier accounts, purchases, and balances" },
-  { id: "accounting", label: "Accounting", description: "Expenses, salaries, bills" },
+  { id: "accounting", label: "Accounting", description: "Receive cash, pay cash, expenses, and books" },
   { id: "reports", label: "Reports", description: "Sales and profit reports" },
 ];
 
@@ -30,6 +30,12 @@ export const ROUTE_MODULE_MAP = {
   "/customers": "customers",
   "/suppliers": "suppliers",
   "/accounting": "accounting",
+  "/accounting/receive": "accounting",
+  "/accounting/pay": "accounting",
+  "/accounting/expenses": "accounting",
+  "/accounting/partners": "accounting",
+  "/accounting/journals": "accounting",
+  "/accounting/reports": "accounting",
   "/employees": "accounting",
   "/expenses": "accounting",
   "/reports": "reports",
@@ -43,7 +49,6 @@ export const ROUTE_MODULE_MAP = {
   "/zatca-test": "settings",
 };
 
-const CASHIER_DEFAULT_MODULES = ["dashboard", "sales", "reports"];
 const ADMIN_ONLY_MODULE_IDS = new Set(["users", "settings"]);
 const ADMIN_GROUP_ID = "administration";
 
@@ -156,15 +161,14 @@ export function isModuleEnabled(settings, moduleId) {
 }
 
 function defaultRoleModuleEnabled(role, moduleId) {
-  if (role === ROLES.ADMIN) {
-    if (ADMIN_ONLY_MODULE_IDS.has(moduleId)) return true;
-    return (ROLE_MODULES[ROLES.ADMIN] || []).includes(moduleId);
+  if (ADMIN_ONLY_MODULE_IDS.has(moduleId)) {
+    return role === ROLES.ADMIN;
   }
-  return CASHIER_DEFAULT_MODULES.includes(moduleId);
+  return (ROLE_MODULES[role] || []).includes(moduleId);
 }
 
 export function isRoleModuleEnabled(settings, role, moduleId) {
-  if (role === ROLES.CASHIER && ADMIN_ONLY_MODULE_IDS.has(moduleId)) {
+  if (role !== ROLES.ADMIN && ADMIN_ONLY_MODULE_IDS.has(moduleId)) {
     return false;
   }
 
@@ -186,7 +190,7 @@ export function isMenuItemEnabled(settings, menuItemId) {
 function defaultRoleMenuItemEnabled(role, menuItemId) {
   const item = MENU_ITEM_BY_ID.get(menuItemId);
   if (!item) return false;
-  if (role === ROLES.CASHIER && ADMIN_ONLY_MODULE_IDS.has(item.module)) return false;
+  if (role !== ROLES.ADMIN && ADMIN_ONLY_MODULE_IDS.has(item.module)) return false;
   return defaultRoleModuleEnabled(role, item.module);
 }
 
@@ -194,7 +198,7 @@ export function isRoleMenuItemEnabled(settings, role, menuItemId) {
   const item = MENU_ITEM_BY_ID.get(menuItemId);
   if (!item) return false;
 
-  if (role === ROLES.CASHIER && ADMIN_ONLY_MODULE_IDS.has(item.module)) {
+  if (role !== ROLES.ADMIN && ADMIN_ONLY_MODULE_IDS.has(item.module)) {
     return false;
   }
 
@@ -209,10 +213,10 @@ export function isRoleMenuItemEnabled(settings, role, menuItemId) {
 export function canAccessModule(user, settings, moduleId) {
   if (!user || !moduleId) return false;
 
-  const role = String(user.role || "").toLowerCase() === ROLES.CASHIER ? ROLES.CASHIER : ROLES.ADMIN;
+  const role = normalizeRole(user.role);
 
   if (ADMIN_ONLY_MODULE_IDS.has(moduleId)) {
-    return role === ROLES.ADMIN && isRoleModuleEnabled(settings, role, moduleId);
+    return role === ROLES.ADMIN;
   }
 
   if (!isModuleEnabled(settings, moduleId)) return false;
@@ -225,10 +229,14 @@ export function canAccessMenuItem(user, settings, menuItemId) {
   const item = MENU_ITEM_BY_ID.get(menuItemId);
   if (!item) return false;
 
+  const role = normalizeRole(user.role);
+  if (role === ROLES.ADMIN && ADMIN_ONLY_MODULE_IDS.has(item.module)) {
+    return true;
+  }
+
   if (!canAccessModule(user, settings, item.module)) return false;
   if (!isMenuItemEnabled(settings, menuItemId)) return false;
 
-  const role = String(user.role || "").toLowerCase() === ROLES.CASHIER ? ROLES.CASHIER : ROLES.ADMIN;
   return isRoleMenuItemEnabled(settings, role, menuItemId);
 }
 
@@ -256,11 +264,9 @@ export function getRoleModuleDefaults() {
   const allModules = [...MODULES, ...ADMIN_MODULES];
 
   for (const mod of allModules) {
-    defaults[roleModuleSettingKey(ROLES.ADMIN, mod.id)] = "1";
-    defaults[roleModuleSettingKey(
-      ROLES.CASHIER,
-      mod.id
-    )] = CASHIER_DEFAULT_MODULES.includes(mod.id) ? "1" : "0";
+    for (const role of ALL_ROLES) {
+      defaults[roleModuleSettingKey(role, mod.id)] = defaultRoleModuleEnabled(role, mod.id) ? "1" : "0";
+    }
   }
 
   return defaults;
@@ -278,11 +284,9 @@ export function getRoleMenuItemDefaults() {
   const defaults = {};
 
   for (const item of MENU_ITEMS) {
-    defaults[roleMenuItemSettingKey(ROLES.ADMIN, item.id)] = "1";
-    defaults[roleMenuItemSettingKey(
-      ROLES.CASHIER,
-      item.id
-    )] = defaultRoleMenuItemEnabled(ROLES.CASHIER, item.id) ? "1" : "0";
+    for (const role of ALL_ROLES) {
+      defaults[roleMenuItemSettingKey(role, item.id)] = defaultRoleMenuItemEnabled(role, item.id) ? "1" : "0";
+    }
   }
 
   return defaults;
@@ -290,10 +294,10 @@ export function getRoleMenuItemDefaults() {
 
 /** First allowed route after login (respects role + settings). */
 export function getDefaultRouteForUser(user, settings) {
-  const role = String(user?.role || "").toLowerCase() === ROLES.CASHIER ? ROLES.CASHIER : ROLES.ADMIN;
+  const role = normalizeRole(user?.role);
   if (role === ROLES.ADMIN) return "/";
 
-  const preferred = ["/sales", "/", "/orders", "/products", "/customers", "/inventory", "/accounting", "/reports"];
+  const preferred = ["/sales", "/", "/orders", "/products", "/customers", "/inventory", "/accounting/receive", "/reports"];
   for (const path of preferred) {
     if (canAccessPath(user, settings, path)) return path;
   }

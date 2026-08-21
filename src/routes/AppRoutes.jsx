@@ -18,6 +18,9 @@ import Orders from "../pages/Orders";
 import Purchases from "../pages/Purchases";
 import Inventory from "../pages/Inventory";
 import Accounting from "../pages/Accounting";
+import AccountingCash from "../pages/AccountingCash";
+import AccountingPartners from "../pages/AccountingPartners";
+import AccountingJournals from "../pages/AccountingJournals";
 import Employees from "../pages/Employees";
 import Reports from "../pages/Reports";
 import DailyClose from "../pages/DailyClose";
@@ -69,9 +72,15 @@ export default function AppRoutes() {
         <Route path="/orders" element={withRole("sales", <Orders />)} />
         <Route path="/purchases" element={withRole("suppliers", <Purchases />)} />
         <Route path="/inventory" element={withRole("inventory", <Inventory />)} />
-        <Route path="/accounting" element={withRole("accounting", <Accounting />)} />
+        <Route path="/accounting" element={<Navigate to="/accounting/receive" replace />} />
+        <Route path="/accounting/receive" element={withRole("accounting", <AccountingCash mode="receive" />)} />
+        <Route path="/accounting/pay" element={withRole("accounting", <AccountingCash mode="pay" />)} />
+        <Route path="/accounting/expenses" element={withRole("accounting", <Accounting />)} />
+        <Route path="/accounting/partners" element={withRole("accounting", <AccountingPartners />)} />
+        <Route path="/accounting/journals" element={withRole("accounting", <AccountingJournals />)} />
+        <Route path="/accounting/reports" element={<Navigate to="/accounting/journals" replace />} />
         <Route path="/employees" element={withRole("accounting", <Employees />)} />
-        <Route path="/expenses" element={<Navigate to="/accounting" replace />} />
+        <Route path="/expenses" element={<Navigate to="/accounting/expenses" replace />} />
         <Route path="/reports" element={withRole("reports", <Reports />)} />
         <Route path="/daily-close" element={withRole("reports", <DailyClose />)} />
         <Route path="/subscriptions" element={withRole("users", <Subscriptions />)} />

@@ -1,13 +1,10 @@
 import { query, queryOne } from "../database/connection";
 import { productService } from "./ProductService";
 import {
-  getGrossSalesInRange,
-  getReturnsTotalInRange,
-  getNetRevenueInRange,
-  getNetCogsInRange,
   getReturnsInRange,
   getSalesCountInRange,
   getReturnsCountInRange,
+  getProfitInRange,
 } from "./FinanceService";
 
 class ReportService {
@@ -62,43 +59,28 @@ class ReportService {
   }
 
   async getProfitSummaryInRange(from, to) {
-    const [
-      grossSales,
-      returnsTotal,
-      netRevenue,
-      cogs,
-      purchasesTotal,
-      expensesTotal,
-      salesCount,
-      returnsCount,
-    ] = await Promise.all([
-      getGrossSalesInRange(from, to),
-      getReturnsTotalInRange(from, to),
-      getNetRevenueInRange(from, to),
-      getNetCogsInRange(from, to),
+    const [profit, purchasesTotal, salesCount, returnsCount] = await Promise.all([
+      getProfitInRange(from, to),
       this.getPurchasesTotalInRange(from, to),
-      this.getExpensesTotalInRange(from, to),
       getSalesCountInRange(from, to),
       getReturnsCountInRange(from, to),
     ]);
 
-    const grossProfit = netRevenue - cogs;
-    const netProfit = grossProfit - expensesTotal;
-    const avgSale = salesCount > 0 ? grossSales / salesCount : 0;
-    const profitMargin = netRevenue > 0 ? (netProfit / netRevenue) * 100 : 0;
+    const avgSale = salesCount > 0 ? profit.sales / salesCount : 0;
+    const profitMargin = profit.netRevenue > 0 ? (profit.netProfit / profit.netRevenue) * 100 : 0;
 
     return {
-      grossSales,
-      returnsTotal,
-      monthlyRevenue: netRevenue,
-      netRevenue,
+      grossSales: profit.sales,
+      returnsTotal: profit.salesReturns,
+      monthlyRevenue: profit.netRevenue,
+      netRevenue: profit.netRevenue,
       purchasesTotal,
       monthlyPurchases: purchasesTotal,
-      expensesTotal,
-      monthlyExpenses: expensesTotal,
-      cogs,
-      grossProfit,
-      netProfit,
+      expensesTotal: profit.expenses,
+      monthlyExpenses: profit.expenses,
+      cogs: profit.cogs,
+      grossProfit: profit.grossProfit,
+      netProfit: profit.netProfit,
       salesCount,
       returnsCount,
       avgSale,

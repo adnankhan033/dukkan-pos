@@ -36,6 +36,7 @@ export const DEFAULT_SETTINGS = {
   dashboard_admin_show_profit: "1",
   dashboard_admin_show_purchases: "1",
   dashboard_cashier_show_recent: "1",
+  accounting_enabled: "0",
   ...VENDOR_DEFAULT_SETTINGS,
   ...getZatcaDefaultSettings(),
   ...getModuleDefaults(),

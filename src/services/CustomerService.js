@@ -396,17 +396,17 @@ class CustomerService {
 
   async create(data) {
     const id = await insert(
-      "INSERT INTO customers (name, phone, email, address, notes) VALUES ($1, $2, $3, $4, $5)",
-      [data.name, data.phone || null, data.email || null, data.address || null, data.notes || null]
+      "INSERT INTO customers (name, phone, email, address, notes, credit_limit) VALUES ($1, $2, $3, $4, $5, $6)",
+      [data.name, data.phone || null, data.email || null, data.address || null, data.notes || null, Number(data.credit_limit) || 0]
     );
     return this.getById(id);
   }
 
   async update(id, data) {
     await execute(
-      `UPDATE customers SET name = $1, phone = $2, email = $3, address = $4, notes = $5,
-       updated_at = datetime('now') WHERE id = $6`,
-      [data.name, data.phone || null, data.email || null, data.address || null, data.notes || null, id]
+      `UPDATE customers SET name = $1, phone = $2, email = $3, address = $4, notes = $5, credit_limit = $6,
+       updated_at = datetime('now') WHERE id = $7`,
+      [data.name, data.phone || null, data.email || null, data.address || null, data.notes || null, Number(data.credit_limit) || 0, id]
     );
     return this.getById(id);
   }

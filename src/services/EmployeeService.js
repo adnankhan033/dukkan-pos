@@ -1,4 +1,5 @@
 import { query, queryOne, execute, insert, runInTransaction, resolveInsertId, ensureEmployeeTables } from "../database/connection";
+import { accountingService, safeAccountingPost } from "./AccountingService";
 
 const PAYMENT_TYPES = {
   SALARY: "salary",
@@ -216,7 +217,7 @@ class EmployeeService {
     const value = Number(amount);
     if (!value || value <= 0) throw new Error("Amount must be greater than zero");
 
-    return runInTransaction(async ({ execute: txExecute, query: txQuery }) => {
+    const result = await runInTransaction(async ({ execute: txExecute, query: txQuery }) => {
       const expenseName =
         type === PAYMENT_TYPES.ADVANCE
           ? `Salary advance — ${employee.full_name}`
@@ -251,11 +252,26 @@ class EmployeeService {
       const rows = await txQuery("SELECT * FROM employee_salaries WHERE id = $1", [paymentId]);
       return rows[0] ?? null;
     });
+    const payment = await queryOne("SELECT * FROM employee_salaries WHERE id = $1", [result?.id]);
+    if (payment?.expense_id) {
+      const expense = await queryOne("SELECT * FROM expenses WHERE id = $1", [payment.expense_id]);
+      await safeAccountingPost(() => accountingService.postExpense(expense));
+    }
+    return result;
   }
 
   async deletePayment(id) {
     const payment = await queryOne("SELECT * FROM employee_salaries WHERE id = $1", [Number(id)]);
     if (!payment) throw new Error("Payment record not found");
+
+    if (payment.expense_id) {
+      const expense = await queryOne("SELECT * FROM expenses WHERE id = $1", [payment.expense_id]);
+      if (expense?.journal_entry_id) {
+        await safeAccountingPost(() =>
+          accountingService.reverseJournal(expense.journal_entry_id, "Salary cancelled")
+        );
+      }
+    }
 
     return runInTransaction(async ({ execute: txExecute }) => {
       if (payment.expense_id) {

@@ -18,6 +18,20 @@ export function formatCurrency(amount, currency) {
   return `${value.toFixed(2)} ${code}`;
 }
 
+/** Dashboard money: + coming in, − going out. `direction` forces the sign even at zero. */
+export function formatSignedCurrency(amount, currency, direction) {
+  const value = Number(amount) || 0;
+  const abs = formatCurrency(Math.abs(value), currency);
+  let sign = 0;
+  if (direction === "in" || direction === "+") sign = 1;
+  else if (direction === "out" || direction === "-") sign = -1;
+  else if (value > 0.005) sign = 1;
+  else if (value < -0.005) sign = -1;
+  if (sign > 0) return `+ ${abs}`;
+  if (sign < 0) return `− ${abs}`;
+  return abs;
+}
+
 export function formatDate(dateStr) {
   if (!dateStr) return "-";
   const raw = String(dateStr).trim();

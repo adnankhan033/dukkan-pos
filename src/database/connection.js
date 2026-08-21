@@ -1,6 +1,7 @@
 import Database from "@tauri-apps/plugin-sql";
 import { DB_NAME } from "../utils/constants";
 import { SCHEMA_STATEMENTS } from "./schema";
+import { ACCOUNTING_SCHEMA_STATEMENTS } from "./accountingSchema";
 import bcrypt from "bcryptjs";
 import { DEFAULT_SETTINGS } from "../utils/constants";
 import { DEFAULT_UNITS } from "../utils/defaultUnits";
@@ -254,12 +255,33 @@ async function runMigrations() {
   await ensureDailyClosesSchema();
   await ensurePaymentMethodsSchema();
   await ensureVatPricingSchema();
+  await ensureAccountingSchema();
   await ensureSettingsKeys();
   await ensureDashboardPerformanceIndexes();
   await migrateUtcTimestampsToBusinessTimezone();
   await migrateSalesTimestampsToIsoUtc();
   await fixSalesUtcTimestampsForRiyadh();
   await migrateSalesTimestampsToBusinessWallV4();
+}
+
+async function ensureAccountingSchema() {
+  for (const statement of ACCOUNTING_SCHEMA_STATEMENTS) {
+    await execute(statement);
+  }
+
+  const addCol = async (table, column, ddl) => {
+    if (!(await tableExists(table))) return;
+    const cols = await query(`PRAGMA table_info(${table})`);
+    if (!cols.some((c) => c.name === column)) {
+      await execute(ddl);
+    }
+  };
+
+  await addCol("customers", "opening_balance", "ALTER TABLE customers ADD COLUMN opening_balance REAL DEFAULT 0");
+  await addCol("customers", "credit_limit", "ALTER TABLE customers ADD COLUMN credit_limit REAL DEFAULT 0");
+  await addCol("suppliers", "opening_balance", "ALTER TABLE suppliers ADD COLUMN opening_balance REAL DEFAULT 0");
+  await addCol("expenses", "payment_method", "ALTER TABLE expenses ADD COLUMN payment_method TEXT DEFAULT 'cash'");
+  await addCol("expenses", "journal_entry_id", "ALTER TABLE expenses ADD COLUMN journal_entry_id INTEGER");
 }
 
 async function ensureVatPricingSchema() {
@@ -1266,7 +1288,18 @@ export async function clearDatabaseSection(sectionId) {
         } catch {
           /* ignore */
         }
-        await deleteFromTables(txExecute, ["expenses"]);
+        await deleteFromTables(txExecute, [
+          "journal_lines",
+          "journal_entries",
+          "partner_transactions",
+          "partners",
+          "accounting_audit_log",
+          "accounting_sequences",
+          "accounts",
+          "account_groups",
+          "fiscal_periods",
+          "expenses",
+        ]);
         try {
           await txExecute(
             "DELETE FROM payments WHERE sale_id IS NULL AND purchase_id IS NULL"
@@ -1292,10 +1325,35 @@ export async function clearDatabaseSection(sectionId) {
   if (sectionId === "products") {
     await ensureUnitsSchema();
   }
+  if (sectionId === "accounting") {
+    await execute(
+      `INSERT INTO settings (key, value) VALUES ('accounting_enabled', '0')
+       ON CONFLICT(key) DO UPDATE SET value = '0'`
+    );
+    for (const key of [
+      "accounting_configured_at",
+      "accounting_fiscal_start",
+      "accounting_default_cash_account_id",
+      "accounting_default_bank_account_id",
+      "accounting_start_mode",
+      "accounting_inventory_revalue_repaired",
+    ]) {
+      await execute("DELETE FROM settings WHERE key = $1", [key]);
+    }
+  }
 }
 
 export async function clearDatabaseData() {
   const clearOrder = [
+    "journal_lines",
+    "journal_entries",
+    "partner_transactions",
+    "partners",
+    "accounting_audit_log",
+    "accounting_sequences",
+    "accounts",
+    "account_groups",
+    "fiscal_periods",
     "sale_return_items",
     "sale_returns",
     "zatca_api_logs",

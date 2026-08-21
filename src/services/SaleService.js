@@ -4,6 +4,7 @@ import { settingsService } from "./SettingsService";
 import { zatcaService } from "./ZatcaService";
 import { invalidateDashboardCache } from "./DashboardCache";
 import { dispatchSalesChanged } from "./SalesSync";
+import { accountingService, safeAccountingPost } from "./AccountingService";
 
 function notifySalesChanged() {
   invalidateDashboardCache();
@@ -221,6 +222,7 @@ class SaleService {
       }
       if (status === SALE_STATUS.COMPLETED) {
         await processZatcaForSale(saved);
+        await safeAccountingPost(() => accountingService.postSale(saved));
         notifySalesChanged();
       }
       return saved;
@@ -279,6 +281,7 @@ class SaleService {
         console.error("Could not store original invoice revision:", err);
       }
       await processZatcaForSale(completed);
+      await safeAccountingPost(() => accountingService.postSale(completed));
       notifySalesChanged();
     }
     return completed;
@@ -315,7 +318,7 @@ class SaleService {
       [newPaid, status, saleId]
     );
 
-    await execute(
+    const paymentId = await insert(
       `INSERT INTO payments (sale_id, amount, payment_method) VALUES ($1, $2, $3)`,
       [saleId, applied, paymentMethod]
     );
@@ -336,6 +339,14 @@ class SaleService {
     }
 
     notifySalesChanged();
+    await safeAccountingPost(() =>
+      accountingService.postSalePayment({
+        paymentId,
+        sale,
+        amount: applied,
+        paymentMethod,
+      })
+    );
     return applied;
   }
 
@@ -1018,13 +1029,15 @@ class SaleService {
 
     notifySalesChanged();
 
-    return {
+    const packed = {
       returnId,
       returnNumber,
       totalRefund,
       sale: await this.getById(saleId),
       returns: await this.getReturnsForSale(saleId),
     };
+    await safeAccountingPost(() => accountingService.postSaleReturn(packed));
+    return packed;
   }
 }
 

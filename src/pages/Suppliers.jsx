@@ -14,12 +14,13 @@ import Table from "../components/common/Table";
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
 import { Input, Textarea } from "../components/common/Input";
-import { StatCard, Card } from "../components/common/Card";
+import { Card } from "../components/common/Card";
 import { LoadingSpinner, Alert } from "../components/common/Loading";
 import SupplierAccountModal from "../components/suppliers/SupplierAccountModal";
+import SupplierBoard from "../components/suppliers/SupplierBoard";
 import { required, runFormValidation } from "../utils/validation";
 import FormValidationAlert from "../components/common/FormValidationAlert";
-import { formatCurrency } from "../utils/format";
+import { formatCurrency, formatSignedCurrency } from "../utils/format";
 
 const emptyForm = { company: "", contact_person: "", phone: "", email: "", address: "" };
 const FORM_ID = "supplier-form";
@@ -28,7 +29,15 @@ export default function Suppliers() {
   const currency = useSettingsStore((s) => s.settings.currency) || "SAR";
   const { submitting, guard } = useSubmitGuard();
   const [suppliers, setSuppliers] = useState([]);
-  const [globalSummary, setGlobalSummary] = useState({ total_pending: 0, suppliers_with_balance: 0 });
+  const [globalSummary, setGlobalSummary] = useState({
+    total_pending: 0,
+    total_advance: 0,
+    suppliers_with_balance: 0,
+    suppliers_with_advance: 0,
+    total_delivered: 0,
+    total_paid: 0,
+    aging: {},
+  });
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -127,12 +136,25 @@ export default function Suppliers() {
     },
     {
       key: "balance_pending",
-      label: "Pending",
-      render: (r) => (
-        <span style={{ fontWeight: r.balance_pending > 0 ? 700 : 400, color: r.balance_pending > 0 ? "var(--color-danger)" : undefined }}>
-          {formatCurrency(r.balance_pending || 0, currency)}
-        </span>
-      ),
+      label: "Status",
+      render: (r) => {
+        const net = Number(r.balance_pending || 0);
+        if (net < -0.01) {
+          return (
+            <span style={{ fontWeight: 700, color: "var(--color-success)" }}>
+              {formatSignedCurrency(Math.abs(net), currency, "in")} extra paid
+            </span>
+          );
+        }
+        if (net > 0.01) {
+          return (
+            <span style={{ fontWeight: 700, color: "var(--color-danger)" }}>
+              {formatSignedCurrency(net, currency, "out")} still to pay
+            </span>
+          );
+        }
+        return <span style={{ color: "var(--color-text-muted)" }}>Settled</span>;
+      },
     },
     {
       key: "actions",
@@ -157,7 +179,7 @@ export default function Suppliers() {
     <div>
       <PageHeader
         title="Supplier Accounts"
-        subtitle="Track supplier deliveries, pending balances, and payments when they collect cash."
+        subtitle="− still to pay  ·  + extra already paid (used on the next delivery)"
         actions={
           <Button onClick={openCreate}>
             <Plus size={16} /> Add Supplier
@@ -173,26 +195,7 @@ export default function Suppliers() {
         />
       </Card>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-          gap: "1rem",
-          marginBottom: "1.25rem",
-        }}
-      >
-        <StatCard
-          label="Total pending (all suppliers)"
-          value={formatCurrency(globalSummary.total_pending, currency)}
-          icon={Wallet}
-          variant={globalSummary.total_pending > 0 ? "danger" : "success"}
-        />
-        <StatCard
-          label="Suppliers with balance"
-          value={String(globalSummary.suppliers_with_balance)}
-          variant="warning"
-        />
-      </div>
+      <SupplierBoard summary={globalSummary} currency={currency} />
 
       {listError && <Alert>{listError}</Alert>}
 

@@ -1,0 +1,124 @@
+.product-value-totals {
+  margin: 0 0 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.product-value-totals.compact {
+  margin: 0.85rem 0 0;
+}
+
+.product-value-totals-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  margin-bottom: 0.75rem;
+}
+
+.product-value-totals-head strong {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.product-value-totals-head small {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+}
+
+.product-value-totals-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.product-value-totals-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  padding: 0.7rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+}
+
+.product-value-totals-icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  margin-bottom: 0.15rem;
+}
+
+.product-value-totals-item.purchase .product-value-totals-icon {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+}
+
+.product-value-totals-item.selling .product-value-totals-icon {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.product-value-totals-item.qty .product-value-totals-icon {
+  background: rgba(100, 116, 139, 0.14);
+  color: #475569;
+}
+
+.product-value-totals-item.profit.up .product-value-totals-icon {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.product-value-totals-item.profit.down .product-value-totals-icon {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+}
+
+.product-value-totals-label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.product-value-totals-item strong {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.product-value-totals.compact .product-value-totals-item strong {
+  font-size: 0.875rem;
+}
+
+.product-value-totals-item > small {
+  font-size: 0.6875rem;
+  color: var(--color-text-muted);
+}
+
+.product-value-totals-item.profit.down strong {
+  color: #dc2626;
+}
+
+.dashboard-page .product-value-totals {
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 900px) {
+  .product-value-totals-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .product-value-totals-grid {
+    grid-template-columns: 1fr;
+  }
+}

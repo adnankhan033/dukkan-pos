@@ -2,6 +2,7 @@ import { query, queryOne, execute, insert } from "../database/connection";
 import { inventoryService } from "./InventoryService";
 import { generateNumber } from "../utils/format";
 import { PURCHASE_PAYMENT_STATUS, PURCHASE_TYPE } from "../utils/constants";
+import { accountingService, safeAccountingPost } from "./AccountingService";
 
 class PurchaseService {
   async getAll({ page = 1, limit = 10, supplierId = null, paymentStatus = null } = {}) {
@@ -131,7 +132,62 @@ class PurchaseService {
       );
     }
 
+    const saved = await this.getById(purchaseId);
+    await safeAccountingPost(() => accountingService.postPurchase(saved));
+    if (isCredit && supplierId) {
+      await this.applyUnallocatedAdvances(supplierId, purchaseId);
+    }
+    await safeAccountingPost(() => accountingService.syncInventoryBookToStock());
     return this.getById(purchaseId);
+  }
+
+  /** Apply prepaid supplier cash (purchase_id IS NULL) to a delivery. No new cash journal. */
+  async applyUnallocatedAdvances(supplierId, purchaseId) {
+    if (!supplierId || !purchaseId) return 0;
+
+    const purchase = await queryOne("SELECT * FROM purchases WHERE id = $1", [purchaseId]);
+    if (!purchase) return 0;
+
+    let due = Number(purchase.total || 0) - Number(purchase.amount_paid || 0);
+    if (due <= 0.01) return 0;
+
+    const advances = await query(
+      `SELECT * FROM supplier_payments
+       WHERE supplier_id = $1 AND purchase_id IS NULL AND amount > 0.01
+       ORDER BY payment_date ASC, id ASC`,
+      [supplierId]
+    );
+
+    let appliedTotal = 0;
+    for (const advance of advances) {
+      if (due <= 0.01) break;
+      const take = Math.min(Number(advance.amount) || 0, due);
+      const applied = await this.applyPaymentToPurchase(purchaseId, take);
+      if (applied <= 0) break;
+
+      const leftover = Number(advance.amount) - applied;
+      const note = `Advance applied to ${purchase.purchase_number}`;
+      if (leftover <= 0.01) {
+        await execute(
+          `UPDATE supplier_payments SET purchase_id = $1,
+             notes = CASE WHEN notes IS NULL OR notes = '' THEN $2 ELSE notes END
+           WHERE id = $3`,
+          [purchaseId, note, advance.id]
+        );
+      } else {
+        await execute("UPDATE supplier_payments SET amount = $1 WHERE id = $2", [leftover, advance.id]);
+        await insert(
+          `INSERT INTO supplier_payments (supplier_id, purchase_id, amount, payment_date, notes)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [supplierId, purchaseId, applied, advance.payment_date, note]
+        );
+      }
+
+      due -= applied;
+      appliedTotal += applied;
+    }
+
+    return appliedTotal;
   }
 
   async applyPaymentToPurchase(purchaseId, amount) {

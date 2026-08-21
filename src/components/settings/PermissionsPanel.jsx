@@ -116,7 +116,7 @@ function PermissionsPanel({ form, updateField, updateFields, onResetRole }) {
 
         {activeRole === ROLES.ADMIN && (
           <Alert type="info" title="Administrator">
-            Administrators always have full action permissions (create, edit, delete). Menu access can still be customized below.
+            Administrators always keep Users, Settings, and every Administration page. Those items cannot be turned off, and all Settings tabs stay visible.
           </Alert>
         )}
 
@@ -127,7 +127,8 @@ function PermissionsPanel({ form, updateField, updateFields, onResetRole }) {
           updateFields={updateFields}
           scope="role"
           role={activeRole}
-          lockModuleIds={activeRole === ROLES.CASHIER ? ["users", "settings"] : []}
+          lockModuleIds={["users", "settings"]}
+          lockForcedOn={activeRole === ROLES.ADMIN}
         />
 
         <div className="settings-permissions-actions">

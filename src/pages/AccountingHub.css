@@ -1,0 +1,96 @@
+.acct-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.acct-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.85rem;
+}
+
+.acct-subtabs,
+.acct-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.acct-subtabs button {
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-text-muted);
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.acct-subtabs button.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+
+.acct-filters .form-group {
+  min-width: 10rem;
+}
+
+.acct-inline-actions {
+  margin-bottom: 0.75rem;
+}
+
+.acct-statement {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+}
+
+.acct-statement h3 {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.acct-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.875rem;
+}
+
+.acct-row.strong {
+  font-weight: 800;
+}
+
+.acct-gate {
+  padding: 1.5rem;
+  max-width: 40rem;
+}
+
+.acct-gate h3 {
+  margin: 0.5rem 0;
+}
+
+.acct-gate p {
+  color: var(--color-text-muted);
+  margin: 0 0 1rem;
+}
+
+.acct-gate svg {
+  color: var(--color-primary);
+}
+
+@media print {
+  .page-header-actions,
+  .acct-subtabs,
+  .acct-filters,
+  .sidebar,
+  .main-layout > aside {
+    display: none !important;
+  }
+}
