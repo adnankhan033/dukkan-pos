@@ -110,9 +110,9 @@ function buildBalanceJoinSql(filters, params, settings) {
   const dateFilter = buildSalesDateFilter(filters, params, settings, "s.created_at");
   return `LEFT JOIN (
     SELECT s.customer_id,
-           SUM(s.total) AS total_invoiced,
+           SUM(COALESCE(s.original_total, s.total)) AS total_invoiced,
            SUM(COALESCE(s.amount_paid, 0)) AS total_paid,
-           SUM(s.total - COALESCE(s.amount_paid, 0)) AS balance_pending,
+           SUM(COALESCE(s.original_total, s.total) - COALESCE(s.amount_paid, 0)) AS balance_pending,
            SUM(CASE WHEN s.payment_status IN ('pending', 'partial') THEN 1 ELSE 0 END) AS pending_count
     FROM sales s
     WHERE s.customer_id IS NOT NULL
@@ -185,9 +185,9 @@ class CustomerService {
   async getBalanceSummary(customerId) {
     const row = await queryOne(
       `SELECT
-         COALESCE(SUM(s.total), 0) AS total_invoiced,
+         COALESCE(SUM(COALESCE(s.original_total, s.total)), 0) AS total_invoiced,
          COALESCE(SUM(s.amount_paid), 0) AS total_paid,
-         COALESCE(SUM(s.total - COALESCE(s.amount_paid, 0)), 0) AS balance_pending,
+         COALESCE(SUM(COALESCE(s.original_total, s.total) - COALESCE(s.amount_paid, 0)), 0) AS balance_pending,
          SUM(CASE WHEN s.payment_status IN ('pending', 'partial') THEN 1 ELSE 0 END) AS pending_orders
        FROM sales s
        WHERE s.customer_id = $1
@@ -207,8 +207,8 @@ class CustomerService {
     const [summary, orders, payments] = await Promise.all([
       this.getBalanceSummary(customerId),
       query(
-        `SELECT s.id, s.sale_number, s.total, s.amount_paid,
-                (s.total - COALESCE(s.amount_paid, 0)) AS balance_due,
+        `SELECT s.id, s.sale_number, s.total, s.original_total, s.amount_paid,
+                (COALESCE(s.original_total, s.total) - COALESCE(s.amount_paid, 0)) AS balance_due,
                 s.payment_status, s.payment_method, s.due_date, s.notes, s.created_at
          FROM sales s
          WHERE s.customer_id = $1
@@ -252,7 +252,7 @@ class CustomerService {
     const orders = await query(
       `SELECT s.id, s.sale_number, s.subtotal, s.discount, s.vat, s.total,
               s.amount_paid, s.payment_status, s.payment_method, s.status,
-              (s.total - COALESCE(s.amount_paid, 0)) AS balance_due,
+              (COALESCE(s.original_total, s.total) - COALESCE(s.amount_paid, 0)) AS balance_due,
               s.notes, s.created_at
        FROM sales s
        WHERE s.customer_id = $1
@@ -370,14 +370,14 @@ class CustomerService {
 
     const balanceRow = await queryOne(
       `SELECT
-         COALESCE(SUM(s.total - COALESCE(s.amount_paid, 0)), 0) AS total_pending,
+         COALESCE(SUM(COALESCE(s.original_total, s.total) - COALESCE(s.amount_paid, 0)), 0) AS total_pending,
          COUNT(DISTINCT s.customer_id) AS customers_with_balance
        FROM sales s
        INNER JOIN customers c ON c.id = s.customer_id
        WHERE s.customer_id IS NOT NULL
          AND s.status IN ('completed', 'partial_return')
          AND s.payment_status IN ('pending', 'partial')
-         AND (s.total - COALESCE(s.amount_paid, 0)) > 0.01
+         AND (COALESCE(s.original_total, s.total) - COALESCE(s.amount_paid, 0)) > 0.01
          AND ${contactWhere}
          ${dateFilter}`,
       summaryParams

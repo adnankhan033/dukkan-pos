@@ -142,6 +142,10 @@ class ZatcaIntegrationService {
     zatcaSyncService.startBackgroundSync(this.settingsProvider);
   }
 
+  stopBackgroundSync() {
+    zatcaSyncService.stopBackgroundSync();
+  }
+
   restartBackgroundSync() {
     zatcaSyncService.restartBackgroundSync(this.settingsProvider);
   }

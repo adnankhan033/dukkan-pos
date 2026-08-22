@@ -1,4 +1,4 @@
-import { query, queryOne } from "../database/connection";
+import { queryOne } from "../database/connection";
 import { saleService } from "./SaleService";
 import { purchaseService } from "./PurchaseService";
 import { productService } from "./ProductService";
@@ -8,6 +8,7 @@ import { employeeService } from "./EmployeeService";
 import {
   getGrossSalesInRange,
   getNetRevenueInRange,
+  getPaymentBreakdownInRange,
   getProfitInRange,
   getReturnsTotalInRange,
 } from "./FinanceService";
@@ -51,27 +52,6 @@ function computeTodayTrend(todaySales, weeklyTrend) {
   return Math.round(((todaySales - avg) / avg) * 100);
 }
 
-async function moneyByMethod(table, dateCol, amountCol, date, extraWhere = "") {
-  const rows = await query(
-    `SELECT lower(coalesce(payment_method, 'cash')) AS method,
-            COALESCE(SUM(${amountCol}), 0) AS total
-     FROM ${table}
-     WHERE date(${dateCol}) = date($1) ${extraWhere}
-     GROUP BY lower(coalesce(payment_method, 'cash'))`,
-    [date]
-  );
-  const out = { cash: 0, card: 0, credit: 0, other: 0 };
-  for (const row of rows) {
-    const method = String(row.method || "cash");
-    const value = Number(row.total || 0);
-    if (method === "pay_later" || method === "credit") out.credit += value;
-    else if (method === "cash") out.cash += value;
-    else if (method === "card") out.card += value;
-    else out.other += value;
-  }
-  return out;
-}
-
 async function agingBuckets(sql, params = []) {
   const row = await queryOne(sql, params);
   return {
@@ -85,24 +65,14 @@ async function agingBuckets(sql, params = []) {
 
 class DashboardService {
   async getDailyBoard(date) {
-    const saleWhere = `AND status IN ('completed', 'partial_return', 'returned')`;
-    const [sales, purchases, returnsByMethod, expenses, inventory, customerAging, customerSummary, vendorSummary] =
+    const [paymentBreakdown, purchases, expenses, inventory, customerAging, customerSummary, vendorSummary] =
       await Promise.all([
-        moneyByMethod("sales", "created_at", "total", date, saleWhere),
+        getPaymentBreakdownInRange(date, date),
         queryOne(
           `SELECT
              COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN total ELSE 0 END), 0) AS cash,
              COALESCE(SUM(CASE WHEN payment_status IN ('pending', 'partial') THEN total ELSE 0 END), 0) AS credit
            FROM purchases WHERE date(created_at) = date($1)`,
-          [date]
-        ),
-        query(
-          `SELECT lower(coalesce(s.payment_method, 'cash')) AS method,
-                  COALESCE(SUM(sr.total_refund), 0) AS total
-           FROM sale_returns sr
-           JOIN sales s ON s.id = sr.sale_id
-           WHERE date(sr.created_at) = date($1)
-           GROUP BY lower(coalesce(s.payment_method, 'cash'))`,
           [date]
         ),
         queryOne(
@@ -144,19 +114,27 @@ class DashboardService {
         })),
       ]);
 
-    const returns = { cash: 0, card: 0, credit: 0, other: 0 };
-    for (const row of returnsByMethod) {
-      const method = String(row.method || "cash");
-      const value = Number(row.total || 0);
-      if (method === "pay_later" || method === "credit") returns.credit += value;
-      else if (method === "cash") returns.cash += value;
-      else if (method === "card") returns.card += value;
-      else returns.other += value;
-    }
+    const sales = {
+      cash: Number(paymentBreakdown.cash?.gross || 0),
+      card: Number(paymentBreakdown.card?.gross || 0),
+      credit: Number(paymentBreakdown.credit?.gross || 0),
+      other: Number(paymentBreakdown.other?.gross || 0),
+    };
+    const returns = {
+      cash: Number(paymentBreakdown.cash?.returns || 0),
+      card: Number(paymentBreakdown.card?.returns || 0),
+      credit: Number(paymentBreakdown.credit?.returns || 0),
+      other: Number(paymentBreakdown.other?.returns || 0),
+    };
 
-    const cashIn = sales.cash + sales.card;
+    const cashIn = Number(paymentBreakdown.cash?.net || 0);
     const cashOut = Number(purchases?.cash || 0) + Number(expenses?.total || 0);
-    const netSales = sales.cash + sales.card + sales.credit + sales.other - (returns.cash + returns.card + returns.credit + returns.other);
+    const netSales =
+      sales.cash +
+      sales.card +
+      sales.credit +
+      sales.other -
+      (returns.cash + returns.card + returns.credit + returns.other);
 
     return {
       sales,
@@ -221,13 +199,13 @@ class DashboardService {
       getGrossSalesInRange(today, today),
       getReturnsTotalInRange(today, today),
       getNetRevenueInRange(today, today),
-      purchaseService.getTodayTotal(),
+      purchaseService.getTodayTotal(today),
       productService.count(),
       customerService.count(),
       productService.getLowStockSummary(8),
       productService.getValueSummary(),
       getProfitInRange(month.from, monthTo),
-      purchaseService.getMonthlyTotal(),
+      purchaseService.getMonthlyTotal(month.from, monthTo),
       saleService.getRecent(8),
       saleService.getRecentReturns(8),
       saleService.getHeldSales(),
@@ -264,8 +242,8 @@ class DashboardService {
       lowStockCount: lowStockSummary.count,
       lowStock: lowStockSummary.items,
       stockValue,
-      monthlyRevenue: monthProfit.netRevenue,
-      monthlyReturns: monthProfit.salesReturns,
+      monthlyRevenue: monthProfit.netRevenueInclusive,
+      monthlyReturns: monthProfit.salesReturnsInclusive,
       monthlyProfit,
       recentSales,
       recentReturns,

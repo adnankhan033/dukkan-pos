@@ -1,22 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Wallet, Receipt, ChevronDown, ChevronUp } from "lucide-react";
+import { Wallet, Receipt } from "lucide-react";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
-import Badge from "../common/Badge";
 import { Input, Select, Textarea } from "../common/Input";
 import { Card, StatCard } from "../common/Card";
 import { LoadingSpinner, Alert } from "../common/Loading";
 import { useSubmitGuard } from "../../hooks/useSubmitGuard";
 import { customerService } from "../../services/CustomerService";
 import { paymentMethodService } from "../../services/PaymentMethodService";
-import { SALE_PAYMENT_STATUS_LABELS } from "../../utils/constants";
-import { resolvePaymentMethodLabel } from "../../utils/paymentMethods";
-import { formatCurrency, formatDateTime } from "../../utils/format";
-
-function StatusBadge({ status }) {
-  const variant = status === "paid" ? "success" : status === "pending" ? "warning" : "info";
-  return <Badge variant={variant}>{SALE_PAYMENT_STATUS_LABELS[status] || status}</Badge>;
-}
+import { formatCurrency } from "../../utils/format";
+import { buildDebitCreditStatement, partyStatementHint } from "../../utils/debitCredit";
+import DebitCreditTable from "../common/DebitCreditTable";
 
 export default function CustomerAccountModal({ customer, currency, isOpen, onClose, onUpdated }) {
   const { submitting, guard } = useSubmitGuard();
@@ -24,7 +18,6 @@ export default function CustomerAccountModal({ customer, currency, isOpen, onClo
   const [ledger, setLedger] = useState(null);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [error, setError] = useState("");
-  const [showFullLedger, setShowFullLedger] = useState(false);
   const [payForm, setPayForm] = useState({
     amount: "",
     saleId: "",
@@ -57,7 +50,6 @@ export default function CustomerAccountModal({ customer, currency, isOpen, onClo
   useEffect(() => {
     if (isOpen && customer) {
       setError("");
-      setShowFullLedger(false);
       setPayForm({
         amount: "",
         saleId: "",
@@ -77,35 +69,16 @@ export default function CustomerAccountModal({ customer, currency, isOpen, onClo
     [ledger]
   );
 
-  const allRecords = useMemo(() => {
-    const orders = (ledger?.orders ?? []).map((order) => ({
-      recordType: "order",
-      sortDate: order.created_at,
-      id: `o-${order.id}`,
-      orderId: order.id,
-      reference: order.sale_number,
-      date: order.created_at,
-      amount: order.total,
-      paid: order.amount_paid,
-      due: order.balance_due,
-      status: order.payment_status,
-    }));
-    const payments = (ledger?.payments ?? []).map((payment) => ({
-      recordType: "payment",
-      sortDate: payment.payment_date || payment.created_at,
-      id: `p-${payment.id}`,
-      reference: payment.sale_number || "General payment",
-      date: payment.payment_date || payment.created_at,
-      amount: payment.amount,
-      method: payment.payment_method,
-      notes: payment.notes,
-    }));
-    return [...orders, ...payments].sort(
-      (a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime()
-    );
-  }, [ledger]);
+  const statement = useMemo(
+    () =>
+      buildDebitCreditStatement({
+        party: "customer",
+        invoices: ledger?.orders ?? [],
+        payments: ledger?.payments ?? [],
+      }),
+    [ledger]
+  );
 
-  const visibleRecords = showFullLedger ? allRecords : allRecords.slice(0, 8);
   const balanceDue = ledger?.summary?.balance_pending ?? 0;
   const canRecordPayment = balanceDue > 0.01 || pendingOrders.length > 0;
 
@@ -159,17 +132,17 @@ export default function CustomerAccountModal({ customer, currency, isOpen, onClo
           <div className="customer-account-stats">
             <StatCard
               icon={Receipt}
-              label="Total invoiced"
+              label="Invoiced · مدين"
               value={formatCurrency(ledger?.summary?.total_invoiced ?? 0, currency)}
             />
             <StatCard
               icon={Wallet}
-              label="Total paid"
+              label="Paid · دائن"
               value={formatCurrency(ledger?.summary?.total_paid ?? 0, currency)}
             />
             <StatCard
               icon={Wallet}
-              label="Balance due"
+              label="Still due"
               value={formatCurrency(balanceDue, currency)}
               variant={balanceDue > 0 ? "warning" : "primary"}
             />
@@ -241,56 +214,14 @@ export default function CustomerAccountModal({ customer, currency, isOpen, onClo
 
           <Card className="customer-account-ledger">
             <div className="customer-account-ledger-header">
-              <h4>Account history</h4>
-              {allRecords.length > 8 && (
-                <Button variant="ghost" size="sm" onClick={() => setShowFullLedger((v) => !v)}>
-                  {showFullLedger ? (
-                    <>
-                      <ChevronUp size={14} /> Show less
-                    </>
-                  ) : (
-                    <>
-                      <ChevronDown size={14} /> Show all ({allRecords.length})
-                    </>
-                  )}
-                </Button>
-              )}
+              <h4>Debit / Credit statement</h4>
             </div>
-            {visibleRecords.length === 0 ? (
-              <p className="customer-account-empty">No orders or payments yet.</p>
-            ) : (
-              <div className="customer-account-records">
-                {visibleRecords.map((record) => (
-                  <div key={record.id} className={`customer-account-record ${record.recordType}`}>
-                    <div>
-                      <strong>{record.reference}</strong>
-                      <small>{formatDateTime(record.date)}</small>
-                    </div>
-                    <div className="customer-account-record-meta">
-                      {record.recordType === "order" ? (
-                        <>
-                          <StatusBadge status={record.status} />
-                          <span>{formatCurrency(record.amount, currency)}</span>
-                          {record.due > 0 && (
-                            <span className="customer-account-due">
-                              Due {formatCurrency(record.due, currency)}
-                            </span>
-                          )}
-                        </>
-                      ) : (
-                        <>
-                          <Badge variant="success">Payment</Badge>
-                          <span>{formatCurrency(record.amount, currency)}</span>
-                          <span className="customer-account-method">
-                            {resolvePaymentMethodLabel(record.method, paymentMethods)}
-                          </span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <DebitCreditTable
+              rows={statement}
+              currency={currency}
+              hint={partyStatementHint("customer")}
+              emptyMessage="No invoices or payments yet."
+            />
           </Card>
         </>
       )}

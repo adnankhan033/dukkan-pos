@@ -348,8 +348,9 @@ export default function DailyClose() {
           <StatCard label="Gross Sales" value={formatCurrency(summary.grossSales, currency)} icon={ShoppingBag} />
           <StatCard label="Returns" value={formatCurrency(summary.returnsTotal, currency)} icon={RotateCcw} variant="warning" />
           <StatCard label="Net Sales" value={formatCurrency(summary.netSales, currency)} icon={Banknote} variant="success" />
-          <StatCard label="Cash (Net)" value={formatCurrency(summary.cashTotal, currency)} icon={Banknote} />
-          <StatCard label="Card (Net)" value={formatCurrency(summary.cardTotal, currency)} icon={CreditCard} />
+          <StatCard label="Cash in drawer (Net)" value={formatCurrency(summary.cashTotal, currency)} icon={Banknote} />
+          <StatCard label="Card / bank (Net)" value={formatCurrency(summary.cardTotal, currency)} icon={CreditCard} />
+          <StatCard label="Pay later (not cash)" value={formatCurrency(summary.creditTotal || 0, currency)} icon={CreditCard} />
           <StatCard label="Sales Count" value={summary.salesCount} icon={ShoppingBag} />
         </div>
       )}
@@ -417,12 +418,16 @@ export default function DailyClose() {
                 <dd>{formatCurrency(summary.netSales, currency)}</dd>
               </div>
               <div>
-                <dt>Expected Cash</dt>
+                <dt>Expected cash in drawer</dt>
                 <dd>{formatCurrency(summary.cashTotal, currency)}</dd>
               </div>
               <div>
-                <dt>Card Total</dt>
+                <dt>Card / bank</dt>
                 <dd>{formatCurrency(summary.cardTotal, currency)}</dd>
+              </div>
+              <div>
+                <dt>Pay later</dt>
+                <dd>{formatCurrency(summary.creditTotal || 0, currency)}</dd>
               </div>
               <div>
                 <dt>Sales / Returns</dt>

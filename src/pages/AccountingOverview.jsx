@@ -54,14 +54,14 @@ export default function AccountingOverview() {
     <div className="acct-hub">
       <PageHeader
         title="Accounting"
-        subtitle="Live books from POS sales, purchases, expenses, and partner capital."
+        subtitle="Sales and profit come from the books (without VAT). Cash is the till."
       />
       <AccountingGate enabled={enabled}>
         {loading ? (
           <LoadingSpinner message="Loading financial summary..." />
         ) : (
           <div className="acct-kpi-grid">
-            <StatCard label="Sales" numericValue={data?.sales} currency={currency} icon={TrendingUp} />
+            <StatCard label="Sales (without VAT)" numericValue={data?.sales} currency={currency} icon={TrendingUp} />
             <StatCard label="Gross profit" numericValue={data?.grossProfit} currency={currency} icon={Scale} />
             <StatCard label="Net profit" numericValue={data?.netProfit} currency={currency} icon={PiggyBank} featured />
             <StatCard label="Expenses" numericValue={data?.expenses} currency={currency} icon={Receipt} />

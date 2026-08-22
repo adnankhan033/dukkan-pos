@@ -18,6 +18,7 @@ import { Input } from "../common/Input";
 import { Alert, LoadingSpinner } from "../common/Loading";
 import { formatCurrency } from "../../utils/format";
 import { todayISO } from "../../utils/format";
+import { ownershipSharesFromAmounts } from "../../utils/accounting";
 import "./AccountingSettingsPanel.css";
 
 const STEPS = [
@@ -86,6 +87,10 @@ export default function AccountingSettingsPanel() {
 
   const capitalTotal = useMemo(
     () => partners.reduce((sum, p) => sum + (Number(p.capital) || 0), 0),
+    [partners]
+  );
+  const inferredShares = useMemo(
+    () => ownershipSharesFromAmounts(partners.map((p) => Number(p.capital) || 0)),
     [partners]
   );
 
@@ -293,6 +298,7 @@ export default function AccountingSettingsPanel() {
               </h3>
               <p className="settings-section-desc">
                 Count what you actually have right now. Use cash, bank, or both. Leave a box off if that place is empty.
+                Partner money you enter on the next screen is who owns this cash — it is not added on top.
                 You can move money between cash and bank later from Accounting → Journals → Transfer.
               </p>
 
@@ -420,7 +426,8 @@ export default function AccountingSettingsPanel() {
                 Partners / owners
               </h3>
               <p className="settings-section-desc">
-                Capital does not need to be equal. Ownership % is used for profit share unless you set a different share later.
+                Capital is how much of the shop each person owns. It does not add extra cash — you already counted the till.
+                Leave ownership blank and it will follow the capital amounts.
               </p>
               <div className="acct-repeat">
                 {partners.map((partner, index) => (
@@ -473,6 +480,12 @@ export default function AccountingSettingsPanel() {
               <p className="acct-hint">
                 Ownership total: {ownershipTotal.toFixed(2)}% · Capital: {formatCurrency(capitalTotal, currency)}
                 {Math.abs(ownershipTotal - 100) > 0.01 && ownershipTotal > 0 ? " — should add to 100%." : ""}
+                {ownershipTotal === 0 && capitalTotal > 0
+                  ? ` — blank ownership will follow capital (${partners
+                      .map((p, i) => (String(p.name || "").trim() ? `${p.name.trim()} ${inferredShares[i].toFixed(2)}%` : null))
+                      .filter(Boolean)
+                      .join(", ")}).`
+                  : ""}
               </p>
             </Card>
           )}
@@ -520,7 +533,9 @@ export default function AccountingSettingsPanel() {
                 </div>
               ) : (
                 <p className="settings-section-desc">
-                  Books start empty except cash {formatCurrency(cashAmount, currency)}, bank {formatCurrency(bankTotal, currency)}, and partner capital {formatCurrency(capitalTotal, currency)}.
+                  Books start with the cash you counted ({formatCurrency(cashAmount, currency)})
+                  {bankTotal > 0 ? ` and bank (${formatCurrency(bankTotal, currency)})` : ""}.
+                  Partner capital ({formatCurrency(capitalTotal, currency)}) is who owns that money — it is not added on top.
                 </p>
               )}
               <p className="settings-section-desc">

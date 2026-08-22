@@ -32,6 +32,8 @@ import ZatcaTestCenter from "../pages/ZatcaTestCenter";
 import Subscriptions from "../pages/Subscriptions";
 import CloudBackup from "../pages/CloudBackup";
 import StoreCards from "../pages/StoreCards";
+import Wholesale from "../pages/Wholesale";
+import WholesalePriceLists from "../pages/WholesalePriceLists";
 
 function withRole(module, element) {
   return <RoleRoute module={module}>{element}</RoleRoute>;
@@ -70,16 +72,18 @@ export default function AppRoutes() {
         <Route path="/suppliers" element={withRole("suppliers", <Suppliers />)} />
         <Route path="/sales" element={withRole("sales", <Sales />)} />
         <Route path="/orders" element={withRole("sales", <Orders />)} />
-        <Route path="/purchases" element={withRole("suppliers", <Purchases />)} />
+        <Route path="/purchases" element={withRole("purchasing", <Purchases />)} />
         <Route path="/inventory" element={withRole("inventory", <Inventory />)} />
+        <Route path="/wholesale" element={withRole("wholesale", <Wholesale />)} />
+        <Route path="/wholesale/price-lists" element={withRole("wholesale", <WholesalePriceLists />)} />
         <Route path="/accounting" element={<Navigate to="/accounting/receive" replace />} />
-        <Route path="/accounting/receive" element={withRole("accounting", <AccountingCash mode="receive" />)} />
-        <Route path="/accounting/pay" element={withRole("accounting", <AccountingCash mode="pay" />)} />
-        <Route path="/accounting/expenses" element={withRole("accounting", <Accounting />)} />
-        <Route path="/accounting/partners" element={withRole("accounting", <AccountingPartners />)} />
+        <Route path="/accounting/receive" element={withRole("cash_bank", <AccountingCash mode="receive" />)} />
+        <Route path="/accounting/pay" element={withRole("cash_bank", <AccountingCash mode="pay" />)} />
+        <Route path="/accounting/expenses" element={withRole("expenses", <Accounting />)} />
+        <Route path="/accounting/partners" element={withRole("partners", <AccountingPartners />)} />
         <Route path="/accounting/journals" element={withRole("accounting", <AccountingJournals />)} />
         <Route path="/accounting/reports" element={<Navigate to="/accounting/journals" replace />} />
-        <Route path="/employees" element={withRole("accounting", <Employees />)} />
+        <Route path="/employees" element={withRole("expenses", <Employees />)} />
         <Route path="/expenses" element={<Navigate to="/accounting/expenses" replace />} />
         <Route path="/reports" element={withRole("reports", <Reports />)} />
         <Route path="/daily-close" element={withRole("reports", <DailyClose />)} />

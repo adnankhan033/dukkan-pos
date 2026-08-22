@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, lazy, Suspense } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Download, RotateCcw, Trash2, ShieldAlert } from "lucide-react";
 import { settingsService } from "../services/SettingsService";
 import { activationService } from "../services/ActivationService";
@@ -8,7 +8,7 @@ import { zatcaService } from "../services/ZatcaService";
 import { useSettingsStore, useAuthStore } from "../contexts/store";
 import { useConfirm } from "../hooks/useConfirm";
 import { usePermissions } from "../hooks/usePermissions";
-import { DATA_CLEAR_SECTIONS } from "../utils/dataClearSections.js";
+import { DATA_CLEAR_SECTIONS, DATA_CLEARED_NOTICE_KEY } from "../utils/dataClearSections.js";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import Modal from "../components/common/Modal";
@@ -22,6 +22,7 @@ import SettingsTabToolbar from "../components/settings/SettingsTabToolbar";
 import SettingsTabView from "../components/settings/SettingsTabView";
 import PaymentMethodsPanel from "../components/settings/PaymentMethodsPanel";
 import AccountingSettingsPanel from "../components/settings/AccountingSettingsPanel";
+import ModulesPanel from "../components/settings/ModulesPanel";
 import { VENDOR_SETTING_KEY_LIST, VENDOR_SETTING_KEYS } from "../config/softwareVendor";
 import { DEFAULT_RECEIPT_TEMPLATE } from "../utils/receiptTemplates";
 import { currencyOptions, DEFAULT_CURRENCY } from "../utils/currencies";
@@ -52,15 +53,16 @@ const PermissionsPanel = lazy(() => import("../components/settings/PermissionsPa
 const ZATCA_DEFAULTS = getZatcaDefaultSettings();
 
 const TABS = [
-  { id: "store", label: "Store" },
-  { id: "permissions", label: "Permissions", adminOnly: true },
-  { id: "payments", label: "Payments", adminOnly: true },
-  { id: "accounting", label: "Accounting", adminOnly: true },
-  { id: "receipt", label: "Receipt" },
-  { id: "zatca", label: "ZATCA" },
-  { id: "dashboard", label: "Dashboard" },
-  { id: "vendor", label: "Vendor", adminOnly: true },
-  { id: "backup", label: "Backup" },
+  { id: "store", label: "Store", group: "shop" },
+  { id: "receipt", label: "Receipts", group: "shop" },
+  { id: "payments", label: "Payments", group: "shop", adminOnly: true },
+  { id: "zatca", label: "ZATCA", group: "shop" },
+  { id: "accounting", label: "Accounting", group: "apps", adminOnly: true },
+  { id: "modules", label: "Modules", group: "apps", adminOnly: true },
+  { id: "permissions", label: "Access", group: "apps", adminOnly: true },
+  { id: "dashboard", label: "Home", group: "system" },
+  { id: "backup", label: "Backup", group: "system" },
+  { id: "vendor", label: "Branding", group: "system", adminOnly: true },
 ];
 
 function settingBool(value) {
@@ -287,10 +289,14 @@ export default function Settings() {
   const setSettings = useSettingsStore((s) => s.setSettings);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { isAdmin, canPerformAction } = usePermissions();
   const canUpdateInvoices = canPerformAction("invoices_update");
   const { confirm, dialog: confirmDialog } = useConfirm();
-  const [tab, setTab] = useState("store");
+  const [tab, setTab] = useState(() => {
+    const requested = searchParams.get("tab");
+    return TABS.some((item) => item.id === requested) ? requested : "store";
+  });
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState(() => buildFormFromSettings(settings));
   const [backupBusy, setBackupBusy] = useState(false);
@@ -309,6 +315,7 @@ export default function Settings() {
     setErrors({});
     setFeedback(null);
     setForm(buildFormFromSettings(settings));
+    setSearchParams(nextTab === "store" ? {} : { tab: nextTab }, { replace: true });
   }
 
   function startEditing() {
@@ -654,7 +661,7 @@ export default function Settings() {
       setFeedbackModal({
         title: "Clear Failed",
         icon: "error",
-        body: <p>{err.message || `Could not clear ${section.label.toLowerCase()}.`}</p>,
+        body: <p>{formatDbError(err) || `Could not clear ${section.label.toLowerCase()}.`}</p>,
       });
     } finally {
       setBackupBusy(false);
@@ -701,21 +708,24 @@ export default function Settings() {
 
   async function handleClearDataClick() {
     const ok = await confirm({
-      title: "Clear All Data",
+      title: "Clear everything?",
       size: "lg",
       variant: "danger",
       confirmLabel: "Continue",
       cancelLabel: "Cancel",
       children: (
         <>
-          <p>Permanently delete all business data from this device:</p>
+          <p>This removes all store data from A to Z on this device:</p>
           <ul className="confirm-list">
-            <li>Products, sales, orders, purchases, inventory</li>
-            <li>Customers, suppliers, expenses</li>
-            <li>Custom settings (store name, VAT)</li>
+            <li>Products, stock, categories, units, barcodes</li>
+            <li>Sales, invoices, returns, held carts, ZATCA queue</li>
+            <li>Purchases, suppliers, customers, payments</li>
+            <li>Expenses, employees, partners, accounting books</li>
+            <li>Reports, daily closes, wholesale price lists</li>
+            <li>Store settings (name, VAT, receipts) reset to defaults</li>
           </ul>
           <div className="confirm-note confirm-note-danger">
-            This cannot be undone. Download a backup first if you need to keep your data.
+            This cannot be undone. Download a backup first if you need the data. Device activation stays so you do not re-license the app.
           </div>
         </>
       ),
@@ -744,22 +754,25 @@ export default function Settings() {
     setBackupBusy(true);
     try {
       await backupService.clearAllData();
+      const message =
+        "All store data was cleared. Sign in with "
+        + DEFAULT_ADMIN_USERNAME
+        + " / "
+        + DEFAULT_ADMIN_PASSWORD
+        + " or cashier / cashier123.";
+      try {
+        sessionStorage.setItem(DATA_CLEARED_NOTICE_KEY, message);
+      } catch {
+        /* ignore */
+      }
       logout();
-      navigate("/login", {
-        replace: true,
-        state: {
-          message:
-            "Database cleared successfully. Sign in with admin / "
-            + DEFAULT_ADMIN_PASSWORD
-            + " or cashier / cashier123.",
-        },
-      });
+      window.location.replace("/login");
     } catch (err) {
       setBackupBusy(false);
       setFeedbackModal({
         title: "Clear Failed",
         icon: "error",
-        body: <p>{err.message || "Could not clear the database."}</p>,
+        body: <p>{formatDbError(err) || "Could not clear the database."}</p>,
       });
     }
   }
@@ -768,22 +781,28 @@ export default function Settings() {
     <div>
       <PageHeader
         title="Settings"
-        subtitle="Store configuration, receipts, accounting, dashboards, and backups."
+        subtitle="Store details, receipts, apps, and backups."
       />
 
       <div className="settings-tabs">
-        {TABS.filter((t) => !t.adminOnly || isAdmin).map((t) => (
-          <button
-            key={t.id}
-            type="button"
-            className={`settings-tab ${tab === t.id ? "active" : ""}`}
-            aria-current={tab === t.id ? "page" : undefined}
-            disabled={saving}
-            onClick={() => switchTab(t.id)}
-          >
-            {t.label}
-          </button>
-        ))}
+        {TABS.filter((t) => !t.adminOnly || isAdmin).map((t, index, tabs) => {
+          const prev = tabs[index - 1];
+          const showSep = Boolean(prev && prev.group !== t.group);
+          return (
+            <span key={t.id} className="settings-tab-wrap">
+              {showSep ? <span className="settings-tab-sep" aria-hidden="true" /> : null}
+              <button
+                type="button"
+                className={`settings-tab ${tab === t.id ? "active" : ""}`}
+                aria-current={tab === t.id ? "page" : undefined}
+                disabled={saving}
+                onClick={() => switchTab(t.id)}
+              >
+                {t.label}
+              </button>
+            </span>
+          );
+        })}
       </div>
 
       {tab === "backup" ? (
@@ -792,7 +811,7 @@ export default function Settings() {
               <h3 className="settings-section-title">Database Backup</h3>
               <p className="settings-section-desc">
                 Export or restore all store data including products, sales, users, and settings.
-                For Gmail cloud backup, use <strong>Administration → Gmail Backup</strong> in the sidebar.
+                For Gmail cloud backup, use <strong>Setup → Backup</strong> in the sidebar.
               </p>
               <div className="settings-backup-actions">
                 <Button type="button" variant="secondary" onClick={handleBackupClick} disabled={backupBusy}>
@@ -865,25 +884,27 @@ export default function Settings() {
 
             {isAdmin && (
             <Card className="settings-card settings-danger-card">
-              <h3 className="settings-section-title settings-danger-title">Clear Database</h3>
+              <h3 className="settings-section-title settings-danger-title">Clear everything (A–Z)</h3>
               <p className="settings-section-desc">
-                Remove all business data and reset to factory defaults. This cannot be undone.
-                Download a backup first if you need to keep your data.
+                One wipe for the whole store. Every business table is emptied, then factory defaults are restored.
+                This cannot be undone. Download a backup first if you need the data.
               </p>
               <ul className="settings-danger-list">
-                <li>Products, sales, orders, purchases, inventory</li>
-                <li>Customers, suppliers, expenses</li>
-                <li>Custom settings (store name, VAT)</li>
+                <li>Products, stock, sales, invoices, purchases, customers, suppliers</li>
+                <li>Payments, expenses, employees, partners, accounting books, ZATCA queue</li>
+                <li>Store settings reset to defaults (device activation is kept)</li>
               </ul>
               <p className="settings-section-desc">
                 Restored after clear: default admin (<strong>{DEFAULT_ADMIN_USERNAME}</strong> / {DEFAULT_ADMIN_PASSWORD}) and cashier (<strong>cashier</strong> / cashier123).
               </p>
               <Button type="button" variant="danger" onClick={handleClearDataClick} disabled={backupBusy}>
-                {backupBusy ? "Clearing..." : "Clear All Data"}
+                {backupBusy ? "Clearing..." : "Clear all data A–Z"}
               </Button>
             </Card>
             )}
         </>
+      ) : tab === "modules" && isAdmin ? (
+        <ModulesPanel onOpenTab={switchTab} />
       ) : tab === "payments" && isAdmin ? (
         <PaymentMethodsPanel />
       ) : tab === "accounting" && isAdmin ? (
@@ -914,9 +935,9 @@ export default function Settings() {
           onSave={() => document.getElementById("settings-edit-form")?.requestSubmit()}
           saveLabel={
             tab === "permissions"
-              ? "Save Permissions"
+              ? "Save Access"
               : tab === "vendor"
-                ? "Save Vendor Branding"
+                ? "Save Branding"
                 : "Save Settings"
           }
         />

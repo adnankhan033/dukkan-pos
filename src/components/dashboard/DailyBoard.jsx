@@ -43,7 +43,7 @@ export default function DailyBoard({ board, currency = "SAR" }) {
       rows: [
         ["Cash sale", board.sales.cash, "in"],
         ["Card / bank", board.sales.card, "in"],
-        ["Credit (pay later)", board.sales.credit, "in"],
+        ["Pay later (customer due)", board.sales.credit, "in"],
         ["Returns", board.returns.cash + board.returns.card + board.returns.credit + board.returns.other, "out"],
       ],
     },
@@ -67,7 +67,7 @@ export default function DailyBoard({ board, currency = "SAR" }) {
       direction: "auto",
       path: "/accounting/receive",
       rows: [
-        ["Money in (cash + card sales)", board.cash.receiving, "in"],
+        ["Money in (cash sales after returns)", board.cash.receiving, "in"],
         ["Money out (paid purchases + expenses)", board.cash.payments, "out"],
         ["Expenses", board.cash.expenses, "out"],
       ],

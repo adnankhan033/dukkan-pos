@@ -4,6 +4,7 @@ import Sidebar from "../components/layout/Sidebar";
 import ZatcaSyncIndicator from "../components/zatca/ZatcaSyncIndicator";
 import SubscriptionBlocked from "../components/subscriptions/SubscriptionBlocked";
 import WelcomeModal from "../components/auth/WelcomeModal";
+import { AppBackProvider } from "../components/common/AppBackProvider";
 import { useAuthStore, useSettingsStore, useSidebarStore } from "../contexts/store";
 import { useSubscription } from "../hooks/useSubscription";
 import { LoadingSpinner } from "../components/common/Loading";
@@ -74,8 +75,10 @@ export default function MainLayout() {
       <div className={`main-layout sidebar-mode-${mode}`}>
         <Sidebar />
         <main className="main-content">
-          <ZatcaSyncIndicator />
-          <Outlet />
+          <AppBackProvider>
+            <ZatcaSyncIndicator />
+            <Outlet />
+          </AppBackProvider>
         </main>
       </div>
     </>

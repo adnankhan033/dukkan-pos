@@ -9,11 +9,14 @@ import {
   DEFAULT_ACCOUNTS,
   EXPENSE_ACCOUNT_MAP,
   JOURNAL_TYPES,
+  applyPartnerOwnershipDefaults,
   dateOnly,
   formatAccountingRef,
   isAccountingEnabled,
+  ownershipSharesFromAmounts,
   roundMoney,
   signedBalance,
+  signedLineDelta,
 } from "../utils/accounting";
 import { isPayLaterMethod } from "../utils/paymentMethods";
 import { getBusinessDateISO, getBusinessDateTimeISO } from "../utils/businessDate";
@@ -61,6 +64,7 @@ class AccountingService {
     await addCol("suppliers", "opening_balance", "ALTER TABLE suppliers ADD COLUMN opening_balance REAL DEFAULT 0");
     await addCol("expenses", "payment_method", "ALTER TABLE expenses ADD COLUMN payment_method TEXT DEFAULT 'cash'");
     await addCol("expenses", "journal_entry_id", "ALTER TABLE expenses ADD COLUMN journal_entry_id INTEGER");
+    await addCol("partners", "shares_manual", "ALTER TABLE partners ADD COLUMN shares_manual INTEGER NOT NULL DEFAULT 0");
   }
 
   async isEnabled() {
@@ -192,11 +196,117 @@ class AccountingService {
   async _runBooksRepair() {
     if (!(await this.isEnabled())) return;
     await this.seedChartOfAccounts();
+    await this._repairDuplicateOpeningCash();
+    await this._backfillPartnerOwnershipShares();
     await this._repairOpeningEquityRevalues();
     await this._reclassInventoryAdjustmentsToOpeningEquity();
     await this._repairOrphanExpenseReversals();
     await this._backfillMissingSales();
     await this._restateBooksToActual();
+  }
+
+  /**
+   * Start-from-zero used to post till cash AND partner capital as extra cash.
+   * Hide the duplicate opening-cash journal. Do not post a reversing entry —
+   * reversed journals are already excluded from balances.
+   */
+  async _repairDuplicateOpeningCash() {
+    const done = await settingsService.get(ACCOUNTING_SETTING_KEYS.OPENING_CASH_DEDUPED, "");
+    if (done === "2") return;
+
+    if (done === "1") {
+      const extra = await queryOne(
+        `SELECT id FROM journal_entries
+         WHERE entry_type = 'reversal' AND status = 'posted'
+           AND description LIKE 'Remove cash counted twice with partner capital%'`
+      );
+      if (extra?.id) {
+        await execute("UPDATE journal_entries SET status = 'reversed' WHERE id = $1", [extra.id]);
+      }
+      await settingsService.set(ACCOUNTING_SETTING_KEYS.OPENING_CASH_DEDUPED, "2");
+      return;
+    }
+
+    const startMode = await settingsService.get(ACCOUNTING_SETTING_KEYS.START_MODE, "snapshot");
+    if (startMode !== "zero") {
+      await settingsService.set(ACCOUNTING_SETTING_KEYS.OPENING_CASH_DEDUPED, "2");
+      return;
+    }
+
+    const opening = await queryOne(
+      `SELECT * FROM journal_entries
+       WHERE entry_type = 'opening' AND status = 'posted' AND source_type = 'opening'
+       ORDER BY id ASC LIMIT 1`
+    );
+    if (!opening) {
+      await settingsService.set(ACCOUNTING_SETTING_KEYS.OPENING_CASH_DEDUPED, "2");
+      return;
+    }
+
+    const cashAccount = await this.getAccountByCode(ACCOUNT_CODES.CASH);
+    if (!cashAccount) {
+      await settingsService.set(ACCOUNTING_SETTING_KEYS.OPENING_CASH_DEDUPED, "2");
+      return;
+    }
+
+    const openingCash = roundMoney(
+      (
+        await queryOne(
+          `SELECT COALESCE(SUM(debit - credit), 0) AS value
+           FROM journal_lines WHERE journal_entry_id = $1 AND account_id = $2`,
+          [opening.id, cashAccount.id]
+        )
+      )?.value
+    );
+    const partnerCash = roundMoney(
+      (
+        await queryOne(
+          `SELECT COALESCE(SUM(jl.debit - jl.credit), 0) AS value
+           FROM journal_lines jl
+           JOIN journal_entries je ON je.id = jl.journal_entry_id
+           WHERE je.status = 'posted' AND je.entry_type = 'partner'
+             AND date(je.entry_date) = date($1)
+             AND jl.account_id = $2`,
+          [opening.entry_date, cashAccount.id]
+        )
+      )?.value
+    );
+
+    if (openingCash > 0 && partnerCash > 0 && Math.abs(openingCash - partnerCash) < 0.01) {
+      await execute("UPDATE journal_entries SET status = 'reversed' WHERE id = $1", [opening.id]);
+      await this.audit("reverse", "journal_entry", opening.id, opening.reference, "Duplicate opening cash");
+    }
+    await settingsService.set(ACCOUNTING_SETTING_KEYS.OPENING_CASH_DEDUPED, "2");
+  }
+
+  async _backfillPartnerOwnershipShares() {
+    const done = await settingsService.get(ACCOUNTING_SETTING_KEYS.PARTNER_SHARES_BACKFILLED, "");
+    if (done === "1") return;
+    const rows = await query("SELECT id, ownership_percent FROM partners WHERE is_active = 1");
+    if (!rows.length || rows.some((row) => Number(row.ownership_percent) > 0)) {
+      await settingsService.set(ACCOUNTING_SETTING_KEYS.PARTNER_SHARES_BACKFILLED, "1");
+      return;
+    }
+
+    const partners = [];
+    for (const row of rows) {
+      partners.push(await this.getPartner(row.id));
+    }
+    const shares = ownershipSharesFromAmounts(partners.map((p) => p.total_invested));
+    if (shares.every((n) => n === 0)) {
+      await settingsService.set(ACCOUNTING_SETTING_KEYS.PARTNER_SHARES_BACKFILLED, "1");
+      return;
+    }
+    for (let i = 0; i < partners.length; i += 1) {
+      const share = shares[i];
+      const profit = Number(partners[i].profit_share_percent) > 0 ? Number(partners[i].profit_share_percent) : share;
+      await execute(
+        `UPDATE partners SET ownership_percent = $1, profit_share_percent = $2, updated_at = datetime('now')
+         WHERE id = $3`,
+        [share, profit, partners[i].id]
+      );
+    }
+    await settingsService.set(ACCOUNTING_SETTING_KEYS.PARTNER_SHARES_BACKFILLED, "1");
   }
 
   async _repairOpeningEquityRevalues() {
@@ -519,12 +629,15 @@ class AccountingService {
       [ACCOUNTING_SETTING_KEYS.START_MODE]: startMode,
     });
 
+    const namedRaw = (partners || []).filter((p) => String(p.name || "").trim());
+    const setupPartners = applyPartnerOwnershipDefaults(partners);
     const createdPartners = [];
-    for (const partner of partners || []) {
-      const name = String(partner.name || "").trim();
-      if (!name) continue;
+    for (const partner of setupPartners) {
+      const raw = namedRaw.find(
+        (p) => String(p.name || "").trim().toLowerCase() === String(partner.name || "").trim().toLowerCase()
+      );
       const created = await this.createPartner({
-        name,
+        name: String(partner.name || "").trim(),
         phone: partner.phone,
         notes: partner.notes,
         ownership_percent: Number(partner.ownership_percent) || 0,
@@ -532,10 +645,11 @@ class AccountingService {
         initial_capital: Number(partner.capital) || 0,
         cash_account_id: cashAccount.id,
         entry_date: start,
-        skipCapitalJournal: startMode === "snapshot",
+        skipCapitalJournal: true,
+        shares_manual: Number(raw?.ownership_percent) > 0,
       });
       const capitalAmt = Number(partner.capital) || 0;
-      if (startMode === "snapshot" && capitalAmt > 0) {
+      if (capitalAmt > 0) {
         await insert(
           `INSERT INTO partner_transactions
            (partner_id, type, amount, cash_account_id, entry_date, notes)
@@ -569,42 +683,38 @@ class AccountingService {
       extraBanks.push({ account: await this.getAccount(id), opening: Number(bank.opening) || 0 });
     }
 
-    if (startMode === "snapshot") {
-      const snapshot = await this.getOpeningSnapshot();
-      await this.postOpeningBalances({
-        entryDate: start,
-        cashOpening: Number(cashOpening) || 0,
-        cashAccountId: cashAccount.id,
-        banks: extraBanks.length
-          ? extraBanks
-          : [{ account: bankAccount, opening: 0 }],
-        snapshot,
-        partners: createdPartners,
-      });
-    } else {
-      const cashAmt = roundMoney(cashOpening);
-      if (cashAmt > 0) {
-        await this.postJournal({
-          prefix: "JV",
-          entryType: JOURNAL_TYPES.OPENING,
-          sourceType: "opening",
-          sourceId: 0,
-          entryDate: start,
-          description: "Opening cash",
-          lines: [
-            line(cashAccount.id, cashAmt, 0, { description: "Opening cash" }),
-            line(
-              (await this.getAccountByCode(ACCOUNT_CODES.OPENING_EQUITY)).id,
-              0,
-              cashAmt,
-              { description: "Opening cash" }
-            ),
-          ],
-        });
-      }
+    const partnerCapitalTotal = roundMoney(
+      createdPartners.reduce((sum, partner) => sum + (Number(partner.capital) || 0), 0)
+    );
+    const bankOpeningTotal = roundMoney(
+      extraBanks.reduce((sum, bank) => sum + (Number(bank.opening) || 0), 0)
+    );
+    let countedCash = roundMoney(cashOpening);
+    if (startMode !== "snapshot" && countedCash <= 0 && bankOpeningTotal <= 0 && partnerCapitalTotal > 0) {
+      countedCash = partnerCapitalTotal;
     }
 
+    const snapshot =
+      startMode === "snapshot"
+        ? await this.getOpeningSnapshot()
+        : { accountsReceivable: 0, accountsPayable: 0, inventoryValue: 0 };
+
+    await this.postOpeningBalances({
+      entryDate: start,
+      cashOpening: countedCash,
+      cashAccountId: cashAccount.id,
+      banks: extraBanks.length ? extraBanks : [{ account: bankAccount, opening: 0 }],
+      snapshot,
+      partners: createdPartners,
+    });
+
     await this.audit("activate", "accounting", periodId, "Accounting configured");
+    try {
+      const { moduleService } = await import("./ModuleService.js");
+      await moduleService.markConfigured("accounting", true);
+    } catch {
+      /* module manager is optional during setup */
+    }
     return this.getStatus();
   }
 
@@ -992,6 +1102,57 @@ class AccountingService {
     return this.getJournal(reversal.id);
   }
 
+  async reversePostedJournals({ sourceType, sourceId, reason = "Reversal" }) {
+    if (!(await this.isEnabled())) return [];
+    const rows = await query(
+      `SELECT id FROM journal_entries
+       WHERE source_type = $1 AND source_id = $2 AND status = 'posted'
+         AND (entry_type IS NULL OR entry_type != $3)
+       ORDER BY id`,
+      [sourceType, Number(sourceId), JOURNAL_TYPES.REVERSAL]
+    );
+    const reversed = [];
+    for (const row of rows) {
+      reversed.push(await this.reverseJournal(row.id, reason));
+    }
+    return reversed;
+  }
+
+  async reverseSaleBooks(saleId, reason = "Sale reversed") {
+    const numId = Number(saleId);
+    const paymentRows = await query("SELECT id FROM payments WHERE sale_id = $1", [numId]).catch(() => []);
+    for (const row of paymentRows || []) {
+      await this.reversePostedJournals({
+        sourceType: "sale_payment",
+        sourceId: row.id,
+        reason,
+      });
+    }
+    const returnRows = await query("SELECT id FROM sale_returns WHERE sale_id = $1", [numId]).catch(() => []);
+    for (const row of returnRows || []) {
+      await this.reversePostedJournals({
+        sourceType: "sale_return",
+        sourceId: row.id,
+        reason,
+      });
+    }
+    await this.reversePostedJournals({ sourceType: "sale", sourceId: numId, reason });
+  }
+
+  async restatedSaleJournal(sale, reason = "Invoice updated") {
+    if (!(await this.isEnabled()) || !sale) return null;
+    const paymentRows = await query("SELECT id FROM payments WHERE sale_id = $1", [sale.id]).catch(() => []);
+    for (const row of paymentRows || []) {
+      await this.reversePostedJournals({
+        sourceType: "sale_payment",
+        sourceId: row.id,
+        reason,
+      });
+    }
+    await this.reversePostedJournals({ sourceType: "sale", sourceId: sale.id, reason });
+    return this.postSale(sale);
+  }
+
   async getJournal(id) {
     const entry = await queryOne(
       `SELECT je.*, fp.name AS period_name
@@ -1002,7 +1163,7 @@ class AccountingService {
     );
     if (!entry) return null;
     const lines = await query(
-      `SELECT jl.*, a.code AS account_code, a.name AS account_name
+      `SELECT jl.*, a.code AS account_code, a.name AS account_name, a.normal_balance
        FROM journal_lines jl
        JOIN accounts a ON a.id = jl.account_id
        WHERE jl.journal_entry_id = $1
@@ -1054,60 +1215,92 @@ class AccountingService {
     search = "",
     page = 1,
     limit = null,
+    includeReversed = false,
   } = {}) {
-    let sql = `
+    const statusSql = includeReversed
+      ? "je.status IN ('posted', 'reversed')"
+      : "je.status = 'posted'";
+    const selectSql = `
       SELECT jl.*, je.reference, je.entry_date, je.entry_type, je.description AS entry_description,
              je.source_type, je.source_id, a.code AS account_code, a.name AS account_name,
              a.normal_balance
       FROM journal_lines jl
       JOIN journal_entries je ON je.id = jl.journal_entry_id
       JOIN accounts a ON a.id = jl.account_id
-      WHERE je.status IN ('posted', 'reversed')
+      WHERE ${statusSql}
     `;
-    const params = [];
-    if (accountId) {
-      params.push(Number(accountId));
-      sql += ` AND jl.account_id = $${params.length}`;
+
+    const identity = [];
+    const identityParams = [];
+    const pushIdentity = (sql, value) => {
+      identityParams.push(value);
+      identity.push(sql.replace("?", `$${identityParams.length}`));
+    };
+    if (accountId) pushIdentity(" AND jl.account_id = ?", Number(accountId));
+    if (customerId) pushIdentity(" AND jl.customer_id = ?", Number(customerId));
+    if (supplierId) pushIdentity(" AND jl.supplier_id = ?", Number(supplierId));
+    if (partnerId) pushIdentity(" AND jl.partner_id = ?", Number(partnerId));
+    const identitySql = identity.join("");
+
+    let opening = 0;
+    let normalBalance = "debit";
+    const fromDate = dateOnly(from);
+    if (fromDate) {
+      const prior = await query(
+        `${selectSql}${identitySql} AND date(je.entry_date) < date($${identityParams.length + 1})
+         ORDER BY je.entry_date ASC, je.id ASC, jl.id ASC`,
+        [...identityParams, fromDate]
+      );
+      for (const row of prior) {
+        normalBalance = row.normal_balance || normalBalance;
+        opening = roundMoney(opening + signedLineDelta(row));
+      }
     }
-    if (customerId) {
-      params.push(Number(customerId));
-      sql += ` AND jl.customer_id = $${params.length}`;
-    }
-    if (supplierId) {
-      params.push(Number(supplierId));
-      sql += ` AND jl.supplier_id = $${params.length}`;
-    }
-    if (partnerId) {
-      params.push(Number(partnerId));
-      sql += ` AND jl.partner_id = $${params.length}`;
-    }
-    if (from) {
-      params.push(from);
-      sql += ` AND date(je.entry_date) >= date($${params.length})`;
+
+    const periodParams = [...identityParams];
+    let periodSql = `${selectSql}${identitySql}`;
+    if (fromDate) {
+      periodParams.push(fromDate);
+      periodSql += ` AND date(je.entry_date) >= date($${periodParams.length})`;
     }
     if (to) {
-      params.push(to);
-      sql += ` AND date(je.entry_date) <= date($${params.length})`;
+      periodParams.push(dateOnly(to));
+      periodSql += ` AND date(je.entry_date) <= date($${periodParams.length})`;
     }
     if (type && type !== "all") {
-      params.push(type);
-      sql += ` AND je.entry_type = $${params.length}`;
+      periodParams.push(type);
+      periodSql += ` AND je.entry_type = $${periodParams.length}`;
     }
     if (String(search || "").trim()) {
-      params.push(`%${String(search).trim()}%`);
-      sql += ` AND (je.reference LIKE $${params.length} OR je.description LIKE $${params.length} OR jl.description LIKE $${params.length})`;
+      periodParams.push(`%${String(search).trim()}%`);
+      periodSql += ` AND (je.reference LIKE $${periodParams.length} OR je.description LIKE $${periodParams.length} OR jl.description LIKE $${periodParams.length})`;
     }
-    sql += " ORDER BY je.entry_date ASC, je.id ASC, jl.id ASC";
-    const rows = await query(sql, params);
+    periodSql += " ORDER BY je.entry_date ASC, je.id ASC, jl.id ASC";
+    const rows = await query(periodSql, periodParams);
 
-    let running = 0;
-    const chronological = rows.map((row) => {
-      const delta = row.normal_balance === "credit"
-        ? roundMoney(row.credit - row.debit)
-        : roundMoney(row.debit - row.credit);
-      running = roundMoney(running + delta);
-      return { ...row, balance: running };
-    });
+    let running = opening;
+    const chronological = [];
+    if (fromDate && Math.abs(opening) >= 0.005) {
+      chronological.push({
+        id: `opening-${accountId || partnerId || customerId || supplierId || "all"}`,
+        entry_date: fromDate,
+        entry_type: "opening",
+        description: "Already in this account",
+        entry_description: "Already in this account",
+        debit: 0,
+        credit: 0,
+        change: 0,
+        balance: opening,
+        is_opening: true,
+        normal_balance: rows[0]?.normal_balance || normalBalance,
+      });
+    }
+    for (const row of rows) {
+      const change = signedLineDelta(row);
+      running = roundMoney(running + change);
+      chronological.push({ ...row, change, balance: running, is_opening: false });
+    }
+
     const newestFirst = [...chronological].reverse();
     const total = newestFirst.length;
     const start = Math.max(0, (Math.max(1, page) - 1) * Number(limit || 0));
@@ -1118,8 +1311,10 @@ class AccountingService {
       page,
       limit,
       totals: {
-        debit: roundMoney(chronological.reduce((s, r) => s + Number(r.debit), 0)),
-        credit: roundMoney(chronological.reduce((s, r) => s + Number(r.credit), 0)),
+        opening,
+        periodChange: roundMoney(running - opening),
+        debit: roundMoney(rows.reduce((s, r) => s + Number(r.debit), 0)),
+        credit: roundMoney(rows.reduce((s, r) => s + Number(r.credit), 0)),
         balance: running,
       },
     };
@@ -1302,19 +1497,27 @@ class AccountingService {
       return { operating: 0, investing: 0, financing: 0, inflow: 0, outflow: 0, opening: 0, closing: 0 };
     }
 
-    const opening = await this.cashTotal(ids, this.dayBefore(from));
-    const closing = await this.cashTotal(ids, to);
+    const asOf = to || (await this.businessDate());
+    const opening = from ? await this.cashTotal(ids, this.dayBefore(from)) : 0;
+    const closing = await this.cashTotal(ids, asOf);
     const placeholders = ids.map((_, i) => `$${i + 1}`).join(",");
+    const params = [...ids];
+    let dateSql = "";
+    if (from) {
+      params.push(from);
+      dateSql += ` AND date(je.entry_date) >= date($${params.length})`;
+    }
+    params.push(asOf);
+    dateSql += ` AND date(je.entry_date) <= date($${params.length})`;
     const movements = await query(
       `SELECT je.entry_type, SUM(jl.debit) AS debit, SUM(jl.credit) AS credit
        FROM journal_lines jl
        JOIN journal_entries je ON je.id = jl.journal_entry_id
        WHERE je.status = 'posted'
          AND jl.account_id IN (${placeholders})
-         AND date(je.entry_date) >= date($${ids.length + 1})
-         AND date(je.entry_date) <= date($${ids.length + 2})
+         ${dateSql}
        GROUP BY je.entry_type`,
-      [...ids, from, to]
+      params
     );
 
     const classify = { operating: 0, investing: 0, financing: 0 };
@@ -1354,7 +1557,7 @@ class AccountingService {
     const asOf = dateOnly(to) || await this.businessDate();
     const stock = await this.getLiveInventoryValue();
     const [pl, cashAccounts, bankAccounts, ar, ap, inventory, partners] = await Promise.all([
-      this.profitAndLoss({ from, to }),
+      this.ledgerProfitAndLoss({ from, to }),
       this.listAccounts({ subtype: "cash" }),
       this.listAccounts({ subtype: "bank" }),
       this.getAccountByCode(ACCOUNT_CODES.AR),
@@ -1365,7 +1568,7 @@ class AccountingService {
          FROM journal_lines jl
          JOIN journal_entries je ON je.id = jl.journal_entry_id
          JOIN accounts a ON a.id = jl.account_id
-         WHERE je.status = 'posted' AND a.subtype = 'capital'`
+         WHERE je.status = 'posted' AND a.subtype = 'capital' AND a.partner_id IS NOT NULL`
       ),
     ]);
     const cashIds = cashAccounts.map((a) => a.id);
@@ -1422,6 +1625,7 @@ class AccountingService {
     cash_account_id = null,
     entry_date,
     skipCapitalJournal = false,
+    shares_manual = false,
   }) {
     const trimmed = String(name || "").trim();
     if (!trimmed) throw new Error("Enter the partner’s name");
@@ -1443,10 +1647,13 @@ class AccountingService {
       throw new Error(`Partner "${trimmed}" is already in the list`);
     }
 
+    const ownership = Number(ownership_percent) || 0;
+    const profitShare = Number(profit_share_percent) || ownership;
+    const manual = Boolean(shares_manual);
     const id = await insert(
-      `INSERT INTO partners (name, phone, notes, ownership_percent, profit_share_percent, is_active)
-       VALUES ($1, $2, $3, $4, $5, 1)`,
-      [trimmed, phone || null, notes || null, Number(ownership_percent) || 0, Number(profit_share_percent) || 0]
+      `INSERT INTO partners (name, phone, notes, ownership_percent, profit_share_percent, is_active, shares_manual)
+       VALUES ($1, $2, $3, $4, $5, 1, $6)`,
+      [trimmed, phone || null, notes || null, ownership, profitShare, manual ? 1 : 0]
     );
 
     const capCode = await this.allocateAccountCode(`31${String(10 + Number(id)).padStart(2, "0")}`);
@@ -1479,6 +1686,8 @@ class AccountingService {
         entryDate: entry_date,
         notes: "Initial capital",
       });
+    } else {
+      await this.syncOwnershipFromInvested().catch(() => {});
     }
 
     return this.getPartner(id);
@@ -1487,42 +1696,83 @@ class AccountingService {
   async getPartner(id) {
     const partner = await queryOne("SELECT * FROM partners WHERE id = $1", [Number(id)]);
     if (!partner) return null;
-    let ledger = { items: [], totals: {} };
-    try {
-      ledger = await this.getLedger({ partnerId: partner.id });
-    } catch {
-      ledger = { items: [], totals: {} };
-    }
     const invested = roundMoney(
-      (await queryOne(
-        `SELECT COALESCE(SUM(amount), 0) AS value FROM partner_transactions
-         WHERE partner_id = $1 AND type IN ('initial_capital', 'additional_capital')`,
-        [partner.id]
-      ))?.value
+      (
+        await queryOne(
+          `SELECT COALESCE(SUM(amount), 0) AS value FROM partner_transactions
+           WHERE partner_id = $1 AND type IN ('initial_capital', 'additional_capital')`,
+          [partner.id]
+        )
+      )?.value
     );
     const withdrawn = roundMoney(
-      (await queryOne(
-        `SELECT COALESCE(SUM(amount), 0) AS value FROM partner_transactions
-         WHERE partner_id = $1 AND type IN ('withdrawal', 'profit_distribution', 'repayment_to_partner')`,
-        [partner.id]
-      ))?.value
+      (
+        await queryOne(
+          `SELECT COALESCE(SUM(amount), 0) AS value FROM partner_transactions
+           WHERE partner_id = $1 AND type IN ('withdrawal', 'profit_distribution', 'repayment_to_partner')`,
+          [partner.id]
+        )
+      )?.value
     );
     return {
       ...partner,
       total_invested: invested,
       total_withdrawn: withdrawn,
       current_capital: roundMoney(invested - withdrawn),
-      ledger,
+      ledger: { items: [], totals: {} },
     };
   }
 
   async listPartners() {
+    await this._repairDuplicateOpeningCash().catch(() => {});
+    await this._backfillPartnerOwnershipShares().catch(() => {});
+    await this.syncOwnershipFromInvested().catch(() => {});
     const rows = await query("SELECT * FROM partners ORDER BY is_active DESC, name ASC");
     const result = [];
     for (const row of rows) {
       result.push(await this.getPartner(row.id));
     }
     return result;
+  }
+
+  /** Each partner's slice of sales, stock, cash, and profit. */
+  async getPartnerShareReport({ partners = null } = {}) {
+    const list = (partners || (await this.listPartners())).filter((p) => p.is_active !== 0);
+    const asOf = await this.businessDate();
+    const [pl, stock, cashAccounts, bankAccounts] = await Promise.all([
+      getProfitInRange("2000-01-01", asOf),
+      this.getLiveInventoryValue(),
+      this.listAccounts({ subtype: "cash" }),
+      this.listAccounts({ subtype: "bank" }),
+    ]);
+    const cash = await this.cashTotal(cashAccounts.map((a) => a.id), asOf);
+    const bank = await this.cashTotal(bankAccounts.map((a) => a.id), asOf);
+    const shop = {
+      sales: pl.netRevenue,
+      stockCost: stock.purchaseTotal,
+      stockSelling: stock.sellingTotal,
+      stockQty: stock.quantity,
+      cash: roundMoney(cash + bank),
+      profit: pl.netProfit,
+    };
+    const slice = (percent, amount) => roundMoney(((Number(percent) || 0) / 100) * (Number(amount) || 0));
+    const rows = list.map((partner) => {
+      const own = Number(partner.ownership_percent) || 0;
+      const profitPct = Number(partner.profit_share_percent) || own;
+      const sharePct = own || profitPct;
+      return {
+        id: partner.id,
+        name: partner.name,
+        ownership_percent: own,
+        profit_share_percent: profitPct,
+        salesShare: slice(sharePct, shop.sales),
+        stockCostShare: slice(sharePct, shop.stockCost),
+        stockSellingShare: slice(sharePct, shop.stockSelling),
+        cashShare: slice(sharePct, shop.cash),
+        profitShare: slice(sharePct, shop.profit),
+      };
+    });
+    return { shop, rows };
   }
 
   async updatePartner(id, data) {
@@ -1621,7 +1871,44 @@ class AccountingService {
       await execute("UPDATE journal_entries SET source_id = $1 WHERE id = $2", [txId, journal.id]);
     }
 
+    if (type === "initial_capital" || type === "additional_capital") {
+      await this.syncOwnershipFromInvested().catch(() => {});
+    }
+
     return this.getPartner(partner.id);
+  }
+
+  /** Ownership and profit share follow invested money unless a partner was given a fixed %. */
+  async syncOwnershipFromInvested() {
+    await this.ensureSchema();
+    const rows = await query(
+      `SELECT id, COALESCE(shares_manual, 0) AS shares_manual
+       FROM partners WHERE is_active = 1`
+    );
+    if (!rows.length || rows.some((row) => Number(row.shares_manual) === 1)) return;
+
+    const partners = [];
+    for (const row of rows) {
+      partners.push(await this.getPartner(row.id));
+    }
+    const shares = ownershipSharesFromAmounts(partners.map((p) => p.total_invested));
+    if (shares.every((n) => n === 0)) return;
+
+    for (let i = 0; i < partners.length; i += 1) {
+      const share = shares[i];
+      if (
+        roundMoney(partners[i].ownership_percent) === share
+        && roundMoney(partners[i].profit_share_percent) === share
+      ) {
+        continue;
+      }
+      await execute(
+        `UPDATE partners
+         SET ownership_percent = $1, profit_share_percent = $2, updated_at = datetime('now')
+         WHERE id = $3`,
+        [share, share, partners[i].id]
+      );
+    }
   }
 
   async defaultCashId() {
@@ -1689,13 +1976,13 @@ class AccountingService {
 
     let cogs = 0;
     for (const item of sale.items || []) {
-      const cost = roundMoney((item.cost_price ?? 0) * item.quantity);
-      if (!cost) {
-        const product = await queryOne("SELECT cost_price FROM products WHERE id = $1", [item.product_id]);
-        cogs = roundMoney(cogs + Number(product?.cost_price || 0) * Number(item.quantity || 0));
-      } else {
-        cogs = roundMoney(cogs + cost);
+      const unitCost = Number(item.cost_price ?? item.product_cost_price);
+      if (Number.isFinite(unitCost) && unitCost > 0) {
+        cogs = roundMoney(cogs + unitCost * Number(item.quantity || 0));
+        continue;
       }
+      const product = await queryOne("SELECT cost_price FROM products WHERE id = $1", [item.product_id]);
+      cogs = roundMoney(cogs + Number(product?.cost_price || 0) * Number(item.quantity || 0));
     }
     if (cogs > 0) {
       lines.push(line(cogsId, cogs, 0, { description: "COGS" }));
@@ -1720,7 +2007,7 @@ class AccountingService {
     const sale = result.sale;
     const refund = roundMoney(result.totalRefund);
     if (refund <= 0) return null;
-    const date = await this.businessDate();
+    const date = dateOnly(result.created_at) || (await this.businessDate());
     const vatPortion = sale?.total ? roundMoney(refund * (Number(sale.vat || 0) / Number(sale.total))) : 0;
     const net = roundMoney(refund - vatPortion);
 
@@ -1742,11 +2029,17 @@ class AccountingService {
 
     let cogs = 0;
     const returnItems = await query(
-      `SELECT sri.quantity, p.cost_price
+      `SELECT sri.quantity,
+              COALESCE(
+                (SELECT si.cost_price FROM sale_items si
+                 WHERE si.sale_id = $2 AND si.product_id = sri.product_id
+                 LIMIT 1),
+                p.cost_price
+              ) AS cost_price
        FROM sale_return_items sri
        JOIN products p ON p.id = sri.product_id
        WHERE sri.return_id = $1`,
-      [result.returnId]
+      [result.returnId, sale?.id]
     );
     for (const item of returnItems) {
       cogs = roundMoney(cogs + Number(item.cost_price || 0) * Number(item.quantity || 0));

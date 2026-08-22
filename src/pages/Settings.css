@@ -9,6 +9,20 @@
   background: var(--color-surface);
 }
 
+.settings-tab-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.settings-tab-sep {
+  width: 1px;
+  height: 1.1rem;
+  margin: 0 0.25rem 0 0.15rem;
+  background: var(--color-border);
+  border-radius: 1px;
+}
+
 .settings-tab {
   appearance: none;
   padding: 0.5rem 0.95rem;

@@ -204,7 +204,7 @@ export default function Reports() {
     <div className="reports-page">
       <PageHeader
         title="Reports"
-        subtitle="Advanced sales, profit, and inventory analytics with flexible date filters."
+        subtitle="Sales shown with VAT. Profit is without VAT — tax is not shop profit."
       />
 
       <div className="reports-toolbar">
@@ -276,9 +276,9 @@ export default function Reports() {
       {summary && (
         <>
           <div className="reports-stats">
-            <StatCard label="Gross Sales" value={formatCurrency(summary.grossSales, currency)} icon={DollarSign} variant="primary" />
-            <StatCard label="Returns" value={formatCurrency(summary.returnsTotal, currency)} icon={RotateCcw} variant="warning" />
-            <StatCard label="Net Revenue" value={formatCurrency(summary.netRevenue, currency)} icon={TrendingUp} variant="info" />
+            <StatCard label="Gross Sales (without VAT)" value={formatCurrency(summary.grossSales, currency)} icon={DollarSign} variant="primary" />
+            <StatCard label="Returns (without VAT)" value={formatCurrency(summary.returnsTotal, currency)} icon={RotateCcw} variant="warning" />
+            <StatCard label="Net Revenue (without VAT)" value={formatCurrency(summary.netRevenue, currency)} icon={TrendingUp} variant="info" />
             <StatCard label="COGS (Net)" value={formatCurrency(summary.cogs, currency)} icon={ShoppingBag} variant="info" />
             <StatCard label="Expenses" value={formatCurrency(summary.expensesTotal, currency)} icon={Receipt} variant="warning" />
             <StatCard
@@ -296,15 +296,15 @@ export default function Reports() {
               <h3 className="card-title" style={{ marginBottom: "1rem" }}>Profit Breakdown</h3>
               <div className="reports-profit-breakdown">
                 <div className="reports-profit-row">
-                  <span>Gross Sales</span>
+                  <span>Gross Sales (without VAT)</span>
                   <span>{formatCurrency(summary.grossSales, currency)}</span>
                 </div>
                 <div className="reports-profit-row">
-                  <span>Returns</span>
+                  <span>Returns (without VAT)</span>
                   <span>- {formatCurrency(summary.returnsTotal, currency)}</span>
                 </div>
                 <div className="reports-profit-row">
-                  <span>Net Revenue</span>
+                  <span>Net Revenue (without VAT)</span>
                   <span>{formatCurrency(summary.netRevenue, currency)}</span>
                 </div>
                 <div className="reports-profit-row">

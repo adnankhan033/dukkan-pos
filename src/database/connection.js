@@ -2,6 +2,7 @@ import Database from "@tauri-apps/plugin-sql";
 import { DB_NAME, DEFAULT_SETTINGS, EXPENSE_CATEGORIES } from "../utils/constants";
 import { SCHEMA_STATEMENTS } from "./schema";
 import { ACCOUNTING_SCHEMA_STATEMENTS } from "./accountingSchema";
+import { MODULE_SCHEMA_STATEMENTS } from "./moduleSchema";
 import bcrypt from "bcryptjs";
 import { DEFAULT_UNITS } from "../utils/defaultUnits";
 import { DEFAULT_PAYMENT_METHODS } from "../utils/defaultPaymentMethods";
@@ -32,6 +33,62 @@ function enqueueDb(operation) {
     () => {}
   );
   return run;
+}
+
+function isSqliteBusy(err) {
+  const text = String(err?.message || err || "").toLowerCase();
+  return (
+    text.includes("database is locked")
+    || text.includes("database is busy")
+    || text.includes("(code: 5)")
+    || text.includes("sqlite_busy")
+  );
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function rollbackQuiet(db) {
+  if (!db) return;
+  try {
+    await db.execute("ROLLBACK");
+  } catch {
+    /* no open transaction on this pooled connection */
+  }
+}
+
+async function reopenDatabase() {
+  const previous = dbInstance;
+  dbInstance = null;
+  dbConfigured = false;
+  if (previous) {
+    await rollbackQuiet(previous);
+    try {
+      await previous.close();
+    } catch {
+      /* already closed */
+    }
+  }
+  return getDatabase();
+}
+
+async function withBusyRetry(operation, { retries = 6 } = {}) {
+  let lastError;
+  for (let attempt = 0; attempt < retries; attempt += 1) {
+    try {
+      return await operation();
+    } catch (err) {
+      lastError = err;
+      if (!isSqliteBusy(err) || attempt === retries - 1) throw err;
+      await rollbackQuiet(dbInstance);
+      if (attempt >= 1) {
+        await reopenDatabase();
+      }
+      await sleep(50 * 2 ** attempt);
+    }
+  }
+  throw lastError;
 }
 
 /** Run multiple statements in one queue slot (e.g. settings batch writes). */
@@ -71,9 +128,14 @@ export async function getDatabase() {
 /** Recover from a stale SQLite write lock. Safe to call on app startup. */
 export async function recoverDatabase() {
   return enqueueDb(async () => {
-    const db = await getDatabase();
     try {
-      await db.execute("ROLLBACK");
+      const db = await getDatabase();
+      await rollbackQuiet(db);
+    } catch {
+      /* ignore */
+    }
+    try {
+      await reopenDatabase();
     } catch {
       /* ignore */
     }
@@ -141,6 +203,14 @@ export async function ensureInvoiceRevisionSchema() {
     }
   } catch {
     /* json_extract or settings insert unavailable — keep original_total from total */
+  }
+}
+
+export async function ensureSaleItemCostSchema() {
+  if (!(await tableExists("sale_items"))) return;
+  const cols = await query("PRAGMA table_info(sale_items)");
+  if (!cols.some((c) => c.name === "cost_price")) {
+    await execute("ALTER TABLE sale_items ADD COLUMN cost_price REAL DEFAULT 0");
   }
 }
 
@@ -245,6 +315,7 @@ async function runMigrations() {
   await ensureSupplierLedgerSchema();
   await ensureCustomerLedgerSchema();
   await ensureInvoiceRevisionSchema();
+  await ensureSaleItemCostSchema();
   await ensureAttributionSchema();
   await ensureZatcaSchema();
   await ensureCashierModuleDefaults();
@@ -256,6 +327,7 @@ async function runMigrations() {
   await ensurePaymentMethodsSchema();
   await ensureVatPricingSchema();
   await ensureAccountingSchema();
+  await ensureModuleSchema();
   await ensureSettingsKeys();
   await ensureDashboardPerformanceIndexes();
   await migrateUtcTimestampsToBusinessTimezone();
@@ -282,6 +354,12 @@ async function ensureAccountingSchema() {
   await addCol("suppliers", "opening_balance", "ALTER TABLE suppliers ADD COLUMN opening_balance REAL DEFAULT 0");
   await addCol("expenses", "payment_method", "ALTER TABLE expenses ADD COLUMN payment_method TEXT DEFAULT 'cash'");
   await addCol("expenses", "journal_entry_id", "ALTER TABLE expenses ADD COLUMN journal_entry_id INTEGER");
+}
+
+async function ensureModuleSchema() {
+  for (const statement of MODULE_SCHEMA_STATEMENTS) {
+    await execute(statement);
+  }
 }
 
 async function ensureVatPricingSchema() {
@@ -1161,15 +1239,19 @@ async function seedDefaultData() {
 
 export async function query(sql, params = []) {
   return enqueueDb(async () => {
-    const db = await getDatabase();
-    return db.select(sql, params);
+    return withBusyRetry(async () => {
+      const db = await getDatabase();
+      return db.select(sql, params);
+    });
   });
 }
 
 export async function execute(sql, params = []) {
   return enqueueDb(async () => {
-    const db = await getDatabase();
-    return db.execute(sql, params);
+    return withBusyRetry(async () => {
+      const db = await getDatabase();
+      return db.execute(sql, params);
+    });
   });
 }
 
@@ -1194,12 +1276,14 @@ export function resolveInsertId(result, fallbackRows) {
 /** Run INSERT and return the new row id from the Tauri SQL plugin. */
 export async function insert(sql, params = []) {
   return enqueueDb(async () => {
-    const db = await getDatabase();
-    const result = await db.execute(sql, params);
-    const rows = await db.select("SELECT last_insert_rowid() AS id");
-    const id = resolveInsertId(result, rows);
-    if (!id) throw new Error("Insert failed: could not get new record id");
-    return id;
+    return withBusyRetry(async () => {
+      const db = await getDatabase();
+      const result = await db.execute(sql, params);
+      const rows = await db.select("SELECT last_insert_rowid() AS id");
+      const id = resolveInsertId(result, rows);
+      if (!id) throw new Error("Insert failed: could not get new record id");
+      return id;
+    });
   });
 }
 
@@ -1208,20 +1292,28 @@ export async function queryOne(sql, params = []) {
   return rows[0] ?? null;
 }
 
-/** Run multiple statements in one SQLite transaction (serialized). */
+/**
+ * Run writes in one queue slot.
+ * Do not use BEGIN/COMMIT here: tauri-plugin-sql uses a connection pool, so
+ * BEGIN on one connection and COMMIT on another leaves the file locked forever.
+ */
 export async function runInTransaction(fn) {
   return enqueueDb(async () => {
     const db = await getDatabase();
-    await db.execute("BEGIN IMMEDIATE");
+    await rollbackQuiet(db);
+    const run = (method, sql, params = []) =>
+      withBusyRetry(async () => {
+        const live = await getDatabase();
+        return live[method](sql, params);
+      }, { retries: 4 });
     try {
-      const result = await fn({ query: (s, p) => db.select(s, p), execute: (s, p) => db.execute(s, p) });
-      await db.execute("COMMIT");
-      return result;
+      return await fn({
+        query: (s, p) => run("select", s, p),
+        execute: (s, p) => run("execute", s, p),
+      });
     } catch (err) {
-      try {
-        await db.execute("ROLLBACK");
-      } catch {
-        /* ignore */
+      if (isSqliteBusy(err)) {
+        await reopenDatabase();
       }
       throw err;
     }
@@ -1257,6 +1349,109 @@ async function deleteFromTables(txExecute, tableNames) {
       /* table may not exist */
     }
   }
+}
+
+const WIPE_CHILD_FIRST = [
+  "journal_lines",
+  "partner_transactions",
+  "accounting_audit_log",
+  "accounting_sequences",
+  "journal_entries",
+  "invoice_revisions",
+  "sale_return_items",
+  "sale_returns",
+  "sale_items",
+  "zatca_api_logs",
+  "zatca_invoices",
+  "customer_payments",
+  "payments",
+  "purchase_items",
+  "supplier_payments",
+  "price_list_items",
+  "customer_price_lists",
+  "product_units",
+  "inventory",
+  "import_logs",
+  "employee_salaries",
+  "expenses",
+  "daily_closes",
+  "backup_logs",
+  "sales",
+  "purchases",
+  "accounts",
+  "partners",
+  "account_groups",
+  "fiscal_periods",
+  "price_lists",
+  "products",
+  "employees",
+  "customers",
+  "suppliers",
+  "categories",
+  "units",
+  "user_subscriptions",
+  "payment_methods",
+  "expense_categories",
+  "app_modules",
+];
+
+const WIPE_LAST = ["users", "settings"];
+
+function orderTablesForWipe(tables) {
+  const pending = new Set(tables);
+  const ordered = [];
+  for (const name of WIPE_CHILD_FIRST) {
+    if (pending.has(name)) {
+      ordered.push(name);
+      pending.delete(name);
+    }
+  }
+  const middle = [...pending].filter((name) => !WIPE_LAST.includes(name)).sort();
+  ordered.push(...middle);
+  for (const name of WIPE_LAST) {
+    if (pending.has(name) || tables.includes(name)) {
+      if (!ordered.includes(name)) ordered.push(name);
+      pending.delete(name);
+    }
+  }
+  return ordered;
+}
+
+function sqliteErrorText(err) {
+  if (!err) return "";
+  if (typeof err === "string") return err;
+  return String(err?.message || err?.error || err);
+}
+
+async function deleteTableRows(runSql, name) {
+  try {
+    await runSql(`DELETE FROM "${name}"`);
+    return null;
+  } catch (err) {
+    const message = sqliteErrorText(err);
+    if (/no such table/i.test(message)) return null;
+    try {
+      await runSql("PRAGMA foreign_keys = OFF");
+      await runSql(`DELETE FROM "${name}"`);
+      return null;
+    } catch (err2) {
+      return `${name}: ${sqliteErrorText(err2) || message || "delete failed"}`;
+    }
+  }
+}
+
+async function leftoverTableNames(runQuery, tables) {
+  const leftover = [];
+  for (const name of tables) {
+    try {
+      const rows = await runQuery(`SELECT COUNT(*) AS c FROM "${name}"`);
+      const count = Number(rows?.[0]?.c ?? rows?.[0]?.C ?? 0);
+      if (count > 0) leftover.push(name);
+    } catch {
+      /* table may have been dropped */
+    }
+  }
+  return leftover;
 }
 
 /** Clear one business-data section (administrator). Does not reset users or settings. */
@@ -1385,6 +1580,21 @@ export async function clearDatabaseSection(sectionId) {
     ]) {
       await execute("DELETE FROM settings WHERE key = $1", [key]);
     }
+    for (const moduleId of ["accounting", "expenses", "partners", "cash_bank"]) {
+      await execute(
+        `INSERT INTO settings (key, value) VALUES ($1, $2)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+        [`module_${moduleId}_configured`, "0"]
+      );
+    }
+    try {
+      await execute(
+        `UPDATE app_modules SET configured = 0, updated_at = datetime('now')
+         WHERE id IN ('accounting', 'expenses', 'partners', 'cash_bank')`
+      );
+    } catch {
+      /* app_modules may not exist yet */
+    }
   }
 }
 
@@ -1396,53 +1606,45 @@ export async function clearDatabaseData() {
     if (row?.key) preserved.push(row);
   }
 
-  const clearOrder = [
-    "journal_lines",
-    "journal_entries",
-    "partner_transactions",
-    "partners",
-    "accounting_audit_log",
-    "accounting_sequences",
-    "accounts",
-    "account_groups",
-    "fiscal_periods",
-    "sale_return_items",
-    "sale_returns",
-    "zatca_api_logs",
-    "zatca_invoices",
-    "sale_items",
-    "sales",
-    "purchase_items",
-    "supplier_payments",
-    "purchases",
-    "payments",
-    "employee_salaries",
-    "employees",
-    "inventory",
-    "expenses",
-    "import_logs",
-    "products",
-    "customers",
-    "suppliers",
-    "categories",
-    "units",
-    "user_subscriptions",
-    "users",
-    "settings",
-  ];
+  const tables = await listBusinessTables();
+  const ordered = orderTablesForWipe(tables);
 
-  await runInTransaction(async ({ execute: txExecute }) => {
-    for (const table of clearOrder) {
-      try {
-        await txExecute(`DELETE FROM ${table}`);
-      } catch {
-        /* table may not exist */
-      }
+  await runInTransaction(async ({ execute: txExecute, query: txQuery }) => {
+    try {
+      await txExecute("PRAGMA foreign_keys = OFF");
+    } catch {
+      /* ignore */
+    }
+
+    const failures = [];
+    for (const name of ordered) {
+      const failure = await deleteTableRows(txExecute, name);
+      if (failure) failures.push(failure);
     }
     try {
       await txExecute("DELETE FROM sqlite_sequence");
     } catch {
       /* ignore */
+    }
+
+    let leftover = await leftoverTableNames(txQuery, tables);
+    if (leftover.length) {
+      try {
+        await txExecute("PRAGMA foreign_keys = OFF");
+      } catch {
+        /* ignore */
+      }
+      for (const name of leftover) {
+        const failure = await deleteTableRows(txExecute, name);
+        if (failure) failures.push(failure);
+      }
+      leftover = await leftoverTableNames(txQuery, leftover);
+    }
+
+    if (leftover.length) {
+      const detail = leftover.join(", ");
+      const extra = failures.length ? ` (${failures.slice(0, 4).join("; ")})` : "";
+      throw new Error(`Could not clear all data. Still remaining: ${detail}${extra}`);
     }
   });
 
@@ -1451,8 +1653,11 @@ export async function clearDatabaseData() {
   );
   await seedDefaultData();
   await ensureUnitsSchema();
+  await ensurePaymentMethodsSchema();
   await ensureSettingsKeys();
   await ensureExpenseCategoriesSchema();
+  await ensureAccountingSchema();
+  await ensureModuleSchema();
 
   for (const row of preserved) {
     await execute(
@@ -1461,6 +1666,24 @@ export async function clearDatabaseData() {
       [row.key, row.value]
     );
   }
+
+  try {
+    await execute("VACUUM");
+  } catch {
+    /* vacuum is best-effort after a full wipe */
+  }
+}
+
+async function listBusinessTables() {
+  const rows = await query(
+    `SELECT name FROM sqlite_master
+     WHERE type = 'table'
+       AND name NOT LIKE 'sqlite_%'
+     ORDER BY name`
+  );
+  return rows
+    .map((row) => String(row.name || ""))
+    .filter((name) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(name));
 }
 
 export { schemaInitialized, ensureExpenseCategoriesSchema };

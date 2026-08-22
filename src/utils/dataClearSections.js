@@ -71,6 +71,8 @@ export const DATA_CLEAR_SECTIONS = [
   },
 ];
 
+export const DATA_CLEARED_NOTICE_KEY = "nexttel-pos-data-cleared-notice";
+
 export function getDataClearSection(sectionId) {
   return DATA_CLEAR_SECTIONS.find((section) => section.id === sectionId) || null;
 }

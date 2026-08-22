@@ -41,6 +41,7 @@ import LastOrderReprintModal from "../components/sales/LastOrderReprintModal";
 import CartLineSheet from "../components/sales/CartLineSheet";
 import CartVerifyModal from "../components/sales/CartVerifyModal";
 import ProductBilingualName from "../components/products/ProductBilingualName";
+import PageBackButton from "../components/common/PageBackButton";
 import { LoadingSpinner } from "../components/common/Loading";
 import { notify } from "../utils/notify";
 import { formatCurrency, formatQuantity } from "../utils/format";
@@ -907,6 +908,7 @@ export default function Sales() {
       <header className="pos-topbar">
         <div className="pos-topbar-main">
           <div className="pos-topbar-brand">
+            <PageBackButton />
             <div className="pos-topbar-icon">
               <Sparkles size={20} />
             </div>

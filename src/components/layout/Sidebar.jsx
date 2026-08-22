@@ -4,9 +4,13 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  ClipboardList,
   Boxes,
   Users,
   Building2,
+  Store,
+  Tags,
+  Truck,
   Receipt,
   BarChart3,
   CalendarCheck,
@@ -30,6 +34,7 @@ import {
   PanelLeftOpen,
 } from "lucide-react";
 import { useVisibleNavGroups } from "../../hooks/usePermissions";
+import { NAV_SECTIONS } from "../../utils/nav";
 import { ROLE_LABELS, normalizeRole } from "../../utils/roles";
 import { useAuthStore } from "../../contexts/store";
 import { useTheme } from "../../hooks/useTheme";
@@ -46,9 +51,13 @@ const ICONS = {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  ClipboardList,
   Boxes,
   Users,
   Building2,
+  Store,
+  Tags,
+  Truck,
   Receipt,
   BarChart3,
   CalendarCheck,
@@ -218,103 +227,114 @@ export default function Sidebar() {
         </div>
 
         <nav className="sidebar-nav" aria-label="Main navigation">
-          <p className="sidebar-nav-heading">Menu</p>
-
-          {visibleGroups.map((group) => {
+          {visibleGroups.map((group, index) => {
             const Icon = ICONS[group.icon] || LayoutDashboard;
+            const prevSection = visibleGroups[index - 1]?.section;
+            const showSection =
+              Boolean(group.section) && group.section !== prevSection && !isMini;
+            const sectionLabel = NAV_SECTIONS[group.section] || group.section;
+
+            const heading = showSection ? (
+              <p className="sidebar-nav-heading">{sectionLabel}</p>
+            ) : null;
 
             if (group.path) {
               return (
-                <div key={group.id} className="sidebar-nav-block">
-                  <NavLink
-                    to={group.path}
-                    end={group.path === "/"}
-                    className={({ isActive }) =>
-                      `sidebar-nav-parent sidebar-nav-link ${isActive ? "active" : ""}`
-                    }
-                    title={isMini ? group.label : undefined}
-                  >
-                    <NavIcon icon={Icon} compact={isMini} />
-                    <span className="sidebar-nav-label">{group.label}</span>
-                    {isMini && <span className="sidebar-nav-tooltip">{group.label}</span>}
-                  </NavLink>
+                <div key={group.id}>
+                  {heading}
+                  <div className="sidebar-nav-block">
+                    <NavLink
+                      to={group.path}
+                      end={group.path === "/"}
+                      className={({ isActive }) =>
+                        `sidebar-nav-parent sidebar-nav-link ${isActive ? "active" : ""} ${
+                          group.featured ? "featured" : ""
+                        }`.trim()
+                      }
+                      title={isMini ? group.label : undefined}
+                    >
+                      <NavIcon icon={Icon} compact={isMini} />
+                      <span className="sidebar-nav-label">{group.label}</span>
+                      {isMini && <span className="sidebar-nav-tooltip">{group.label}</span>}
+                    </NavLink>
+                  </div>
                 </div>
               );
             }
 
             const isOpen = isMini ? flyoutGroupId === group.id : expanded[group.id];
             const hasActiveChild = groupHasActiveChild(group, pathname);
-            const childCount = group.items?.length ?? 0;
 
             return (
-              <div
-                key={group.id}
-                className={`sidebar-nav-block sidebar-nav-group ${isOpen ? "open" : ""} ${hasActiveChild ? "has-active-child" : ""}`}
-                onMouseEnter={() => openFlyout(group.id)}
-                onMouseLeave={scheduleFlyoutClose}
-              >
-                <button
-                  type="button"
-                  className={`sidebar-nav-parent sidebar-nav-toggle ${isOpen ? "open" : ""} ${hasActiveChild ? "active" : ""}`}
-                  onClick={() => toggleGroup(group.id)}
-                  aria-expanded={isOpen}
-                  title={isMini ? group.label : undefined}
+              <div key={group.id}>
+                {heading}
+                <div
+                  className={`sidebar-nav-block sidebar-nav-group ${isOpen ? "open" : ""} ${hasActiveChild ? "has-active-child" : ""}`}
+                  onMouseEnter={() => openFlyout(group.id)}
+                  onMouseLeave={scheduleFlyoutClose}
                 >
-                  <NavIcon icon={Icon} compact={isMini} />
-                  <span className="sidebar-nav-label">{group.label}</span>
-                  <span className="sidebar-nav-meta">
-                    <span className="sidebar-nav-count">{childCount}</span>
-                    <ChevronDown size={15} className={`sidebar-nav-chevron ${isOpen ? "open" : ""}`} />
-                  </span>
-                  {isMini && <span className="sidebar-nav-tooltip">{group.label}</span>}
-                </button>
-
-                {isMini ? (
-                  <div
-                    className={`sidebar-flyout ${isOpen ? "open" : ""}`}
-                    onMouseEnter={cancelFlyoutClose}
-                    onMouseLeave={scheduleFlyoutClose}
+                  <button
+                    type="button"
+                    className={`sidebar-nav-parent sidebar-nav-toggle ${isOpen ? "open" : ""} ${hasActiveChild ? "active" : ""}`}
+                    onClick={() => toggleGroup(group.id)}
+                    aria-expanded={isOpen}
+                    title={isMini ? group.label : undefined}
                   >
-                    <div className="sidebar-flyout-header">
-                      <NavIcon icon={Icon} />
-                      <span>{group.label}</span>
+                    <NavIcon icon={Icon} compact={isMini} />
+                    <span className="sidebar-nav-label">{group.label}</span>
+                    <span className="sidebar-nav-meta">
+                      <ChevronDown size={15} className={`sidebar-nav-chevron ${isOpen ? "open" : ""}`} />
+                    </span>
+                    {isMini && <span className="sidebar-nav-tooltip">{group.label}</span>}
+                  </button>
+
+                  {isMini ? (
+                    <div
+                      className={`sidebar-flyout ${isOpen ? "open" : ""}`}
+                      onMouseEnter={cancelFlyoutClose}
+                      onMouseLeave={scheduleFlyoutClose}
+                    >
+                      <div className="sidebar-flyout-header">
+                        <NavIcon icon={Icon} />
+                        <span>{group.label}</span>
+                      </div>
+                      <div className="sidebar-flyout-links">
+                        {group.items.map((item) => (
+                          <NavLink
+                            key={item.path}
+                            to={item.path}
+                            className={({ isActive }) =>
+                              `sidebar-flyout-link ${isActive ? "active" : ""}`
+                            }
+                            onClick={() => setFlyoutGroupId(null)}
+                          >
+                            {item.label}
+                          </NavLink>
+                        ))}
+                      </div>
                     </div>
-                    <div className="sidebar-flyout-links">
-                      {group.items.map((item) => (
-                        <NavLink
-                          key={item.path}
-                          to={item.path}
-                          className={({ isActive }) =>
-                            `sidebar-flyout-link ${isActive ? "active" : ""}`
-                          }
-                          onClick={() => setFlyoutGroupId(null)}
-                        >
-                          {item.label}
-                        </NavLink>
-                      ))}
+                  ) : (
+                    <div className={`sidebar-subnav-panel ${isOpen ? "open" : ""}`}>
+                      <div className="sidebar-subnav-inner">
+                        {group.items.map((item) => (
+                          <NavLink
+                            key={item.path}
+                            to={item.path}
+                            className={({ isActive }) =>
+                              `sidebar-nav-child ${isActive ? "active" : ""}`
+                            }
+                          >
+                            <span className="sidebar-nav-child-track" aria-hidden="true">
+                              <span className="sidebar-nav-child-line" />
+                              <span className="sidebar-nav-child-dot" />
+                            </span>
+                            <span className="sidebar-nav-child-label">{item.label}</span>
+                          </NavLink>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className={`sidebar-subnav-panel ${isOpen ? "open" : ""}`}>
-                    <div className="sidebar-subnav-inner">
-                      {group.items.map((item) => (
-                        <NavLink
-                          key={item.path}
-                          to={item.path}
-                          className={({ isActive }) =>
-                            `sidebar-nav-child ${isActive ? "active" : ""}`
-                          }
-                        >
-                          <span className="sidebar-nav-child-track" aria-hidden="true">
-                            <span className="sidebar-nav-child-line" />
-                            <span className="sidebar-nav-child-dot" />
-                          </span>
-                          <span className="sidebar-nav-child-label">{item.label}</span>
-                        </NavLink>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             );
           })}

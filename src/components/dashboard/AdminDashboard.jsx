@@ -73,7 +73,7 @@ export default function AdminDashboard({ stats }) {
     ...(showPurchases
       ? [
           {
-            label: "Today's purchases",
+            label: "Paid purchases today",
             value: stats.todayPurchases,
             currency,
             sign: "out",
@@ -125,7 +125,7 @@ export default function AdminDashboard({ stats }) {
               <ShoppingCart size={16} /> Open POS
             </Button>
             <Button variant="secondary" onClick={() => navigate("/accounting/receive")}>
-              <Wallet size={16} /> Receive cash
+              <Wallet size={16} /> Receive
             </Button>
             <Button variant="secondary" onClick={() => navigate("/reports")}>
               <BarChart3 size={16} /> Reports
@@ -172,7 +172,7 @@ export default function AdminDashboard({ stats }) {
         />
         {showProfit ? (
           <StatCard
-            label="Monthly Profit"
+            label="Monthly Profit (without VAT)"
             value={formatSignedCurrency(stats.monthlyProfit, currency)}
             numericValue={stats.monthlyProfit}
             currency={currency}
@@ -268,7 +268,7 @@ export default function AdminDashboard({ stats }) {
           />
           {showPurchases && (
             <StatCard
-              label="Today's Purchases"
+              label="Paid purchases today"
               value={formatSignedCurrency(stats.todayPurchases, currency, "out")}
               numericValue={stats.todayPurchases}
               currency={currency}

@@ -121,6 +121,7 @@ export const SCHEMA_STATEMENTS = [
     unit_price REAL NOT NULL,
     discount REAL DEFAULT 0,
     total REAL NOT NULL,
+    cost_price REAL DEFAULT 0,
     FOREIGN KEY (sale_id) REFERENCES sales(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id)
   )`,

@@ -210,20 +210,32 @@ class PurchaseService {
     return applied;
   }
 
-  async getTodayTotal() {
+  async getTodayTotal(date) {
     const row = await queryOne(
       `SELECT COALESCE(SUM(total), 0) as total FROM purchases
-       WHERE date(created_at) = date('now')`
+       WHERE date(created_at) = date($1)
+         AND payment_status = 'paid'`,
+      [date || new Date().toISOString().slice(0, 10)]
     );
-    return row?.total ?? 0;
+    return Number(row?.total ?? 0);
   }
 
-  async getMonthlyTotal() {
+  async getMonthlyTotal(from, to) {
+    if (from && to) {
+      const row = await queryOne(
+        `SELECT COALESCE(SUM(total), 0) as total FROM purchases
+         WHERE date(created_at) >= date($1) AND date(created_at) <= date($2)
+           AND payment_status = 'paid'`,
+        [from, to]
+      );
+      return Number(row?.total ?? 0);
+    }
     const row = await queryOne(
       `SELECT COALESCE(SUM(total), 0) as total FROM purchases
-       WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`
+       WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')
+         AND payment_status = 'paid'`
     );
-    return row?.total ?? 0;
+    return Number(row?.total ?? 0);
   }
 }
 

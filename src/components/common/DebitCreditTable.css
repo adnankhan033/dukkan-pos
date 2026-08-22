@@ -1,0 +1,85 @@
+.dc-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.dc-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.dc-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.dc-pill.debit {
+  color: #9a3412;
+  background: color-mix(in srgb, #ea580c 14%, var(--color-card));
+  border: 1px solid color-mix(in srgb, #ea580c 35%, var(--color-border));
+}
+
+.dc-pill.credit {
+  color: #166534;
+  background: color-mix(in srgb, #16a34a 14%, var(--color-card));
+  border: 1px solid color-mix(in srgb, #16a34a 35%, var(--color-border));
+}
+
+.dc-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-muted);
+  max-width: 72ch;
+}
+
+.dc-table th.dc-col.debit,
+.dc-amount.debit {
+  color: #9a3412;
+}
+
+.dc-table th.dc-col.credit,
+.dc-amount.credit {
+  color: #166534;
+}
+
+.dc-table td.dc-col,
+.dc-table th.dc-col {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dc-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.dc-amount.due {
+  color: var(--color-danger);
+}
+
+.dc-amount.settled {
+  color: var(--color-text);
+}
+
+.dc-empty {
+  color: var(--color-text-muted);
+}
+
+.dc-note {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.dc-empty-msg {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}

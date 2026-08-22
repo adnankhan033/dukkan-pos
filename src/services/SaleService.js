@@ -1,4 +1,4 @@
-import { query, queryOne, execute, insert, ensureInvoiceRevisionSchema } from "../database/connection";
+import { query, queryOne, execute, insert, ensureInvoiceRevisionSchema, ensureSaleItemCostSchema } from "../database/connection";
 import { inventoryService } from "./InventoryService";
 import { settingsService } from "./SettingsService";
 import { zatcaService } from "./ZatcaService";
@@ -29,6 +29,33 @@ async function processZatcaForSale(sale) {
   } catch (err) {
     console.error("ZATCA processing failed:", err);
   }
+}
+
+async function snapshotItemCost(item) {
+  if (item?.cost_price != null && item.cost_price !== "") {
+    const n = Number(item.cost_price);
+    if (Number.isFinite(n)) return n;
+  }
+  const product = await queryOne("SELECT cost_price FROM products WHERE id = $1", [item.product_id]);
+  return Number(product?.cost_price) || 0;
+}
+
+async function insertSaleItem(saleId, item) {
+  await ensureSaleItemCostSchema();
+  const cost = await snapshotItemCost(item);
+  await execute(
+    `INSERT INTO sale_items (sale_id, product_id, quantity, unit_price, discount, total, cost_price)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+    [saleId, item.product_id, item.quantity, item.unit_price, item.discount || 0, item.total, cost]
+  );
+}
+
+function paymentStatusForCollectable(collectable, amountPaid) {
+  const due = Math.max(0, Number(collectable) || 0);
+  const paid = Math.max(0, Number(amountPaid) || 0);
+  if (due <= 0 || paid >= due) return SALE_PAYMENT_STATUS.PAID;
+  if (paid <= 0) return SALE_PAYMENT_STATUS.PENDING;
+  return SALE_PAYMENT_STATUS.PARTIAL;
 }
 
 class SaleService {
@@ -84,7 +111,7 @@ class SaleService {
     if (!sale) return null;
 
     const items = await query(
-      `SELECT si.*, p.name AS product_name, p.name_ar, p.barcode
+      `SELECT si.*, p.name AS product_name, p.name_ar, p.barcode, p.cost_price AS product_cost_price
        FROM sale_items si
        LEFT JOIN products p ON si.product_id = p.id
        WHERE si.sale_id = $1`,
@@ -195,11 +222,7 @@ class SaleService {
     );
 
     for (const item of items) {
-      await execute(
-        `INSERT INTO sale_items (sale_id, product_id, quantity, unit_price, discount, total)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [saleId, item.product_id, item.quantity, item.unit_price, item.discount || 0, item.total]
-      );
+      await insertSaleItem(saleId, item);
 
       if (status === SALE_STATUS.COMPLETED) {
         await inventoryService.reduceStock(item.product_id, item.quantity, "sale", saleId);
@@ -362,6 +385,8 @@ class SaleService {
     if (!sale) {
       throw new Error("Order not found");
     }
+
+    await safeAccountingPost(() => accountingService.reverseSaleBooks(numId, `Deleted ${sale.sale_number}`));
 
     if (sale.status !== SALE_STATUS.HELD && sale.items?.length) {
       const returnedRows = await query(
@@ -816,18 +841,7 @@ class SaleService {
 
     await execute("DELETE FROM sale_items WHERE sale_id = $1", [numId]);
     for (const item of nextItems) {
-      await execute(
-        `INSERT INTO sale_items (sale_id, product_id, quantity, unit_price, discount, total)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        [
-          numId,
-          item.product_id,
-          item.quantity,
-          item.unit_price,
-          item.discount || 0,
-          item.total,
-        ]
-      );
+      await insertSaleItem(numId, item);
     }
 
     const nextRevision =
@@ -835,21 +849,29 @@ class SaleService {
         ? 2
         : Math.max(...existingRevisions.map((row) => Number(row.revision) || 1)) + 1;
 
+    const paid = Math.min(Number(sale.amount_paid) || 0, total);
+    const paymentStatus = paymentStatusForCollectable(total, paid);
+
     await execute(
       `UPDATE sales
        SET subtotal = $1,
            discount = $2,
            vat = $3,
            total = $4,
-           invoice_settings = $5,
-           revision = $6,
+           original_total = $4,
+           amount_paid = $5,
+           payment_status = $6,
+           invoice_settings = $7,
+           revision = $8,
            updated_at = datetime('now')
-       WHERE id = $7`,
+       WHERE id = $9`,
       [
         subtotal,
         disc,
         vat,
         total,
+        paid,
+        paymentStatus,
         JSON.stringify(snapshotInvoiceSettings(settings)),
         nextRevision,
         numId,
@@ -861,6 +883,7 @@ class SaleService {
     notifySalesChanged();
 
     if (saved?.status === SALE_STATUS.COMPLETED) {
+      await safeAccountingPost(() => accountingService.restatedSaleJournal(saved, `Updated ${saved.sale_number}`));
       try {
         await execute(
           `DELETE FROM zatca_invoices WHERE sale_id = $1 AND status IN ($2, $3)`,
@@ -1022,9 +1045,13 @@ class SaleService {
     const remaining = await this.getReturnableItems(saleId);
     const newStatus =
       !remaining?.length ? SALE_STATUS.RETURNED : SALE_STATUS.PARTIAL_RETURN;
+    const collectable = Math.max(0, Number(sale.original_total ?? sale.total) - totalRefund);
+    const paymentStatus = paymentStatusForCollectable(collectable, sale.amount_paid);
     await execute(
-      `UPDATE sales SET status = $1, updated_at = datetime('now') WHERE id = $2`,
-      [newStatus, saleId]
+      `UPDATE sales
+       SET status = $1, original_total = $2, payment_status = $3, updated_at = datetime('now')
+       WHERE id = $4`,
+      [newStatus, collectable, paymentStatus, saleId]
     );
 
     notifySalesChanged();
@@ -1033,6 +1060,7 @@ class SaleService {
       returnId,
       returnNumber,
       totalRefund,
+      created_at: (await queryOne("SELECT created_at FROM sale_returns WHERE id = $1", [returnId]))?.created_at,
       sale: await this.getById(saleId),
       returns: await this.getReturnsForSale(saleId),
     };

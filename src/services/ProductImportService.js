@@ -188,20 +188,12 @@ class ProductImportService {
   }
 
   async beginBatch() {
-    await execute("BEGIN IMMEDIATE");
+    /* sqlx pool cannot pin BEGIN to one connection */
   }
 
-  async commitBatch() {
-    await execute("COMMIT");
-  }
+  async commitBatch() {}
 
-  async rollbackBatch() {
-    try {
-      await execute("ROLLBACK");
-    } catch {
-      /* ignore */
-    }
-  }
+  async rollbackBatch() {}
 
   async insertProduct(parsed, categoryId, unitId, supplierId) {
     return insert(

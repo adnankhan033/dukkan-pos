@@ -21,6 +21,21 @@ const REPORTS = [
   { id: "trial", label: "Accountant" },
 ];
 
+function monthStartISO() {
+  return todayISO().slice(0, 8) + "01";
+}
+
+function yearStartISO() {
+  return `${todayISO().slice(0, 4)}-01-01`;
+}
+
+function periodPresetFor(from, to) {
+  if (!from && !to) return "all";
+  if (from === monthStartISO() && (to === todayISO() || !to)) return "month";
+  if (from === yearStartISO() && (to === todayISO() || !to)) return "year";
+  return "custom";
+}
+
 export default function AccountingReports({ embedded = false }) {
   const settings = useSettingsStore((s) => s.settings);
   const currency = settings.currency || "SAR";
@@ -40,10 +55,10 @@ export default function AccountingReports({ embedded = false }) {
     setData(null);
     try {
       let next = null;
-      if (report === "trial") next = await accountingService.trialBalance({ from, to });
-      else if (report === "pl") next = await accountingService.ledgerProfitAndLoss({ from, to });
+      if (report === "trial") next = await accountingService.trialBalance({ from: from || null, to });
+      else if (report === "pl") next = await accountingService.ledgerProfitAndLoss({ from: from || null, to });
       else if (report === "bs") next = await accountingService.balanceSheet({ asOf: to });
-      else next = await accountingService.cashFlow({ from, to });
+      else next = await accountingService.cashFlow({ from: from || null, to });
       setData({ kind: report, ...next });
     } catch (err) {
       setError(err.message || "Could not build report");
@@ -103,7 +118,32 @@ export default function AccountingReports({ embedded = false }) {
       </div>
       <div className="acct-filters">
         {report !== "bs" ? (
-          <Input label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          <>
+            <div className="acct-period-chips">
+              {["month", "year", "all"].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  className={periodPresetFor(from, to) === preset ? "active" : ""}
+                  onClick={() => {
+                    if (preset === "month") {
+                      setFrom(monthStartISO());
+                      setTo(todayISO());
+                    } else if (preset === "year") {
+                      setFrom(yearStartISO());
+                      setTo(todayISO());
+                    } else {
+                      setFrom("");
+                      setTo(todayISO());
+                    }
+                  }}
+                >
+                  {preset === "month" ? "This month" : preset === "year" ? "This year" : "All dates"}
+                </button>
+              ))}
+            </div>
+            <Input label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </>
         ) : null}
         <Input
           label={report === "bs" ? "As of" : "To"}
@@ -117,7 +157,7 @@ export default function AccountingReports({ embedded = false }) {
         <LoadingSpinner message="Preparing a simple summary..." />
       ) : error || !data ? null : report === "trial" ? (
         <>
-          <p className="acct-hint">This list is for an accountant. Day-to-day use Profit and What we own.</p>
+          <p className="acct-hint">Debit is مدين. Credit is دائن. For day-to-day, use Profit and What we own.</p>
           <Alert type={data.balanced ? "success" : "error"}>
             {data.balanced ? "Books match." : "Books need a check — totals do not match."}
           </Alert>
@@ -125,8 +165,8 @@ export default function AccountingReports({ embedded = false }) {
             columns={[
               { key: "code", label: "Code" },
               { key: "name", label: "Account" },
-              { key: "tb_debit", label: "Debit", render: (r) => formatCurrency(r.tb_debit, currency) },
-              { key: "tb_credit", label: "Credit", render: (r) => formatCurrency(r.tb_credit, currency) },
+              { key: "tb_debit", label: "Debit · مدين", render: (r) => formatCurrency(r.tb_debit, currency) },
+              { key: "tb_credit", label: "Credit · دائن", render: (r) => formatCurrency(r.tb_credit, currency) },
             ]}
             data={data.items || []}
             emptyMessage="No accounts yet. Turn books on in Settings if you just cleared data."
@@ -138,7 +178,7 @@ export default function AccountingReports({ embedded = false }) {
             <Hero label="You sold" value={data.netRevenue} currency={currency} />
             <Hero label="Profit left" value={data.netProfit} currency={currency} featured />
           </div>
-          <p className="acct-hint">Sales minus product cost and shop expenses for this period.</p>
+          <p className="acct-hint">Sales minus product cost and shop expenses for this period. VAT is tax, not profit.</p>
           <Row label="Sales" value={data.sales} currency={currency} />
           {data.otherIncome ? <Row label="Other income" value={data.otherIncome} currency={currency} /> : null}
           {data.salesReturns ? <Row label="Returns" value={-(data.salesReturns || 0)} currency={currency} /> : null}

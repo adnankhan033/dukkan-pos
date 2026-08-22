@@ -10,6 +10,8 @@ export const ACCOUNTING_SETTING_KEYS = {
   INVENTORY_REVALUE_REPAIRED: "accounting_inventory_revalue_repaired",
   INVENTORY_PL_RECLASS: "accounting_inventory_pl_reclass",
   EXPENSE_REVERSAL_REPAIRED: "accounting_expense_reversal_repaired",
+  OPENING_CASH_DEDUPED: "accounting_opening_cash_deduped",
+  PARTNER_SHARES_BACKFILLED: "accounting_partner_shares_backfilled",
 };
 
 export const ACCOUNT_TYPES = {
@@ -146,6 +148,37 @@ export function roundMoney(amount) {
   return Math.round((Number(amount) || 0) * 100) / 100;
 }
 
+/** Split 100% across amounts (largest share absorbs rounding). */
+export function ownershipSharesFromAmounts(amounts) {
+  const values = (amounts || []).map((n) => Math.max(0, Number(n) || 0));
+  const total = values.reduce((sum, n) => sum + n, 0);
+  if (!values.length || total <= 0) return values.map(() => 0);
+  const raw = values.map((n) => (n / total) * 100);
+  const rounded = raw.map((n) => roundMoney(n));
+  const diff = roundMoney(100 - rounded.reduce((sum, n) => sum + n, 0));
+  if (diff !== 0) {
+    let idx = 0;
+    for (let i = 1; i < raw.length; i += 1) {
+      if (raw[i] > raw[idx]) idx = i;
+    }
+    rounded[idx] = roundMoney(rounded[idx] + diff);
+  }
+  return rounded;
+}
+
+export function applyPartnerOwnershipDefaults(partners) {
+  const rows = (partners || []).filter((p) => String(p.name || "").trim());
+  const allBlank = rows.every((p) => !(Number(p.ownership_percent) > 0));
+  const shares = allBlank
+    ? ownershipSharesFromAmounts(rows.map((p) => Number(p.capital) || Number(p.initial_capital) || 0))
+    : rows.map((p) => Number(p.ownership_percent) || 0);
+  return rows.map((p, i) => {
+    const ownership = Number(p.ownership_percent) > 0 ? Number(p.ownership_percent) : shares[i];
+    const profit = Number(p.profit_share_percent) > 0 ? Number(p.profit_share_percent) : ownership;
+    return { ...p, ownership_percent: ownership, profit_share_percent: profit };
+  });
+}
+
 export function isAccountingEnabled(settings) {
   const value = settings?.[ACCOUNTING_SETTING_KEYS.ENABLED];
   return value === "1" || value === "true" || value === true;
@@ -209,6 +242,24 @@ const ACCOUNT_EASY_NAMES = {
 
 export function journalTypeLabel(type) {
   return JOURNAL_TYPE_LABELS[type] || String(type || "").replace(/_/g, " ");
+}
+
+export function signedLineDelta(row) {
+  const debit = Number(row?.debit) || 0;
+  const credit = Number(row?.credit) || 0;
+  if (row?.normal_balance === "credit") return roundMoney(credit - debit);
+  return roundMoney(debit - credit);
+}
+
+export function friendlyLineDescription(row) {
+  if (row?.is_opening) return "Already in this account";
+  const entry = String(row?.entry_description || "").trim();
+  if (entry) return entry.replace(/_/g, " ");
+  const line = String(row?.description || "").trim();
+  const mapped = PARTNER_TX_TYPES.find((item) => item.id === line);
+  if (mapped) return mapped.label;
+  if (line) return line.replace(/_/g, " ");
+  return journalTypeLabel(row?.entry_type);
 }
 
 export function friendlyAccountLabel(account) {

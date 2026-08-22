@@ -35,6 +35,7 @@ export default function AccountingPartners() {
   const enabled = isAccountingEnabled(settings);
   const { submitting, guard } = useSubmitGuard();
   const [partners, setPartners] = useState([]);
+  const [shareReport, setShareReport] = useState({ shop: null, rows: [] });
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [txOpen, setTxOpen] = useState(false);
@@ -59,6 +60,7 @@ export default function AccountingPartners() {
         accountingService.listAccounts({ subtype: "bank" }),
       ]);
       setPartners(list);
+      setShareReport(await accountingService.getPartnerShareReport({ partners: list }));
       const accounts = [...cash, ...bank];
       setCashAccounts(accounts);
       setCashAccountId((current) => current || String(accounts[0]?.id || ""));
@@ -111,6 +113,7 @@ export default function AccountingPartners() {
           initial_capital: capital,
           cash_account_id: cashAccountId ? Number(cashAccountId) : null,
           entry_date: todayISO(),
+          shares_manual: Number(form.ownership_percent) > 0,
         })
       );
       if (outcome?.skipped) return;
@@ -202,7 +205,7 @@ export default function AccountingPartners() {
     <div className="acct-hub">
       <PageHeader
         title="Partners"
-        subtitle="Partners put money in, take money out, and share profit."
+        subtitle="Partners put money in, take money out, and share profit. Ownership % follows the money they invested unless you set a fixed %."
         actions={
           enabled ? (
             <Button onClick={openCreate}>
@@ -215,7 +218,12 @@ export default function AccountingPartners() {
         {loading ? (
           <LoadingSpinner message="Loading partners..." />
         ) : (
-          <Table columns={columns} data={partners} emptyMessage="No partners yet. Tap Add partner to create the first one." />
+          <>
+            <PartnerShareBoard data={shareReport} currency={currency} />
+            <h3 className="acct-section-title">Capital in and out</h3>
+            <p className="acct-hint">Money each partner put in or took out. Tap Transaction to add more.</p>
+            <Table columns={columns} data={partners} emptyMessage="No partners yet. Tap Add partner to create the first one." />
+          </>
         )}
       </AccountingGate>
 
@@ -235,7 +243,10 @@ export default function AccountingPartners() {
       >
         <form id={PARTNER_FORM_ID} onSubmit={handleCreate} noValidate>
           <FormValidationAlert errors={errors} />
-          <p className="acct-hint">Name is required. Starting money is optional — add it only if they already put cash in the shop.</p>
+          <p className="acct-hint">
+            Name is required. Starting money adds cash to the till — use it only when they bring new cash, not money already counted in setup.
+            Leave ownership blank if you will set shares later.
+          </p>
           <Input
             label="Partner name *"
             value={form.name}
@@ -309,5 +320,81 @@ export default function AccountingPartners() {
         </form>
       </Modal>
     </div>
+  );
+}
+
+function shareTone(amount) {
+  const value = Number(amount) || 0;
+  if (value > 0.005) return "in";
+  if (value < -0.005) return "out";
+  return "zero";
+}
+
+function PartnerShareBoard({ data, currency }) {
+  const shop = data?.shop;
+  const rows = data?.rows || [];
+  if (!shop) return null;
+
+  const totals = [
+    { label: "Sales already made", value: shop.sales, extra: "All completed sales, without VAT" },
+    { label: "Products in the shop", value: shop.stockCost, extra: "Stock at cost" },
+    { label: "If those products sell", value: shop.stockSelling, extra: "Stock at selling price" },
+    { label: "Cash + bank", value: shop.cash, extra: "Money in the till and bank" },
+    { label: "Profit so far", value: shop.profit, extra: "Without VAT, after product cost and expenses" },
+  ];
+
+  return (
+    <section className="acct-partner-share">
+      <h3 className="acct-section-title">Each partner’s share of the shop</h3>
+      <p className="acct-hint">
+        Split by ownership %. Sales and profit are from POS without VAT. Cash is from the books.
+      </p>
+      <div className="acct-snapshot-grid">
+        {totals.map((card) => (
+          <div key={card.label} className="acct-snapshot-card">
+            <span>{card.label}</span>
+            <strong className={`acct-money ${shareTone(card.value)}`}>{formatCurrency(card.value, currency)}</strong>
+            <small>{card.extra}</small>
+          </div>
+        ))}
+      </div>
+      <Table
+        columns={[
+          { key: "name", label: "Partner" },
+          {
+            key: "ownership_percent",
+            label: "Share %",
+            render: (r) => `${Number(r.ownership_percent || 0).toFixed(2)}%`,
+          },
+          {
+            key: "salesShare",
+            label: "Sales already made",
+            render: (r) => formatCurrency(r.salesShare, currency),
+          },
+          {
+            key: "stockCostShare",
+            label: "Products in shop",
+            render: (r) => formatCurrency(r.stockCostShare, currency),
+          },
+          {
+            key: "stockSellingShare",
+            label: "If products sell",
+            render: (r) => formatCurrency(r.stockSellingShare, currency),
+          },
+          {
+            key: "cashShare",
+            label: "Cash + bank",
+            render: (r) => formatCurrency(r.cashShare, currency),
+          },
+          {
+            key: "profitShare",
+            label: "Profit so far",
+            render: (r) => formatCurrency(r.profitShare, currency),
+          },
+        ]}
+        data={rows}
+        emptyMessage="Add partners to see each person’s share of sales and stock."
+      />
+    </section>
   );
 }

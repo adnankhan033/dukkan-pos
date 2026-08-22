@@ -11,10 +11,10 @@ export default function AccountingGate({ enabled, children }) {
       <Landmark size={28} />
       <h3>Turn on books</h3>
       <p>
-        Books were reset when data was cleared. Open Settings → Accounting and finish setup so
-        sales, purchases, and expenses are recorded again.
+        Accounting is not configured yet. Open Settings → Modules to install it, then finish Settings →
+        Accounting so sales, purchases, and expenses post to the books.
       </p>
-      <Link to="/settings">
+      <Link to="/settings?tab=accounting">
         <Button>Open setup</Button>
       </Link>
     </Card>

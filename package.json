@@ -9,6 +9,7 @@
     "build:zatca-signer": "node scripts/build-zatca-signer.mjs",
     "preview": "vite preview",
     "tauri": "tauri",
+    "test": "node --test src/modules/*.test.js",
     "reset:setup": "node scripts/reset-setup.mjs",
     "postinstall": "node scripts/patch-zatca-xml-js.mjs",
     "build:mac-dmg": "node scripts/build-zatca-signer.mjs && tauri build --bundles dmg && node scripts/copy-release.mjs dmg",

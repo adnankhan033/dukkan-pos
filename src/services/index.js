@@ -14,3 +14,5 @@ export { employeeService } from "./EmployeeService";
 export { dashboardService } from "./DashboardService";
 export { reportService } from "./ReportService";
 export { backupService } from "./BackupService";
+export { moduleService } from "./ModuleService";
+export { priceListService } from "./PriceListService";

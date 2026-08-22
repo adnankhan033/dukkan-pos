@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Sparkles, Store } from "lucide-react";
 import { useSettingsStore, useAuthStore } from "../../contexts/store";
 import { getBusinessDateTimeLabel } from "../../utils/businessDate";
+import PageBackButton from "../common/PageBackButton";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -56,6 +57,7 @@ export default function DashboardHero({ variant = "admin", actions, children, ch
 
       <div className="dashboard-hero-content">
         <div className="dashboard-hero-main">
+          <PageBackButton />
           <div className="dashboard-hero-badge">
             <span className="dashboard-live-dot" aria-hidden="true" />
             <Sparkles size={14} />

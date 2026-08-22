@@ -5,8 +5,10 @@ import { useSettingsStore } from "../contexts/store";
 import {
   JOURNAL_TYPE_LABELS,
   friendlyAccountLabel,
+  friendlyLineDescription,
   isAccountingEnabled,
   journalTypeLabel,
+  roundMoney,
 } from "../utils/accounting";
 import { BOOKS_PAGE_SIZE } from "../utils/constants";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
@@ -74,6 +76,30 @@ function activityBadgeVariant(type) {
   return "neutral";
 }
 
+function periodPresetFor(from, to) {
+  if (!from && !to) return "all";
+  if (from === monthStartISO() && to === todayISO()) return "month";
+  if (from === yearStartISO() && to === todayISO()) return "year";
+  return "custom";
+}
+
+function datesForPreset(preset) {
+  if (preset === "month") return { from: monthStartISO(), to: todayISO() };
+  if (preset === "year") return { from: yearStartISO(), to: todayISO() };
+  return { from: "", to: "" };
+}
+
+function PeriodChips({ from, to, onPreset }) {
+  const preset = periodPresetFor(from, to);
+  return (
+    <div className="acct-period-chips">
+      <button type="button" className={preset === "month" ? "active" : ""} onClick={() => onPreset("month")}>This month</button>
+      <button type="button" className={preset === "year" ? "active" : ""} onClick={() => onPreset("year")}>This year</button>
+      <button type="button" className={preset === "all" ? "active" : ""} onClick={() => onPreset("all")}>All dates</button>
+    </div>
+  );
+}
+
 function pagesFor(total, size = BOOKS_PAGE_SIZE) {
   return Math.max(1, Math.ceil(Number(total || 0) / size));
 }
@@ -111,8 +137,11 @@ export default function AccountingJournals() {
   const [ledgerPage, setLedgerPage] = useState(1);
   const [ledgerSearch, setLedgerSearch] = useState("");
   const [ledgerType, setLedgerType] = useState("all");
-  const [from, setFrom] = useState(monthStartISO());
-  const [to, setTo] = useState(todayISO());
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [ledgerFrom, setLedgerFrom] = useState("");
+  const [ledgerTo, setLedgerTo] = useState("");
+  const [hideEmptyAccounts, setHideEmptyAccounts] = useState(true);
   const [manualOpen, setManualOpen] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -127,7 +156,8 @@ export default function AccountingJournals() {
   const [accountForm, setAccountForm] = useState({ code: "", name: "", group_id: "", name_ar: "" });
 
   const applyPickerDefaults = (accountRowsList) => {
-    setLedgerAccount((prev) => prev || (accountRowsList[0] ? String(accountRowsList[0].id) : ""));
+    const cash = accountRowsList.find((a) => a.subtype === "cash" && a.is_active) || accountRowsList[0];
+    setLedgerAccount((prev) => prev || (cash ? String(cash.id) : ""));
     setManual((m) => (
       m.debit_account
         ? m
@@ -230,8 +260,8 @@ export default function AccountingJournals() {
     try {
       const data = await accountingService.getLedger({
         accountId: Number(ledgerAccount),
-        from: from || null,
-        to: to || null,
+        from: ledgerFrom || null,
+        to: ledgerTo || null,
         type: ledgerType,
         search: ledgerSearch,
         page: ledgerPage,
@@ -242,7 +272,7 @@ export default function AccountingJournals() {
     } finally {
       setListLoading(false);
     }
-  }, [enabled, ledgerAccount, from, to, ledgerType, ledgerSearch, ledgerPage]);
+  }, [enabled, ledgerAccount, ledgerFrom, ledgerTo, ledgerType, ledgerSearch, ledgerPage]);
 
   useEffect(() => {
     loadShell();
@@ -269,31 +299,46 @@ export default function AccountingJournals() {
     ...account,
     balance: balances.find((row) => row.id === account.id)?.balance || 0,
   }));
+  const visibleAccounts = hideEmptyAccounts
+    ? listedAccounts.filter(
+        (account) =>
+          Math.abs(Number(account.balance) || 0) > 0.005
+          || account.subtype === "cash"
+          || account.subtype === "bank"
+      )
+    : listedAccounts;
+  const cashTotal = roundMoney(cashRows.reduce((sum, row) => sum + (Number(row.balance) || 0), 0));
   const activeAccounts = useMemo(() => accounts.filter((a) => a.is_active), [accounts]);
 
-  const periodPreset = !from && !to ? "all" : from === monthStartISO() && to === todayISO() ? "month" : from === yearStartISO() && to === todayISO() ? "year" : "custom";
-
-  const setPeriod = (preset) => {
-    if (preset === "month") {
-      setFrom(monthStartISO());
-      setTo(todayISO());
-    } else if (preset === "year") {
-      setFrom(yearStartISO());
-      setTo(todayISO());
-    } else {
-      setFrom("");
-      setTo("");
-    }
+  const applyActivityPeriod = (preset) => {
+    const next = datesForPreset(preset);
+    setFrom(next.from);
+    setTo(next.to);
     setActivityPage(1);
+  };
+
+  const applyLedgerPeriod = (preset) => {
+    const next = datesForPreset(preset);
+    setLedgerFrom(next.from);
+    setLedgerTo(next.to);
     setLedgerPage(1);
+  };
+
+  const openAccountHistory = (accountId) => {
+    setLedgerAccount(String(accountId));
+    setLedgerFrom("");
+    setLedgerTo("");
+    setLedgerPage(1);
+    setMoreView("ledger");
+    setTab("more");
   };
 
   const resetActivityFilters = () => {
     setActivitySearch("");
     setActivityType("all");
     setActivityStatus("posted");
-    setFrom(monthStartISO());
-    setTo(todayISO());
+    setFrom("");
+    setTo("");
     setActivityPage(1);
   };
 
@@ -308,8 +353,8 @@ export default function AccountingJournals() {
   const resetLedgerFilters = () => {
     setLedgerSearch("");
     setLedgerType("all");
-    setFrom(monthStartISO());
-    setTo(todayISO());
+    setLedgerFrom("");
+    setLedgerTo("");
     setLedgerPage(1);
   };
 
@@ -322,11 +367,13 @@ export default function AccountingJournals() {
 
   const headerActions = !enabled ? null : tab === "cash" ? (
     <Button onClick={() => setTransferOpen(true)}>Move cash</Button>
-  ) : tab === "more" ? (
+  ) : tab === "more" && moreView === "accounts" ? (
     <>
       <Button variant="secondary" onClick={() => setAccountOpen(true)}>Add account</Button>
       <Button variant="secondary" onClick={() => setManualOpen(true)}>Adjustment</Button>
     </>
+  ) : tab === "more" ? (
+    <Button variant="secondary" onClick={() => setManualOpen(true)}>Adjustment</Button>
   ) : null;
 
   const showListSpinner = loading && tab !== "statements";
@@ -360,12 +407,8 @@ export default function AccountingJournals() {
           <SnapshotBoard data={snapshot} currency={currency} />
         ) : tab === "activity" ? (
           <>
-            <p className="acct-hint">Every sale, payment, expense, and stock change — newest first, 100 per page.</p>
-            <div className="acct-period-chips">
-              <button type="button" className={periodPreset === "month" ? "active" : ""} onClick={() => setPeriod("month")}>This month</button>
-              <button type="button" className={periodPreset === "year" ? "active" : ""} onClick={() => setPeriod("year")}>This year</button>
-              <button type="button" className={periodPreset === "all" ? "active" : ""} onClick={() => setPeriod("all")}>All dates</button>
-            </div>
+            <p className="acct-hint">Every sale, payment, expense, and stock change — newest first. Use All dates to see starting capital.</p>
+            <PeriodChips from={from} to={to} onPreset={applyActivityPeriod} />
             <div className="acct-toolbar">
               <SearchBar
                 value={activitySearch}
@@ -452,18 +495,27 @@ export default function AccountingJournals() {
             )}
           </>
         ) : tab === "cash" ? (
-          <Table
-            columns={[
-              { key: "name", label: "Where", render: (r) => friendlyAccountLabel(r) },
-              {
-                key: "balance",
-                label: "Amount",
-                render: (r) => formatSignedCurrency(r.balance, currency),
-              },
-            ]}
-            data={cashRows}
-            emptyMessage="No cash or bank accounts yet."
-          />
+          <>
+            <p className="acct-hint">Money in the till and bank right now. Tap a row to see how it got there.</p>
+            {cashTotal ? (
+              <p className="acct-result-meta">
+                Total cash + bank: <strong>{formatCurrency(cashTotal, currency)}</strong>
+              </p>
+            ) : null}
+            <Table
+              columns={[
+                { key: "name", label: "Where", render: (r) => friendlyAccountLabel(r) },
+                {
+                  key: "balance",
+                  label: "Amount",
+                  render: (r) => formatCurrency(r.balance, currency),
+                },
+              ]}
+              data={cashRows}
+              emptyMessage="No cash or bank accounts yet."
+              onRowClick={(row) => openAccountHistory(row.id)}
+            />
+          </>
         ) : (
           <>
             <div className="acct-subtabs">
@@ -484,8 +536,8 @@ export default function AccountingJournals() {
             </div>
             <p className="acct-hint">
               {moreView === "accounts"
-                ? "Tap an account to open its history. Filters and 100-per-page keep long lists easy to scan."
-                : "Newest lines first. Running total is still counted from the start of this account."}
+                ? "Tap an account to open its history. Empty accounts are hidden so the list stays short."
+                : "Newest lines first. Debit (مدين) and Credit (دائن) are the two sides. The running total includes money from before this date range."}
             </p>
             {moreView === "accounts" ? (
               <>
@@ -535,6 +587,14 @@ export default function AccountingJournals() {
                       <option key={item.id} value={item.id}>{item.label}</option>
                     ))}
                   </Select>
+                  <Select
+                    label="Empty accounts"
+                    value={hideEmptyAccounts ? "hide" : "show"}
+                    onChange={(e) => setHideEmptyAccounts(e.target.value === "hide")}
+                  >
+                    <option value="hide">Hide empty</option>
+                    <option value="show">Show empty</option>
+                  </Select>
                   <Button variant="secondary" onClick={resetAccountFilters}>Clear</Button>
                 </div>
                 {showTableSpinner ? <LoadingSpinner message="Finding accounts..." /> : (
@@ -546,22 +606,18 @@ export default function AccountingJournals() {
                         {
                           key: "balance",
                           label: "Amount",
-                          render: (r) => formatSignedCurrency(r.balance, currency),
+                          render: (r) => formatCurrency(r.balance, currency),
                         },
                         { key: "is_active", label: "In use", render: (r) => (r.is_active ? "Yes" : "No") },
                       ]}
-                      data={listedAccounts}
+                      data={visibleAccounts}
                       emptyMessage="No accounts match these filters."
-                      onRowClick={(row) => {
-                        setLedgerAccount(String(row.id));
-                        setLedgerPage(1);
-                        setMoreView("ledger");
-                      }}
+                      onRowClick={(row) => openAccountHistory(row.id)}
                     />
                     <Pagination
                       page={accountPage}
-                      totalPages={pagesFor(accountTotal)}
-                      total={accountTotal}
+                      totalPages={pagesFor(hideEmptyAccounts ? visibleAccounts.length : accountTotal)}
+                      total={hideEmptyAccounts ? visibleAccounts.length : accountTotal}
                       onPageChange={setAccountPage}
                       itemLabel="accounts"
                     />
@@ -570,11 +626,7 @@ export default function AccountingJournals() {
               </>
             ) : (
               <>
-                <div className="acct-period-chips">
-                  <button type="button" className={periodPreset === "month" ? "active" : ""} onClick={() => setPeriod("month")}>This month</button>
-                  <button type="button" className={periodPreset === "year" ? "active" : ""} onClick={() => setPeriod("year")}>This year</button>
-                  <button type="button" className={periodPreset === "all" ? "active" : ""} onClick={() => setPeriod("all")}>All dates</button>
-                </div>
+                <PeriodChips from={ledgerFrom} to={ledgerTo} onPreset={applyLedgerPeriod} />
                 <div className="acct-toolbar">
                   <Select
                     label="Account"
@@ -584,6 +636,7 @@ export default function AccountingJournals() {
                       setLedgerPage(1);
                     }}
                   >
+                    {!ledgerAccount ? <option value="">Select account</option> : null}
                     {activeAccounts.map((account) => (
                       <option key={account.id} value={account.id}>
                         {friendlyAccountLabel(account)}
@@ -613,18 +666,18 @@ export default function AccountingJournals() {
                   <Input
                     label="From"
                     type="date"
-                    value={from}
+                    value={ledgerFrom}
                     onChange={(e) => {
-                      setFrom(e.target.value);
+                      setLedgerFrom(e.target.value);
                       setLedgerPage(1);
                     }}
                   />
                   <Input
                     label="To"
                     type="date"
-                    value={to}
+                    value={ledgerTo}
                     onChange={(e) => {
-                      setTo(e.target.value);
+                      setLedgerTo(e.target.value);
                       setLedgerPage(1);
                     }}
                   />
@@ -632,7 +685,10 @@ export default function AccountingJournals() {
                 </div>
                 {ledger.totals?.balance != null ? (
                   <p className="acct-result-meta">
-                    Running total now: <strong>{formatCurrency(ledger.totals.balance, currency)}</strong>
+                    In this account now: <strong>{formatCurrency(ledger.totals.balance, currency)}</strong>
+                    {ledgerFrom && Math.abs(Number(ledger.totals.opening) || 0) >= 0.005
+                      ? ` · Before this period ${formatCurrency(ledger.totals.opening, currency)} · This period ${formatSignedCurrency(ledger.totals.periodChange, currency)}`
+                      : ""}
                     {ledger.total ? ` · ${ledger.total.toLocaleString()} lines` : ""}
                   </p>
                 ) : null}
@@ -640,20 +696,22 @@ export default function AccountingJournals() {
                   <>
                     <Table
                       columns={[
-                        { key: "entry_date", label: "Date", render: (r) => formatDate(r.entry_date) },
+                        { key: "entry_date", label: "Date", render: (r) => (r.is_opening ? "Before" : formatDate(r.entry_date)) },
                         {
                           key: "entry_type",
                           label: "What",
-                          render: (r) => <Badge variant={activityBadgeVariant(r.entry_type)}>{journalTypeLabel(r.entry_type)}</Badge>,
+                          render: (r) => <Badge variant={activityBadgeVariant(r.entry_type)}>{r.is_opening ? "Brought forward" : journalTypeLabel(r.entry_type)}</Badge>,
                         },
-                        { key: "description", label: "What happened", render: (r) => r.description || r.entry_description },
+                        { key: "description", label: "What happened", render: (r) => friendlyLineDescription(r) },
                         {
-                          key: "change",
-                          label: "Change",
-                          render: (r) => {
-                            const change = Number(r.debit || 0) - Number(r.credit || 0);
-                            return formatSignedCurrency(change, currency);
-                          },
+                          key: "debit",
+                          label: "Debit · مدين",
+                          render: (r) => (r.is_opening || !(Number(r.debit) > 0.004) ? "—" : formatCurrency(r.debit, currency)),
+                        },
+                        {
+                          key: "credit",
+                          label: "Credit · دائن",
+                          render: (r) => (r.is_opening || !(Number(r.credit) > 0.004) ? "—" : formatCurrency(r.credit, currency)),
                         },
                         { key: "balance", label: "Running total", render: (r) => formatCurrency(r.balance, currency) },
                       ]}
@@ -684,9 +742,14 @@ export default function AccountingJournals() {
               columns={[
                 { key: "account_name", label: "Account", render: (r) => friendlyAccountLabel({ code: r.account_code, name: r.account_name }) },
                 {
-                  key: "change",
-                  label: "Change",
-                  render: (r) => formatSignedCurrency(Number(r.debit || 0) - Number(r.credit || 0), currency),
+                  key: "debit",
+                  label: "Debit · مدين",
+                  render: (r) => (Number(r.debit) > 0.004 ? formatCurrency(r.debit, currency) : "—"),
+                },
+                {
+                  key: "credit",
+                  label: "Credit · دائن",
+                  render: (r) => (Number(r.credit) > 0.004 ? formatCurrency(r.credit, currency) : "—"),
                 },
               ]}
               data={detail.lines || []}
@@ -749,12 +812,12 @@ export default function AccountingJournals() {
         <p className="acct-hint">Move an amount from one account into another. Use Receive cash or Pay cash for customers and suppliers.</p>
         <Input label="Date" type="date" value={manual.entry_date} onChange={(e) => setManual({ ...manual, entry_date: e.target.value })} />
         <Input label="What is this for?" value={manual.description} onChange={(e) => setManual({ ...manual, description: e.target.value })} />
-        <Select label="Put into" value={manual.debit_account} onChange={(e) => setManual({ ...manual, debit_account: e.target.value })}>
+        <Select label="Put into (Debit · مدين)" value={manual.debit_account} onChange={(e) => setManual({ ...manual, debit_account: e.target.value })}>
           {activeAccounts.map((a) => (
             <option key={a.id} value={a.id}>{friendlyAccountLabel(a)}</option>
           ))}
         </Select>
-        <Select label="Take from" value={manual.credit_account} onChange={(e) => setManual({ ...manual, credit_account: e.target.value })}>
+        <Select label="Take from (Credit · دائن)" value={manual.credit_account} onChange={(e) => setManual({ ...manual, credit_account: e.target.value })}>
           {activeAccounts.map((a) => (
             <option key={a.id} value={a.id}>{friendlyAccountLabel(a)}</option>
           ))}
@@ -837,17 +900,20 @@ export default function AccountingJournals() {
 
 function SnapshotBoard({ data, currency }) {
   const cards = [
-    { label: "Cash in drawer", value: data?.cash, extra: "Ready to use" },
+    { label: "Cash in drawer", value: data?.cash, extra: "Physical cash in the till", always: true },
     { label: "Bank", value: data?.bank, extra: "In the bank account" },
+    { label: "Partner capital", value: data?.partnerCapital, extra: "What partners own — not extra cash", always: true },
     { label: "Customers owe us", value: data?.receivable, extra: "Collect later" },
     { label: "We owe suppliers", value: data?.payable, extra: "Pay later" },
     { label: "Stock at cost", value: data?.inventory, extra: "On-hand products" },
-    { label: "This month’s profit", value: data?.netProfit, extra: "After expenses" },
-  ];
+    { label: "This month’s profit", value: data?.netProfit, extra: "From the books, without VAT", always: true },
+  ].filter((card) => card.always || Math.abs(Number(card.value) || 0) > 0.005);
 
   return (
     <div className="acct-snapshot">
-      <p className="acct-hint">A quick picture of the shop right now. Open Reports for the full story.</p>
+      <p className="acct-hint">
+        Cash is what is in the till. Partner capital is who owns the shop — it is not added on top of cash.
+      </p>
       <div className="acct-snapshot-grid">
         {cards.map((card) => {
           const amount = Number(card.value) || 0;

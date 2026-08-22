@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Wallet, Truck, Package, ChevronDown, ChevronUp, List } from "lucide-react";
+import { Wallet, Truck, Package } from "lucide-react";
 import Modal from "../common/Modal";
 import Button from "../common/Button";
 import Table from "../common/Table";
@@ -12,6 +12,8 @@ import { supplierService } from "../../services/SupplierService";
 import { purchaseService } from "../../services/PurchaseService";
 import { PURCHASE_PAYMENT_STATUS_LABELS, PURCHASE_TYPE } from "../../utils/constants";
 import { formatCurrency, formatDateTime, formatSignedCurrency } from "../../utils/format";
+import { buildDebitCreditStatement, partyStatementHint } from "../../utils/debitCredit";
+import DebitCreditTable from "../common/DebitCreditTable";
 
 const PURCHASE_TYPE_LABELS = {
   [PURCHASE_TYPE.MARKET]: "Market",
@@ -30,7 +32,6 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
   const [ledger, setLedger] = useState(null);
   const [products, setProducts] = useState([]);
   const [error, setError] = useState("");
-  const [showFullLedger, setShowFullLedger] = useState(false);
   const [expandedDeliveryId, setExpandedDeliveryId] = useState(null);
   const [deliveryItems, setDeliveryItems] = useState({});
   const [loadingDeliveryId, setLoadingDeliveryId] = useState(null);
@@ -54,7 +55,6 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
   useEffect(() => {
     if (isOpen && supplier) {
       setError("");
-      setShowFullLedger(false);
       setExpandedDeliveryId(null);
       setDeliveryItems({});
       setPayForm({
@@ -67,34 +67,15 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
     }
   }, [isOpen, supplier, load]);
 
-  const allRecords = useMemo(() => {
-    const deliveries = (ledger?.deliveries ?? []).map((d) => ({
-      recordType: "delivery",
-      sortDate: d.created_at,
-      id: `d-${d.id}`,
-      deliveryId: d.id,
-      reference: d.purchase_number,
-      date: d.created_at,
-      amount: d.total,
-      paid: d.amount_paid,
-      due: d.balance_due,
-      status: d.payment_status,
-      purchaseType: d.purchase_type,
-      notes: d.notes,
-    }));
-    const payments = (ledger?.payments ?? []).map((p) => ({
-      recordType: "payment",
-      sortDate: p.payment_date || p.created_at,
-      id: `p-${p.id}`,
-      reference: p.purchase_number || "Extra paid",
-      date: p.payment_date || p.created_at,
-      amount: p.amount,
-      notes: p.notes,
-    }));
-    return [...deliveries, ...payments].sort(
-      (a, b) => new Date(b.sortDate).getTime() - new Date(a.sortDate).getTime()
-    );
-  }, [ledger]);
+  const statement = useMemo(
+    () =>
+      buildDebitCreditStatement({
+        party: "supplier",
+        invoices: ledger?.deliveries ?? [],
+        payments: ledger?.payments ?? [],
+      }),
+    [ledger]
+  );
 
   async function handlePayment(e) {
     e.preventDefault();
@@ -164,17 +145,6 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
         </Button>
       ),
     },
-  ];
-
-  const paymentColumns = [
-    { key: "payment_date", label: "Date", render: (r) => r.payment_date },
-    { key: "amount", label: "Amount", render: (r) => formatCurrency(r.amount, currency) },
-    {
-      key: "purchase_number",
-      label: "For delivery",
-      render: (r) => r.purchase_number || "Extra paid (next delivery)",
-    },
-    { key: "notes", label: "Notes", render: (r) => r.notes || "-" },
   ];
 
   const productColumns = [
@@ -282,13 +252,13 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
             }}
           >
             <StatCard
-              label="Total delivered"
+              label="Delivered · دائن"
               value={formatCurrency(ledger?.summary?.total_delivered ?? 0, currency)}
               icon={Truck}
               variant="info"
             />
             <StatCard
-              label="Total paid"
+              label="Paid · مدين"
               value={formatCurrency(ledger?.summary?.total_paid ?? 0, currency)}
               icon={Wallet}
               variant="success"
@@ -307,6 +277,16 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
             />
             <StatCard label="Linked products" value={String(products.length)} icon={Package} variant="primary" />
           </div>
+
+          <Card style={{ marginBottom: "1.25rem" }}>
+            <h4 className="card-title" style={{ marginBottom: "0.5rem" }}>Debit / Credit statement</h4>
+            <DebitCreditTable
+              rows={statement}
+              currency={currency}
+              hint={partyStatementHint("supplier")}
+              emptyMessage="No deliveries or payments yet."
+            />
+          </Card>
 
           <Card style={{ marginBottom: "1.25rem" }}>
               <h4 className="card-title" style={{ marginBottom: "0.35rem" }}>
@@ -359,110 +339,17 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
               </form>
             </Card>
 
-          {!showFullLedger && (
-            <>
-              <h4 className="card-title" style={{ marginBottom: "0.5rem" }}>
-                Recent deliveries
-              </h4>
-              <Table
-                columns={deliveryColumns}
-                data={(ledger?.deliveries ?? []).slice(0, 5)}
-                emptyMessage="No deliveries yet"
-              />
-              {expandedDeliveryId &&
-                (ledger?.deliveries ?? []).slice(0, 5).some((d) => d.id === expandedDeliveryId) &&
-                renderDeliveryItemsBlock(expandedDeliveryId)}
-
-              <h4 className="card-title" style={{ margin: "1.25rem 0 0.5rem" }}>
-                Recent payments
-              </h4>
-              <Table
-                columns={paymentColumns}
-                data={(ledger?.payments ?? []).slice(0, 5)}
-                emptyMessage="No payments recorded"
-              />
-            </>
-          )}
-
-          {showFullLedger && (
-            <div style={{ marginBottom: "1.25rem" }}>
-              <h4 className="card-title" style={{ marginBottom: "0.75rem" }}>
-                Full account history
-              </h4>
-              {allRecords.length === 0 ? (
-                <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>No records yet.</p>
-              ) : (
-                <div className="supplier-ledger-list">
-                  {allRecords.map((record) => (
-                    <div
-                      key={record.id}
-                      style={{
-                        border: "1px solid var(--color-border)",
-                        borderRadius: "var(--radius-md)",
-                        marginBottom: "0.5rem",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "auto 1fr auto auto",
-                          gap: "0.75rem",
-                          alignItems: "center",
-                          padding: "0.75rem 1rem",
-                          fontSize: "0.875rem",
-                        }}
-                      >
-                        <Badge variant={record.recordType === "delivery" ? "info" : "success"}>
-                          {record.recordType === "delivery" ? "Delivery" : "Payment"}
-                        </Badge>
-                        <div>
-                          <strong>{record.reference}</strong>
-                          <div style={{ color: "var(--color-text-muted)", fontSize: "0.8125rem" }}>
-                            {record.recordType === "delivery"
-                              ? formatDateTime(record.date)
-                              : record.date}
-                            {record.notes ? ` · ${record.notes}` : ""}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: "right" }}>
-                          {record.recordType === "delivery" ? (
-                            <>
-                              <div>{formatCurrency(record.amount, currency)}</div>
-                              <div style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
-                                Paid {formatCurrency(record.paid || 0, currency)} · Due{" "}
-                                {formatCurrency(record.due ?? 0, currency)}
-                              </div>
-                            </>
-                          ) : (
-                            <div style={{ color: "var(--color-success)", fontWeight: 600 }}>
-                              Paid {formatCurrency(record.amount, currency)}
-                            </div>
-                          )}
-                        </div>
-                        {record.recordType === "delivery" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleDeliveryItems(record.deliveryId)}
-                            title="View products in this delivery"
-                          >
-                            {expandedDeliveryId === record.deliveryId ? (
-                              <ChevronUp size={16} />
-                            ) : (
-                              <ChevronDown size={16} />
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                      {record.recordType === "delivery" &&
-                        renderDeliveryItemsBlock(record.deliveryId)}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          <h4 className="card-title" style={{ marginBottom: "0.5rem" }}>
+            Recent deliveries
+          </h4>
+          <Table
+            columns={deliveryColumns}
+            data={(ledger?.deliveries ?? []).slice(0, 5)}
+            emptyMessage="No deliveries yet"
+          />
+          {expandedDeliveryId &&
+            (ledger?.deliveries ?? []).slice(0, 5).some((d) => d.id === expandedDeliveryId) &&
+            renderDeliveryItemsBlock(expandedDeliveryId)}
 
           {products.length > 0 && (
             <>
@@ -472,28 +359,6 @@ export default function SupplierAccountModal({ supplier, currency, isOpen, onClo
               <Table columns={productColumns} data={products} />
             </>
           )}
-
-          <div
-            style={{
-              marginTop: "1.5rem",
-              paddingTop: "1rem",
-              borderTop: "1px solid var(--color-border)",
-              textAlign: "center",
-            }}
-          >
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowFullLedger((v) => !v);
-                setExpandedDeliveryId(null);
-              }}
-            >
-              <List size={16} />
-              {showFullLedger
-                ? "Show recent records only"
-                : `View all account records (${allRecords.length})`}
-            </Button>
-          </div>
         </>
       )}
     </Modal>

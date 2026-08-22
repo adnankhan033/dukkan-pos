@@ -1,21 +1,37 @@
 import { ROLES, ROLE_MODULES, ALL_ROLES, normalizeRole } from "./roles";
 import { NAV_GROUPS } from "./nav";
+import {
+  getAdminPermissionModules,
+  getCatalogModule,
+  getPermissionModules,
+  MODULE_LIFECYCLE,
+} from "../modules/catalog";
+import {
+  isTruthySetting,
+  menuItemSettingKey,
+  moduleConfiguredKey,
+  moduleInstalledKey,
+  moduleSettingKey,
+  roleMenuItemSettingKey,
+  roleModuleSettingKey,
+} from "../modules/keys";
 
-export const MODULES = [
-  { id: "dashboard", label: "Dashboard", description: "Home dashboard and stats" },
-  { id: "sales", label: "Sales", description: "POS checkout and orders" },
-  { id: "products", label: "Products", description: "Products, categories, units" },
-  { id: "inventory", label: "Inventory", description: "Stock and purchases" },
-  { id: "customers", label: "Customers", description: "Customer management" },
-  { id: "suppliers", label: "Suppliers", description: "Supplier accounts, purchases, and balances" },
-  { id: "accounting", label: "Accounting", description: "Receive cash, pay cash, expenses, and books" },
-  { id: "reports", label: "Reports", description: "Sales and profit reports" },
-];
+export {
+  menuItemSettingKey,
+  moduleConfiguredKey,
+  moduleInstalledKey,
+  moduleSettingKey,
+  roleMenuItemSettingKey,
+  roleModuleSettingKey,
+};
 
-export const ADMIN_MODULES = [
-  { id: "users", label: "User Management", description: "Manage administrators and cashiers" },
-  { id: "settings", label: "Settings", description: "Store and system configuration" },
-];
+function toPermissionModule(mod) {
+  return { id: mod.id, label: mod.name, description: mod.description };
+}
+
+export const MODULES = getPermissionModules().map(toPermissionModule);
+
+export const ADMIN_MODULES = getAdminPermissionModules().map(toPermissionModule);
 
 export const ROUTE_MODULE_MAP = {
   "/": "dashboard",
@@ -26,18 +42,20 @@ export const ROUTE_MODULE_MAP = {
   "/categories": "products",
   "/units": "products",
   "/inventory": "inventory",
-  "/purchases": "suppliers",
+  "/purchases": "purchasing",
   "/customers": "customers",
   "/suppliers": "suppliers",
+  "/wholesale": "wholesale",
+  "/wholesale/price-lists": "wholesale",
   "/accounting": "accounting",
-  "/accounting/receive": "accounting",
-  "/accounting/pay": "accounting",
-  "/accounting/expenses": "accounting",
-  "/accounting/partners": "accounting",
+  "/accounting/receive": "cash_bank",
+  "/accounting/pay": "cash_bank",
+  "/accounting/expenses": "expenses",
+  "/accounting/partners": "partners",
   "/accounting/journals": "accounting",
   "/accounting/reports": "accounting",
-  "/employees": "accounting",
-  "/expenses": "accounting",
+  "/employees": "expenses",
+  "/expenses": "expenses",
   "/reports": "reports",
   "/daily-close": "reports",
   "/cloud-backup": "settings",
@@ -137,27 +155,21 @@ export function getMenuPermissionGroupsByModule({ includeAdmin = false } = {}) {
   return order.filter((id) => byModule.has(id)).map((id) => byModule.get(id));
 }
 
-export function moduleSettingKey(moduleId) {
-  return `module_${moduleId}_enabled`;
-}
-
-export function roleModuleSettingKey(role, moduleId) {
-  return `role_${role}_module_${moduleId}`;
-}
-
-export function menuItemSettingKey(menuItemId) {
-  return `menu_${menuItemId}_enabled`;
-}
-
-export function roleMenuItemSettingKey(role, menuItemId) {
-  return `role_${role}_menu_${menuItemId}`;
-}
-
 export function isModuleEnabled(settings, moduleId) {
+  const def = getCatalogModule(moduleId);
+  if (def?.lifecycle === MODULE_LIFECYCLE.CORE) return true;
+
+  if (def?.lifecycle === MODULE_LIFECYCLE.OPTIONAL) {
+    const installed = settings?.[moduleInstalledKey(moduleId)];
+    if (!isTruthySetting(installed)) return false;
+  }
+
   const key = moduleSettingKey(moduleId);
   const value = settings?.[key];
-  if (value === undefined || value === "") return true;
-  return value === "1" || value === "true";
+  if (value === undefined || value === "") {
+    return def ? Boolean(def.defaultEnabled) && def.lifecycle !== MODULE_LIFECYCLE.OPTIONAL : true;
+  }
+  return isTruthySetting(value);
 }
 
 function defaultRoleModuleEnabled(role, moduleId) {
@@ -254,7 +266,11 @@ export function canAccessPath(user, settings, path) {
 export function getModuleDefaults() {
   const defaults = {};
   for (const mod of MODULES) {
-    defaults[moduleSettingKey(mod.id)] = "1";
+    const def = getCatalogModule(mod.id);
+    const enabled = def ? Boolean(def.defaultEnabled) && def.lifecycle !== MODULE_LIFECYCLE.OPTIONAL : true;
+    defaults[moduleSettingKey(mod.id)] = enabled ? "1" : "0";
+    defaults[moduleInstalledKey(mod.id)] = def?.lifecycle === MODULE_LIFECYCLE.OPTIONAL ? "0" : "1";
+    defaults[moduleConfiguredKey(mod.id)] = def?.lifecycle === MODULE_LIFECYCLE.OPTIONAL ? "0" : "1";
   }
   return defaults;
 }

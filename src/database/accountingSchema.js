@@ -51,6 +51,7 @@ export const ACCOUNTING_SCHEMA_STATEMENTS = [
     notes TEXT,
     ownership_percent REAL NOT NULL DEFAULT 0,
     profit_share_percent REAL NOT NULL DEFAULT 0,
+    shares_manual INTEGER NOT NULL DEFAULT 0,
     is_active INTEGER NOT NULL DEFAULT 1,
     capital_account_id INTEGER,
     drawings_account_id INTEGER,

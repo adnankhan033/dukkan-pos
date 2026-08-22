@@ -2,6 +2,8 @@ import { invoke, isTauri } from "@tauri-apps/api/core";
 import { query, queryOne, execute, runInTransaction, clearDatabaseData, clearDatabaseSection } from "../database/connection";
 import { settingsService } from "./SettingsService";
 import { DATA_CLEAR_SECTIONS } from "../utils/dataClearSections.js";
+import { invalidateProductCaches, dispatchCatalogChanged } from "./CatalogSync";
+import { invalidateDashboardCache } from "./DashboardCache";
 import {
   BACKUP_SETTING_KEYS,
   BACKUP_TYPES,
@@ -48,6 +50,11 @@ const BACKUP_TABLES = [
   "journal_lines",
   "accounting_audit_log",
   "accounting_sequences",
+  "app_modules",
+  "price_lists",
+  "price_list_items",
+  "customer_price_lists",
+  "product_units",
 ];
 
 class BackupService {
@@ -420,9 +427,20 @@ class BackupService {
     return true;
   }
 
-  /** Delete all data and restore default admin, cashier, settings, and units. */
+  /** Delete all business data A–Z and restore factory users, units, payments, and settings. */
   async clearAllData() {
+    try {
+      const { zatcaService } = await import("./ZatcaService.js");
+      const { backupSyncService } = await import("./BackupSyncService.js");
+      zatcaService.stopBackgroundSync?.();
+      backupSyncService.stopBackgroundSync();
+    } catch {
+      /* ignore */
+    }
     await clearDatabaseData();
+    invalidateProductCaches();
+    invalidateDashboardCache();
+    dispatchCatalogChanged();
     return true;
   }
 

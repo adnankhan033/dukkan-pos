@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { initializeDatabase } from "../database/connection";
 import { settingsService } from "../services/SettingsService";
+import { moduleService } from "../services/ModuleService";
 import { zatcaService } from "../services/ZatcaService";
 import { backupSyncService } from "../services/BackupSyncService";
 import { useAppStore, useSettingsStore } from "../contexts/store";
@@ -15,6 +16,7 @@ export function useDatabaseInit() {
     async function init() {
       try {
         await initializeDatabase();
+        await moduleService.ensureReady();
         let settings = await settingsService.getAll();
 
         const { activationService } = await import("../services/ActivationService.js");

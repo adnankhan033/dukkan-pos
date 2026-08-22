@@ -10,7 +10,21 @@ import Button from "../components/common/Button";
 import { Alert } from "../components/common/Loading";
 import AuthShell from "../components/auth/AuthShell";
 import { ACTIVATION_SETTING_KEYS } from "../utils/activationConfig";
+import { DATA_CLEARED_NOTICE_KEY } from "../utils/dataClearSections";
 import "./Setup.css";
+
+function readClearNotice(locationMessage) {
+  try {
+    const stored = sessionStorage.getItem(DATA_CLEARED_NOTICE_KEY);
+    if (stored) {
+      sessionStorage.removeItem(DATA_CLEARED_NOTICE_KEY);
+      return stored;
+    }
+  } catch {
+    /* ignore */
+  }
+  return locationMessage || "";
+}
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -22,7 +36,7 @@ export default function Login() {
   const setSettings = useSettingsStore((s) => s.setSettings);
   const navigate = useNavigate();
   const location = useLocation();
-  const notice = location.state?.message;
+  const [notice] = useState(() => readClearNotice(location.state?.message));
 
   async function handleStartOver() {
     setError("");
@@ -67,7 +81,7 @@ export default function Login() {
       formSubtitle="Enter your credentials to access your store"
       footer="Nexttel POS · Secure store sign-in"
     >
-      {notice && <Alert type="warning">{notice}</Alert>}
+      {notice && <Alert type="success">{notice}</Alert>}
       {error && <Alert>{error}</Alert>}
 
       <form onSubmit={handleSubmit}>

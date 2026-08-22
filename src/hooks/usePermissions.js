@@ -39,6 +39,17 @@ export function useVisibleNavGroups() {
           return canAccessModule(moduleId);
         });
         if (items.length === 0) return null;
+        if (items.length === 1) {
+          return {
+            ...group,
+            path: items[0].path,
+            label: items[0].label,
+            icon: items[0].icon || group.icon,
+            module: items[0].module || group.module,
+            items: undefined,
+            featured: false,
+          };
+        }
         return { ...group, items };
       }
 

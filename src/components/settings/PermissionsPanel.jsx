@@ -110,13 +110,13 @@ function PermissionsPanel({ form, updateField, updateFields, onResetRole }) {
 
         {activeRole === ROLES.CASHIER && (
           <Alert type="info" title="Cashier limits">
-            Users and Settings stay admin-only. Cashiers never see Administration pages even if checked here.
+            Users and Settings stay admin-only. Cashiers never see Setup pages even if checked here.
           </Alert>
         )}
 
         {activeRole === ROLES.ADMIN && (
           <Alert type="info" title="Administrator">
-            Administrators always keep Users, Settings, and every Administration page. Those items cannot be turned off, and all Settings tabs stay visible.
+            Administrators always keep Users, Settings, and every Setup page. Those items cannot be turned off, and all Settings tabs stay visible.
           </Alert>
         )}
 
