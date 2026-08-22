@@ -22,7 +22,7 @@ import "./AccountingSettingsPanel.css";
 
 const STEPS = [
   { id: "welcome", label: "Welcome" },
-  { id: "year", label: "Fiscal year" },
+  { id: "year", label: "Year" },
   { id: "cash", label: "Cash & bank" },
   { id: "partners", label: "Partners" },
   { id: "review", label: "Review" },
@@ -145,18 +145,18 @@ export default function AccountingSettingsPanel() {
             <div>
               <h3 className="settings-section-title">
                 <CheckCircle2 size={18} style={{ verticalAlign: "middle", marginRight: 6 }} />
-                Accounting is active
+                Books are on
               </h3>
               <p className="settings-section-desc">
-                Sales, purchases, expenses, payments, and partner capital now post to the general ledger.
-                POS, inventory, and ZATCA keep working as before.
+                Sales, purchases, expenses, and partner money are recorded automatically.
+                The POS and ZATCA invoices work the same as before.
               </p>
             </div>
             <Button onClick={() => navigate("/accounting/receive")}>Receive cash</Button>
           </div>
           <div className="acct-status-grid">
             <div>
-              <span>Fiscal year</span>
+              <span>Year</span>
               <strong>{status.period ? `${status.period.start_date} → ${status.period.end_date}` : "—"}</strong>
             </div>
             <div>
@@ -168,7 +168,7 @@ export default function AccountingSettingsPanel() {
               <strong>{status.partnerCount}</strong>
             </div>
             <div>
-              <span>Journal entries</span>
+              <span>Records</span>
               <strong>{status.journalCount}</strong>
             </div>
           </div>
@@ -208,18 +208,17 @@ export default function AccountingSettingsPanel() {
       {!wizard ? (
         <Card className="settings-card acct-hero">
           <Landmark size={28} />
-          <h3 className="settings-section-title">Set up business accounting</h3>
+          <h3 className="settings-section-title">Turn on shop books</h3>
           <p className="settings-section-desc">
-            A short wizard turns this POS into a complete books system: chart of accounts, partners,
-            cash and bank, customer/supplier ledgers, and financial reports. Existing sales and ZATCA
-            stay untouched. New transactions post automatically after you finish.
+            A short setup. After that, sales, purchases, and expenses are saved for you.
+            You do not type debit and credit. POS and ZATCA stay the same.
           </p>
           <ul className="acct-hero-list">
-            <li>Double-entry journals (debit always equals credit)</li>
-            <li>Partners with unequal capital and profit share</li>
-            <li>Profit &amp; loss, balance sheet, trial balance, cash flow</li>
+            <li>See cash, bank, and profit in plain language</li>
+            <li>Partners can put in different capital</li>
+            <li>Reports: profit, what we own, cash movement</li>
           </ul>
-          <Button onClick={() => setWizard(true)}>Start configuration</Button>
+          <Button onClick={() => setWizard(true)}>Start setup</Button>
         </Card>
       ) : (
         <>

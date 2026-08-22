@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Printer } from "lucide-react";
 import { accountingService } from "../services/AccountingService";
 import { useSettingsStore } from "../contexts/store";
-import { isAccountingEnabled } from "../utils/accounting";
+import { friendlyAccountLabel, isAccountingEnabled } from "../utils/accounting";
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import Table from "../components/common/Table";
@@ -15,10 +15,10 @@ import { getBusinessPeriodDateRange } from "../utils/businessDate";
 import "./AccountingHub.css";
 
 const REPORTS = [
-  { id: "trial", label: "Trial balance" },
-  { id: "pl", label: "Profit & loss" },
-  { id: "bs", label: "Balance sheet" },
-  { id: "cf", label: "Cash flow" },
+  { id: "pl", label: "Profit" },
+  { id: "bs", label: "What we own" },
+  { id: "cf", label: "Cash movement" },
+  { id: "trial", label: "Accountant" },
 ];
 
 export default function AccountingReports({ embedded = false }) {
@@ -26,7 +26,7 @@ export default function AccountingReports({ embedded = false }) {
   const currency = settings.currency || "SAR";
   const enabled = isAccountingEnabled(settings);
   const month = getBusinessPeriodDateRange("monthly", settings);
-  const [report, setReport] = useState("trial");
+  const [report, setReport] = useState("pl");
   const [from, setFrom] = useState(month.from);
   const [to, setTo] = useState(month.to || todayISO());
   const [data, setData] = useState(null);
@@ -77,7 +77,9 @@ export default function AccountingReports({ embedded = false }) {
 
   const actions = enabled ? (
     <>
-      <Button variant="secondary" onClick={exportCsv}>Export CSV</Button>
+      {report === "trial" ? (
+        <Button variant="secondary" onClick={exportCsv}>Export CSV</Button>
+      ) : null}
       <Button variant="secondary" onClick={() => window.print()}>
         <Printer size={16} /> Print
       </Button>
@@ -100,18 +102,24 @@ export default function AccountingReports({ embedded = false }) {
         ))}
       </div>
       <div className="acct-filters">
-        <Input label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-        <Input label="To" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+        {report !== "bs" ? (
+          <Input label="From" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+        ) : null}
+        <Input
+          label={report === "bs" ? "As of" : "To"}
+          type="date"
+          value={to}
+          onChange={(e) => setTo(e.target.value)}
+        />
       </div>
       {error ? <Alert type="error">{error}</Alert> : null}
       {loading || (!error && (!data || data.kind !== report)) ? (
-        <LoadingSpinner message="Building report..." />
+        <LoadingSpinner message="Preparing a simple summary..." />
       ) : error || !data ? null : report === "trial" ? (
         <>
+          <p className="acct-hint">This list is for an accountant. Day-to-day use Profit and What we own.</p>
           <Alert type={data.balanced ? "success" : "error"}>
-            {data.balanced
-              ? `Balanced — debit ${formatCurrency(data.totalDebit, currency)} equals credit ${formatCurrency(data.totalCredit, currency)}`
-              : `Out of balance — debit ${formatCurrency(data.totalDebit, currency)} / credit ${formatCurrency(data.totalCredit, currency)}`}
+            {data.balanced ? "Books match." : "Books need a check — totals do not match."}
           </Alert>
           <Table
             columns={[
@@ -120,55 +128,86 @@ export default function AccountingReports({ embedded = false }) {
               { key: "tb_debit", label: "Debit", render: (r) => formatCurrency(r.tb_debit, currency) },
               { key: "tb_credit", label: "Credit", render: (r) => formatCurrency(r.tb_credit, currency) },
             ]}
-            data={(data.items || []).filter((r) => r.tb_debit || r.tb_credit)}
-            emptyMessage="No balances in this period."
+            data={data.items || []}
+            emptyMessage="No accounts yet. Turn books on in Settings if you just cleared data."
           />
         </>
       ) : report === "pl" ? (
         <div className="acct-statement">
+          <div className="acct-summary">
+            <Hero label="You sold" value={data.netRevenue} currency={currency} />
+            <Hero label="Profit left" value={data.netProfit} currency={currency} featured />
+          </div>
+          <p className="acct-hint">Sales minus product cost and shop expenses for this period.</p>
           <Row label="Sales" value={data.sales} currency={currency} />
           {data.otherIncome ? <Row label="Other income" value={data.otherIncome} currency={currency} /> : null}
-          <Row label="Sales returns" value={-(data.salesReturns || 0)} currency={currency} />
+          {data.salesReturns ? <Row label="Returns" value={-(data.salesReturns || 0)} currency={currency} /> : null}
           {data.discounts ? <Row label="Discounts" value={-(data.discounts || 0)} currency={currency} /> : null}
-          <Row label="Net revenue" value={data.netRevenue} currency={currency} strong />
-          <Row label="Cost of goods sold" value={-(data.cogs || 0)} currency={currency} />
-          <Row label="Gross profit" value={data.grossProfit} currency={currency} strong />
+          <Row label="Sales after returns" value={data.netRevenue} currency={currency} strong />
+          <Row label="Product cost" value={-(data.cogs || 0)} currency={currency} />
+          <Row label="Profit before expenses" value={data.grossProfit} currency={currency} strong />
           {(data.operatingExpenses || []).map((row) => (
-            <Row key={row.id} label={row.name} value={-(row.balance || 0)} currency={currency} />
+            <Row
+              key={row.id}
+              label={friendlyAccountLabel(row)}
+              value={-(row.balance || 0)}
+              currency={currency}
+            />
           ))}
-          <Row label="Net profit" value={data.netProfit} currency={currency} strong />
+          {data.inventoryAdjustments ? (
+            <Row
+              label="Stock correction"
+              value={-(data.inventoryAdjustments || 0)}
+              currency={currency}
+            />
+          ) : null}
+          <Row label="Profit left" value={data.netProfit} currency={currency} strong />
         </div>
       ) : report === "bs" ? (
         <div className="acct-statement">
-          <h3>Assets</h3>
+          <div className="acct-summary">
+            <Hero label="We own" value={data.assetTotal} currency={currency} />
+            <Hero label="We owe" value={data.liabilityTotal} currency={currency} />
+            <Hero label="Left for owners" value={data.equityTotal} currency={currency} featured />
+          </div>
+          <h3>What we own</h3>
           {(data.assets || []).filter((r) => r.balance).map((row) => (
-            <Row key={row.id} label={`${row.code} ${row.name}`} value={row.balance} currency={currency} />
+            <Row key={row.id} label={friendlyAccountLabel(row)} value={row.balance} currency={currency} />
           ))}
-          <Row label="Total assets" value={data.assetTotal} currency={currency} strong />
-          <h3>Liabilities</h3>
+          <Row label="Total we own" value={data.assetTotal} currency={currency} strong />
+          <h3>What we owe</h3>
           {(data.liabilities || []).filter((r) => r.balance).map((row) => (
-            <Row key={row.id} label={`${row.code} ${row.name}`} value={row.balance} currency={currency} />
+            <Row key={row.id} label={friendlyAccountLabel(row)} value={row.balance} currency={currency} />
           ))}
-          <Row label="Total liabilities" value={data.liabilityTotal} currency={currency} strong />
-          <h3>Equity</h3>
+          <Row label="Total we owe" value={data.liabilityTotal} currency={currency} strong />
+          <h3>Left for owners</h3>
+          <p className="acct-hint">
+            Partner capital is what they put in. Opening difference is the leftover so cash, stock,
+            and debts still add up. Profit is sales minus product cost and expenses.
+          </p>
           {(data.equity || []).filter((r) => r.balance).map((row) => (
-            <Row key={row.id} label={`${row.code} ${row.name}`} value={row.balance} currency={currency} />
+            <Row key={row.id} label={friendlyAccountLabel(row)} value={row.balance} currency={currency} />
           ))}
-          <Row label="Current profit / loss" value={data.netProfit} currency={currency} />
-          <Row label="Total equity" value={data.equityTotal} currency={currency} strong />
+          <Row label="Profit so far" value={data.netProfit} currency={currency} />
+          <Row label="Total left for owners" value={data.equityTotal} currency={currency} strong />
           <Alert type={data.balanced ? "success" : "error"}>
             {data.balanced
-              ? "Assets = Liabilities + Equity"
-              : `Accounting equation is out of balance — assets ${formatCurrency(data.assetTotal, currency)} vs liabilities + equity ${formatCurrency(data.liabilityTotal + data.equityTotal, currency)}`}
+              ? "Books match — what we own equals what we owe plus the owners’ share."
+              : "Books need a check — totals do not match yet."}
           </Alert>
         </div>
       ) : report === "cf" ? (
         <div className="acct-statement">
-          <Row label="Opening cash" value={data.opening} currency={currency} />
-          <Row label="Operating" value={data.operating} currency={currency} />
-          <Row label="Investing" value={data.investing} currency={currency} />
-          <Row label="Financing" value={data.financing} currency={currency} />
-          <Row label="Closing cash" value={data.closing} currency={currency} strong />
+          <div className="acct-summary">
+            <Hero label="Cash at start" value={data.opening} currency={currency} />
+            <Hero label="Cash now" value={data.closing} currency={currency} featured />
+          </div>
+          <p className="acct-hint">How cash and bank moved in this period.</p>
+          <Row label="Cash at start" value={data.opening} currency={currency} />
+          <Row label="From shop work" value={data.operating} currency={currency} />
+          <Row label="From stock / equipment" value={data.investing} currency={currency} />
+          <Row label="From partners" value={data.financing} currency={currency} />
+          <Row label="Cash now" value={data.closing} currency={currency} strong />
         </div>
       ) : null}
     </>
@@ -178,8 +217,8 @@ export default function AccountingReports({ embedded = false }) {
     <div className={embedded ? "acct-statements" : "acct-hub"}>
       {embedded ? null : (
         <PageHeader
-          title="Financial reports"
-          subtitle="Trial balance, profit & loss, balance sheet, and cash flow from the same ledger."
+          title="Reports"
+          subtitle="Simple picture of sales, profit, cash, and what the shop owns."
           actions={actions}
         />
       )}
@@ -188,11 +227,24 @@ export default function AccountingReports({ embedded = false }) {
   );
 }
 
+function Hero({ label, value, currency, featured }) {
+  const amount = Number(value) || 0;
+  const tone = amount > 0.005 ? "in" : amount < -0.005 ? "out" : "zero";
+  return (
+    <div className={`acct-summary-card ${featured ? "featured" : ""}`}>
+      <span>{label}</span>
+      <strong className={`acct-money ${tone}`}>{formatCurrency(amount, currency)}</strong>
+    </div>
+  );
+}
+
 function Row({ label, value, currency, strong }) {
+  const amount = Number(value) || 0;
+  const tone = amount > 0.005 ? "in" : amount < -0.005 ? "out" : "zero";
   return (
     <div className={`acct-row ${strong ? "strong" : ""}`}>
       <span>{label}</span>
-      <span>{formatCurrency(value, currency)}</span>
+      <span className={`acct-money ${tone}`}>{formatCurrency(amount, currency)}</span>
     </div>
   );
 }

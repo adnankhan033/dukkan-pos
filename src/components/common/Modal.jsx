@@ -10,12 +10,13 @@ export default function Modal({
   footer,
   size = "md",
   closeOnOverlay = true,
+  overlayClassName = "",
 }) {
   if (!isOpen) return null;
 
   return (
     <div
-      className="modal-overlay"
+      className={`modal-overlay ${overlayClassName}`.trim()}
       onClick={closeOnOverlay ? onClose : undefined}
     >
       <div

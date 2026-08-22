@@ -131,12 +131,14 @@ export default function Products() {
 
   const loadValueSummary = useCallback(async () => {
     try {
-      const summary = await productService.getValueSummary();
+      const summary = await productService.getValueSummary({
+        published: isPublishedSection,
+      });
       setValueSummary(summary);
     } catch {
       setValueSummary(emptyProductValueSummary());
     }
-  }, []);
+  }, [isPublishedSection]);
 
   useEffect(() => {
     Promise.all([

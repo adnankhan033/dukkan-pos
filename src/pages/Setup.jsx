@@ -58,7 +58,7 @@ export default function Setup() {
     }
   }, [settings, registrationStatus, emailSent]);
 
-  if (isInstallationRegistered(settings) && isAuthenticated) {
+  if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 

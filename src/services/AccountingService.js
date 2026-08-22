@@ -1,4 +1,4 @@
-import { query, queryOne, execute, insert, runInTransaction, resolveInsertId } from "../database/connection";
+import { query, queryOne, execute, insert, runInTransaction, resolveInsertId, ensureExpenseCategoriesSchema } from "../database/connection";
 import { settingsService } from "./SettingsService";
 import { useAuthStore } from "../contexts/store";
 import {
@@ -145,12 +145,14 @@ class AccountingService {
     return balances.find((r) => r.id === inv.id)?.balance || 0;
   }
 
-  async postInventoryValueDelta(delta, description = "Inventory value change", sourceId = null) {
+  async postInventoryValueDelta(delta, description = "Inventory value change", sourceId = null, { against = "equity" } = {}) {
     if (!(await this.isEnabled())) return null;
     const value = roundMoney(delta);
     if (!value) return null;
     const invId = await this.accountId(ACCOUNT_CODES.INVENTORY);
-    const adjId = await this.accountId(ACCOUNT_CODES.INVENTORY_ADJUST);
+    const offsetId = await this.accountId(
+      against === "adjust" ? ACCOUNT_CODES.INVENTORY_ADJUST : ACCOUNT_CODES.OPENING_EQUITY
+    );
     const abs = Math.abs(value);
     const increase = value > 0;
     return this.postJournal({
@@ -162,48 +164,204 @@ class AccountingService {
       entryDate: await this.businessDate(),
       description,
       lines: increase
-        ? [line(invId, abs, 0, { description }), line(adjId, 0, abs, { description })]
-        : [line(adjId, abs, 0, { description }), line(invId, 0, abs, { description })],
+        ? [line(invId, abs, 0, { description }), line(offsetId, 0, abs, { description })]
+        : [line(offsetId, abs, 0, { description }), line(invId, 0, abs, { description })],
     });
   }
 
-  async syncInventoryBookToStock() {
+  async syncInventoryBookToStock({ against = "equity" } = {}) {
     if (!(await this.isEnabled())) return this.getLiveInventoryValue();
     const live = await this.getLiveInventoryValue();
     const asOf = await this.businessDate();
     const book = await this.getInventoryBookValue(asOf);
     const delta = roundMoney(live.purchaseTotal - book);
     if (Math.abs(delta) >= 0.01) {
-      await this.postInventoryValueDelta(delta, "Align inventory to on-hand stock at cost");
+      await this.postInventoryValueDelta(delta, "Align inventory to on-hand stock at cost", null, { against });
     }
     return live;
   }
 
-  /** One-time: inventory was aligned against opening equity; reverse those journals. */
   async repairMispostedInventoryRevaluations() {
     if (this._inventoryRevalueRepair) return this._inventoryRevalueRepair;
-    this._inventoryRevalueRepair = this._runInventoryRevalueRepair().finally(() => {
+    this._inventoryRevalueRepair = this._runBooksRepair().finally(() => {
       this._inventoryRevalueRepair = null;
     });
     return this._inventoryRevalueRepair;
   }
 
-  async _runInventoryRevalueRepair() {
+  async _runBooksRepair() {
     if (!(await this.isEnabled())) return;
+    await this.seedChartOfAccounts();
+    await this._repairOpeningEquityRevalues();
+    await this._reclassInventoryAdjustmentsToOpeningEquity();
+    await this._repairOrphanExpenseReversals();
+    await this._backfillMissingSales();
+    await this._restateBooksToActual();
+  }
+
+  async _repairOpeningEquityRevalues() {
     const done = await settingsService.get(ACCOUNTING_SETTING_KEYS.INVENTORY_REVALUE_REPAIRED, "");
     if (done === "1") return;
 
-    await this.seedChartOfAccounts();
     const journals = await query(
       `SELECT id FROM journal_entries
-       WHERE source_type = 'inventory_revalue' AND status = 'posted'
+       WHERE source_type = 'inventory_revalue' AND status = 'posted' AND entry_type != 'reversal'
        ORDER BY id ASC`
     );
     for (const row of journals) {
       await this.reverseJournal(row.id, "Move inventory alignment off opening equity");
     }
     await settingsService.set(ACCOUNTING_SETTING_KEYS.INVENTORY_REVALUE_REPAIRED, "1");
-    await this.syncInventoryBookToStock();
+  }
+
+  /** Stock restatement belongs in starting balance, not this period's profit. */
+  async _reclassInventoryAdjustmentsToOpeningEquity() {
+    const done = await settingsService.get(ACCOUNTING_SETTING_KEYS.INVENTORY_PL_RECLASS, "");
+    if (done === "1") return;
+
+    const adj = await this.getAccountByCode(ACCOUNT_CODES.INVENTORY_ADJUST);
+    const equity = await this.getAccountByCode(ACCOUNT_CODES.OPENING_EQUITY);
+    if (adj && equity) {
+      const rows = await this.accountBalances();
+      const balance = rows.find((r) => r.id === adj.id)?.balance || 0;
+      if (Math.abs(balance) >= 0.01) {
+        const abs = Math.abs(balance);
+        const description = "Move stock restatement to starting balance";
+        await this.postJournal({
+          prefix: "JV",
+          entryType: JOURNAL_TYPES.INVENTORY,
+          sourceType: "inventory_reclass",
+          sourceId: 1,
+          allowDuplicate: true,
+          entryDate: await this.businessDate(),
+          description,
+          lines:
+            balance > 0
+              ? [line(equity.id, abs, 0, { description }), line(adj.id, 0, abs, { description })]
+              : [line(adj.id, abs, 0, { description }), line(equity.id, 0, abs, { description })],
+        });
+      }
+    }
+    await settingsService.set(ACCOUNTING_SETTING_KEYS.INVENTORY_PL_RECLASS, "1");
+    await this.syncInventoryBookToStock({ against: "equity" });
+  }
+
+  /** Expense edits reversed the old journal then reused that reversal as the live entry. */
+  async _repairOrphanExpenseReversals() {
+    const done = await settingsService.get(ACCOUNTING_SETTING_KEYS.EXPENSE_REVERSAL_REPAIRED, "");
+    if (done === "1") return;
+
+    const rows = await query(
+      `SELECT e.id AS expense_id, je.id AS journal_id
+       FROM expenses e
+       JOIN journal_entries je ON je.id = e.journal_entry_id
+       WHERE je.status = 'posted' AND je.entry_type = 'reversal'`
+    );
+    for (const row of rows) {
+      await this.reverseJournal(row.journal_id, "Restore expense after update");
+      const expense = await queryOne("SELECT * FROM expenses WHERE id = $1", [row.expense_id]);
+      if (expense) await this.postExpense({ ...expense, journal_entry_id: null });
+    }
+    await settingsService.set(ACCOUNTING_SETTING_KEYS.EXPENSE_REVERSAL_REPAIRED, "1");
+  }
+
+  async _backfillMissingSales() {
+    const missing = await query(
+      `SELECT s.id FROM sales s
+       WHERE s.status IN ('completed', 'partial_return')
+         AND NOT EXISTS (
+           SELECT 1 FROM journal_entries je
+           WHERE je.source_type = 'sale' AND je.source_id = s.id
+             AND je.status = 'posted' AND je.entry_type != 'reversal'
+         )`
+    );
+    for (const row of missing) {
+      const sale = await queryOne(
+        `SELECT s.*, c.name AS customer_name FROM sales s
+         LEFT JOIN customers c ON c.id = s.customer_id WHERE s.id = $1`,
+        [row.id]
+      );
+      if (!sale) continue;
+      const items = await query(
+        `SELECT si.*, p.cost_price FROM sale_items si
+         LEFT JOIN products p ON p.id = si.product_id WHERE si.sale_id = $1`,
+        [row.id]
+      );
+      await this.postSale({ ...sale, items });
+    }
+  }
+
+  /** Force GL cash, stock, expenses, and stock-correction to match the POS. */
+  async _restateBooksToActual() {
+    const live = await this.getLiveInventoryValue();
+    const rows = await this.accountBalances();
+    const byCode = Object.fromEntries(rows.map((r) => [r.code, r]));
+
+    const expenseRows = await query("SELECT category, amount FROM expenses");
+    const wantExpense = {};
+    for (const row of expenseRows) {
+      const code = EXPENSE_ACCOUNT_MAP[row.category] || ACCOUNT_CODES.OTHER_EXPENSE;
+      wantExpense[code] = roundMoney((wantExpense[code] || 0) + Number(row.amount || 0));
+    }
+
+    const cashId = await this.defaultCashId();
+    const cashAccount = rows.find((r) => r.id === cashId);
+    const lines = [];
+    let extraCashOut = 0;
+
+    const pushDelta = (account, target) => {
+      if (!account) return;
+      const current = account.balance || 0;
+      const diff = roundMoney(target - current);
+      if (Math.abs(diff) < 0.01) return;
+      if (account.normal_balance === "credit") {
+        lines.push(diff > 0 ? line(account.id, 0, diff) : line(account.id, -diff, 0));
+      } else {
+        lines.push(diff > 0 ? line(account.id, diff, 0) : line(account.id, 0, -diff));
+      }
+    };
+
+    const expenseCodes = new Set([
+      ...Object.values(EXPENSE_ACCOUNT_MAP),
+      ACCOUNT_CODES.OTHER_EXPENSE,
+    ]);
+    for (const account of rows) {
+      if (account.type !== ACCOUNT_TYPES.EXPENSE) continue;
+      if (account.code === ACCOUNT_CODES.COGS || account.code === ACCOUNT_CODES.INVENTORY_ADJUST) continue;
+      if (!expenseCodes.has(account.code) && !account.balance) continue;
+      const want = wantExpense[account.code] || 0;
+      extraCashOut = roundMoney(extraCashOut + ((account.balance || 0) - want));
+      pushDelta(account, want);
+    }
+
+    pushDelta(byCode[ACCOUNT_CODES.INVENTORY], live.purchaseTotal);
+    pushDelta(byCode[ACCOUNT_CODES.INVENTORY_ADJUST], 0);
+    if (cashAccount && Math.abs(extraCashOut) >= 0.01) {
+      // Extra expense in the GL was taken from cash. Put that cash back (or take more).
+      pushDelta(cashAccount, roundMoney((cashAccount.balance || 0) + extraCashOut));
+    }
+
+    const raw = lines.filter(Boolean);
+    if (raw.length < 2) return;
+    const debit = roundMoney(raw.reduce((s, l) => s + Number(l.debit || 0), 0));
+    const credit = roundMoney(raw.reduce((s, l) => s + Number(l.credit || 0), 0));
+    const plug = roundMoney(debit - credit);
+    if (Math.abs(plug) >= 0.01) {
+      const equityId = await this.accountId(ACCOUNT_CODES.OPENING_EQUITY);
+      raw.push(plug > 0 ? line(equityId, 0, plug) : line(equityId, -plug, 0));
+    }
+    if (raw.filter(Boolean).length < 2) return;
+
+    await this.postJournal({
+      prefix: "JV",
+      entryType: JOURNAL_TYPES.INVENTORY,
+      sourceType: "books_restate",
+      sourceId: 1,
+      allowDuplicate: true,
+      entryDate: await this.businessDate(),
+      description: "Restate books to actual shop amounts",
+      lines: raw,
+    });
   }
 
   async seedChartOfAccounts() {
@@ -233,6 +391,80 @@ class AccountingService {
         ]
       );
     }
+  }
+
+  async ensureDefaultBookSettings() {
+    const year = new Date().getFullYear();
+    const start = `${year}-01-01`;
+    const end = `${year}-12-31`;
+    const current = await queryOne("SELECT id FROM fiscal_periods WHERE is_current = 1");
+    if (!current) {
+      await execute("UPDATE fiscal_periods SET is_current = 0");
+      const existing = await queryOne(
+        "SELECT id FROM fiscal_periods WHERE start_date = $1 AND end_date = $2",
+        [start, end]
+      );
+      if (existing?.id) {
+        await execute("UPDATE fiscal_periods SET status = 'open', is_current = 1 WHERE id = $1", [existing.id]);
+      } else {
+        await insert(
+          `INSERT INTO fiscal_periods (name, year, start_date, end_date, status, is_current)
+           VALUES ($1, $2, $3, $4, 'open', 1)`,
+          [`FY ${year}`, year, start, end]
+        );
+      }
+    }
+
+    const cashAccount = await this.getAccountByCode(ACCOUNT_CODES.CASH);
+    const bankAccount = await this.getAccountByCode(ACCOUNT_CODES.BANK);
+    const patch = {};
+    if (cashAccount?.id) patch[ACCOUNTING_SETTING_KEYS.DEFAULT_CASH_ID] = String(cashAccount.id);
+    if (bankAccount?.id) patch[ACCOUNTING_SETTING_KEYS.DEFAULT_BANK_ID] = String(bankAccount.id);
+    const fiscalStart = await settingsService.get(ACCOUNTING_SETTING_KEYS.FISCAL_START, "");
+    if (!fiscalStart) patch[ACCOUNTING_SETTING_KEYS.FISCAL_START] = start;
+    if (Object.keys(patch).length) await settingsService.updateMany(patch);
+  }
+
+  /**
+   * After a data wipe the chart of accounts is gone and books are switched off,
+   * so new sales never post. Restore the chart and turn books back on when the
+   * shop already has products or transactions.
+   */
+  async recoverBooksAfterDataClear() {
+    await this.ensureSchema();
+    await ensureExpenseCategoriesSchema();
+    await this.seedChartOfAccounts();
+    await this.ensureDefaultBookSettings();
+
+    if (await this.isEnabled()) return false;
+
+    const shop = await queryOne(`
+      SELECT
+        (SELECT COUNT(*) FROM sales WHERE COALESCE(status, '') != 'held') AS sales,
+        (SELECT COUNT(*) FROM purchases) AS purchases,
+        (SELECT COUNT(*) FROM expenses) AS expenses,
+        (SELECT COUNT(*) FROM products) AS products
+    `);
+    const hasShopWork =
+      Number(shop?.sales || 0) +
+        Number(shop?.purchases || 0) +
+        Number(shop?.expenses || 0) +
+        Number(shop?.products || 0) >
+      0;
+    if (!hasShopWork) return false;
+
+    await settingsService.updateMany({
+      [ACCOUNTING_SETTING_KEYS.ENABLED]: "1",
+      [ACCOUNTING_SETTING_KEYS.CONFIGURED_AT]: getBusinessDateTimeISO(await settingsService.getAll()),
+      [ACCOUNTING_SETTING_KEYS.START_MODE]: "snapshot",
+    });
+    try {
+      const { activationService } = await import("./ActivationService.js");
+      await activationService.repairRegistrationIfShopAlreadyInUse();
+    } catch {
+      /* setup flags are independent of books recovery */
+    }
+    return true;
   }
 
   async activate({
@@ -452,7 +684,16 @@ class AccountingService {
     return row.id;
   }
 
-  async listAccounts({ type = null, activeOnly = true, subtype = null } = {}) {
+  async listAccounts({
+    type = null,
+    activeOnly = true,
+    subtype = null,
+    search = "",
+    groupId = null,
+    active = null,
+    page = null,
+    limit = null,
+  } = {}) {
     let sql = `
       SELECT a.*, g.name AS group_name, g.code AS group_code
       FROM accounts a
@@ -460,7 +701,9 @@ class AccountingService {
       WHERE 1=1
     `;
     const params = [];
-    if (activeOnly) sql += " AND a.is_active = 1";
+    if (active === "hidden") sql += " AND a.is_active = 0";
+    else if (active === "all") { /* include every account */ }
+    else if (activeOnly || active === "active") sql += " AND a.is_active = 1";
     if (type) {
       params.push(type);
       sql += ` AND a.type = $${params.length}`;
@@ -469,8 +712,23 @@ class AccountingService {
       params.push(subtype);
       sql += ` AND a.subtype = $${params.length}`;
     }
+    if (groupId) {
+      params.push(Number(groupId));
+      sql += ` AND a.group_id = $${params.length}`;
+    }
+    if (String(search || "").trim()) {
+      params.push(`%${String(search).trim()}%`);
+      sql += ` AND (a.name LIKE $${params.length} OR a.name_ar LIKE $${params.length} OR a.code LIKE $${params.length})`;
+    }
     sql += " ORDER BY a.code ASC";
-    return query(sql, params);
+    if (page == null || limit == null) return query(sql, params);
+
+    const countSql = `SELECT COUNT(*) AS total FROM accounts a JOIN account_groups g ON g.id = a.group_id WHERE 1=1${sql.split("WHERE 1=1")[1]?.replace(/ORDER BY[\s\S]*$/, "") || ""}`;
+    const countRow = await queryOne(countSql, params);
+    const offset = (Math.max(1, page) - 1) * limit;
+    params.push(limit, offset);
+    const items = await query(`${sql} LIMIT $${params.length - 1} OFFSET $${params.length}`, params);
+    return { items, total: Number(countRow?.total || 0), page, limit };
   }
 
   async listGroups() {
@@ -583,6 +841,7 @@ class AccountingService {
     return queryOne(
       `SELECT * FROM journal_entries
        WHERE source_type = $1 AND source_id = $2 AND status = 'posted'
+         AND entry_type != 'reversal'
        ORDER BY id DESC LIMIT 1`,
       [sourceType, Number(sourceId)]
     );
@@ -753,7 +1012,7 @@ class AccountingService {
     return { ...entry, lines };
   }
 
-  async listJournals({ from = null, to = null, type = null, search = "", page = 1, limit = 50 } = {}) {
+  async listJournals({ from = null, to = null, type = null, status = null, search = "", page = 1, limit = 50 } = {}) {
     let sql = "SELECT * FROM journal_entries WHERE 1=1";
     const params = [];
     if (from) {
@@ -768,6 +1027,10 @@ class AccountingService {
       params.push(type);
       sql += ` AND entry_type = $${params.length}`;
     }
+    if (status && status !== "all") {
+      params.push(status);
+      sql += ` AND status = $${params.length}`;
+    }
     if (search.trim()) {
       params.push(`%${search.trim()}%`);
       sql += ` AND (reference LIKE $${params.length} OR description LIKE $${params.length})`;
@@ -780,7 +1043,18 @@ class AccountingService {
     return { items, total: Number(countRow?.total || 0), page, limit };
   }
 
-  async getLedger({ accountId = null, customerId = null, supplierId = null, partnerId = null, from = null, to = null } = {}) {
+  async getLedger({
+    accountId = null,
+    customerId = null,
+    supplierId = null,
+    partnerId = null,
+    from = null,
+    to = null,
+    type = null,
+    search = "",
+    page = 1,
+    limit = null,
+  } = {}) {
     let sql = `
       SELECT jl.*, je.reference, je.entry_date, je.entry_type, je.description AS entry_description,
              je.source_type, je.source_id, a.code AS account_code, a.name AS account_name,
@@ -815,23 +1089,37 @@ class AccountingService {
       params.push(to);
       sql += ` AND date(je.entry_date) <= date($${params.length})`;
     }
+    if (type && type !== "all") {
+      params.push(type);
+      sql += ` AND je.entry_type = $${params.length}`;
+    }
+    if (String(search || "").trim()) {
+      params.push(`%${String(search).trim()}%`);
+      sql += ` AND (je.reference LIKE $${params.length} OR je.description LIKE $${params.length} OR jl.description LIKE $${params.length})`;
+    }
     sql += " ORDER BY je.entry_date ASC, je.id ASC, jl.id ASC";
     const rows = await query(sql, params);
 
     let running = 0;
-    const items = rows.map((row) => {
+    const chronological = rows.map((row) => {
       const delta = row.normal_balance === "credit"
         ? roundMoney(row.credit - row.debit)
         : roundMoney(row.debit - row.credit);
       running = roundMoney(running + delta);
       return { ...row, balance: running };
     });
+    const newestFirst = [...chronological].reverse();
+    const total = newestFirst.length;
+    const start = Math.max(0, (Math.max(1, page) - 1) * Number(limit || 0));
 
     return {
-      items,
+      items: limit ? newestFirst.slice(start, start + limit) : chronological,
+      total,
+      page,
+      limit,
       totals: {
-        debit: roundMoney(items.reduce((s, r) => s + Number(r.debit), 0)),
-        credit: roundMoney(items.reduce((s, r) => s + Number(r.credit), 0)),
+        debit: roundMoney(chronological.reduce((s, r) => s + Number(r.debit), 0)),
+        credit: roundMoney(chronological.reduce((s, r) => s + Number(r.credit), 0)),
         balance: running,
       },
     };
@@ -913,7 +1201,9 @@ class AccountingService {
   async profitAndLoss({ from, to }) {
     const profit = await getProfitInRange(from, to);
     const breakdown = await getExpenseBreakdownInRange(from, to);
-    const labelFor = (id) => EXPENSE_CATEGORIES.find((c) => c.id === id)?.label || id;
+    const categoryRows = await query("SELECT code, name FROM expense_categories").catch(() => []);
+    const categoryNames = Object.fromEntries((categoryRows || []).map((row) => [row.code, row.name]));
+    const labelFor = (id) => categoryNames[id] || EXPENSE_CATEGORIES.find((c) => c.id === id)?.label || id;
     const operatingExpenses = breakdown.map((row) => ({
       id: row.id,
       name: labelFor(row.id),
@@ -945,12 +1235,21 @@ class AccountingService {
     const salesReturns = bal(ACCOUNT_CODES.SALES_RETURNS);
     const discounts = bal(ACCOUNT_CODES.SALES_DISCOUNTS);
     const cogs = bal(ACCOUNT_CODES.COGS);
+    const inventoryAdjustments = bal(ACCOUNT_CODES.INVENTORY_ADJUST);
     const netRevenue = roundMoney(sales + otherIncome - salesReturns - discounts);
     const grossProfit = roundMoney(netRevenue - cogs);
     const operatingExpenses = rows
-      .filter((r) => r.type === ACCOUNT_TYPES.EXPENSE && r.code !== ACCOUNT_CODES.COGS && r.balance)
+      .filter(
+        (r) =>
+          r.type === ACCOUNT_TYPES.EXPENSE &&
+          r.code !== ACCOUNT_CODES.COGS &&
+          r.code !== ACCOUNT_CODES.INVENTORY_ADJUST &&
+          r.balance
+      )
       .map((r) => ({ id: r.id, code: r.code, name: r.name, balance: r.balance }));
-    const expenses = roundMoney(operatingExpenses.reduce((s, r) => s + r.balance, 0));
+    const expenses = roundMoney(
+      operatingExpenses.reduce((s, r) => s + r.balance, 0) + inventoryAdjustments
+    );
     const netProfit = roundMoney(grossProfit - expenses);
     return {
       sales,
@@ -961,6 +1260,7 @@ class AccountingService {
       cogs,
       grossProfit,
       operatingExpenses,
+      inventoryAdjustments,
       expenses,
       netProfit,
       revenueTotal: netRevenue,
@@ -1101,6 +1401,17 @@ class AccountingService {
     };
   }
 
+  async allocateAccountCode(preferred) {
+    let code = String(preferred);
+    let seq = Number(preferred);
+    if (!Number.isFinite(seq) || seq <= 0) seq = Date.now() % 100000;
+    while (await this.getAccountByCode(code)) {
+      seq += 1;
+      code = String(seq);
+    }
+    return code;
+  }
+
   async createPartner({
     name,
     phone,
@@ -1113,17 +1424,33 @@ class AccountingService {
     skipCapitalJournal = false,
   }) {
     const trimmed = String(name || "").trim();
-    if (!trimmed) throw new Error("Partner name is required");
+    if (!trimmed) throw new Error("Enter the partner’s name");
+
+    await this.ensureSchema();
+    await this.seedChartOfAccounts();
+
+    const capitalControl = await this.getAccountByCode(ACCOUNT_CODES.PARTNER_CAPITAL);
+    const drawingsControl = await this.getAccountByCode(ACCOUNT_CODES.PARTNER_DRAWINGS);
+    if (!capitalControl?.group_id || !drawingsControl?.group_id) {
+      throw new Error("Partner accounts are missing. Open Books once, then add the partner again.");
+    }
+
+    const existing = await queryOne(
+      "SELECT id FROM partners WHERE lower(trim(name)) = $1 AND is_active = 1",
+      [trimmed.toLowerCase()]
+    );
+    if (existing) {
+      throw new Error(`Partner "${trimmed}" is already in the list`);
+    }
+
     const id = await insert(
       `INSERT INTO partners (name, phone, notes, ownership_percent, profit_share_percent, is_active)
        VALUES ($1, $2, $3, $4, $5, 1)`,
       [trimmed, phone || null, notes || null, Number(ownership_percent) || 0, Number(profit_share_percent) || 0]
     );
 
-    const capitalControl = await this.getAccountByCode(ACCOUNT_CODES.PARTNER_CAPITAL);
-    const drawingsControl = await this.getAccountByCode(ACCOUNT_CODES.PARTNER_DRAWINGS);
-    const capCode = `31${String(10 + id).padStart(2, "0")}`;
-    const drwCode = `32${String(10 + id).padStart(2, "0")}`;
+    const capCode = await this.allocateAccountCode(`31${String(10 + Number(id)).padStart(2, "0")}`);
+    const drwCode = await this.allocateAccountCode(`32${String(10 + Number(id)).padStart(2, "0")}`);
 
     const capitalId = await insert(
       `INSERT INTO accounts
@@ -1160,7 +1487,12 @@ class AccountingService {
   async getPartner(id) {
     const partner = await queryOne("SELECT * FROM partners WHERE id = $1", [Number(id)]);
     if (!partner) return null;
-    const ledger = await this.getLedger({ partnerId: partner.id });
+    let ledger = { items: [], totals: {} };
+    try {
+      ledger = await this.getLedger({ partnerId: partner.id });
+    } catch {
+      ledger = { items: [], totals: {} };
+    }
     const invested = roundMoney(
       (await queryOne(
         `SELECT COALESCE(SUM(amount), 0) AS value FROM partner_transactions
@@ -1224,8 +1556,12 @@ class AccountingService {
     if (!partner) throw new Error("Partner not found");
     const value = roundMoney(amount);
     if (value <= 0) throw new Error("Amount must be greater than zero");
+    if (!partner.capital_account_id || !partner.drawings_account_id) {
+      throw new Error("This partner is missing capital accounts. Delete and add them again.");
+    }
 
-    const cashId = cashAccountId || (await this.defaultCashId());
+    const cashId = Number(cashAccountId) || (await this.defaultCashId());
+    if (!cashId) throw new Error("Choose a cash or bank account");
     const date = dateOnly(entryDate) || await this.businessDate();
     const lines = [];
     let prefix = "CAP";
@@ -1291,14 +1627,20 @@ class AccountingService {
   async defaultCashId() {
     const settings = await settingsService.getAll();
     const id = Number(settings[ACCOUNTING_SETTING_KEYS.DEFAULT_CASH_ID] || 0);
-    if (id) return id;
+    if (id) {
+      const existing = await this.getAccount(id);
+      if (existing) return existing.id;
+    }
     return this.accountId(ACCOUNT_CODES.CASH);
   }
 
   async defaultBankId() {
     const settings = await settingsService.getAll();
     const id = Number(settings[ACCOUNTING_SETTING_KEYS.DEFAULT_BANK_ID] || 0);
-    if (id) return id;
+    if (id) {
+      const existing = await this.getAccount(id);
+      if (existing) return existing.id;
+    }
     return this.accountId(ACCOUNT_CODES.BANK);
   }
 

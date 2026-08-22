@@ -1,14 +1,14 @@
 import Database from "@tauri-apps/plugin-sql";
-import { DB_NAME } from "../utils/constants";
+import { DB_NAME, DEFAULT_SETTINGS, EXPENSE_CATEGORIES } from "../utils/constants";
 import { SCHEMA_STATEMENTS } from "./schema";
 import { ACCOUNTING_SCHEMA_STATEMENTS } from "./accountingSchema";
 import bcrypt from "bcryptjs";
-import { DEFAULT_SETTINGS } from "../utils/constants";
 import { DEFAULT_UNITS } from "../utils/defaultUnits";
 import { DEFAULT_PAYMENT_METHODS } from "../utils/defaultPaymentMethods";
 import {
   DEFAULT_ADMIN_PASSWORD,
   DEFAULT_ADMIN_USERNAME,
+  ACTIVATION_SETTING_KEYS,
 } from "../utils/activationConfig";
 import { getDataClearSection } from "../utils/dataClearSections.js";
 import {
@@ -768,6 +768,49 @@ async function ensureUsersAndExpensesSchema() {
   if (!expenseCols.some((c) => c.name === "category")) {
     await execute("ALTER TABLE expenses ADD COLUMN category TEXT DEFAULT 'other'");
   }
+
+  await ensureExpenseCategoriesSchema();
+}
+
+async function ensureExpenseCategoriesSchema() {
+  await execute(`CREATE TABLE IF NOT EXISTS expense_categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    name TEXT NOT NULL UNIQUE,
+    is_system INTEGER NOT NULL DEFAULT 0,
+    sort_order INTEGER NOT NULL DEFAULT 100,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`);
+
+  for (let i = 0; i < EXPENSE_CATEGORIES.length; i += 1) {
+    const category = EXPENSE_CATEGORIES[i];
+    await execute(
+      `INSERT OR IGNORE INTO expense_categories (code, name, is_system, sort_order)
+       VALUES ($1, $2, 1, $3)`,
+      [category.id, category.label, (i + 1) * 10]
+    );
+  }
+
+  const used = await query(
+    `SELECT DISTINCT category FROM expenses
+     WHERE category IS NOT NULL AND TRIM(category) != ''`
+  );
+  for (const row of used) {
+    const code = String(row.category).trim();
+    const existing = await queryOne(
+      "SELECT id FROM expense_categories WHERE code = $1 OR lower(trim(name)) = $2",
+      [code, code.toLowerCase()]
+    );
+    if (existing) continue;
+    const seeded = EXPENSE_CATEGORIES.find((item) => item.id === code);
+    const name = seeded?.label || code.replace(/_/g, " ");
+    await execute(
+      `INSERT OR IGNORE INTO expense_categories (code, name, is_system, sort_order)
+       VALUES ($1, $2, 0, 200)`,
+      [code, name]
+    );
+  }
 }
 
 async function ensureSettingsKeys() {
@@ -1337,6 +1380,8 @@ export async function clearDatabaseSection(sectionId) {
       "accounting_default_bank_account_id",
       "accounting_start_mode",
       "accounting_inventory_revalue_repaired",
+      "accounting_inventory_pl_reclass",
+      "accounting_expense_reversal_repaired",
     ]) {
       await execute("DELETE FROM settings WHERE key = $1", [key]);
     }
@@ -1344,6 +1389,13 @@ export async function clearDatabaseSection(sectionId) {
 }
 
 export async function clearDatabaseData() {
+  const keepKeys = [...Object.values(ACTIVATION_SETTING_KEYS), "system_hostname"];
+  const preserved = [];
+  for (const key of keepKeys) {
+    const row = await queryOne("SELECT key, value FROM settings WHERE key = $1", [key]);
+    if (row?.key) preserved.push(row);
+  }
+
   const clearOrder = [
     "journal_lines",
     "journal_entries",
@@ -1400,6 +1452,15 @@ export async function clearDatabaseData() {
   await seedDefaultData();
   await ensureUnitsSchema();
   await ensureSettingsKeys();
+  await ensureExpenseCategoriesSchema();
+
+  for (const row of preserved) {
+    await execute(
+      `INSERT INTO settings (key, value) VALUES ($1, $2)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [row.key, row.value]
+    );
+  }
 }
 
-export { schemaInitialized };
+export { schemaInitialized, ensureExpenseCategoriesSchema };

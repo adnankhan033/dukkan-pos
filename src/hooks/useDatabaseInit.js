@@ -19,6 +19,7 @@ export function useDatabaseInit() {
 
         const { activationService } = await import("../services/ActivationService.js");
         settings = await activationService.ensureSystemActivation(settings);
+        settings = await activationService.repairRegistrationIfShopAlreadyInUse(settings);
 
         if (mounted) {
           setSettings(settings);

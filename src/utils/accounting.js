@@ -8,6 +8,8 @@ export const ACCOUNTING_SETTING_KEYS = {
   DEFAULT_BANK_ID: "accounting_default_bank_account_id",
   START_MODE: "accounting_start_mode",
   INVENTORY_REVALUE_REPAIRED: "accounting_inventory_revalue_repaired",
+  INVENTORY_PL_RECLASS: "accounting_inventory_pl_reclass",
+  EXPENSE_REVERSAL_REPAIRED: "accounting_expense_reversal_repaired",
 };
 
 export const ACCOUNT_TYPES = {
@@ -166,4 +168,53 @@ export function dateOnly(value) {
   const text = String(value).trim();
   if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text.slice(0, 10);
   return text;
+}
+
+export const JOURNAL_TYPE_LABELS = {
+  sale: "Sale",
+  sale_return: "Return",
+  sale_payment: "Customer paid",
+  purchase: "Purchase",
+  purchase_payment: "Paid supplier",
+  expense: "Expense",
+  partner: "Partner",
+  cash: "Cash move",
+  inventory: "Stock",
+  opening: "Starting balance",
+  manual: "Adjustment",
+  closing: "Period close",
+  reversal: "Cancelled",
+};
+
+const ACCOUNT_EASY_NAMES = {
+  [ACCOUNT_CODES.CASH]: "Cash in the drawer",
+  [ACCOUNT_CODES.BANK]: "Bank",
+  [ACCOUNT_CODES.AR]: "Customers owe us",
+  [ACCOUNT_CODES.INVENTORY]: "Stock at cost",
+  [ACCOUNT_CODES.VAT_INPUT]: "VAT we can reclaim",
+  [ACCOUNT_CODES.AP]: "We owe suppliers",
+  [ACCOUNT_CODES.VAT_OUTPUT]: "VAT to pay",
+  [ACCOUNT_CODES.OPENING_EQUITY]: "Opening difference",
+  [ACCOUNT_CODES.OWNER_CAPITAL]: "Owner capital",
+  [ACCOUNT_CODES.PARTNER_CAPITAL]: "Partner capital",
+  [ACCOUNT_CODES.PARTNER_DRAWINGS]: "Partner drawings",
+  [ACCOUNT_CODES.RETAINED_EARNINGS]: "Kept earnings",
+  [ACCOUNT_CODES.CURRENT_PL]: "This year's profit",
+  [ACCOUNT_CODES.SALES]: "Sales",
+  [ACCOUNT_CODES.COGS]: "Product cost",
+  [ACCOUNT_CODES.INVENTORY_ADJUST]: "Stock correction",
+  [ACCOUNT_CODES.SALES_RETURNS]: "Returns",
+  [ACCOUNT_CODES.SALES_DISCOUNTS]: "Discounts",
+};
+
+export function journalTypeLabel(type) {
+  return JOURNAL_TYPE_LABELS[type] || String(type || "").replace(/_/g, " ");
+}
+
+export function friendlyAccountLabel(account) {
+  if (!account) return "";
+  if (ACCOUNT_EASY_NAMES[account.code]) return ACCOUNT_EASY_NAMES[account.code];
+  const name = String(account.name || "").trim();
+  if (/opening balance equity/i.test(name)) return "Starting balance";
+  return name;
 }

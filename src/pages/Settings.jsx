@@ -645,6 +645,9 @@ export default function Settings() {
     setBackupBusy(true);
     try {
       await backupService.clearSection(section.id);
+      if (section.id === "accounting") {
+        setSettings(await settingsService.getAll());
+      }
       await refreshSectionCounts();
       notify.success(`${section.label} data was cleared.`, { title: "Section cleared" });
     } catch (err) {

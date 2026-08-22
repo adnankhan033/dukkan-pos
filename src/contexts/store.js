@@ -56,6 +56,10 @@ export const useThemeStore = create(
 export const useSettingsStore = create((set) => ({
   settings: {},
   setSettings: (settings) => set({ settings }),
+  mergeSettings: (partial) =>
+    set((state) => ({
+      settings: { ...state.settings, ...(partial || {}) },
+    })),
 }));
 
 export const useAppStore = create((set) => ({

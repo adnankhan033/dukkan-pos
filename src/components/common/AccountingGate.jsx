@@ -9,13 +9,13 @@ export default function AccountingGate({ enabled, children }) {
   return (
     <Card className="acct-gate">
       <Landmark size={28} />
-      <h3>Accounting is not configured yet</h3>
+      <h3>Turn on books</h3>
       <p>
-        Open Settings → Accounting and run the short setup wizard. After that, sales, purchases,
-        expenses, and partner capital will post to the general ledger automatically.
+        Books were reset when data was cleared. Open Settings → Accounting and finish setup so
+        sales, purchases, and expenses are recorded again.
       </p>
       <Link to="/settings">
-        <Button>Open Accounting settings</Button>
+        <Button>Open setup</Button>
       </Link>
     </Card>
   );

@@ -281,6 +281,47 @@ class ActivationService {
     };
   }
 
+  /**
+   * Data wipe can drop installation flags while the shop is already in use.
+   * Restore registration so Accounting stays in the app, not Store Setup.
+   * Brand-new empty installs are left for the real setup wizard.
+   */
+  async repairRegistrationIfShopAlreadyInUse(existingSettings = null) {
+    let settings = existingSettings || (await settingsService.getAll());
+    if (settings[ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS] === REGISTRATION_STATUS.ACTIVATED) {
+      return settings;
+    }
+
+    const { queryOne } = await import("../database/connection.js");
+    const shop = await queryOne(`
+      SELECT
+        (SELECT COUNT(*) FROM products) AS products,
+        (SELECT COUNT(*) FROM sales) AS sales,
+        (SELECT COUNT(*) FROM purchases) AS purchases,
+        (SELECT COUNT(*) FROM expenses) AS expenses,
+        (SELECT COUNT(*) FROM partners) AS partners
+    `);
+    const inUse =
+      Number(shop?.products || 0) +
+        Number(shop?.sales || 0) +
+        Number(shop?.purchases || 0) +
+        Number(shop?.expenses || 0) +
+        Number(shop?.partners || 0) >
+      0;
+    if (!inUse) return settings;
+
+    settings = await this.ensureSystemActivation(settings);
+    await settingsService.set(
+      ACTIVATION_SETTING_KEYS.REGISTRATION_STATUS,
+      REGISTRATION_STATUS.ACTIVATED
+    );
+    await settingsService.set(ACTIVATION_SETTING_KEYS.STATUS, ACTIVATION_STATUS.ACTIVATED);
+    if (!settings[ACTIVATION_SETTING_KEYS.ACTIVATED_AT]) {
+      await settingsService.set(ACTIVATION_SETTING_KEYS.ACTIVATED_AT, new Date().toISOString());
+    }
+    return settingsService.getAll();
+  }
+
   /** @deprecated Use activateLocalKey. */
   async activate(enteredKey) {
     const result = await this.activateLocalKey(enteredKey);

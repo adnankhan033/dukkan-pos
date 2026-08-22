@@ -137,4 +137,7 @@ export const ORDERS_PAGE_SIZE = 100;
 /** Customers directory page size. */
 export const CUSTOMERS_PAGE_SIZE = 100;
 
+/** Books activity, account list, and account history page size. */
+export const BOOKS_PAGE_SIZE = 100;
+
 export { NAV_GROUPS } from "./nav";

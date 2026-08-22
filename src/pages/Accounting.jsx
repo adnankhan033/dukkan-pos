@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { expenseService } from "../services/ExpenseService";
+import { expenseCategoryService } from "../services/ExpenseCategoryService";
 import { useSettingsStore } from "../contexts/store";
 import { useSubmitGuard } from "../hooks/useSubmitGuard";
 import {
   ITEMS_PER_PAGE,
-  EXPENSE_CATEGORIES,
   EXPENSE_PERIODS,
 } from "../utils/constants";
 import {
@@ -18,10 +18,11 @@ import {
 import PageHeader from "../components/common/PageHeader";
 import Button from "../components/common/Button";
 import SearchBar from "../components/common/SearchBar";
+import SearchableSelect from "../components/common/SearchableSelect";
 import Table from "../components/common/Table";
 import Pagination from "../components/common/Pagination";
 import Modal from "../components/common/Modal";
-import { Input, Select, Textarea } from "../components/common/Input";
+import { Input, Textarea } from "../components/common/Input";
 import { StatCard } from "../components/common/Card";
 import { LoadingSpinner } from "../components/common/Loading";
 import { formatCurrency, formatDateTime } from "../utils/format";
@@ -31,10 +32,7 @@ import FormValidationAlert from "../components/common/FormValidationAlert";
 import "./Accounting.css";
 
 const FORM_ID = "expense-form";
-
-function categoryLabel(id) {
-  return EXPENSE_CATEGORIES.find((c) => c.id === id)?.label || id;
-}
+const CATEGORY_FORM_ID = "expense-category-form";
 
 function buildEmptyForm(settings) {
   return {
@@ -79,6 +77,24 @@ export default function Accounting() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(() => buildEmptyForm(settings));
   const [errors, setErrors] = useState({});
+  const [categories, setCategories] = useState([]);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
+  const [categoryForm, setCategoryForm] = useState({ name: "" });
+  const [categoryErrors, setCategoryErrors] = useState({});
+
+  const categoryLabel = (id) => expenseCategoryService.labelFor(id, categories);
+  const categoryOptions = categories.map((item) => ({
+    value: item.code,
+    label: item.name,
+  }));
+
+  const loadCategories = useCallback(async () => {
+    try {
+      setCategories(await expenseCategoryService.getAll());
+    } catch {
+      setCategories([]);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -104,8 +120,62 @@ export default function Accounting() {
   }, [page, period, category, search, businessNow]);
 
   useEffect(() => {
+    loadCategories();
+  }, [loadCategories]);
+
+  useEffect(() => {
     load();
   }, [load]);
+
+  async function addCategory(name) {
+    const trimmed = String(name || "").trim();
+    if (!trimmed) throw new Error("Category name is required");
+    const match = categories.find(
+      (item) => item.name.trim().toLowerCase() === trimmed.toLowerCase()
+    );
+    if (match) return match.code;
+    const created = await expenseCategoryService.create({ name: trimmed });
+    setCategories((prev) => {
+      const next = prev.some((item) => item.code === created.code)
+        ? prev
+        : [...prev, created];
+      return [...next].sort(
+        (a, b) => (a.sort_order - b.sort_order) || a.name.localeCompare(b.name)
+      );
+    });
+    return created.code;
+  }
+
+  async function createCategoryFromSearch(name) {
+    return addCategory(name);
+  }
+
+  function openCategoryModal() {
+    setCategoryForm({ name: "" });
+    setCategoryErrors({});
+    setCategoryModalOpen(true);
+  }
+
+  async function handleCreateCategory(e) {
+    e.preventDefault();
+    const validation = runFormValidation({
+      name: required(categoryForm.name, "Category name"),
+    });
+    if (!validation.isValid) {
+      setCategoryErrors(validation.errors);
+      return;
+    }
+    try {
+      await guard(async () => {
+        const code = await addCategory(categoryForm.name);
+        setForm((prev) => ({ ...prev, category: code }));
+        setCategoryModalOpen(false);
+        setCategoryErrors({});
+      });
+    } catch (err) {
+      setCategoryErrors({ form: err.message });
+    }
+  }
 
   function openCreate() {
     setEditing(null);
@@ -137,6 +207,7 @@ export default function Accounting() {
     e.preventDefault();
     const validation = runFormValidation({
       name: required(form.name, "Name"),
+      category: required(form.category, "Category"),
       amount: positiveNumber(form.amount, "Amount"),
       expense_datetime: required(form.expense_datetime, "Date & time"),
     });
@@ -248,21 +319,17 @@ export default function Accounting() {
             }}
             placeholder="Search expenses..."
           />
-          <Select
-            value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
+          <SearchableSelect
+            value={category === "all" ? "" : category}
+            onChange={(value) => {
+              setCategory(value || "all");
               setPage(1);
             }}
-            style={{ maxWidth: "220px" }}
-          >
-            <option value="all">All Categories</option>
-            {EXPENSE_CATEGORIES.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.label}
-              </option>
-            ))}
-          </Select>
+            options={categoryOptions}
+            placeholder="All categories"
+            noneLabel="All categories"
+            className="accounting-category-filter"
+          />
         </div>
       </div>
 
@@ -321,17 +388,31 @@ export default function Accounting() {
             error={errors.name}
           />
           <div className="form-row" style={{ marginTop: "1rem" }}>
-            <Select
-              label="Category"
-              value={form.category}
-              onChange={(e) => setForm({ ...form, category: e.target.value })}
-            >
-              {EXPENSE_CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.label}
-                </option>
-              ))}
-            </Select>
+            <div className="expense-category-field">
+              <SearchableSelect
+                label="Category *"
+                value={form.category}
+                onChange={(value) => setForm({ ...form, category: value })}
+                options={categoryOptions}
+                placeholder="Search or create category…"
+                noneLabel="Select category"
+                creatable
+                onCreateOption={createCategoryFromSearch}
+                menuPortal
+                clearable={false}
+                error={errors.category}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                className="expense-category-add"
+                onClick={openCategoryModal}
+                aria-label="Add category"
+                title="Add category"
+              >
+                <Plus size={18} />
+              </Button>
+            </div>
             <Input
               label="Amount *"
               type="number"
@@ -356,6 +437,37 @@ export default function Accounting() {
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
             />
           </div>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={categoryModalOpen}
+        onClose={() => !submitting && setCategoryModalOpen(false)}
+        closeOnOverlay={!submitting}
+        overlayClassName="modal-overlay-nested"
+        title="Add category"
+        size="sm"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCategoryModalOpen(false)} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button type="submit" form={CATEGORY_FORM_ID} disabled={submitting}>
+              {submitting ? "Saving..." : "Save"}
+            </Button>
+          </>
+        }
+      >
+        <form id={CATEGORY_FORM_ID} onSubmit={handleCreateCategory} noValidate>
+          <FormValidationAlert errors={categoryErrors} />
+          <Input
+            label="Category name *"
+            value={categoryForm.name}
+            onChange={(e) => setCategoryForm({ name: e.target.value })}
+            error={categoryErrors.name}
+            autoFocus
+            placeholder="e.g. Fuel, Cleaning, Internet"
+          />
         </form>
       </Modal>
     </div>
